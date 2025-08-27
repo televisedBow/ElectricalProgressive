@@ -36,7 +36,7 @@ namespace ElectricalProgressive
 
 
         private readonly List<EnergyPacket> globalEnergyPackets = new(); // Глобальный список пакетов энергии
-
+        
         private AsyncPathFinder asyncPathFinder= null!;
 
         //public PathFinder pathFinder = new PathFinder(); // Модуль поиска путей
@@ -81,7 +81,7 @@ namespace ElectricalProgressive
         public static int timeBeforeBurnout; // Время до сгорания проводника в секундах
         public static int multiThreading; // сколько потоков использовать
         public static int cacheTimeoutCleanupMinutes; // Время очистки кэша путей в минутах
-
+        public static int maxDistanceForFinding; // Максимальное расстояние для поиска пути
 
         public int tickTimeMs;
         private float elapsedMs = 0f;
@@ -169,6 +169,7 @@ namespace ElectricalProgressive
             timeBeforeBurnout = Math.Clamp(config.timeBeforeBurnout, 1, 600);
             multiThreading = Math.Clamp(config.multiThreading, 2, 32);
             cacheTimeoutCleanupMinutes = Math.Clamp(config.cacheTimeoutCleanupMinutes, 1, 60);
+            maxDistanceForFinding= Math.Clamp(config.MaxDistanceForFinding, 8, 1000);
 
             // устанавливаем время между тиками
             tickTimeMs = 1000 / speedOfElectricity;
@@ -1797,7 +1798,8 @@ namespace ElectricalProgressive
         public int speedOfElectricity = 4;
         public int timeBeforeBurnout = 30;
         public int multiThreading = 4;
-        public int cacheTimeoutCleanupMinutes = 2; 
+        public int cacheTimeoutCleanupMinutes = 2;
+        public int MaxDistanceForFinding = 200;
     }
 
     /// <summary>

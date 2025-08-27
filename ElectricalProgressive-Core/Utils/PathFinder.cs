@@ -95,8 +95,11 @@ public class PathFinder
 
         networkPositions = network.PartPositions; // ни в коем случае не очищать
 
-        //проверяем наличие начальной и конечной точки в этой цепи
-        if (!networkPositions.Contains(start) || !networkPositions.Contains(end))
+        if (!networkPositions.Contains(start)    //проверяем наличие начальной точки в этой цепи
+            || !networkPositions.Contains(end)   //проверяем наличие конечной точки в этой цепи
+            || Heuristic(start, end) >= ElectricalProgressive.maxDistanceForFinding   // ограничение на поиск пути, чтобы не зацикливаться на бесконечном поиске
+            || start == end                        // начальная и конечная точка не должны совпадать
+           )
             return (null!, null!, null!, null!);
 
 
@@ -188,7 +191,7 @@ public class PathFinder
                 int priority = Heuristic(neighbor, end); // Приоритет = эвристика
                 if (!processedFaces[neighbor][buf2[i]]   // проверяем, что грань соседа еще не обработана
                     && !cameFrom.ContainsKey(state)      // проверяем, что состояние еще не посещали
-                    && priority < 200                     // ограничение на приоритет, чтобы не зацикливаться на бесконечном поиске
+                    && priority < ElectricalProgressive.maxDistanceForFinding                      // ограничение на приоритет, чтобы не зацикливаться на бесконечном поиске
                     )
                 {
                     queue.Enqueue(state, priority);
