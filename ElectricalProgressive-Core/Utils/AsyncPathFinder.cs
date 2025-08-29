@@ -104,7 +104,7 @@ namespace ElectricalProgressive.Utils
 
 
                             // Копирование массива facing
-                            int[] copiedFacing = new int[facing.Length];
+                            byte[] copiedFacing = new byte[facing.Length];
                             Array.Copy(facing, copiedFacing, facing.Length);
 
 

@@ -49,15 +49,15 @@ namespace ElectricalProgressive
         private List<Accumulator> localAccums = new List<Accumulator>();
         private List<EnergyPacket> localPackets = new List<EnergyPacket>(); // Для пакетов сети
 
-        private List<BlockPos> consumerPositions = new();
-        private List<float> consumerRequests = new();
-        private List<BlockPos> producerPositions = new();
-        private List<float> producerGive = new();
+        private List<BlockPos> consumerPositions = new(1);
+        private List<float> consumerRequests = new(1);
+        private List<BlockPos> producerPositions = new(1);
+        private List<float> producerGive = new(1);
 
-        private List<BlockPos> consumer2Positions = new();
-        private List<float> consumer2Requests = new();
-        private List<BlockPos> producer2Positions = new();
-        private List<float> producer2Give = new();
+        private List<BlockPos> consumer2Positions = new(1);
+        private List<float> consumer2Requests = new(1);
+        private List<BlockPos> producer2Positions = new(1);
+        private List<float> producer2Give = new(1);
 
         private Simulation sim = new();
         private Simulation sim2 = new();
@@ -466,7 +466,7 @@ namespace ElectricalProgressive
                 return;
 
             //Очищаем старые пути
-            if (sapi.World.Rand.NextDouble() < 0.1d)
+            if (sapi.World.Rand.NextDouble() < 0.01d)
             {
                 PathCacheManager.Cleanup();
             }
@@ -500,8 +500,8 @@ namespace ElectricalProgressive
                 // Этап 2: Сбор запросов от потребителей----------------------------------------------------------------------------
                 var cons = network.Consumers.Count; // Количество потребителей в сети
                 float requestedEnergy; // Запрошенная энергия от потребителей
-                consumerPositions = new(cons); // Позиции потребителей
-                consumerRequests = new(cons); // Запросы потребителей
+                //consumerPositions = new(cons); // Позиции потребителей
+                //consumerRequests = new(cons); // Запросы потребителей
 
                 foreach (var electricConsumer in network.Consumers)
                 {
@@ -519,8 +519,8 @@ namespace ElectricalProgressive
                 // Этап 3: Сбор энергии с генераторов и аккумуляторов----------------------------------------------------------------------------
                 var prod = network.Producers.Count + network.Accumulators.Count; // Количество производителей в сети
                 float giveEnergy; // Энергия, которую отдают производители
-                producerPositions = new(prod); // Позиции производителей
-                producerGive = new(prod); // Энергия, которую отдают производители
+                //producerPositions = new(prod); // Позиции производителей
+                //producerGive = new(prod); // Энергия, которую отдают производители
 
                 foreach (var electricProducer in network.Producers)
                 {
@@ -625,8 +625,8 @@ namespace ElectricalProgressive
 
                 // Этап 6: Зарядка аккумуляторов    ----------------------------------------------------------------------------
                 cons = network.Accumulators.Count; // Количество аккумов в сети
-                consumer2Positions = new(cons); // Позиции потребителей
-                consumer2Requests = new(cons); // Запросы потребителей
+                //consumer2Positions = new(cons); // Позиции потребителей
+                //consumer2Requests = new(cons); // Запросы потребителей
                 localAccums.Clear();
                 foreach (var electricAccum in network.Accumulators)
                 {
@@ -648,8 +648,8 @@ namespace ElectricalProgressive
                 // Этап 7: Остатки генераторов  ----------------------------------------------------------------------------
                 prod = localProducers.Count; // Количество производителей в сети
                 int prodIter = 0; // Итератор для производителей
-                producer2Positions = new(prod); // Позиции производителей
-                producer2Give = new(prod); // Энергия, которую отдают производители
+                //producer2Positions = new(prod); // Позиции производителей
+                //producer2Give = new(prod); // Энергия, которую отдают производители
 
                 foreach (var producer in localProducers)
                 {

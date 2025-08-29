@@ -30,12 +30,12 @@ public class PathFinder
 
     // Переменные используемые в ReconstructPath, чтобы избежать очень частых аллокаций
     BlockPos[] pathArray = new BlockPos[1];
-    int[] faceArray = new int[1];
+    byte[] faceArray = new byte[1];
 
 
     // Переменные используемые в GetNeighbors, чтобы избежать очень частых аллокаций
     private List<BlockPos> Neighbors = new(27);      // координата соседа
-    private List<int> NeighborsFace = new(27);            // грань соседа с которым мы взаимодействовать будем
+    private List<byte> NeighborsFace = new(27);            // грань соседа с которым мы взаимодействовать будем
     private bool[] NowProcessed = new bool[6];                    // задействованные грани в этой точке
     private Queue<int> queue2 = new();
     private bool[] processFacesBuf = new bool[6];
@@ -44,21 +44,21 @@ public class PathFinder
     private List<BlockFacing> bufForFaces = new List<BlockFacing>(6);
 
     // Переменные используемые в FindShortestPath, чтобы избежать очень частых аллокаций
-    private List<int> startBlockFacing = new();
-    private List<int> endBlockFacing = new();
-    private PriorityQueue<(BlockPos, int), int> queue = new();
-    private Dictionary<(BlockPos, int), (BlockPos, int)> cameFrom = new();
+    private List<byte> startBlockFacing = new();
+    private List<byte> endBlockFacing = new();
+    private PriorityQueue<(BlockPos, byte), int> queue = new();
+    private Dictionary<(BlockPos, byte), (BlockPos, byte)> cameFrom = new();
     private List<BlockPos> cameFromList = new();
     private Dictionary<BlockPos, bool[]> processedFaces = new();
-    private Dictionary<(BlockPos, int), int> facingFrom = new();
-    private Dictionary<(BlockPos, int), bool[]> nowProcessedFaces = new();
+    private Dictionary<(BlockPos, byte), byte> facingFrom = new();
+    private Dictionary<(BlockPos, byte), bool[]> nowProcessedFaces = new();
     private HashSet<BlockPos> networkPositions = new();
     private List<BlockPos> buf1 = new();     //список соседей
-    private List<int> buf2 = new();          //список граней соседей
+    private List<byte> buf2 = new();          //список граней соседей
     private bool[]? buf3;            //список граней, которые сейчас в работе
     private bool[]? buf4;            //список граней, которые уже просчитаны
     private BlockPos? currentPos;    //текущая позиция
-    private int currentFace;        //текущая грань
+    private byte currentFace;        //текущая грань
 
 
 
@@ -73,7 +73,7 @@ public class PathFinder
     /// <param name="start"></param>
     /// <param name="end"></param>
     /// <returns></returns>
-    public (BlockPos[], int[], bool[][], Facing[]) FindShortestPath(BlockPos start, BlockPos end, Network network, Dictionary<BlockPos, NetworkPart> parts)
+    public (BlockPos[], byte[], bool[][], Facing[]) FindShortestPath(BlockPos start, BlockPos end, Network network, Dictionary<BlockPos, NetworkPart> parts)
     {
         // очищаем предыдущие данные
         startBlockFacing.Clear();
@@ -107,11 +107,9 @@ public class PathFinder
         var startConnection = parts[start].Connection;
         foreach (var face in FacingHelper.Faces(startConnection))
         {
-            startBlockFacing.Add(face.Index);
+            startBlockFacing.Add((byte)face.Index);
         }
 
-
-        // startBlockFacing[0] и endBlockFacing[0] будут работать корректно до тех пор, пока не появятся источники и приемники энергии, у которых несколько граней на передачу и прием!!!!
 
 
 
@@ -119,7 +117,7 @@ public class PathFinder
         var endConnection = parts[end].Connection;
         foreach (var face in FacingHelper.Faces(endConnection))
         {
-            endBlockFacing.Add(face.Index);
+            endBlockFacing.Add((byte)face.Index);
         }
 
         // заполняем очередь обработки стартовыми значениями
@@ -232,7 +230,7 @@ public class PathFinder
 
         Facing[] nowProcessingFaces = null!;      //храним тут Facing граней, которые сейчас в работе                                           
         bool[][] nowProcessedFacesList = null!; //хранит для каждого кусочка цепи посещенные грани в данный момент (для вывода наружу)                                                
-        int[] facingFromList = null!;            //хранит номер задействованной грани соседа (для вывода наружу)
+        byte[] facingFromList = null!;            //хранит номер задействованной грани соседа (для вывода наружу)
 
 
         // ниже можно код сделать компактнее, но потом
@@ -242,7 +240,7 @@ public class PathFinder
         int pathLength = path.Count(); //длина пути
         nowProcessingFaces = new Facing[pathLength];
         nowProcessedFacesList = new bool[pathLength][];
-        facingFromList = new int[pathLength];
+        facingFromList = new byte[pathLength];
 
         facingFromList[0] = facingFrom[(path[0], faces![0])];
 
@@ -300,7 +298,7 @@ public class PathFinder
     /// </summary>
     /// <param name="pos"></param>
     /// <returns></returns>
-    private (List<BlockPos>, List<int>, bool[], bool[]) GetNeighbors(BlockPos pos, bool[] processFaces, int startFace, Network network, Dictionary<BlockPos, NetworkPart> parts)
+    private (List<BlockPos>, List<byte>, bool[], bool[]) GetNeighbors(BlockPos pos, bool[] processFaces, int startFace, Network network, Dictionary<BlockPos, NetworkPart> parts)
     {
         // очищаем предыдущие данные
         Neighbors.Clear();                                // координата соседа
@@ -387,7 +385,7 @@ public class PathFinder
                     if ((neighborPart.Connection & FacingHelper.From(face, opposite)) != 0)
                     {
                         Neighbors.Add(neighborPosition);
-                        NeighborsFace.Add(face.Index);
+                        NeighborsFace.Add((byte)face.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
                     }
@@ -395,7 +393,7 @@ public class PathFinder
                     if ((neighborPart.Connection & FacingHelper.From(opposite, face)) != 0)
                     {
                         Neighbors.Add(neighborPosition);
-                        NeighborsFace.Add(opposite.Index);
+                        NeighborsFace.Add((byte)opposite.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
                     }
@@ -420,7 +418,7 @@ public class PathFinder
                     if ((neighborPart.Connection & FacingHelper.From(oppDir, oppFace)) != 0)
                     {
                         Neighbors.Add(neighborPosition);
-                        NeighborsFace.Add(oppDir.Index);
+                        NeighborsFace.Add((byte)oppDir.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
                     }
@@ -428,7 +426,7 @@ public class PathFinder
                     if ((neighborPart.Connection & FacingHelper.From(oppFace, oppDir)) != 0)
                     {
                         Neighbors.Add(neighborPosition);
-                        NeighborsFace.Add(oppFace.Index);
+                        NeighborsFace.Add((byte)oppFace.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
                     }
@@ -452,7 +450,7 @@ public class PathFinder
                     if ((neighborPart.Connection & FacingHelper.From(direction, oppFace)) != 0)
                     {
                         Neighbors.Add(neighborPosition);
-                        NeighborsFace.Add(direction.Index);
+                        NeighborsFace.Add((byte)direction.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
                     }
@@ -460,7 +458,7 @@ public class PathFinder
                     if ((neighborPart.Connection & FacingHelper.From(oppFace, direction)) != 0)
                     {
                         Neighbors.Add(neighborPosition);
-                        NeighborsFace.Add(oppFace.Index);
+                        NeighborsFace.Add((byte)oppFace.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
                     }
@@ -488,11 +486,11 @@ public class PathFinder
     /// <param name="endFacing"></param>
     /// <param name="cameFrom"></param>
     /// <returns></returns>
-    private (BlockPos[]? path, int[]? faces) ReconstructPath(
+    private (BlockPos[]? path, byte[]? faces) ReconstructPath(
         BlockPos start,
         BlockPos end,
-        List<int> endFacing,
-        Dictionary<(BlockPos, int), (BlockPos, int)> cameFrom)
+        List<byte> endFacing,
+        Dictionary<(BlockPos, byte), (BlockPos, byte)> cameFrom)
     {
         // 1) Первый проход: считаем длину пути
         int length = 0;
