@@ -1,16 +1,17 @@
-﻿using Vintagestory.API.Common;
+﻿using ElectricalProgressive.Interface;
+using ElectricalProgressive.Utils;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Client;
-using Vintagestory.API.Server;
+using Vintagestory.API.Common;
 using Vintagestory.API.Config;
-using ElectricalProgressive.Interface;
-using ElectricalProgressive.Utils;
+using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 using static ElectricalProgressive.ElectricalProgressive;
-using Vintagestory.API.Util;
 
 
 [assembly: ModDependency("game", "1.21.0-rc.4")]
@@ -39,7 +40,7 @@ namespace ElectricalProgressive
         
         private AsyncPathFinder asyncPathFinder= null!;
 
-        //public PathFinder pathFinder = new PathFinder(); // Модуль поиска путей
+        
 
         private Dictionary<BlockPos, float> sumEnergy = new();
 
@@ -329,15 +330,23 @@ namespace ElectricalProgressive
             List<float> producerGive,
             Simulation sim)
         {
-            var cP = consumerPositions.Count; // Количество потребителей
-            var pP = producerPositions.Count; // Количество производителей
+            var cP = sim.CountWorkingCustomers = consumerPositions.Count; // Количество потребителей
+            var pP = sim.CountWorkingStores = producerPositions.Count; // Количество производителей
 
+            
             BlockPos start;
             BlockPos end;
 
-            // обновляем массив для расстояний
+            // обновляем массив для расстояний, магазинов и клиентов
             if (sim.Distances.Length < cP * pP)
                 Array.Resize(ref sim.Distances, cP * pP);
+
+            if (sim.Stores == null || sim.Stores.Length < pP)
+                sim.Stores = new Store[pP];
+
+            if (sim.Customers == null || sim.Customers.Length < cP)
+                sim.Customers = new Customer[cP];
+
 
 
             for (int i = 0; i < cP; i++)
@@ -362,34 +371,41 @@ namespace ElectricalProgressive
                 }
             }
 
-            sim.Stores = new Store[pP];
 
-            sim.Customers = new Customer[cP];
-            
 
+            // инициализируем магазины
             for (int j = 0; j < pP; j++)
             {
-                sim.Stores[j] = new Store(j, producerGive[j]);
+                var store = sim.Stores[j];
+                if (store == null)
+                    sim.Stores[j] = store = new Store(j, producerGive[j]);
+                store.Update(j, producerGive[j]);
             }
 
 
-            // буффер для расстояний (сбрасывать размер всегда!)
-            Array.Resize(ref sim.DistBuffer, pP);
 
+
+            // инициализируем клиентов
             for (int i = 0; i < cP; i++)
             {
-    
+                var DistBuffer = new int[pP];
+
                 for (int j = 0; j < pP; j++)
                 {
-                    sim.DistBuffer[j] = sim.Distances[i * pP + j];
+                    DistBuffer[j] = sim.Distances[i * pP + j];
                 }
 
-                sim.Customers[i] = new Customer(i, consumerRequests[i], sim.DistBuffer);
+                var cust = sim.Customers[i];
+                if (cust == null)
+                    sim.Customers[i] = cust = new Customer(i, consumerRequests[i], DistBuffer);
+                else
+                    cust.Update(i, consumerRequests[i], DistBuffer);
             }
-
-
+            
 
             sim.Run(); // Запускаем симуляцию для распределения энергии между потребителями и производителями
+
+
         }
 
 
@@ -496,16 +512,15 @@ namespace ElectricalProgressive
                 producer2Positions.Clear();
                 producer2Give.Clear();
 
-                sim.Reset();
-                sim2.Reset();
+                //sim.Reset();
+                //sim2.Reset();
 
 
 
                 // Этап 2: Сбор запросов от потребителей----------------------------------------------------------------------------
                 var cons = network.Consumers.Count; // Количество потребителей в сети
                 float requestedEnergy; // Запрошенная энергия от потребителей
-                //consumerPositions = new(cons); // Позиции потребителей
-                //consumerRequests = new(cons); // Запросы потребителей
+
 
                 foreach (var electricConsumer in network.Consumers)
                 {
@@ -523,8 +538,6 @@ namespace ElectricalProgressive
                 // Этап 3: Сбор энергии с генераторов и аккумуляторов----------------------------------------------------------------------------
                 var prod = network.Producers.Count + network.Accumulators.Count; // Количество производителей в сети
                 float giveEnergy; // Энергия, которую отдают производители
-                //producerPositions = new(prod); // Позиции производителей
-                //producerGive = new(prod); // Энергия, которую отдают производители
 
                 foreach (var electricProducer in network.Producers)
                 {
@@ -562,8 +575,8 @@ namespace ElectricalProgressive
                 EnergyPacket packet;   // Временная переменная для пакета энергии
                 BlockPos posStore; // Позиция магазина в мире
                 BlockPos posCustomer; // Позиция потребителя в мире
-                int customCount = sim.Customers?.Length ?? 0; // Количество клиентов в симуляции
-                int storeCount = sim.Stores?.Length ?? 0; // Количество магазинов в симуляции
+                int customCount = consumerPositions.Count; // Количество клиентов в симуляции
+                int storeCount = producerPositions.Count; // Количество магазинов в симуляции
                 int k = 0;
                 for (int i = 0; i < customCount; i++)
                 {
@@ -629,8 +642,7 @@ namespace ElectricalProgressive
 
                 // Этап 6: Зарядка аккумуляторов    ----------------------------------------------------------------------------
                 cons = network.Accumulators.Count; // Количество аккумов в сети
-                //consumer2Positions = new(cons); // Позиции потребителей
-                //consumer2Requests = new(cons); // Запросы потребителей
+
                 localAccums.Clear();
                 foreach (var electricAccum in network.Accumulators)
                 {
@@ -652,8 +664,7 @@ namespace ElectricalProgressive
                 // Этап 7: Остатки генераторов  ----------------------------------------------------------------------------
                 prod = localProducers.Count; // Количество производителей в сети
                 int prodIter = 0; // Итератор для производителей
-                //producer2Positions = new(prod); // Позиции производителей
-                //producer2Give = new(prod); // Энергия, которую отдают производители
+
 
                 foreach (var producer in localProducers)
                 {
@@ -668,8 +679,8 @@ namespace ElectricalProgressive
                 logisticalTask(network, consumer2Positions, consumer2Requests, producer2Positions, producer2Give, sim2);
 
 
-                customCount = sim2.Customers?.Length ?? 0; // Количество клиентов в симуляции 2
-                storeCount = sim2.Stores?.Length ?? 0; // Количество магазинов в симуляции 2
+                customCount = consumer2Positions.Count; // Количество клиентов в симуляции 2
+                storeCount = producer2Positions.Count; // Количество магазинов в симуляции 2
 
                 for (int i = 0; i < customCount; i++)
                 {
@@ -950,11 +961,7 @@ namespace ElectricalProgressive
             foreach (var part2 in parts)  //перебираем все элементы
             {
                 //заполняем нулями
-                if (!sumEnergy.TryGetValue(part2.Key, out _))
-                {
-                    sumEnergy.Add(part2.Key, 0F);
-                }
-                else
+                if (!sumEnergy.TryAdd(part2.Key, 0F))
                 {
                     sumEnergy[part2.Key] = 0F;
                 }
@@ -965,6 +972,8 @@ namespace ElectricalProgressive
                 part2.Value.eparams[3].current = 0f;       //обнуляем токи
                 part2.Value.eparams[4].current = 0f;       //обнуляем токи
                 part2.Value.eparams[5].current = 0f;       //обнуляем токи
+
+                
             }
 
 
@@ -995,7 +1004,7 @@ namespace ElectricalProgressive
 
                         if (isValid)
                         {
-                            if (sumEnergy.TryGetValue(pos, out _))
+                            if (sumEnergy.ContainsKey(pos))
                             {
                                 sumEnergy[pos] += packet.energy;
                             }

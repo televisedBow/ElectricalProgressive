@@ -7,22 +7,22 @@ namespace ElectricalProgressive.Utils
         /// <summary>
         /// Уникальный идентификатор клиента.
         /// </summary>
-        public int Id { get; }
+        public int Id { get; set; }
 
         /// <summary>
         /// Требуемое количество товара клиентом.
         /// </summary>
-        public float Required { get; }
+        public float Required;
 
         /// <summary>
         /// Расстояния до каждого магазина, индекс соответствует Id магазина.
         /// </summary>
-        public int[] StoreDistances { get; }
+        public int[] StoreDistances;
 
         /// <summary>
         /// Полученное количество товара от каждого магазина, индекс соответствует Id магазина.
         /// </summary>
-        public float[] Received { get; }
+        public float[] Received;
 
         /// <summary>
         /// Массив идентификаторов магазинов, отсортированных по расстоянию до клиента.
@@ -33,7 +33,6 @@ namespace ElectricalProgressive.Utils
         /// Сумма полученного товара от всех магазинов.
         /// </summary>
         private float _receivedSum;
-
 
         /// <summary>
         /// Индекс текущего магазина, от которого клиент получает товар.
@@ -71,7 +70,7 @@ namespace ElectricalProgressive.Utils
             get
             {
                 double total = 0;
-                for (int i = 0; i < Received.Length; i++)
+                for (int i = 0; i < StoreDistances.Length; i++)
                 {
                     total += StoreDistances[i] * Received[i];
                 }
@@ -84,7 +83,7 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         private void UpdateOrderedStores()
         {
-            for (int i = 0; i < orderedStoreIds.Length; i++)
+            for (int i = 0; i < StoreDistances.Length; i++)
             {
                 orderedStoreIds[i] = i;
             }
@@ -123,5 +122,28 @@ namespace ElectricalProgressive.Utils
         /// Проверяет, есть ли еще магазины.
         /// </summary>
         internal bool HasMoreStores() => _currentStoreIndex < orderedStoreIds.Length;
+
+        internal void Update(int id, float required, int[] storeDistances)
+        {
+            Id = id;
+            Required = required;
+
+            if (StoreDistances == null || StoreDistances.Length != storeDistances.Length)
+            {
+                StoreDistances = storeDistances;
+                Received = new float[storeDistances.Length];
+                orderedStoreIds = new int[storeDistances.Length];
+                UpdateOrderedStores();
+            }
+            else
+            {
+                Array.Copy(storeDistances, StoreDistances, storeDistances.Length);
+                Array.Clear(Received, 0, Received.Length);
+                UpdateOrderedStores();
+            }
+
+            _receivedSum = 0f;
+            _currentStoreIndex = 0;
+        }
     }
 }

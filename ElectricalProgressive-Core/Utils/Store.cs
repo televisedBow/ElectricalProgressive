@@ -8,7 +8,7 @@ namespace ElectricalProgressive.Utils
         /// <summary>
         /// Уникальный идентификатор магазина.
         /// </summary>
-        public int Id { get; }
+        public int Id { get; set; }
 
         /// <summary>
         /// Текущее количество товара в магазине.
@@ -49,6 +49,9 @@ namespace ElectricalProgressive.Utils
         {
             CurrentRequests.Clear();
         }
+
+
+
 
         /// <summary>
         /// Обрабатывает запросы от клиентов и распределяет товар по запросам.
@@ -104,6 +107,14 @@ namespace ElectricalProgressive.Utils
             }
 
             ResetRequests();
+        }
+
+        internal void Update(int id, float stock)
+        {
+            Id = id;
+            Stock = stock;
+            totalRequest = 0f;
+            ImNull = false;
         }
     }
 }

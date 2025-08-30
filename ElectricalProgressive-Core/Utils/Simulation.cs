@@ -6,25 +6,26 @@ namespace ElectricalProgressive.Utils
     public class Simulation
     {
 
+
+        public int CountWorkingStores;
+        public int CountWorkingCustomers;
+
         /// Массив для хранения всех расстояний между клиентами и магазинами
         /// </summary>
-        public int[] Distances = new int[1];
+        public int[] Distances = new int[100];
 
 
-        /// <summary>
-        /// Буффер для хранения расстояний между клиентами и магазинами.
-        /// </summary>
-        public int[] DistBuffer = new int[0];
+
 
         /// <summary>
         /// Список клиентов, участвующих в симуляции.
         /// </summary>
-        public Customer[] Customers { get; set; }
+        public Customer[] Customers = new Customer[100];
 
         /// <summary>
         /// Список магазинов, участвующих в симуляции.
         /// </summary>
-        public Store[] Stores { get; set; }
+        public Store[] Stores = new Store[100];
 
         /// <summary>
         /// Запускает симуляцию распределения товара между клиентами и магазинами.
@@ -35,7 +36,7 @@ namespace ElectricalProgressive.Utils
             if (Customers == null || Stores == null)
                 return;
 
-            for (int i = 0; i < Stores.Length; i++)
+            for (int i = 0; i < CountWorkingStores; i++)
             {
                 Stores[i].totalRequest = 0;
             }
@@ -45,12 +46,12 @@ namespace ElectricalProgressive.Utils
 
             do
             {
-                for (int i = 0; i < Stores.Length; i++)
+                for (int i = 0; i < CountWorkingStores; i++)
                 {
                     Stores[i].ResetRequests();
                 }
 
-                for (int c = 0; c < Customers.Length; c++)
+                for (int c = 0; c < CountWorkingCustomers; c++)
                 {
                     var customer = Customers[c];
                     customer.ResetStoreIndex();
@@ -62,13 +63,13 @@ namespace ElectricalProgressive.Utils
                     ProcessStoresArray(customer, remaining, availableStoreIds);
                 }
 
-                for (int i = 0; i < Stores.Length; i++)
+                for (int i = 0; i < CountWorkingStores; i++)
                 {
                     Stores[i].ProcessRequests(Customers);
                 }
 
                 hasActiveStores = false;
-                for (int i = 0; i < Stores.Length; i++)
+                for (int i = 0; i < CountWorkingStores; i++)
                 {
                     if (!Stores[i].ImNull)
                     {
@@ -78,7 +79,7 @@ namespace ElectricalProgressive.Utils
                 }
 
                 hasPendingCustomers = false;
-                for (int i = 0; i < Customers.Length; i++)
+                for (int i = 0; i < CountWorkingCustomers; i++)
                 {
                     if (Customers[i].Remaining > 0.001f)
                     {
@@ -117,8 +118,8 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         public void Reset()
         {
-            Stores= Array.Empty<Store>();
-            Customers= Array.Empty<Customer>();
+            //Stores= Array.Empty<Store>();
+            //Customers= Array.Empty<Customer>();
         }
     }
 }
