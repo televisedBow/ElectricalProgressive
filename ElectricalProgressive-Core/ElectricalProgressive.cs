@@ -63,7 +63,7 @@ namespace ElectricalProgressive
         private Simulation sim2 = new();
 
 
-        int[] distances = new int[1];
+     
 
 
         public ICoreAPI api = null!;
@@ -335,7 +335,10 @@ namespace ElectricalProgressive
             BlockPos start;
             BlockPos end;
 
-            Array.Resize(ref distances, cP * pP);
+            // обновляем массив для расстояний
+            if (sim.Distances.Length < cP * pP)
+                Array.Resize(ref sim.Distances, cP * pP);
+
 
             for (int i = 0; i < cP; i++)
             {
@@ -345,7 +348,7 @@ namespace ElectricalProgressive
                     end = producerPositions[j];
                     if (PathCacheManager.TryGet(start, end, out var cachedPath, out _, out _, out _, out var version))
                     {
-                        distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
+                        sim.Distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
                         if (version != network.version) // Если версия сети не совпадает, то добавляем запрос в очередь
                         {
                             asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
@@ -354,36 +357,37 @@ namespace ElectricalProgressive
                     else
                     {
                         asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
-                        distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
+                        sim.Distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
                     }
                 }
             }
 
-            Store[] stores = new Store[pP];
+            sim.Stores = new Store[pP];
 
-            Customer[] customers = new Customer[cP];
-            int[] distFromCustomerToStore = new int[pP];
+            sim.Customers = new Customer[cP];
+            
 
             for (int j = 0; j < pP; j++)
             {
-                stores[j] = new Store(j, producerGive[j]);
+                sim.Stores[j] = new Store(j, producerGive[j]);
             }
 
+
+            // буффер для расстояний (сбрасывать размер всегда!)
+            Array.Resize(ref sim.DistBuffer, pP);
 
             for (int i = 0; i < cP; i++)
             {
-                distFromCustomerToStore.Fill(0);
+    
                 for (int j = 0; j < pP; j++)
                 {
-                    distFromCustomerToStore[j] = distances[i * pP + j];
+                    sim.DistBuffer[j] = sim.Distances[i * pP + j];
                 }
 
-                customers[i] = new Customer(i, consumerRequests[i], distFromCustomerToStore);
+                sim.Customers[i] = new Customer(i, consumerRequests[i], sim.DistBuffer);
             }
 
-            // Добавляем магазины и клиентов в симуляцию
-            sim.Stores = new List<Store>(stores);
-            sim.Customers = new List<Customer>(customers);
+
 
             sim.Run(); // Запускаем симуляцию для распределения энергии между потребителями и производителями
         }
@@ -558,8 +562,8 @@ namespace ElectricalProgressive
                 EnergyPacket packet;   // Временная переменная для пакета энергии
                 BlockPos posStore; // Позиция магазина в мире
                 BlockPos posCustomer; // Позиция потребителя в мире
-                int customCount = sim.Customers?.Count ?? 0; // Количество клиентов в симуляции
-                int storeCount = sim.Stores?.Count ?? 0; // Количество магазинов в симуляции
+                int customCount = sim.Customers?.Length ?? 0; // Количество клиентов в симуляции
+                int storeCount = sim.Stores?.Length ?? 0; // Количество магазинов в симуляции
                 int k = 0;
                 for (int i = 0; i < customCount; i++)
                 {
@@ -664,8 +668,8 @@ namespace ElectricalProgressive
                 logisticalTask(network, consumer2Positions, consumer2Requests, producer2Positions, producer2Give, sim2);
 
 
-                customCount = sim2.Customers?.Count ?? 0; // Количество клиентов в симуляции 2
-                storeCount = sim2.Stores?.Count ?? 0; // Количество магазинов в симуляции 2
+                customCount = sim2.Customers?.Length ?? 0; // Количество клиентов в симуляции 2
+                storeCount = sim2.Stores?.Length ?? 0; // Количество магазинов в симуляции 2
 
                 for (int i = 0; i < customCount; i++)
                 {
