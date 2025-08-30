@@ -132,6 +132,7 @@ public class BlockEGenerator : BlockEBase, IMechanicalPowerBlock
 
             var beh = entity.GetBehavior<BEBehaviorMPBase>();
             beh?.CreateJoinAndDiscoverNetwork(blockFacing);
+            beh?.Network.updateNetwork(1);
 
             if (
                 world.BlockAccessor.GetBlock(blockPos1) is IMechanicalPowerBlock block &&

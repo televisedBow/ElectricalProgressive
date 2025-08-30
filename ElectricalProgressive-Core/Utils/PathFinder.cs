@@ -132,8 +132,10 @@ public class PathFinder
             facingFrom[(start, sFace)] = sFace;
 
             //хранит для каждого кусочка цепи посещенные грани в данный момент
-            nowProcessedFaces[(start, sFace)] = new bool[6] { false, false, false, false, false, false };
-            nowProcessedFaces[(start, sFace)][sFace] = true;
+            var buffer = new bool[6] { false, false, false, false, false, false };
+            buffer[sFace] = true;
+            nowProcessedFaces[(start, sFace)] = buffer;
+
         }
 
 
@@ -150,18 +152,13 @@ public class PathFinder
         // словарь не перезаполняется, а лишь очищается при каждом новом запуске поиска пути для той же сети, чтобы не создавать новые объекты
         foreach (var index in networkPositions)
         {
-            if (!processedFaces.TryGetValue(index, out _))
+            if (!processedFaces.TryGetValue(index, out var value))
             {
                 processedFaces.Add(index, new bool[6] { false, false, false, false, false, false });
             }
             else
             {
-                processedFaces[index][0] = false;
-                processedFaces[index][1] = false;
-                processedFaces[index][2] = false;
-                processedFaces[index][3] = false;
-                processedFaces[index][4] = false;
-                processedFaces[index][5] = false;
+                Array.Fill(value, false);
             }
 
         }
@@ -170,6 +167,7 @@ public class PathFinder
 
         while (queue.Count > 0)                 //пока очередь не опустеет
         {
+            // Извлекаем элемент с наивысшим приоритетом
             (currentPos, currentFace) = queue.Dequeue();
 
             if (currentPos.Equals(end))            //достигли конца и прекращаем просчет
@@ -187,9 +185,10 @@ public class PathFinder
             {
                 var state = (neighbor, buf2[i]);
                 int priority = Heuristic(neighbor, end); // Приоритет = эвристика
-                if (!processedFaces[neighbor][buf2[i]]   // проверяем, что грань соседа еще не обработана
+
+                if (priority < ElectricalProgressive.maxDistanceForFinding       // ограничение на приоритет, чтобы не зацикливаться на бесконечном поиске
                     && !cameFrom.ContainsKey(state)      // проверяем, что состояние еще не посещали
-                    && priority < ElectricalProgressive.maxDistanceForFinding                      // ограничение на приоритет, чтобы не зацикливаться на бесконечном поиске
+                    && !processedFaces[neighbor][buf2[i]]   // проверяем, что грань соседа еще не обработана
                     )
                 {
                     queue.Enqueue(state, priority);
@@ -210,11 +209,6 @@ public class PathFinder
             }
 
 
-
-            //if (cameFrom.Count > 1000)
-            //{ // Ограничение на количество посещенных состояний
-            //    return (null!, null!, null!, null!);
-            //}
 
         }
 

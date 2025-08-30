@@ -14,13 +14,13 @@ using Vintagestory.GameContent;
 using static ElectricalProgressive.ElectricalProgressive;
 
 
-[assembly: ModDependency("game", "1.21.0-rc.4")]
+[assembly: ModDependency("game", "1.21.0")]
 [assembly: ModInfo(
     "Electrical Progressive: Core",
     "electricalprogressivecore",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electrical logic library.",
-    Version = "2.1.0-rc.6",
+    Version = "2.1.0",
     Authors = new[] { "Tehtelev", "Kotl" }
 )]
 
@@ -31,9 +31,9 @@ namespace ElectricalProgressive
     public class ElectricalProgressive : ModSystem
     {
         public readonly HashSet<Network> networks = new();
-        public readonly Dictionary<BlockPos, NetworkPart> parts = new(); // Хранит все элементы всех цепей
+        public readonly Dictionary<BlockPos, NetworkPart> parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
 
-        private Dictionary<BlockPos, List<EnergyPacket>> packetsByPosition = new(); //Словарь для хранения пакетов по позициям
+        private Dictionary<BlockPos, List<EnergyPacket>> packetsByPosition = new(new BlockPosComparer()); //Словарь для хранения пакетов по позициям
 
 
         private readonly List<EnergyPacket> globalEnergyPackets = new(); // Глобальный список пакетов энергии
@@ -1826,4 +1826,27 @@ namespace ElectricalProgressive
         public Facing[]? usedConnections;
         public int Version;
     }
+
+
+
+    public class BlockPosComparer : IEqualityComparer<BlockPos>
+    {
+        public bool Equals(BlockPos a1, BlockPos a2)
+        {
+            return a1.X == a2.X && a1.Y == a2.Y && a1.Z == a2.Z && a1.dimension == a2.dimension;
+        }
+
+        public int GetHashCode(BlockPos pos)
+        {
+            unchecked
+            {
+                // Быстрая версия с битовыми операциями и минимальным количеством операций
+                int hash = pos.X;
+                hash = (hash << 9) ^ (hash >> 23) ^ pos.Y;  // Сдвиги и XOR вместо умножения
+                hash = (hash << 9) ^ (hash >> 23) ^ pos.Z;
+                return hash ^ (pos.dimension * 269023);
+            }
+        }
+    }
 }
+

@@ -136,7 +136,7 @@ public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
 
             var beh = entity.GetBehavior<BEBehaviorMPBase>();
             beh?.CreateJoinAndDiscoverNetwork(blockFacing);
-
+            beh?.Network.updateNetwork(1);
             if (
                 world.BlockAccessor.GetBlock(blockPos1) is IMechanicalPowerBlock block &&
                 block.HasMechPowerConnectorAt(world, blockPos1, blockFacing.Opposite)

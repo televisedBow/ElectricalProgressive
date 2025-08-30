@@ -16,7 +16,7 @@ namespace ElectricalProgressive.Utils
         private readonly int maxConcurrentTasks;                            // Максимальное количество параллельных задач
         private Dictionary<BlockPos, NetworkPart> parts;                    // Словарь частей сети
         private int sizeOfQueue;
-
+        private int sizeOfNotBusy;
 
         /// <summary>
         /// Инициализирует новый экземпляр класса AsyncPathFinder.
@@ -28,6 +28,8 @@ namespace ElectricalProgressive.Utils
             this.parts = parts;
             this.maxConcurrentTasks = maxConcurrentTasks;
             this.sizeOfQueue = 500 * maxConcurrentTasks;
+            this.sizeOfNotBusy = 100 * maxConcurrentTasks;
+
 
             // Запускаем задачи-потребители один раз при старте
             for (int i = 0; i < maxConcurrentTasks; i++)
@@ -48,7 +50,7 @@ namespace ElectricalProgressive.Utils
         public void EnqueueRequest(BlockPos start, BlockPos end, Network network)
         {
             // если очередь пуста считай, то можно снова заполнять
-            if (requestQueue.Count < 100)
+            if (requestQueue.Count < sizeOfNotBusy)
                 busy = false;
 
             // если очередь меньше sizeOfQueue и не занята, то добавляем запрос
@@ -76,7 +78,7 @@ namespace ElectricalProgressive.Utils
                 if (requestQueue.Count == 0)
                 {
                     pathFinder.Clear();
-                    Thread.Sleep(100); // Если очередь пуста, ждем 100 мс
+                    Thread.Sleep(50); // Если очередь пуста, ждем 100 мс
                 }
 
                 // Пытаемся извлечь запрос из очереди
