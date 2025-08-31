@@ -149,6 +149,9 @@ namespace ElectricalProgressive
             networks.Clear();
             parts.Clear();
 
+            PathCacheManager.Dispose();
+            asyncPathFinder.Stop();
+
         }
 
 

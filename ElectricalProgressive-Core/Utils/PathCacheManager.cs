@@ -147,5 +147,14 @@ namespace ElectricalProgressive.Utils
             ulong key = HashPair(start, end);
             cache.TryRemove(key, out _);
         }
+
+        /// <summary>
+        /// Удалить все записи 
+        /// </summary>
+        public static void Dispose()
+        {
+            cache.Clear();
+        }
+
     }
 }
