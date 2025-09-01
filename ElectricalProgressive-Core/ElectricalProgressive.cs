@@ -150,7 +150,7 @@ namespace ElectricalProgressive
             parts.Clear();
 
             PathCacheManager.Dispose();
-            asyncPathFinder.Stop();
+            
 
         }
 
