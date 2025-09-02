@@ -78,7 +78,7 @@ namespace ElectricalProgressive.Utils
                 if (requestQueue.Count == 0)
                 {
                     pathFinder.Clear();
-                    Thread.Sleep(100); // Если очередь пуста, ждем 100 мс
+                    Thread.Sleep(50); // Если очередь пуста, ждем 100 мс
                 }
 
                 // Пытаемся извлечь запрос из очереди

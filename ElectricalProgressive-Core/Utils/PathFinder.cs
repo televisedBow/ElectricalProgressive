@@ -30,10 +30,17 @@ public struct FastPosKeyByteComparer : IEqualityComparer<(FastPosKey key, byte f
 public struct FastPosKey : IEquatable<FastPosKey>
 {
     public int X, Y, Z, Dim;
-    public FastPosKey(int x, int y, int z, int dim)
+    public BlockPos Pos;
+    public FastPosKey(int x, int y, int z, int dim, BlockPos pos=null)
     {
-        X = x; Y = y; Z = z; Dim = dim;
+        X = x;
+        Y = y;
+        Z = z;
+        Dim = dim;
+        Pos = pos;
     }
+
+
 
     // Реализация интерфейса IEquatable для быстрого сравнения
     public bool Equals(FastPosKey other) =>
@@ -77,6 +84,9 @@ public class PathFinder
     private bool[] processFacesBuf = new bool[6]; // Буфер флагов обработки
     private List<BlockFacing> bufForDirections = new(6); // Буфер направлений
     private List<BlockFacing> bufForFaces = new(6); // Буфер граней
+    private FastPosKey[] pathBuffer = new FastPosKey[ElectricalProgressive.maxDistanceForFinding+1];
+    private byte[] faceBuffer = new byte[ElectricalProgressive.maxDistanceForFinding+1];
+
 
     private List<byte> startBlockFacing = new(); // Стартовые направления
     private List<byte> endBlockFacing = new(); // Конечные направления
@@ -129,7 +139,6 @@ public class PathFinder
         queue.Clear();
         cameFrom.Clear();
         facingFrom.Clear();
-        //nowProcessedFaces.Clear();
         buf1.Clear();
         buf2.Clear();
         buf3 = Array.Empty<bool>();
@@ -138,8 +147,8 @@ public class PathFinder
         networkPositions = network.PartPositions;
 
         // стартовые и конечные значения
-        var startKey = new FastPosKey(start.X, start.Y, start.Z, start.dimension);
-        var endKey = new FastPosKey(end.X, end.Y, end.Z, end.dimension);
+        var startKey = new FastPosKey(start.X, start.Y, start.Z, start.dimension, start);
+        var endKey = new FastPosKey(end.X, end.Y, end.Z, end.dimension, end);
 
         // Проверка на валидность старта и конца
         if (!networkPositions.Contains(start) ||
@@ -234,22 +243,18 @@ public class PathFinder
         }
 
         // Восстановление пути
-        var (fastPath, faces) = ReconstructFastPath(startKey, endKey, endBlockFacing, cameFrom);
+        var (fastPath, faces, pathLength) = ReconstructFastPath(startKey, endKey, endBlockFacing, cameFrom);
         if (fastPath == null)
             return (null!, null!, null!, null!);
 
-        // Конвертация FastPosKey[] в BlockPos[]
-        var path = new BlockPos[fastPath.Length];
-        for (int i = 0; i < fastPath.Length; i++)
+        // Конвертация FastPosKey[] в BlockPos[] для пути
+        var path = new BlockPos[pathLength];
+        for (int i = 0; i < pathLength; i++)
         {
             var key = fastPath[i];
-            lookupPos.X = key.X;
-            lookupPos.Y = key.Y;
-            lookupPos.Z = key.Z;
-            lookupPos.dimension = key.Dim;
-
-            if (parts.TryGetValue(lookupPos, out var part))
-                path[i] = part.Position; // Используем существующий BlockPos
+            
+            if (key.Pos!=null)
+                path[i] = key.Pos; // Используем существующий BlockPos
             else
                 return (null!, null!, null!, null!);
         }
@@ -295,8 +300,10 @@ public class PathFinder
         return (path, facingFromList, nowProcessedFacesList, nowProcessingFaces);
     }
 
+
+
     // Восстановление пути от конца к началу
-    private (FastPosKey[]?, byte[]?) ReconstructFastPath(
+    private (FastPosKey[]?, byte[]?, int) ReconstructFastPath(
         FastPosKey start, FastPosKey end, List<byte> endFacing,
         Dictionary<(FastPosKey, byte), (FastPosKey, byte)> cameFrom)
     {
@@ -315,15 +322,15 @@ public class PathFinder
                     current = (end, eFace);
                     if (cameFrom.TryGetValue(current, out current)) { valid = true; break; }
                 }
-                if (!valid) return (null, null);
+                if (!valid) return (null, null, 0);
             }
             else if (!cameFrom.TryGetValue(current, out current))
-                return (null, null);
+                return (null, null, 0);
         }
 
         // Построение массива пути
-        var pathArray = new FastPosKey[length];
-        var faceArray = new byte[length];
+        var pathArray = pathBuffer;
+        var faceArray = faceBuffer;
         current = (end, endFacing[0]);
 
         for (int i = length - 1; i >= 0; i--)
@@ -334,8 +341,11 @@ public class PathFinder
                 break;
         }
 
-        return pathArray[0].Equals(start) ? (pathArray, faceArray) : (null, null);
+        return pathArray[0].Equals(start) ? (pathArray, faceArray, length) : (null, null, 0);
     }
+
+
+
 
     // Получение соседних позиций с учетом направлений и соединений
     private (List<FastPosKey>, List<byte>, bool[], bool[]) GetNeighbors(
@@ -409,7 +419,7 @@ public class PathFinder
                     var opp = dir.Opposite;
                     if ((neighborPart.Connection & FacingHelper.From(face, opp)) != 0)
                     {
-                        neighborsFast.Add(neighborKey);
+                        neighborsFast.Add(new FastPosKey(nx, ny, nz, dim, neighborPart.Position));
                         NeighborsFace.Add((byte)face.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
@@ -417,7 +427,7 @@ public class PathFinder
 
                     if ((neighborPart.Connection & FacingHelper.From(opp, face)) != 0)
                     {
-                        neighborsFast.Add(neighborKey);
+                        neighborsFast.Add(new FastPosKey(nx, ny, nz, dim, neighborPart.Position));
                         NeighborsFace.Add((byte)opp.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
@@ -444,7 +454,7 @@ public class PathFinder
 
                     if ((neighborPart.Connection & FacingHelper.From(oppDir, oppFace)) != 0)
                     {
-                        neighborsFast.Add(neighborKey);
+                        neighborsFast.Add(new FastPosKey(nx, ny, nz, dim, neighborPart.Position));
                         NeighborsFace.Add((byte)oppDir.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
@@ -452,7 +462,7 @@ public class PathFinder
 
                     if ((neighborPart.Connection & FacingHelper.From(oppFace, oppDir)) != 0)
                     {
-                        neighborsFast.Add(neighborKey);
+                        neighborsFast.Add(new FastPosKey(nx, ny, nz, dim, neighborPart.Position));
                         NeighborsFace.Add((byte)oppFace.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
@@ -477,7 +487,7 @@ public class PathFinder
 
                     if ((neighborPart.Connection & FacingHelper.From(dir, oppFace)) != 0)
                     {
-                        neighborsFast.Add(neighborKey);
+                        neighborsFast.Add(new FastPosKey(nx, ny, nz, dim, neighborPart.Position));
                         NeighborsFace.Add((byte)dir.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;
@@ -485,7 +495,7 @@ public class PathFinder
 
                     if ((neighborPart.Connection & FacingHelper.From(oppFace, dir)) != 0)
                     {
-                        neighborsFast.Add(neighborKey);
+                        neighborsFast.Add(new FastPosKey(nx, ny, nz, dim, neighborPart.Position));
                         NeighborsFace.Add((byte)oppFace.Index);
                         NowProcessed[face.Index] = true;
                         processFaces[face.Index] = true;

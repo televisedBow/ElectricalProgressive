@@ -120,6 +120,7 @@ namespace ElectricalProgressive
             {
                 sapi.Event.UnregisterGameTickListener(listenerId1);
                 asyncPathFinder.Stop();
+                asyncPathFinder=null;
             }
             //if (capi != null)
             //{
@@ -149,8 +150,9 @@ namespace ElectricalProgressive
             networks.Clear();
             parts.Clear();
 
+
             PathCacheManager.Dispose();
-            
+            localPackets.Clear();
 
         }
 

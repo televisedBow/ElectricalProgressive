@@ -56,7 +56,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     public global::ElectricalProgressive.ElectricalProgressive? System =>
         this.Api?.ModLoader.GetModSystem<global::ElectricalProgressive.ElectricalProgressive>();
 
-
+    
     public Facing Connection
     {
         get => this.connection;
@@ -224,6 +224,9 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     {
         base.OnBlockRemoved();
         this.System?.Remove(this.Blockentity.Pos);
+
+        
+        networkInformation = null;
     }
 
 
@@ -237,6 +240,9 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         this.isLoaded = false;  // оно выгрузилось!
         this.dirty = true;
         this.Update();          // обновляем систему, чтобы она знала, что блок выгрузился
+
+        
+        networkInformation = null;
     }
 
  
