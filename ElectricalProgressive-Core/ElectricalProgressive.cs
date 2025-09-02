@@ -2,6 +2,7 @@
 using ElectricalProgressive.Utils;
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
@@ -31,7 +32,7 @@ namespace ElectricalProgressive
     public class ElectricalProgressive : ModSystem
     {
         public readonly HashSet<Network> networks = new();
-        public readonly Dictionary<BlockPos, NetworkPart> parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
+        public readonly ConcurrentDictionary<BlockPos, NetworkPart> parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
 
         private Dictionary<BlockPos, List<EnergyPacket>> packetsByPosition = new(new BlockPosComparer()); //Словарь для хранения пакетов по позициям
 
