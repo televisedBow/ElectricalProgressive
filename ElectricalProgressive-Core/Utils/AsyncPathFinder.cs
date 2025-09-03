@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Vintagestory.API.MathTools;
@@ -96,7 +97,7 @@ namespace ElectricalProgressive.Utils
                             // Глубокое копирование Start и End
                             BlockPos copiedStart = request.Start.Copy();
                             BlockPos copiedEnd = request.End.Copy();
-
+                            var voltage = parts[copiedEnd].eparams[facing.Last()].voltage;
 
                             // Добавление скопированных данных в кэш
                             PathCacheManager.AddOrUpdate(
@@ -106,7 +107,8 @@ namespace ElectricalProgressive.Utils
                                 path,
                                 facing,
                                 processed,
-                                usedConn);
+                                usedConn,
+                                voltage);
                         }
 
 

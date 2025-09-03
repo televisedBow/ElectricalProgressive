@@ -225,7 +225,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         base.OnBlockRemoved();
         this.System?.Remove(this.Blockentity.Pos);
 
-        
+    
         networkInformation = null;
     }
 
@@ -241,7 +241,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         this.dirty = true;
         this.Update();          // обновляем систему, чтобы она знала, что блок выгрузился
 
-        
+      
         networkInformation = null;
     }
 

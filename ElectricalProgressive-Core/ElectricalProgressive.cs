@@ -361,7 +361,7 @@ namespace ElectricalProgressive
                 {
                     start = consumerPositions[i];
                     end = producerPositions[j];
-                    if (PathCacheManager.TryGet(start, end, out var cachedPath, out _, out _, out _, out var version))
+                    if (PathCacheManager.TryGet(start, end, out var cachedPath, out _, out _, out _, out var version, out _))
                     {
                         sim.Distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
                         if (version != network.version) // Если версия сети не совпадает, то добавляем запрос в очередь
@@ -595,7 +595,7 @@ namespace ElectricalProgressive
                             posCustomer = consumerPositions[i];
 
                             if (PathCacheManager.TryGet(posCustomer, posStore, out var path,
-                                    out var facing, out var processed, out var usedConn, out _))
+                                    out var facing, out var processed, out var usedConn, out _, out var voltage))
                             {
                                 // Проверяем, что пути и направления не равны null
                                 if (path == null ||
@@ -607,7 +607,7 @@ namespace ElectricalProgressive
                                 // создаём пакет, не копируя ничего
                                 packet = new EnergyPacket(
                                     value,
-                                    parts[posStore].eparams[facing.Last()].voltage,
+                                    voltage,
                                     path.Length - 1,
                                     path,
                                     facing,
@@ -699,7 +699,7 @@ namespace ElectricalProgressive
                             posCustomer = consumer2Positions[i];
 
                             if (PathCacheManager.TryGet(posCustomer, posStore, out var path,
-                                    out var facing, out var processed, out var usedConn, out _))
+                                    out var facing, out var processed, out var usedConn, out _, out var voltage))
                             {
                                 // Проверяем, что пути и направления не равны null
                                 if (path == null ||
@@ -711,7 +711,7 @@ namespace ElectricalProgressive
                                 // создаём пакет, не копируя ничего
                                 packet = new EnergyPacket(
                                     value,
-                                    parts[posStore].eparams[facing.Last()].voltage,
+                                    voltage,
                                     path.Length - 1,
                                     path,
                                     facing,

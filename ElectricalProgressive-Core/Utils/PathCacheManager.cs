@@ -17,7 +17,8 @@ namespace ElectricalProgressive.Utils
             public bool[][]? NowProcessedFaces;
             public Facing[]? UsedConnections;
             public DateTime LastAccessed;
-            public int version;
+            public int Version;
+            public int Voltage;
         }
 
         private static readonly TimeSpan EntryTtl = TimeSpan.FromMinutes(ElectricalProgressive.cacheTimeoutCleanupMinutes);
@@ -67,7 +68,8 @@ namespace ElectricalProgressive.Utils
             out byte[] facingFrom,
             out bool[][] nowProcessed,
             out Facing[] usedConnections,
-            out int version)
+            out int version,
+            out int voltage)
         {
             ulong key = HashPair(start, end);
             if (cache.TryGetValue(key, out var entry))
@@ -77,7 +79,8 @@ namespace ElectricalProgressive.Utils
                 facingFrom = entry.FacingFrom!;
                 nowProcessed = entry.NowProcessedFaces!;
                 usedConnections = entry.UsedConnections!;
-                version = entry.version;
+                version = entry.Version;
+                voltage= entry.Voltage;
                 return true;
             }
 
@@ -86,6 +89,7 @@ namespace ElectricalProgressive.Utils
             nowProcessed = null!;
             usedConnections = null!;
             version = 0;
+            voltage= 0;
             return false;
         }
 
@@ -99,7 +103,8 @@ namespace ElectricalProgressive.Utils
             BlockPos[] path,
             byte[] facingFrom,
             bool[][] nowProcessedFaces,
-            Facing[] usedConnections)
+            Facing[] usedConnections,
+            int voltage)
         {
             ulong key = HashPair(start, end);
 
@@ -111,7 +116,8 @@ namespace ElectricalProgressive.Utils
                     NowProcessedFaces = nowProcessedFaces,
                     UsedConnections = usedConnections,
                     LastAccessed = DateTime.UtcNow,
-                    version = currentVersion
+                    Version = currentVersion,
+                    Voltage = voltage
                 },
                 (_, existing) =>
                 {
@@ -119,7 +125,8 @@ namespace ElectricalProgressive.Utils
                     existing.FacingFrom = facingFrom;
                     existing.NowProcessedFaces = nowProcessedFaces;
                     existing.UsedConnections = usedConnections;
-                    existing.version = currentVersion;
+                    existing.Version = currentVersion;
+                    existing.Voltage = voltage;
                     return existing;
                 });
         }
