@@ -32,16 +32,16 @@ namespace ElectricalProgressive
     public class ElectricalProgressive : ModSystem
     {
         public readonly HashSet<Network> networks = new();
-        public readonly ConcurrentDictionary<BlockPos, NetworkPart> parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
+        public readonly Dictionary<BlockPos, NetworkPart> parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
 
         private Dictionary<BlockPos, List<EnergyPacket>> packetsByPosition = new(new BlockPosComparer()); //Словарь для хранения пакетов по позициям
 
 
         private readonly List<EnergyPacket> globalEnergyPackets = new(); // Глобальный список пакетов энергии
-        
-        private AsyncPathFinder asyncPathFinder= null!;
 
-        
+        private AsyncPathFinder asyncPathFinder = null!;
+
+
 
         private Dictionary<BlockPos, float> sumEnergy = new();
 
@@ -65,7 +65,7 @@ namespace ElectricalProgressive
         private Simulation sim2 = new();
 
 
-     
+
 
 
         public ICoreAPI api = null!;
@@ -121,7 +121,7 @@ namespace ElectricalProgressive
             {
                 sapi.Event.UnregisterGameTickListener(listenerId1);
                 asyncPathFinder.Stop();
-                asyncPathFinder=null;
+                asyncPathFinder = null;
             }
             //if (capi != null)
             //{
@@ -176,7 +176,7 @@ namespace ElectricalProgressive
             timeBeforeBurnout = Math.Clamp(config.timeBeforeBurnout, 1, 600);
             multiThreading = Math.Clamp(config.multiThreading, 2, 32);
             cacheTimeoutCleanupMinutes = Math.Clamp(config.cacheTimeoutCleanupMinutes, 1, 60);
-            maxDistanceForFinding= Math.Clamp(config.MaxDistanceForFinding, 8, 1000);
+            maxDistanceForFinding = Math.Clamp(config.MaxDistanceForFinding, 8, 1000);
 
             // устанавливаем время между тиками
             tickTimeMs = 1000 / speedOfElectricity;
@@ -193,7 +193,7 @@ namespace ElectricalProgressive
             this.capi = api;
             RegisterAltKeys();
 
-            
+
             //listenerId2 = capi.Event.RegisterGameTickListener(this.OnGameTickClient, tickTimeMs);
         }
 
@@ -288,32 +288,48 @@ namespace ElectricalProgressive
 
 
         /// <summary>
-        /// Чистка
+        /// Чистка всего и вся
         /// </summary>
         public void Cleaner()
         {
-            foreach (var kvp in parts)
+            foreach (var part in parts)
             {
-                var part = kvp.Value;
-                //не трогать тут ничего
-                if (part.eparams != null && part.eparams.Length == 6) // если проводник существует и имеет 6 проводников
+
+                // подчищаем списки пакетов, но не в ноль
+                part.Value.packets?.Clear();
+
+                //не трогать тут ничего 
+                if (part.Value.eparams != null && part.Value.eparams.Length == 6) // если проводник существует и имеет 6 проводников
                 {
                     for (int i = 0; i < 6; i++)
                     {
-                        if (!part.eparams[i].burnout && part.eparams[i].ticksBeforeBurnout > 0) // если проводник не сгорел и есть тики до сгорания
-                            part.eparams[i].ticksBeforeBurnout--;                               // уменьшаем тики до сгорания
+                        if (!part.Value.eparams[i].burnout && part.Value.eparams[i].ticksBeforeBurnout > 0) // если проводник не сгорел и есть тики до сгорания
+                            part.Value.eparams[i].ticksBeforeBurnout--;                               // уменьшаем тики до сгорания
                     }
 
                 }
                 else
                 {
-                    part.eparams = new EParams[]
+                    part.Value.eparams = new EParams[]
                     {
                             new EParams(), new EParams(), new EParams(),
                             new EParams(), new EParams(), new EParams()
                     };
                 }
 
+
+                //заполняем нулями токи и выданные энергии с пакетов
+                if (!sumEnergy.TryAdd(part.Key, 0F))
+                {
+                    sumEnergy[part.Key] = 0F;
+                }
+
+                part.Value.eparams[0].current = 0f;       //обнуляем токи
+                part.Value.eparams[1].current = 0f;       //обнуляем токи
+                part.Value.eparams[2].current = 0f;       //обнуляем токи
+                part.Value.eparams[3].current = 0f;       //обнуляем токи
+                part.Value.eparams[4].current = 0f;       //обнуляем токи
+                part.Value.eparams[5].current = 0f;       //обнуляем токи
             }
         }
 
@@ -339,7 +355,7 @@ namespace ElectricalProgressive
             var cP = sim.CountWorkingCustomers = consumerPositions.Count; // Количество потребителей
             var pP = sim.CountWorkingStores = producerPositions.Count; // Количество производителей
 
-            
+
             BlockPos start;
             BlockPos end;
 
@@ -407,7 +423,7 @@ namespace ElectricalProgressive
                 else
                     cust.Update(i, consumerRequests[i], DistBuffer);
             }
-            
+
 
             sim.Run(); // Запускаем симуляцию для распределения энергии между потребителями и производителями
 
@@ -769,6 +785,7 @@ namespace ElectricalProgressive
 
 
 
+
             foreach (var pair in sumEnergy)
             {
                 if (parts.TryGetValue(pair.Key, out var parta))
@@ -788,32 +805,6 @@ namespace ElectricalProgressive
 
 
             // Этап 13: Проверка сгорания проводов и трансформаторов ----------------------------------------------------------------------------
-
-            BlockPos pos; // Временная переменная для позиции
-
-            // подчищаем словарь, но не в ноль
-            foreach (var list in packetsByPosition.Values)
-            {
-                list.Clear();
-            }
-
-            // Создаем словарь для хранения пакетов по позициям
-            foreach (var packet2 in globalEnergyPackets)
-            {
-                if (!packet2.shouldBeRemoved) // Проверяем, что пакет не помечен для удаления
-                {
-                    pos = packet2.path[packet2.currentIndex];
-                    if (!packetsByPosition.TryGetValue(pos, out var list))
-                    {
-                        list = new List<EnergyPacket>();
-                        packetsByPosition[pos] = list;
-                    }
-
-                    list.Add(packet2);
-                }
-            }
-
-
 
             var bAccessor = sapi!.World.BlockAccessor; // аксессор для блоков
             BlockPos partPos;                        // Временная переменная для позиции части сети
@@ -851,63 +842,61 @@ namespace ElectricalProgressive
                 }
 
 
-                // Обрабатываем пакеты в этой части сети
-                if (packetsByPosition.TryGetValue(partPos, out var packets))
+
+                var bufPartTrans = part.Transformator;
+                // Обработка трансформаторов
+                if (bufPartTrans != null)
                 {
-                    var bufPartTrans = part.Transformator;
-                    // Обработка трансформаторов
-                    if (bufPartTrans != null)
+                    totalEnergy = 0f;
+                    totalCurrent = 0f;
+
+                    foreach (var packet2 in part.packets)
                     {
-                        totalEnergy = 0f;
-                        totalCurrent = 0f;
 
-                        foreach (var packet2 in packets)
-                        {
-
-                            totalEnergy += packet2.energy;
-                            totalCurrent += packet2.energy / packet2.voltage;
+                        totalEnergy += packet2.energy;
+                        totalCurrent += packet2.energy / packet2.voltage;
 
 
-                            if (packet2.voltage == bufPartTrans.highVoltage)
-                                packet2.voltage = bufPartTrans.lowVoltage;
-                            else if (packet2.voltage == bufPartTrans.lowVoltage)
-                                packet2.voltage = bufPartTrans.highVoltage;
-
-                        }
-
-
-                        int transformatorFaceIndex =
-                            FacingHelper.GetFaceIndex(
-                                FacingHelper.FromFace(FacingHelper.Faces(part.Connection)
-                                    .First())); // Индекс грани трансформатора!
-
-                        part.eparams[transformatorFaceIndex].current = totalCurrent;
-
-                        bufPartTrans.setPower(totalEnergy);
+                        if (packet2.voltage == bufPartTrans.highVoltage)
+                            packet2.voltage = bufPartTrans.lowVoltage;
+                        else if (packet2.voltage == bufPartTrans.lowVoltage)
+                            packet2.voltage = bufPartTrans.highVoltage;
 
                     }
 
 
-                    // Проверка на превышение напряжения
-                    foreach (var packet2 in packets)
-                    {
-                        lastFaceIndex = packet2.facingFrom[packet2.currentIndex];
+                    int transformatorFaceIndex =
+                        FacingHelper.GetFaceIndex(
+                            FacingHelper.FromFace(FacingHelper.Faces(part.Connection)
+                                .First())); // Индекс грани трансформатора!
 
-                        faceParams = part.eparams[lastFaceIndex];
-                        if (faceParams.voltage != 0 && packet2.voltage > faceParams.voltage)
-                        {
-                            part.eparams[lastFaceIndex].prepareForBurnout(2);
+                    part.eparams[transformatorFaceIndex].current = totalCurrent;
 
-                            if (packet2.path[packet2.currentIndex] == partPos)
-                                packet2.shouldBeRemoved = true;
-
-
-                            ResetComponents(ref part);
-                            break;
-                        }
-                    }
+                    bufPartTrans.setPower(totalEnergy);
 
                 }
+
+
+                // Проверка на превышение напряжения
+                foreach (var packet2 in part.packets)
+                {
+                    lastFaceIndex = packet2.facingFrom[packet2.currentIndex];
+
+                    faceParams = part.eparams[lastFaceIndex];
+                    if (faceParams.voltage != 0 && packet2.voltage > faceParams.voltage)
+                    {
+                        part.eparams[lastFaceIndex].prepareForBurnout(2);
+
+                        if (packet2.path[packet2.currentIndex] == partPos)
+                            packet2.shouldBeRemoved = true;
+
+
+                        ResetComponents(ref part);
+                        break;
+                    }
+                }
+
+
 
 
 
@@ -960,91 +949,88 @@ namespace ElectricalProgressive
             BlockPos pos;                   // Временная переменная для позиции
             float resistance, current, lossEnergy;  // Переменные для расчета сопротивления, тока и потерь энергии                    
             int curIndex, currentFacingFrom;        // текущий индекс и направление в пакете
-            BlockPos currentPos, nextPos;           // текущая и следующая позиции в пути пакета
-            NetworkPart nextPart, currentPart;      // Временные переменные для частей сети
+            BlockPos currentPos;           // текущая и следующая позиции в пути пакета
+            NetworkPart currentPart;      // Временные переменные для частей сети
 
 
-            foreach (var part2 in parts)  //перебираем все элементы
+
+            // Заполняем списки пакетов по позициям
+            foreach (var packet in globalEnergyPackets)
             {
-                //заполняем нулями
-                if (!sumEnergy.TryAdd(part2.Key, 0F))
+                pos = packet.path[packet.currentIndex];
+                if (parts.TryGetValue(pos, out var partValue))
                 {
-                    sumEnergy[part2.Key] = 0F;
+                    if (partValue.packets == null)
+                        partValue.packets = new List<EnergyPacket>();
+                    else
+                    {
+                        partValue.packets.Add(packet);
+                    }
                 }
 
-                part2.Value.eparams[0].current = 0f;       //обнуляем токи
-                part2.Value.eparams[1].current = 0f;       //обнуляем токи
-                part2.Value.eparams[2].current = 0f;       //обнуляем токи
-                part2.Value.eparams[3].current = 0f;       //обнуляем токи
-                part2.Value.eparams[4].current = 0f;       //обнуляем токи
-                part2.Value.eparams[5].current = 0f;       //обнуляем токи
-
-                
             }
 
 
-
-            for (int i = globalEnergyPackets.Count - 1; i >= 0; i--)
+            foreach (var partValue in parts.Values)
             {
-                var packet = globalEnergyPackets[i];
-                curIndex = packet.currentIndex; //текущий индекс в пакете
+                // если пакетов нет тут, то пропускаем
+                if (partValue.packets == null || partValue.packets.Count == 0)
+                    continue;
 
-                if (curIndex == 0)
+                foreach (var packet in partValue.packets)
                 {
-                    pos = packet.path[0];
+                    curIndex = packet.currentIndex; //текущий индекс в пакете
 
-                    if (parts.TryGetValue(pos, out var part2))
+                    if (curIndex == 0)
                     {
-                        bool isValid = false;
-                        // Ручная проверка условий 
-                        foreach (var s in part2.eparams)
+                        pos = packet.path[0];
+
+                        if (parts.TryGetValue(pos, out var part2))
                         {
-                            if (s.voltage > 0
-                                && !s.burnout
-                                && packet.voltage >= s.voltage)
+                            bool isValid = false;
+                            // Ручная проверка условий 
+                            foreach (var s in part2.eparams)
                             {
-                                isValid = true;
-                                break;
+                                if (s.voltage > 0
+                                    && !s.burnout
+                                    && packet.voltage >= s.voltage)
+                                {
+                                    isValid = true;
+                                    break;
+                                }
+                            }
+
+                            if (isValid)
+                            {
+                                if (sumEnergy.ContainsKey(pos))
+                                {
+                                    sumEnergy[pos] += packet.energy;
+                                }
+                                else
+                                {
+                                    sumEnergy.Add(pos, packet.energy);
+                                }
                             }
                         }
 
-                        if (isValid)
-                        {
-                            if (sumEnergy.ContainsKey(pos))
-                            {
-                                sumEnergy[pos] += packet.energy;
-                            }
-                            else
-                            {
-                                sumEnergy.Add(pos, packet.energy);
-                            }
-                        }
+                        packet.shouldBeRemoved = true;
                     }
-
-                    globalEnergyPackets[i].shouldBeRemoved = true;
-                }
-                else
-                {
-                    currentPos = packet.path[curIndex];              // текущая позиция в пути пакета
-                    nextPos = packet.path[curIndex - 1];             // следующая позиция в пути пакета
-                    currentFacingFrom = packet.facingFrom[curIndex]; // текущая грань, с которой пришел пакет
-
-                    if (parts.TryGetValue(nextPos, out nextPart!) &&
-                        parts.TryGetValue(currentPos, out currentPart!))
+                    else
                     {
-                        if (!nextPart.eparams[packet.facingFrom[curIndex - 1]].burnout)   //проверяем не сгорела ли грань в след блоке
-                        
-                        {
+                        currentPos = packet.path[curIndex]; // текущая позиция в пути пакета
+                        currentFacingFrom = packet.facingFrom[curIndex]; // текущая грань, с которой пришел пакет
 
-                            if ((nextPart.Connection & packet.usedConnections[curIndex - 1]) == packet.usedConnections[curIndex - 1]) // проверяем совпадает ли путь в пакете с путем в части сети
+                        if (!partValue.eparams[packet.facingFrom[curIndex]].burnout) //проверяем не сгорела ли грань в след блоке
+                        {
+                            if ((partValue.Connection & packet.usedConnections[curIndex]) == packet.usedConnections[curIndex]) // проверяем совпадает ли путь в пакете с путем в части сети
                             {
                                 // считаем сопротивление
-                                resistance = currentPart.eparams[currentFacingFrom].resistivity /
-                                             (currentPart.eparams[currentFacingFrom].lines *
-                                              currentPart.eparams[currentFacingFrom].crossArea);
+                                resistance = partValue.eparams[currentFacingFrom].resistivity /
+                                             (partValue.eparams[currentFacingFrom].lines *
+                                              partValue.eparams[currentFacingFrom].crossArea);
 
                                 // Провод в изоляции теряет меньше энергии
-                                if (currentPart.eparams[currentFacingFrom].isolated)
+                                if (partValue.eparams[currentFacingFrom].isolated)
                                     resistance /= 2.0f;
 
                                 // считаем ток по закону Ома
@@ -1058,11 +1044,10 @@ namespace ElectricalProgressive
                                 current = packet.energy / packet.voltage;
 
 
-                                packet.currentIndex--;
 
                                 // далее учитываем правило алгебраического сложения встречных токов
                                 // 1) Определяем вектор движения
-                                var delta = nextPos.SubCopy(currentPos);
+                                var delta = packet.path[curIndex - 1].SubCopy(currentPos);
                                 bool sign = true;
 
                                 if (delta.X < 0) sign = !sign;
@@ -1076,9 +1061,9 @@ namespace ElectricalProgressive
                                     if (face)
                                     {
                                         if (sign)
-                                            nextPart.eparams[j].current += current; // добавляем ток в следующую часть сети
+                                            partValue.eparams[j].current += current; // добавляем ток в следующую часть сети
                                         else
-                                            nextPart.eparams[j].current -= current; // добавляем ток в следующую часть сети
+                                            partValue.eparams[j].current -= current; // добавляем ток в следующую часть сети
                                     }
 
                                     j++;
@@ -1087,29 +1072,26 @@ namespace ElectricalProgressive
                                 // 3) Если энергия пакета почти нулевая — удаляем пакет
                                 if (packet.energy <= 0.001f)
                                 {
-                                    globalEnergyPackets[i].shouldBeRemoved = true;
+                                    packet.shouldBeRemoved = true;
                                 }
 
+                                // переходим к следующему блоку в пути
+                                packet.currentIndex--;
 
                             }
                             else
                             {
                                 // если все же путь не совпадает с путем в пакете, то чистим кэши
                                 PathCacheManager.RemoveAll(packet.path[0], packet.path.Last());
-                                globalEnergyPackets[i].shouldBeRemoved = true;
+                                packet.shouldBeRemoved = true;
 
                             }
                         }
                         else
                         {
-                            globalEnergyPackets[i].shouldBeRemoved = true;
+                            packet.shouldBeRemoved = true;
                         }
-                    }
-                    else
-                    {
-                        // если все же части сети не найдены, то тут точно кэш надо утилизировать
-                        PathCacheManager.RemoveAll(packet.path[0], packet.path.Last());
-                        globalEnergyPackets[i].shouldBeRemoved = true;
+
                     }
                 }
             }
@@ -1678,7 +1660,7 @@ namespace ElectricalProgressive
 
 
 
-        
+
 
         /// <summary>
         /// Cобирает информацию по цепи

@@ -1,5 +1,6 @@
 ﻿using Vintagestory.API.MathTools;
 using ElectricalProgressive.Interface;
+using System.Collections.Generic;
 
 namespace ElectricalProgressive.Utils
 {
@@ -18,6 +19,7 @@ namespace ElectricalProgressive.Utils
         public IElectricProducer? Producer;
         public IElectricTransformator? Transformator;
         public bool IsLoaded = false;
+        public List<EnergyPacket> packets= new();
 
         public NetworkPart(BlockPos position)
         {
