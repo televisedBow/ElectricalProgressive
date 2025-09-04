@@ -361,7 +361,14 @@ namespace ElectricalProgressive
 
             // обновляем массив для расстояний, магазинов и клиентов
             if (sim.Distances.Length < cP * pP)
+            {
                 Array.Resize(ref sim.Distances, cP * pP);
+                Array.Resize(ref sim.Path, cP * pP);
+                Array.Resize(ref sim.FacingFrom, cP * pP);
+                Array.Resize(ref sim.NowProcessedFaces, cP * pP);
+                Array.Resize(ref sim.UsedConnection, cP * pP);
+                Array.Resize(ref sim.Voltage, cP * pP);
+            }
 
             if (sim.Stores == null || sim.Stores.Length < pP)
                 sim.Stores = new Store[pP];
@@ -371,25 +378,42 @@ namespace ElectricalProgressive
 
 
 
+
             for (int i = 0; i < cP; i++)
             {
                 for (int j = 0; j < pP; j++)
                 {
                     start = consumerPositions[i];
                     end = producerPositions[j];
-                    if (PathCacheManager.TryGet(start, end, out var cachedPath, out _, out _, out _, out var version, out _))
+
+
+                    
+                    if (PathCacheManager.TryGet(start, end, out var cachedPath, out var facingFrom, out var nowProcessed, out var usedConnections, out var version, out var voltage))
                     {
                         sim.Distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
                         if (version != network.version) // Если версия сети не совпадает, то добавляем запрос в очередь
                         {
                             asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
                         }
+
+                        sim.Path[i * pP + j] = cachedPath;
+                        sim.FacingFrom[i * pP + j] = facingFrom;
+                        sim.NowProcessedFaces[i * pP + j] = nowProcessed;
+                        sim.UsedConnection[i * pP + j] = usedConnections;
+                        sim.Voltage[i * pP + j] = voltage;
                     }
                     else
                     {
                         asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
                         sim.Distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
+
+                        sim.Path[i * pP + j] = null;
+                        sim.FacingFrom[i * pP + j] = null;
+                        sim.NowProcessedFaces[i * pP + j] = null;
+                        sim.UsedConnection[i * pP + j] = null;
+                        sim.Voltage[i * pP + j] = 0;
                     }
+
                 }
             }
 
@@ -607,34 +631,29 @@ namespace ElectricalProgressive
                         var value = sim.Customers![i].Received[sim.Stores![k].Id];
                         if (value > 0)
                         {
-                            posStore = producerPositions[k];
-                            posCustomer = consumerPositions[i];
+                            //posStore = producerPositions[k];
+                            //posCustomer = consumerPositions[i];
 
-                            if (PathCacheManager.TryGet(posCustomer, posStore, out var path,
-                                    out var facing, out var processed, out var usedConn, out _, out var voltage))
-                            {
+
                                 // Проверяем, что пути и направления не равны null
-                                if (path == null ||
-                                    facing == null ||
-                                    processed == null ||
-                                    usedConn == null)
+                                if (sim.Path[i* storeCount + k] == null)
                                     continue;
 
                                 // создаём пакет, не копируя ничего
                                 packet = new EnergyPacket(
                                     value,
-                                    voltage,
-                                    path.Length - 1,
-                                    path,
-                                    facing,
-                                    processed,
-                                    usedConn
+                                    sim.Voltage[i * storeCount + k],
+                                    sim.Path[i * storeCount + k].Length - 1,
+                                    sim.Path[i * storeCount + k],
+                                    sim.FacingFrom[i * storeCount + k],
+                                    sim.NowProcessedFaces[i * storeCount + k],
+                                    sim.UsedConnection[i * storeCount + k]
                                 );
 
 
                                 // Добавляем пакет в глобальный список
                                 localPackets.Add(packet);
-                            }
+                            
 
                         }
 
@@ -711,34 +730,29 @@ namespace ElectricalProgressive
                         var value = sim2.Customers![i].Received[sim2.Stores![k].Id];
                         if (value > 0)
                         {
-                            posStore = producer2Positions[k];
-                            posCustomer = consumer2Positions[i];
-
-                            if (PathCacheManager.TryGet(posCustomer, posStore, out var path,
-                                    out var facing, out var processed, out var usedConn, out _, out var voltage))
-                            {
-                                // Проверяем, что пути и направления не равны null
-                                if (path == null ||
-                                    facing == null ||
-                                    processed == null ||
-                                    usedConn == null)
-                                    continue;
-
-                                // создаём пакет, не копируя ничего
-                                packet = new EnergyPacket(
-                                    value,
-                                    voltage,
-                                    path.Length - 1,
-                                    path,
-                                    facing,
-                                    processed,
-                                    usedConn
-                                );
+                            //posStore = producerPositions[k];
+                            //posCustomer = consumerPositions[i];
 
 
-                                // Добавляем пакет в глобальный список
-                                localPackets.Add(packet);
-                            }
+                            // Проверяем, что пути и направления не равны null
+                            if (sim2.Path[i * storeCount + k] == null)
+                                continue;
+
+                            // создаём пакет, не копируя ничего
+                            packet = new EnergyPacket(
+                                value,
+                                sim2.Voltage[i * storeCount + k],
+                                sim2.Path[i * storeCount + k].Length - 1,
+                                sim2.Path[i * storeCount + k],
+                                sim2.FacingFrom[i * storeCount + k],
+                                sim2.NowProcessedFaces[i * storeCount + k],
+                                sim2.UsedConnection[i * storeCount + k]
+                            );
+
+
+                            // Добавляем пакет в глобальный список
+                            localPackets.Add(packet);
+
 
                         }
                     }

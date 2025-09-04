@@ -6,11 +6,11 @@ namespace ElectricalProgressive.Utils
 {
     public class Simulation
     {
-        //public BlockPos[][] Path = new BlockPos[100][];
-        //public byte[][]? FacingFrom = new byte[100][];
-        //public bool[][][]? NowProcessedFaces= new bool[100][][];
-        //public Facing[][]? UsedConnection = new Facing[100][];
-        //public int[] Voltage = new int[100];
+        public BlockPos[][] Path = new BlockPos[100][];
+        public byte[][]? FacingFrom = new byte[100][];
+        public bool[][][]? NowProcessedFaces= new bool[100][][];
+        public Facing[][]? UsedConnection = new Facing[100][];
+        public int[] Voltage = new int[100];
 
 
 
