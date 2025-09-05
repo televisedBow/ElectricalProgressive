@@ -28,7 +28,6 @@ namespace ElectricalProgressive.Content.Block.EConnector
         /// <summary>
         /// Обновление блока кабеля
         /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
         public void Update()
         {
             // Blockentity.MarkDirty();
@@ -39,8 +38,8 @@ namespace ElectricalProgressive.Content.Block.EConnector
         {
             base.GetBlockInfo(forPlayer, dsc);
 
-            if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEConnector entity)
-                return;
+            //if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEConnector entity)
+            //    return;
 
            
         }

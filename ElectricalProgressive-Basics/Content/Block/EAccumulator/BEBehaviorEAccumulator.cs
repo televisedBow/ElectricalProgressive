@@ -112,53 +112,57 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
     /// </summary>
     public void Update()
     {
-
-        // смотрим надо ли обновить модельку когда сгорает батарея
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is BlockEntityEAccumulator
-            {
-                AllEparams: not null
-            } entity)
+        if (Blockentity is BlockEntityEAccumulator { AllEparams: not null } entity)
         {
-            bool hasBurnout = entity.AllEparams.Any(e => e.burnout);
+            bool hasBurnout = false;
+            bool prepareBurnout = false;
 
+            // Однопроходная проверка условий
+            foreach (var eParam in entity.AllEparams)
+            {
+                hasBurnout |= eParam.burnout;
+                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+                // Ранний выход если оба условия уже выполнены
+                if (hasBurnout || prepareBurnout)
+                    break;
+            }
+
+            // Кэшируем значения вариантов блока
+            var tier = entity.Block.Variant["tier"];
+            var state = entity.Block.Variant["state"];
+
+            // Обработка burnout
             if (hasBurnout)
             {
-                switch (entity.Block.Variant["tier"])
-                {
-                    case "tier1":
-                        ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-                        break;
-                    case "tier2":
-                        ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1.0, 0.1));
-                        break;
-                }
+                var posVec = Pos.ToVec3d().Add(0.1, 0, 0.1);
+
+                if (tier == "tier2")
+                    posVec = Pos.ToVec3d().Add(0.1, 1.0, 0.1);
+
+                ParticleManager.SpawnBlackSmoke(Api.World, posVec);
             }
 
-            if (hasBurnout && entity.Block.Variant["state"] != "burned")
+            // Обмен блока если нужно
+            if (hasBurnout && state != "burned")
             {
-                this.Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant("state", "burned")).BlockId, Pos);
+                var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("state", "burned"));
+                Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
             }
 
-
-            bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
+            // Обработка prepareBurnout
             if (prepareBurnout)
             {
-                switch (entity.Block.Variant["tier"])
-                {
-                    case "tier1":
-                        ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-                        break;
-                    case "tier2":
-                        ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1.0, 0.1));
-                        break;
-                }
+                var posVec = Pos.ToVec3d().Add(0.1, 0, 0.1);
 
+                if (tier == "tier2")
+                    posVec = Pos.ToVec3d().Add(0.1, 1.0, 0.1);
+
+                ParticleManager.SpawnWhiteSlowSmoke(Api.World, posVec);
             }
         }
 
-
         LastCapacity = Capacity;
-        
     }
 
 
@@ -179,7 +183,7 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
         base.GetBlockInfo(forPlayer, stringBuilder);
         
         //проверяем не сгорел ли прибор
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEAccumulator entity)
+        if (Blockentity is not BlockEntityEAccumulator entity)
             return;
 
 

@@ -42,7 +42,7 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEFreezer2 entity)
+        if (Blockentity is not BlockEntityEFreezer2 entity)
             return;
 
         if (IsBurned)
@@ -68,30 +68,42 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
 
     public void Update()
     {
-        //смотрим надо ли обновить модельку когда сгорает прибор
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEFreezer2 entity || entity.AllEparams == null)
+        if (Blockentity is not BlockEntityEFreezer2 entity || entity.AllEparams == null)
             return;
 
-        var hasBurnout = entity.AllEparams.Any(e => e.burnout);
-        if (hasBurnout)
-            ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1.0, 0.1));
+        bool hasBurnout = false;
+        bool prepareBurnout = false;
 
-        bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
-        if (prepareBurnout)
+        // Однопроходная проверка всех условий
+        foreach (var eParam in entity.AllEparams)
         {
-            ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
+            hasBurnout |= eParam.burnout;
+            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+            // Ранний выход если оба условия уже выполнены
+            if (hasBurnout || prepareBurnout)
+                break;
         }
 
-        
+        // Кэшируем позицию для частиц (одинаковая для обоих типов дыма)
+        var particlePos = Pos.ToVec3d().Add(0.1, 1.0, 0.1);
+
+        if (hasBurnout)
+            ParticleManager.SpawnBlackSmoke(Api.World, particlePos);
+
+        if (prepareBurnout)
+            ParticleManager.SpawnWhiteSlowSmoke(Api.World, particlePos);
 
         if (!hasBurnout || entity.Block.Variant["state"] == "burned")
             return;
 
-        var type = "state";
-        var variant = "burned";
-        this.Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant(type, variant)).BlockId, Pos);
+        // Используем константы вместо создания новых строк
+        const string type = "state";
+        const string variant = "burned";
 
-        
+        // Кэшируем блок для обмена
+        var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant(type, variant));
+        Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
     }
 
 

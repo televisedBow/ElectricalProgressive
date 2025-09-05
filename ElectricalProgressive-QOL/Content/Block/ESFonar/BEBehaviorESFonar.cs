@@ -49,7 +49,7 @@ namespace ElectricalProgressive.Content.Block.ESFonar
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             //проверяем не сгорел ли прибор
-            if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityESFonar entity)
+            if (Blockentity is not BlockEntityESFonar entity)
                 return;
 
             if (IsBurned)
@@ -112,35 +112,55 @@ namespace ElectricalProgressive.Content.Block.ESFonar
 
         public void Update()
         {
-            //смотрим надо ли обновить модельку когда сгорает прибор
-            if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityESFonar entity ||
-                entity.AllEparams == null)
-            {
+            if (Blockentity is not BlockEntityESFonar entity || entity.AllEparams == null)
                 return;
-            }
 
-            var hasBurnout = entity.AllEparams.Any(e => e.burnout);
-            if (hasBurnout)
-                ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, entity.Block.Variant["height"].ToFloat()-1, 0.1));
+            bool hasBurnout = false;
+            bool prepareBurnout = false;
 
-            bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
-            if (prepareBurnout)
+            // Однопроходная проверка всех условий
+            foreach (var eParam in entity.AllEparams)
             {
-                ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, entity.Block.Variant["height"].ToFloat() - 1, 0.1));
+                hasBurnout |= eParam.burnout;
+                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+                // Ранний выход если оба условия уже выполнены
+                if (hasBurnout || prepareBurnout)
+                    break;
             }
 
-            
+            // Кэшируем значения вариантов блока
+            var heightStr = entity.Block.Variant["height"];
+            var height = heightStr.ToFloat() - 1;
+
+            // Кэшируем позицию для частиц
+            var particlePos = Pos.ToVec3d().Add(0.1, height, 0.1);
+
+            if (hasBurnout)
+                ParticleManager.SpawnBlackSmoke(Api.World, particlePos);
+
+            if (prepareBurnout)
+                ParticleManager.SpawnWhiteSlowSmoke(Api.World, particlePos);
 
             if (!hasBurnout || entity.Block.Variant["state"] == "burned")
                 return;
 
-            var height = entity.Block.Variant["height"];
+            // Кэшируем значение format
             var format = entity.Block.Variant["format"];
 
-            var types = new string[3] { "height", "format", "state" };   //типы лампы
-            var variants = new string[3] { height, format, "burned" };     //нужный вариант лампы
+            // Используем предварительно созданные массивы для избежания аллокаций
+            const string heightType = "height";
+            const string formatType = "format";
+            const string stateType = "state";
+            const string burnedVariant = "burned";
 
-            this.Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariants(types, variants)).BlockId, Pos);
+            // Получаем блок только один раз
+            var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
+                new[] { heightType, formatType, stateType },
+                new[] { heightStr, format, burnedVariant }
+            ));
+
+            Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
         }
 
         #endregion

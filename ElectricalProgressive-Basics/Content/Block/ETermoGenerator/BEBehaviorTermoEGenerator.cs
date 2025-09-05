@@ -39,27 +39,30 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
 
     public void Update()
     {
-        //смотрим надо ли обновить модельку когда сгорает прибор
-        if (Api.World.BlockAccessor.GetBlockEntity(Blockentity.Pos) is BlockEntityETermoGenerator
-            {
-                AllEparams: not null
-            } entity)
+        if (Blockentity is BlockEntityETermoGenerator { AllEparams: not null } entity)
         {
-            var hasBurnout = entity.AllEparams.Any(e => e.burnout);
+            bool hasBurnout = false;
 
-            if (hasBurnout)
-                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
-
-
-            if (entity.GenTemp > 20 && !hasBurnout)
+            // Проверяем наличие burnout без использования LINQ
+            foreach (var eParam in entity.AllEparams)
             {
-                ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin+0.9, 0.4));
+                if (eParam.burnout)
+                {
+                    hasBurnout = true;
+                    break; // Ранний выход при нахождении первого burnout
+                }
             }
 
-
+            if (hasBurnout)
+            {
+                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+            }
+            else if (entity.GenTemp > 20)
+            {
+                // Кэшируем вычисление позиции
+                ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin + 0.9, 0.4));
+            }
         }
-
-        //Blockentity.MarkDirty(true); //обновлять здесь уже лишнее
     }
 
 
@@ -106,7 +109,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
     {
         base.GetBlockInfo(forPlayer, stringBuilder);
 
-        if (Api.World.BlockAccessor.GetBlockEntity(Blockentity.Pos) is not BlockEntityETermoGenerator entity)
+        if (Blockentity is not BlockEntityETermoGenerator entity)
             return;
 
         if (IsBurned)

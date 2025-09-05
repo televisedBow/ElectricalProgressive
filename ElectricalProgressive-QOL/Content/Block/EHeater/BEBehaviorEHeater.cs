@@ -33,7 +33,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             //проверяем не сгорел ли прибор
-            if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEHeater entity)
+            if (Blockentity is not BlockEntityEHeater entity)
                 return;
 
             if (IsBurned)
@@ -80,30 +80,43 @@ namespace ElectricalProgressive.Content.Block.EHeater
 
         public void Update()
         {
-            //смотрим надо ли обновить модельку когда сгорает прибор
-            if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEHeater entity || entity.AllEparams == null)
+            if (Blockentity is not BlockEntityEHeater entity || entity.AllEparams == null)
                 return;
 
-            var hasBurnout = entity.AllEparams.Any(e => e.burnout);
-            if (hasBurnout)
-                ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+            bool hasBurnout = false;
+            bool prepareBurnout = false;
 
-            bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
-            if (prepareBurnout)
+            // Однопроходная проверка всех условий
+            foreach (var eParam in entity.AllEparams)
             {
-                ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+                hasBurnout |= eParam.burnout;
+                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+                // Ранний выход если оба условия уже выполнены
+                if (hasBurnout || prepareBurnout)
+                    break;
             }
 
-            
+            // Кэшируем позицию для частиц
+            var particlePos = Pos.ToVec3d().Add(0.1, 0, 0.1);
+
+            if (hasBurnout)
+                ParticleManager.SpawnBlackSmoke(Api.World, particlePos);
+
+            if (prepareBurnout)
+                ParticleManager.SpawnWhiteSlowSmoke(Api.World, particlePos);
+
             if (!hasBurnout || entity.Block.Variant["state"] == "burned")
                 return;
 
-            var types = new string[1] { "state" };   //типы лампы
-            var variants = new string[1] { "burned" };     //нужный вариант лампы
+            // Используем CodeWithVariant вместо CodeWithVariants для одного варианта
+            // Это эффективнее, так как не требует создания массивов
+            const string type = "state";
+            const string variant = "burned";
 
-            this.Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariants(types, variants)).BlockId, Pos);
-
-            
+            // Кэшируем блок для обмена
+            var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant(type, variant));
+            Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
         }
 
         public float getPowerReceive()

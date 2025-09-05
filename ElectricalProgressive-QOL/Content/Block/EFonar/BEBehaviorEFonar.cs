@@ -94,27 +94,38 @@ namespace ElectricalProgressive.Content.Block.EFonar
 
         public void Update()
         {
-            //смотрим надо ли обновить модельку когда сгорает прибор
-            if (Api.World.BlockAccessor.GetBlockEntity(Blockentity.Pos) is not BlockEntityEFonar entity ||
-                entity.AllEparams == null)
-            {
+            if (Blockentity is not BlockEntityEFonar entity || entity.AllEparams == null)
                 return;
-            }
 
-            var hasBurnout = entity.AllEparams.Any(e => e.burnout);
-            if (hasBurnout)
-                ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0.3, 0.1));
+            bool hasBurnout = false;
+            bool prepareBurnout = false;
 
-            bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
-            if (prepareBurnout)
+            // Однопроходная проверка всех условий
+            foreach (var eParam in entity.AllEparams)
             {
-                ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0.3, 0.1));
+                hasBurnout |= eParam.burnout;
+                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+                // Ранний выход если оба условия уже выполнены
+                if (hasBurnout || prepareBurnout)
+                    break;
             }
 
-            
+            // Кэшируем позицию для частиц
+            var particlePos = Pos.ToVec3d().Add(0.1, 0.3, 0.1);
+
+            if (hasBurnout)
+                ParticleManager.SpawnBlackSmoke(Api.World, particlePos);
+
+            if (prepareBurnout)
+                ParticleManager.SpawnWhiteSlowSmoke(Api.World, particlePos);
 
             if (hasBurnout && entity.Block.Variant["state"] != "burned")
-                Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant("state", "burned")).BlockId, Pos);
+            {
+                // Кэшируем блок для обмена
+                var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("state", "burned"));
+                Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
+            }
         }
 
 
@@ -123,7 +134,7 @@ namespace ElectricalProgressive.Content.Block.EFonar
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             //проверяем не сгорел ли прибор
-            if (Api.World.BlockAccessor.GetBlockEntity(Blockentity.Pos) is not BlockEntityEFonar entity)
+            if (Blockentity is not BlockEntityEFonar entity)
                 return;
 
             if (IsBurned)

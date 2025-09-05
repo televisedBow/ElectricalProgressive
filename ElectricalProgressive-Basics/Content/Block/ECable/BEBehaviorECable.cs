@@ -30,8 +30,8 @@ namespace ElectricalProgressive.Content.Block.ECable
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             
-            if (Api.World.BlockAccessor.GetBlockEntity(Blockentity.Pos) is not BlockEntityECable entity)
-                return;
+            //if (Blockentity is not BlockEntityECable entity)
+            //    return;
 
 
 
@@ -45,26 +45,29 @@ namespace ElectricalProgressive.Content.Block.ECable
         /// <exception cref="NotImplementedException"></exception>
         public void Update()
         {
-            //смотрим надо ли обновить модельку когда сгорает прибор
-            if (Api.World.BlockAccessor.GetBlockEntity(Blockentity.Pos) is BlockEntityECable
-                {
-                    AllEparams: not null
-                } entity)
+            if (Blockentity is BlockEntityECable { AllEparams: not null } entity)
             {
-                var hasBurnout = entity.AllEparams.Any(e => e.burnout);
+                bool hasBurnout = false;
+                bool prepareBurnout = false;
+
+                // Проверяем все параметры на наличие перегрева
+                foreach (var eParam in entity.AllEparams) 
+                {
+                    hasBurnout |= eParam.burnout;
+                    prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+                    if (hasBurnout || prepareBurnout)
+                        break;
+                }
+
+                // Генерируем частицы черного дыма
                 if (hasBurnout)
                     ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
 
-
-                bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
+                // Генерируем частицы белого дыма
                 if (prepareBurnout)
-                {
-                    ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-                }
-
+                    ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
             }
-
-            
         }
 
 
