@@ -39,6 +39,10 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         private int _currentStoreIndex;
 
+        // Временные массивы для поразрядной сортировки
+        private int[] _radixSortOutput;
+        private int[] _radixSortCount;
+
         /// <summary>
         /// Инициализирует новый экземпляр класса Customer.
         /// </summary>
@@ -83,11 +87,54 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         private void UpdateOrderedStores()
         {
-            for (int i = 0; i < StoreDistances.Length; i++)
+            int n = StoreDistances.Length;
+            for (int i = 0; i < n; i++)
             {
                 orderedStoreIds[i] = i;
             }
-            Array.Sort(orderedStoreIds, (a, b) => StoreDistances[a].CompareTo(StoreDistances[b]));
+
+            if (n == 0) return;
+
+            // Проверяем и выделяем память для временных массивов при необходимости
+            if (_radixSortOutput == null || _radixSortOutput.Length < n)
+            {
+                _radixSortOutput = new int[n];
+                _radixSortCount = new int[256];
+            }
+
+            RadixSort(orderedStoreIds, StoreDistances, _radixSortOutput, _radixSortCount);
+        }
+
+        /// <summary>
+        /// Поразрядная сортировка для целых чисел.
+        /// </summary>
+        private void RadixSort(int[] indices, int[] keys, int[] output, int[] count)
+        {
+            int n = indices.Length;
+
+            for (int shift = 0; shift < 4; shift++)
+            {
+                Array.Fill(count, 0, 0, 256);
+
+                for (int i = 0; i < n; i++)
+                {
+                    uint key = (uint)keys[indices[i]];
+                    byte b = (byte)((key >> (shift * 8)) & 0xFF);
+                    count[b]++;
+                }
+
+                for (int i = 1; i < 256; i++)
+                    count[i] += count[i - 1];
+
+                for (int i = n - 1; i >= 0; i--)
+                {
+                    uint key = (uint)keys[indices[i]];
+                    byte b = (byte)((key >> (shift * 8)) & 0xFF);
+                    output[--count[b]] = indices[i];
+                }
+
+                Array.Copy(output, indices, n);
+            }
         }
 
         /// <summary>
