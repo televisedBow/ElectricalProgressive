@@ -226,7 +226,9 @@ public class PathFinder
                     // Копирование массива флагов
                     if (!nowProcessedFaces.TryGetValue(state, out var val))
                     {
-                        nowProcessedFaces.Add(state, buf3);
+                        var buf3copy= new bool[6];
+                        buf3.CopyTo(buf3copy, 0);
+                        nowProcessedFaces.Add(state, buf3copy);
                     }
                     else
                     {

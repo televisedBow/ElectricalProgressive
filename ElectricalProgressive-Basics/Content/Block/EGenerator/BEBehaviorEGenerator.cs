@@ -213,6 +213,13 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     /// <inheritdoc />
     public void Update()
     {
+
+        // Если нет сети, пытаемся создать/подключиться
+        if (network == null)
+        {
+            CreateJoinAndDiscoverNetwork(OutFacingForNetworkDiscovery);
+        }
+
         if (Blockentity is BlockEntityEGenerator { AllEparams: not null } entity)
         {
             bool hasBurnout = false;

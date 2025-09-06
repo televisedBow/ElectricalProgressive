@@ -186,6 +186,14 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     /// <inheritdoc />
     public void Update()
     {
+        // Если нет сети, пытаемся создать/подключиться
+        if (network==null)
+        {
+            CreateJoinAndDiscoverNetwork(OutFacingForNetworkDiscovery);
+        }
+
+
+
         if (Blockentity is BlockEntityEMotor { AllEparams: not null } entity)
         {
             bool hasBurnout = false;
