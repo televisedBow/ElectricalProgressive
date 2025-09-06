@@ -47,27 +47,6 @@ namespace ElectricalProgressive
         private Dictionary<BlockPos, float> sumEnergy = new();
 
 
-       // private List<Consumer> localConsumers = new List<Consumer>();
-       // private List<Producer> localProducers = new List<Producer>();
-       // private List<Accumulator> localAccums = new List<Accumulator>();
-       // private List<EnergyPacket> localPackets = new List<EnergyPacket>(); // Для пакетов сети
-
-       // private List<BlockPos> consumerPositions = new(1);
-       // private List<float> consumerRequests = new(1);
-       // private List<BlockPos> producerPositions = new(1);
-        //private List<float> producerGive = new(1);
-
-        //private List<BlockPos> consumer2Positions = new(1);
-        //private List<float> consumer2Requests = new(1);
-        //private List<BlockPos> producer2Positions = new(1);
-        //private List<float> producer2Give = new(1);
-
-        //private Simulation sim = new();
-        //private Simulation sim2 = new();
-
-
-
-
 
         public ICoreAPI api = null!;
         private ICoreClientAPI capi = null!;
@@ -85,6 +64,10 @@ namespace ElectricalProgressive
         public static int multiThreading; // сколько потоков использовать
         public static int cacheTimeoutCleanupMinutes; // Время очистки кэша путей в минутах
         public static int maxDistanceForFinding; // Максимальное расстояние для поиска пути
+        public static float energyLossFactor; // Коэффициент потерь энергии на проводах
+
+
+
 
         public int tickTimeMs;
         private float elapsedMs = 0f;
@@ -173,15 +156,17 @@ namespace ElectricalProgressive
             api.StoreModConfig(config, "ElectricityConfig.json");
 
             // проверяем, что конфиг валиден, и обрезаются значения
-            speedOfElectricity = Math.Clamp(config.speedOfElectricity, 1, 16);
-            timeBeforeBurnout = Math.Clamp(config.timeBeforeBurnout, 1, 600);
-            multiThreading = Math.Clamp(config.multiThreading, 2, 32);
-            cacheTimeoutCleanupMinutes = Math.Clamp(config.cacheTimeoutCleanupMinutes, 1, 60);
+            speedOfElectricity = Math.Clamp(config.SpeedOfElectricity, 1, 16);
+            timeBeforeBurnout = Math.Clamp(config.TimeBeforeBurnout, 1, 600);
+            multiThreading = Math.Clamp(config.MultiThreading, 2, 32);
+            cacheTimeoutCleanupMinutes = Math.Clamp(config.CacheTimeoutCleanupMinutes, 1, 60);
             maxDistanceForFinding = Math.Clamp(config.MaxDistanceForFinding, 8, 1000);
+            energyLossFactor = Math.Clamp(config.EnergyLossFactor, 0.0f, 2.0f);
 
             // устанавливаем время между тиками
             tickTimeMs = 1000 / speedOfElectricity;
         }
+
 
 
         /// <summary>
@@ -419,8 +404,7 @@ namespace ElectricalProgressive
                     }
                     else
                     {
-                        sim.Distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
-
+                        sim.Distances[i * pP + j] = int.MaxValue; 
                         sim.Path[i * pP + j] = null;
                         sim.FacingFrom[i * pP + j] = null;
                         sim.NowProcessedFaces[i * pP + j] = null;
@@ -1121,7 +1105,8 @@ namespace ElectricalProgressive
                             if ((partValue.Connection & packet.usedConnections[curIndex]) == packet.usedConnections[curIndex]) // проверяем совпадает ли путь в пакете с путем в части сети
                             {
                                 // считаем сопротивление
-                                resistance = partValue.eparams[currentFacingFrom].resistivity /
+                                resistance = ElectricalProgressive.energyLossFactor* 
+                                    partValue.eparams[currentFacingFrom].resistivity /
                                              (partValue.eparams[currentFacingFrom].lines *
                                               partValue.eparams[currentFacingFrom].crossArea);
 
@@ -1898,11 +1883,12 @@ namespace ElectricalProgressive
     /// </summary>
     public class ElectricityConfig
     {
-        public int speedOfElectricity = 4;
-        public int timeBeforeBurnout = 30;
-        public int multiThreading = 4;
-        public int cacheTimeoutCleanupMinutes = 2;
+        public int SpeedOfElectricity = 4;
+        public int TimeBeforeBurnout = 30;
+        public int MultiThreading = 4;
+        public int CacheTimeoutCleanupMinutes = 2;
         public int MaxDistanceForFinding = 200;
+        public float EnergyLossFactor = 1.0f;
     }
 
     /// <summary>
