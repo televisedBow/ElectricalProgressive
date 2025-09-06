@@ -5,6 +5,7 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -46,23 +47,23 @@ namespace ElectricalProgressive
         private Dictionary<BlockPos, float> sumEnergy = new();
 
 
-        private List<Consumer> localConsumers = new List<Consumer>();
-        private List<Producer> localProducers = new List<Producer>();
-        private List<Accumulator> localAccums = new List<Accumulator>();
-        private List<EnergyPacket> localPackets = new List<EnergyPacket>(); // Для пакетов сети
+       // private List<Consumer> localConsumers = new List<Consumer>();
+       // private List<Producer> localProducers = new List<Producer>();
+       // private List<Accumulator> localAccums = new List<Accumulator>();
+       // private List<EnergyPacket> localPackets = new List<EnergyPacket>(); // Для пакетов сети
 
-        private List<BlockPos> consumerPositions = new(1);
-        private List<float> consumerRequests = new(1);
-        private List<BlockPos> producerPositions = new(1);
-        private List<float> producerGive = new(1);
+       // private List<BlockPos> consumerPositions = new(1);
+       // private List<float> consumerRequests = new(1);
+       // private List<BlockPos> producerPositions = new(1);
+        //private List<float> producerGive = new(1);
 
-        private List<BlockPos> consumer2Positions = new(1);
-        private List<float> consumer2Requests = new(1);
-        private List<BlockPos> producer2Positions = new(1);
-        private List<float> producer2Give = new(1);
+        //private List<BlockPos> consumer2Positions = new(1);
+        //private List<float> consumer2Requests = new(1);
+        //private List<BlockPos> producer2Positions = new(1);
+        //private List<float> producer2Give = new(1);
 
-        private Simulation sim = new();
-        private Simulation sim2 = new();
+        //private Simulation sim = new();
+        //private Simulation sim2 = new();
 
 
 
@@ -153,7 +154,7 @@ namespace ElectricalProgressive
 
 
             PathCacheManager.Dispose();
-            localPackets.Clear();
+            //localPackets.Clear();
 
         }
 
@@ -386,25 +387,38 @@ namespace ElectricalProgressive
                     start = consumerPositions[i];
                     end = producerPositions[j];
 
-
-                    
-                    if (PathCacheManager.TryGet(start, end, out var cachedPath, out var facingFrom, out var nowProcessed, out var usedConnections, out var version, out var voltage))
+                    if (PathFinder.Heuristic(start, end) < ElectricalProgressive.maxDistanceForFinding)
                     {
-                        sim.Distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
-                        if (version != network.version) // Если версия сети не совпадает, то добавляем запрос в очередь
+                        if (PathCacheManager.TryGet(start, end, out var cachedPath, out var facingFrom,
+                                out var nowProcessed, out var usedConnections, out var version, out var voltage))
+                        {
+                            sim.Distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
+                            if (version != network
+                                    .version) // Если версия сети не совпадает, то добавляем запрос в очередь
+                            {
+                                asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
+                            }
+
+                            sim.Path[i * pP + j] = cachedPath;
+                            sim.FacingFrom[i * pP + j] = facingFrom;
+                            sim.NowProcessedFaces[i * pP + j] = nowProcessed;
+                            sim.UsedConnection[i * pP + j] = usedConnections;
+                            sim.Voltage[i * pP + j] = voltage;
+                        }
+                        else
                         {
                             asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
-                        }
+                            sim.Distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
 
-                        sim.Path[i * pP + j] = cachedPath;
-                        sim.FacingFrom[i * pP + j] = facingFrom;
-                        sim.NowProcessedFaces[i * pP + j] = nowProcessed;
-                        sim.UsedConnection[i * pP + j] = usedConnections;
-                        sim.Voltage[i * pP + j] = voltage;
+                            sim.Path[i * pP + j] = null;
+                            sim.FacingFrom[i * pP + j] = null;
+                            sim.NowProcessedFaces[i * pP + j] = null;
+                            sim.UsedConnection[i * pP + j] = null;
+                            sim.Voltage[i * pP + j] = 0;
+                        }
                     }
                     else
                     {
-                        asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
                         sim.Distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
 
                         sim.Path[i * pP + j] = null;
@@ -413,7 +427,6 @@ namespace ElectricalProgressive
                         sim.UsedConnection[i * pP + j] = null;
                         sim.Voltage[i * pP + j] = 0;
                     }
-
                 }
             }
 
@@ -521,6 +534,283 @@ namespace ElectricalProgressive
         */
 
 
+        // Добавляем класс для пула контекстов обработки
+        private class NetworkProcessingContext
+        {
+            public List<Consumer> LocalConsumers { get; } = new List<Consumer>();
+            public List<Producer> LocalProducers { get; } = new List<Producer>();
+            public List<Accumulator> LocalAccums { get; } = new List<Accumulator>();
+            public List<EnergyPacket> LocalPackets { get; } = new List<EnergyPacket>();
+
+            public List<BlockPos> ConsumerPositions { get; } = new List<BlockPos>();
+            public List<float> ConsumerRequests { get; } = new List<float>();
+            public List<BlockPos> ProducerPositions { get; } = new List<BlockPos>();
+            public List<float> ProducerGive { get; } = new List<float>();
+            public List<BlockPos> Consumer2Positions { get; } = new List<BlockPos>();
+            public List<float> Consumer2Requests { get; } = new List<float>();
+            public List<BlockPos> Producer2Positions { get; } = new List<BlockPos>();
+            public List<float> Producer2Give { get; } = new List<float>();
+
+            public Simulation Sim { get; } = new Simulation();
+            public Simulation Sim2 { get; } = new Simulation();
+
+            public void Clear()
+            {
+                LocalConsumers.Clear();
+                LocalProducers.Clear();
+                LocalAccums.Clear();
+                LocalPackets.Clear();
+                ConsumerPositions.Clear();
+                ConsumerRequests.Clear();
+                ProducerPositions.Clear();
+                ProducerGive.Clear();
+                Consumer2Positions.Clear();
+                Consumer2Requests.Clear();
+                Producer2Positions.Clear();
+                Producer2Give.Clear();
+            }
+        }
+
+        // Добавляем пул контекстов
+        private readonly ConcurrentBag<NetworkProcessingContext> _contextPool = new ConcurrentBag<NetworkProcessingContext>();
+
+        // Метод для получения контекста из пула
+        private NetworkProcessingContext GetContext()
+        {
+            if (_contextPool.TryTake(out var context))
+            {
+                context.Clear();
+                return context;
+            }
+            return new NetworkProcessingContext();
+        }
+
+        // Метод для возврата контекста в пул
+        private void ReturnContext(NetworkProcessingContext context)
+        {
+            _contextPool.Add(context);
+        }
+
+
+
+        private void ProcessNetwork(Network network, NetworkProcessingContext context)
+        {
+            // Этап 1: Очищаем локальные переменные цикла ----------------------------------------------------------------------------
+
+
+
+            // Этап 2: Сбор запросов от потребителей----------------------------------------------------------------------------
+            var cons = network.Consumers.Count; // Количество потребителей в сети
+            float requestedEnergy; // Запрошенная энергия от потребителей
+
+
+            foreach (var electricConsumer in network.Consumers)
+            {
+                if (network.PartPositions.Contains(electricConsumer.Pos) // Проверяем, что потребитель находится в части сети
+                    && parts[electricConsumer.Pos].IsLoaded              // Проверяем, что потребитель загружен
+                    && electricConsumer.Consume_request() > 0)             // Проверяем, что потребитель запрашивает энергию вообще
+                {
+                    context.LocalConsumers.Add(new Consumer(electricConsumer));
+                    requestedEnergy = electricConsumer.Consume_request();
+                    context.ConsumerPositions.Add(electricConsumer.Pos);
+                    context.ConsumerRequests.Add(requestedEnergy);
+                }
+            }
+
+            // Этап 3: Сбор энергии с генераторов и аккумуляторов----------------------------------------------------------------------------
+            var prod = network.Producers.Count + network.Accumulators.Count; // Количество производителей в сети
+            float giveEnergy; // Энергия, которую отдают производители
+
+            foreach (var electricProducer in network.Producers)
+            {
+                if (network.PartPositions.Contains(electricProducer.Pos) // Проверяем, что генератор находится в части сети
+                    && parts[electricProducer.Pos].IsLoaded              // Проверяем, что генератор загружен
+                    && electricProducer.Produce_give() > 0)                // Проверяем, что генератор отдает энергию вообще
+                {
+                    context.LocalProducers.Add(new Producer(electricProducer));
+                    giveEnergy = electricProducer.Produce_give();
+                    context.ProducerPositions.Add(electricProducer.Pos);
+                    context.ProducerGive.Add(giveEnergy);
+
+                }
+            }
+
+            foreach (var electricAccum in network.Accumulators)
+            {
+                if (network.PartPositions.Contains(electricAccum.Pos)   // Проверяем, что аккумулятор находится в части сети
+                    && parts[electricAccum.Pos].IsLoaded                // Проверяем, что аккумулятор загружен
+                    && electricAccum.canRelease() > 0)                    // Проверяем, что аккумулятор может отдать энергию вообще
+                {
+                    context.LocalAccums.Add(new Accumulator(electricAccum));
+                    giveEnergy = electricAccum.canRelease();
+                    context.ProducerPositions.Add(electricAccum.Pos);
+                    context.ProducerGive.Add(giveEnergy);
+
+                }
+            }
+
+            // Этап 4: Распределение энергии ----------------------------------------------------------------------------
+            logisticalTask(network, context.ConsumerPositions, context.ConsumerRequests, context.ProducerPositions, context.ProducerGive, context.Sim);
+
+
+
+            EnergyPacket packet;   // Временная переменная для пакета энергии
+            BlockPos posStore; // Позиция магазина в мире
+            BlockPos posCustomer; // Позиция потребителя в мире
+            int customCount = context.ConsumerPositions.Count; // Количество клиентов в симуляции
+            int storeCount = context.ProducerPositions.Count; // Количество магазинов в симуляции
+            int k = 0;
+            for (int i = 0; i < customCount; i++)
+            {
+                for (k = 0; k < storeCount; k++)
+                {
+                    var value = context.Sim.Customers![i].Received[context.Sim.Stores![k].Id];
+                    if (value > 0)
+                    {
+
+                        // Проверяем, что пути и направления не равны null
+                        if (context.Sim.Path[i * storeCount + k] == null)
+                            continue;
+
+                        // создаём пакет, не копируя ничего
+                        packet = new EnergyPacket(
+                            value,
+                            context.Sim.Voltage[i * storeCount + k],
+                            context.Sim.Path[i * storeCount + k].Length - 1,
+                            context.Sim.Path[i * storeCount + k],
+                            context.Sim.FacingFrom[i * storeCount + k],
+                            context.Sim.NowProcessedFaces[i * storeCount + k],
+                            context.Sim.UsedConnection[i * storeCount + k]
+                        );
+
+
+                        // Добавляем пакет в глобальный список
+                        context.LocalPackets.Add(packet);
+
+
+                    }
+
+
+                }
+            }
+
+
+
+
+
+
+
+            // Этап 5: Забираем у аккумуляторов выданное----------------------------------------------------------------------------
+            int consIter = 0; // Итератор
+            foreach (var accum in context.LocalAccums)
+            {
+                if (context.Sim.Stores![consIter + context.LocalProducers.Count].Stock < accum.ElectricAccum.canRelease())
+                {
+                    accum.ElectricAccum.Release(accum.ElectricAccum.canRelease() -
+                                                context.Sim.Stores[consIter + context.LocalProducers.Count].Stock);
+                }
+
+                consIter++;
+            }
+
+
+            // Этап 6: Зарядка аккумуляторов    ----------------------------------------------------------------------------
+            cons = network.Accumulators.Count; // Количество аккумов в сети
+
+            context.LocalAccums.Clear();
+            foreach (var electricAccum in network.Accumulators)
+            {
+                if (network.PartPositions.Contains(electricAccum.Pos)   // Проверяем, что аккумулятор находится в части сети
+                    && parts[electricAccum.Pos].IsLoaded)                // Проверяем, что аккумулятор загружен
+                                                                         // Проверяем, что аккумулятор может отдать энергию вообще
+                {
+                    context.LocalAccums.Add(new Accumulator(electricAccum));
+                    requestedEnergy = electricAccum.canStore();
+                    context.Consumer2Positions.Add(electricAccum.Pos);
+                    context.Consumer2Requests.Add(requestedEnergy);
+                }
+            }
+
+
+
+
+
+            // Этап 7: Остатки генераторов  ----------------------------------------------------------------------------
+            prod = context.LocalProducers.Count; // Количество производителей в сети
+            int prodIter = 0; // Итератор для производителей
+
+
+            foreach (var producer in context.LocalProducers)
+            {
+                giveEnergy = context.Sim.Stores![prodIter].Stock;
+                context.Producer2Positions.Add(producer.ElectricProducer.Pos);
+                context.Producer2Give.Add(giveEnergy);
+                prodIter++;
+            }
+
+
+            // Этап 8: Распределение энергии для аккумуляторов ----------------------------------------------------------------------------
+            logisticalTask(network, context.Consumer2Positions, context.Consumer2Requests, context.Producer2Positions, context.Producer2Give, context.Sim2);
+
+
+            customCount = context.Consumer2Positions.Count; // Количество клиентов в симуляции 2
+            storeCount = context.Producer2Positions.Count; // Количество магазинов в симуляции 2
+
+            for (int i = 0; i < customCount; i++)
+            {
+                for (k = 0; k < storeCount; k++)
+                {
+                    var value = context.Sim2.Customers![i].Received[context.Sim2.Stores![k].Id];
+                    if (value > 0)
+                    {
+                        // Проверяем, что пути и направления не равны null
+                        if (context.Sim2.Path[i * storeCount + k] == null)
+                            continue;
+
+                        // создаём пакет, не копируя ничего
+                        packet = new EnergyPacket(
+                            value,
+                            context.Sim2.Voltage[i * storeCount + k],
+                            context.Sim2.Path[i * storeCount + k].Length - 1,
+                            context.Sim2.Path[i * storeCount + k],
+                            context.Sim2.FacingFrom[i * storeCount + k],
+                            context.Sim2.NowProcessedFaces[i * storeCount + k],
+                            context.Sim2.UsedConnection[i * storeCount + k]
+                        );
+
+
+                        // Добавляем пакет в глобальный список
+                        context.LocalPackets.Add(packet);
+
+
+                    }
+                }
+            }
+
+
+
+
+
+            // Этап 9: Сообщение генераторам о нагрузке ----------------------------------------------------------------------------
+            int j = 0;
+            foreach (var producer in context.LocalProducers)
+            {
+                var totalOrder = context.Sim.Stores![j].totalRequest + context.Sim2.Stores![j].totalRequest;
+                producer.ElectricProducer.Produce_order(totalOrder);
+                j++;
+            }
+
+
+
+            // Обновляем инфу об электрических цепях
+            UpdateNetworkInfo(network);
+
+
+        }
+
+
+
+
         /// <summary>
         /// Тикаем сервер
         /// </summary>
@@ -541,255 +831,45 @@ namespace ElectricalProgressive
             Cleaner();
 
 
-            foreach (var network in networks)
+            // Потокобезопасный контейнер для сбора пакетов
+            var packetsBag = new ConcurrentBag<List<EnergyPacket>>();
+
+            // Обрабатываем сети параллельно с использованием пула контекстов
+            Parallel.ForEach(networks, new ParallelOptions
             {
-                // Этап 1: Очищаем локальные переменные цикла ----------------------------------------------------------------------------
-                localConsumers.Clear();
-                localProducers.Clear();
-                localAccums.Clear();
-                localPackets.Clear();
-
-                consumerPositions.Clear();
-                consumerRequests.Clear();
-                producerPositions.Clear();
-                producerGive.Clear();
-                consumer2Positions.Clear();
-                consumer2Requests.Clear();
-                producer2Positions.Clear();
-                producer2Give.Clear();
-
-                //sim.Reset();
-                //sim2.Reset();
-
-
-
-                // Этап 2: Сбор запросов от потребителей----------------------------------------------------------------------------
-                var cons = network.Consumers.Count; // Количество потребителей в сети
-                float requestedEnergy; // Запрошенная энергия от потребителей
-
-
-                foreach (var electricConsumer in network.Consumers)
+                MaxDegreeOfParallelism = multiThreading
+            }, network =>
+            {
+                var context = GetContext();
+                try
                 {
-                    if (network.PartPositions.Contains(electricConsumer.Pos) // Проверяем, что потребитель находится в части сети
-                        && parts[electricConsumer.Pos].IsLoaded              // Проверяем, что потребитель загружен
-                        && electricConsumer.Consume_request() > 0)             // Проверяем, что потребитель запрашивает энергию вообще
+                    // Используем контекст вместо локальных переменных
+                    ProcessNetwork(network, context);
+
+                    if (context.LocalPackets.Count > 0)
                     {
-                        localConsumers.Add(new Consumer(electricConsumer));
-                        requestedEnergy = electricConsumer.Consume_request();
-                        consumerPositions.Add(electricConsumer.Pos);
-                        consumerRequests.Add(requestedEnergy);
+                        // Создаем копию только если есть пакеты
+                        var packetsCopy = new List<EnergyPacket>(context.LocalPackets);
+                        packetsBag.Add(packetsCopy);
                     }
                 }
-
-                // Этап 3: Сбор энергии с генераторов и аккумуляторов----------------------------------------------------------------------------
-                var prod = network.Producers.Count + network.Accumulators.Count; // Количество производителей в сети
-                float giveEnergy; // Энергия, которую отдают производители
-
-                foreach (var electricProducer in network.Producers)
+                finally
                 {
-                    if (network.PartPositions.Contains(electricProducer.Pos) // Проверяем, что генератор находится в части сети
-                        && parts[electricProducer.Pos].IsLoaded              // Проверяем, что генератор загружен
-                        && electricProducer.Produce_give() > 0)                // Проверяем, что генератор отдает энергию вообще
-                    {
-                        localProducers.Add(new Producer(electricProducer));
-                        giveEnergy = electricProducer.Produce_give();
-                        producerPositions.Add(electricProducer.Pos);
-                        producerGive.Add(giveEnergy);
-
-                    }
+                    ReturnContext(context);
                 }
+            });
 
-                foreach (var electricAccum in network.Accumulators)
-                {
-                    if (network.PartPositions.Contains(electricAccum.Pos)   // Проверяем, что аккумулятор находится в части сети
-                        && parts[electricAccum.Pos].IsLoaded                // Проверяем, что аккумулятор загружен
-                        && electricAccum.canRelease() > 0)                    // Проверяем, что аккумулятор может отдать энергию вообще
-                    {
-                        localAccums.Add(new Accumulator(electricAccum));
-                        giveEnergy = electricAccum.canRelease();
-                        producerPositions.Add(electricAccum.Pos);
-                        producerGive.Add(giveEnergy);
-
-                    }
-                }
-
-                // Этап 4: Распределение энергии ----------------------------------------------------------------------------
-                logisticalTask(network, consumerPositions, consumerRequests, producerPositions, producerGive, sim);
+            // Собираем все пакеты
+            foreach (var packets in packetsBag)
+                globalEnergyPackets.AddRange(packets);
 
 
-
-                EnergyPacket packet;   // Временная переменная для пакета энергии
-                BlockPos posStore; // Позиция магазина в мире
-                BlockPos posCustomer; // Позиция потребителя в мире
-                int customCount = consumerPositions.Count; // Количество клиентов в симуляции
-                int storeCount = producerPositions.Count; // Количество магазинов в симуляции
-                int k = 0;
-                for (int i = 0; i < customCount; i++)
-                {
-                    for (k = 0; k < storeCount; k++)
-                    {
-                        var value = sim.Customers![i].Received[sim.Stores![k].Id];
-                        if (value > 0)
-                        {
-                            //posStore = producerPositions[k];
-                            //posCustomer = consumerPositions[i];
-
-
-                                // Проверяем, что пути и направления не равны null
-                                if (sim.Path[i* storeCount + k] == null)
-                                    continue;
-
-                                // создаём пакет, не копируя ничего
-                                packet = new EnergyPacket(
-                                    value,
-                                    sim.Voltage[i * storeCount + k],
-                                    sim.Path[i * storeCount + k].Length - 1,
-                                    sim.Path[i * storeCount + k],
-                                    sim.FacingFrom[i * storeCount + k],
-                                    sim.NowProcessedFaces[i * storeCount + k],
-                                    sim.UsedConnection[i * storeCount + k]
-                                );
-
-
-                                // Добавляем пакет в глобальный список
-                                localPackets.Add(packet);
-                            
-
-                        }
-
-
-                    }
-                }
-
-
-
-
-
-
-
-                // Этап 5: Забираем у аккумуляторов выданное----------------------------------------------------------------------------
-                int consIter = 0; // Итератор
-                foreach (var accum in localAccums)
-                {
-                    if (sim.Stores![consIter + localProducers.Count].Stock < accum.ElectricAccum.canRelease())
-                    {
-                        accum.ElectricAccum.Release(accum.ElectricAccum.canRelease() -
-                                                    sim.Stores[consIter + localProducers.Count].Stock);
-                    }
-
-                    consIter++;
-                }
-
-
-                // Этап 6: Зарядка аккумуляторов    ----------------------------------------------------------------------------
-                cons = network.Accumulators.Count; // Количество аккумов в сети
-
-                localAccums.Clear();
-                foreach (var electricAccum in network.Accumulators)
-                {
-                    if (network.PartPositions.Contains(electricAccum.Pos)   // Проверяем, что аккумулятор находится в части сети
-                        && parts[electricAccum.Pos].IsLoaded)                // Проверяем, что аккумулятор загружен
-                                                                             // Проверяем, что аккумулятор может отдать энергию вообще
-                    {
-                        localAccums.Add(new Accumulator(electricAccum));
-                        requestedEnergy = electricAccum.canStore();
-                        consumer2Positions.Add(electricAccum.Pos);
-                        consumer2Requests.Add(requestedEnergy);
-                    }
-                }
-
-
-
-
-
-                // Этап 7: Остатки генераторов  ----------------------------------------------------------------------------
-                prod = localProducers.Count; // Количество производителей в сети
-                int prodIter = 0; // Итератор для производителей
-
-
-                foreach (var producer in localProducers)
-                {
-                    giveEnergy = sim.Stores![prodIter].Stock;
-                    producer2Positions.Add(producer.ElectricProducer.Pos);
-                    producer2Give.Add(giveEnergy);
-                    prodIter++;
-                }
-
-
-                // Этап 8: Распределение энергии для аккумуляторов ----------------------------------------------------------------------------
-                logisticalTask(network, consumer2Positions, consumer2Requests, producer2Positions, producer2Give, sim2);
-
-
-                customCount = consumer2Positions.Count; // Количество клиентов в симуляции 2
-                storeCount = producer2Positions.Count; // Количество магазинов в симуляции 2
-
-                for (int i = 0; i < customCount; i++)
-                {
-                    for (k = 0; k < storeCount; k++)
-                    {
-                        var value = sim2.Customers![i].Received[sim2.Stores![k].Id];
-                        if (value > 0)
-                        {
-                            //posStore = producerPositions[k];
-                            //posCustomer = consumerPositions[i];
-
-
-                            // Проверяем, что пути и направления не равны null
-                            if (sim2.Path[i * storeCount + k] == null)
-                                continue;
-
-                            // создаём пакет, не копируя ничего
-                            packet = new EnergyPacket(
-                                value,
-                                sim2.Voltage[i * storeCount + k],
-                                sim2.Path[i * storeCount + k].Length - 1,
-                                sim2.Path[i * storeCount + k],
-                                sim2.FacingFrom[i * storeCount + k],
-                                sim2.NowProcessedFaces[i * storeCount + k],
-                                sim2.UsedConnection[i * storeCount + k]
-                            );
-
-
-                            // Добавляем пакет в глобальный список
-                            localPackets.Add(packet);
-
-
-                        }
-                    }
-                }
-
-
-
-
-
-                // Этап 9: Сообщение генераторам о нагрузке ----------------------------------------------------------------------------
-                int j = 0;
-                foreach (var producer in localProducers)
-                {
-                    var totalOrder = sim.Stores![j].totalRequest + sim2.Stores![j].totalRequest;
-                    producer.ElectricProducer.Produce_order(totalOrder);
-                    j++;
-                }
-
-
-
-
-                // Обновляем инфу об электрических цепях
-                UpdateNetworkInfo(network);
-
-
-                // добаляем одним разом, чтобы не было лишних операций
-                globalEnergyPackets.AddRange(localPackets);
-
-            }
 
 
 
             // Обновление электрических компонентов в сети, если прошло достаточно времени около 0.5 секунд
             elapsedMs += deltaTime;
             UpdateNetworkComponents();
-
-
 
 
 
@@ -991,6 +1071,8 @@ namespace ElectricalProgressive
                 if (partValue.packets == null || partValue.packets.Count == 0)
                     continue;
 
+                int deltaX, deltaY, deltaZ;
+
                 foreach (var packet in partValue.packets)
                 {
                     curIndex = packet.currentIndex; //текущий индекс в пакете
@@ -1061,12 +1143,18 @@ namespace ElectricalProgressive
 
                                 // далее учитываем правило алгебраического сложения встречных токов
                                 // 1) Определяем вектор движения
-                                var delta = packet.path[curIndex - 1].SubCopy(currentPos);
+                                var nextPos= packet.path[curIndex - 1];
+                                
                                 bool sign = true;
 
-                                if (delta.X < 0) sign = !sign;
-                                if (delta.Y < 0) sign = !sign;
-                                if (delta.Z < 0) sign = !sign;
+                                deltaX = nextPos.X - currentPos.X;
+                                deltaY = nextPos.InternalY - currentPos.InternalY;
+                                deltaZ = nextPos.Z - currentPos.Z;
+                                
+
+                                if (deltaX < 0) sign = !sign;
+                                if (deltaY < 0) sign = !sign;
+                                if (deltaZ < 0) sign = !sign;
 
                                 // 2) Прописываем токи на нужные грани
                                 int j = 0;

@@ -125,7 +125,7 @@ public class PathFinder
     }
 
     // Эвристика для A* (манхэттенское расстояние)
-    private static int Heuristic(BlockPos a, BlockPos b)
+    public static int Heuristic(BlockPos a, BlockPos b)
         => Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
 
     /// <summary>
@@ -154,7 +154,6 @@ public class PathFinder
         // Проверка на валидность старта и конца
         if (!networkPositions.Contains(start) ||
             !networkPositions.Contains(end) ||
-            Heuristic(start, end) >= ElectricalProgressive.maxDistanceForFinding ||
             start.Equals(end))
             return (null!, null!, null!, null!);
 

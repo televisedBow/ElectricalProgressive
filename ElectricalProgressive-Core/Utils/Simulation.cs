@@ -126,8 +126,7 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         public void Reset()
         {
-            //Stores= Array.Empty<Store>();
-            //Customers= Array.Empty<Customer>();
+   
         }
     }
 }
