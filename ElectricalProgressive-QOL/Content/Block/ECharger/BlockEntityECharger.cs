@@ -99,6 +99,13 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
         var stack = Inventory[0]?.Itemstack;
 
 
+        // со стаком что-то не так?
+        if (stack is null ||
+            stack.StackSize == 0 ||
+            stack.Collectible == null ||
+            stack.Collectible.Attributes == null)
+            return;
+
         if (stack?.Item != null && stack.Collectible.Attributes["chargable"].AsBool(false))
         {
             var durability = stack.Attributes.GetInt("durability");             //текущая прочность
@@ -218,7 +225,11 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
     bool PutInSlot(IPlayer player, int slot)
     {
         var stack = player.InventoryManager.ActiveHotbarSlot.Itemstack;
-        if (stack == null)
+        // со стаком что-то не так?
+        if (stack is null ||
+            stack.StackSize == 0 ||
+            stack.Collectible == null ||
+            stack.Collectible.Attributes == null)
             return false;
 
         var isValid = stack.Class == EnumItemClass.Block
@@ -330,7 +341,14 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
         mesher.AddMeshData(mesh);
 
         if (toolMeshes[0] != null)
-            mesher.AddMeshData(toolMeshes[0]);
+            try
+            {
+                mesher.AddMeshData(toolMeshes[0]);
+            }
+            catch
+            {
+                // мэш поврежден
+            }
 
         return true;
     }
@@ -406,6 +424,13 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         var stack = Inventory[0]?.Itemstack; //стак инвентаря
+
+        // со стаком что-то не так?
+        if (stack is null ||
+            stack.StackSize == 0 ||
+            stack.Collectible == null ||
+            stack.Collectible.Attributes == null)
+            return;
 
         if (stack?.Item != null && stack.Collectible.Attributes["chargable"].AsBool(false)) //предмет
         {

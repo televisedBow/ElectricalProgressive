@@ -3,7 +3,7 @@
   "ingredients": {
     "M": {
       "type": "block",
-      "code": "electricalprogressiveqol:elamp_small-6000-enabled",
+      "code": "electricalprogressiveqol:elamp_small-6000-disabled",
       "quantity": 1
     },
     "B": {

@@ -41,7 +41,12 @@ public class BEBehaviorECharger : BEBehaviorBase, IElectricConsumer
                 return working;
 
             var entityStack = entityECharger.Inventory[0]?.Itemstack;
-            if (entityStack is null || entityStack.StackSize == 0)
+
+            // со стаком что - то не так?
+            if (entityStack is null ||
+                entityStack.StackSize == 0 ||
+                entityStack.Collectible==null ||
+                entityStack.Collectible.Attributes == null)
                 return working = false;
 
             if (entityStack.Item != null &&
