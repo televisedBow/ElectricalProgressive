@@ -309,16 +309,14 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
 
         var direction = OutFacingForNetworkDiscovery;
 
-        //if (CompositeShape == null)
-        //{
-            string tier = entity.Block.Variant["tier"];             //какой тир
-            string type = "rotor";
-            string[] types = new string[2] { "tier", "type" };//типы генератора
-            string[] variants = new string[2] { tier, type };//нужные вариант генератора
+        if (CompositeShape == null)
+        {
+            string tier = entity.Block.Variant["tier"];             // какой тир
 
-            var location = Block.CodeWithVariants(types, variants);
-            CompositeShape = api.World.BlockAccessor.GetBlock(location).Shape.Clone();
-        //}
+            CompositeShape = Block.Shape.Clone();
+
+            CompositeShape.Base = new AssetLocation("electricalprogressivebasics:shapes/block/emotor/emotor-" + tier + "-rotor.json");
+        }
 
         var shape = CompositeShape.Clone();
 

@@ -15,7 +15,6 @@
     {
       "code": "type",
       "states": [
-        "rotor",
         "stator",
         "normal",
         "burned"

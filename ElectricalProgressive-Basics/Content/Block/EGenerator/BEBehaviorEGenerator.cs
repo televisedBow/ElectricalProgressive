@@ -310,17 +310,14 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
             return null;
 
         var direction = OutFacingForNetworkDiscovery;
-        //if (CompositeShape == null)
-        //{
+        if (CompositeShape == null)
+        {
             string tier = entity.Block.Variant["tier"];             // какой тир
-            string type = "rotor";
-            string[] types = new string[2] { "tier", "type" };// типы генератора
-            string[] variants = new string[2] { tier, type };// нужные вариант генератора
 
-            var location = Block.CodeWithVariants(types, variants);
+            CompositeShape = Block.Shape.Clone();
 
-            CompositeShape = api.World.BlockAccessor.GetBlock(location).Shape.Clone();
-        //}
+            CompositeShape.Base = new AssetLocation("electricalprogressivebasics:shapes/block/egenerator/egenerator-" + tier + "-rotor.json");
+        }
 
         var shape = CompositeShape.Clone();
 
