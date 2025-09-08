@@ -214,5 +214,73 @@
       "code": "electricalprogressivebasics:accumulator-tier2-normal",
       "quantity": 1
     }
+  },
+
+  {
+    "ingredientPattern": "OOC,OOC,___",
+    "width": 3,
+    "height": 2,
+    "ingredients": {
+      "O": {
+        "type": "block",
+        "code": "electricalprogressivebasics:accumulator-tier1-normal",
+        "quantity": 1
+      },
+      "C": {
+        "type": "item",
+        "code": "game:ore-bituminouscoal",
+        "quantity": 16
+      }
+    },
+    "output": {
+      "type": "block",
+      "code": "electricalprogressivebasics:accumulator-tier2-normal",
+      "quantity": 1
+    }
+  },
+
+  {
+    "ingredientPattern": "OOC,OOC,___",
+    "width": 3,
+    "height": 2,
+    "ingredients": {
+      "O": {
+        "type": "block",
+        "code": "electricalprogressivebasics:accumulator-tier1-normal",
+        "quantity": 1
+      },
+      "C": {
+        "type": "item",
+        "code": "game:powder-charcoal",
+        "quantity": 64
+      }
+    },
+    "output": {
+      "type": "block",
+      "code": "electricalprogressivebasics:accumulator-tier2-normal",
+      "quantity": 1
+    }
+  },
+  {
+    "ingredientPattern": "OOC,OOC,___",
+    "width": 3,
+    "height": 2,
+    "ingredients": {
+      "O": {
+        "type": "block",
+        "code": "electricalprogressivebasics:accumulator-tier1-normal",
+        "quantity": 1
+      },
+      "C": {
+        "type": "item",
+        "code": "game:ore-graphite",
+        "quantity": 8
+      }
+    },
+    "output": {
+      "type": "block",
+      "code": "electricalprogressivebasics:accumulator-tier2-normal",
+      "quantity": 1
+    }
   }
 ]
