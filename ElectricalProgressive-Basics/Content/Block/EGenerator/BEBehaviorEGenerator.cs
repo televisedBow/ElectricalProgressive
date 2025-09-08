@@ -209,6 +209,8 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         return res;
     }
 
+    
+
 
     /// <inheritdoc />
     public void Update()
@@ -308,8 +310,8 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
             return null;
 
         var direction = OutFacingForNetworkDiscovery;
-        if (CompositeShape == null)
-        {
+        //if (CompositeShape == null)
+        //{
             string tier = entity.Block.Variant["tier"];             // какой тир
             string type = "rotor";
             string[] types = new string[2] { "tier", "type" };// типы генератора
@@ -318,7 +320,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
             var location = Block.CodeWithVariants(types, variants);
 
             CompositeShape = api.World.BlockAccessor.GetBlock(location).Shape.Clone();
-        }
+        //}
 
         var shape = CompositeShape.Clone();
 

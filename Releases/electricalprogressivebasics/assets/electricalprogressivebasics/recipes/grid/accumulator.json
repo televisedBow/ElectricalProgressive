@@ -217,7 +217,7 @@
   },
 
   {
-    "ingredientPattern": "OOC,OOC,___",
+    "ingredientPattern": "OOC,OOC",
     "width": 3,
     "height": 2,
     "ingredients": {
@@ -240,7 +240,7 @@
   },
 
   {
-    "ingredientPattern": "OOC,OOC,___",
+    "ingredientPattern": "OOC,OOC",
     "width": 3,
     "height": 2,
     "ingredients": {
@@ -262,7 +262,7 @@
     }
   },
   {
-    "ingredientPattern": "OOC,OOC,___",
+    "ingredientPattern": "OOC,OOC",
     "width": 3,
     "height": 2,
     "ingredients": {
