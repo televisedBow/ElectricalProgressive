@@ -50,7 +50,7 @@
       },
       "G": {
         "type": "item",
-        "code": "game:metalplate-steel",
+        "code": "game:metalplate-iron",
         "quantity": 1
       },
       "C": {

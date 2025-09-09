@@ -46,6 +46,20 @@ public class InventoryEStove : InventorySmelting
     }
 
 
+
+
+
+    public override ItemSlot this[int slotId]
+    {
+        get => slotId < 0 || slotId >= this.Count ? (ItemSlot)null : this.slots[slotId];
+        set
+        {
+            if (slotId < 0 || slotId >= this.Count)
+                throw new ArgumentOutOfRangeException(nameof(slotId));
+            this.slots[slotId] = value != null ? value : throw new ArgumentNullException(nameof(value));
+        }
+    }
+
     /// <summary>
     /// Автозагрузка духовки
     /// </summary>

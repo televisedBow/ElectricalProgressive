@@ -76,21 +76,7 @@ public class BlockEOven : BlockEBase
             base.GetPlacedBlockInteractionHelp(world, selection, forPlayer));
     }
 
-    public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
-    {
-        base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        /* // Если снизу нет блока, то ломаем духовку
-        if (
-            !world.BlockAccessor
-                .GetBlock(pos.AddCopy(BlockFacing.DOWN))
-                .SideSolid[BlockFacing.indexUP]
-        )
-        {
-            world.BlockAccessor.BreakBlock(pos, null);
-        }
-        */
-    }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
