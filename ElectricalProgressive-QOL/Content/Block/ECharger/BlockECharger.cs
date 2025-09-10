@@ -130,21 +130,13 @@ public class BlockECharger : BlockEBase
 
     public override bool CanAttachBlockAt(IBlockAccessor blockAccessor, Vintagestory.API.Common.Block block, BlockPos pos, BlockFacing blockFace, Cuboidi attachmentArea = null!)
     {
-        return blockFace == BlockFacing.DOWN;
+        return true;
     }
 
     public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
     {
         base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        if (
-            !world.BlockAccessor
-                .GetBlock(pos.AddCopy(BlockFacing.DOWN))
-                .SideSolid[BlockFacing.indexUP]
-        )
-        {
-            world.BlockAccessor.BreakBlock(pos, null);
-        }
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)

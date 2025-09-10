@@ -1,4 +1,5 @@
-﻿using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Content.Block.EStove;
+using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Collections.Generic;
@@ -9,13 +10,18 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 using Facing = ElectricalProgressive.Utils.Facing;
 
 namespace ElectricalProgressive.Content.Block.ECharger;
 
-public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
+public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 {
-    public InventoryGeneric Inventory { get; private set; }
+
+    private InventoryECharger inventory;
+    public override InventoryBase Inventory => inventory;
+
+    public override string InventoryClassName => "charger";
 
     MeshData[] toolMeshes = new MeshData[1];
 
@@ -25,6 +31,27 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
 
     private long listenerId;
 
+
+
+
+    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    public (EParams, int) Eparams
+    {
+        get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
+        set => this.ElectricalProgressive!.Eparams = value;
+    }
+
+    public EParams[] AllEparams
+    {
+        get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
+        {
+            new EParams(), new EParams(), new EParams(), new EParams(), new EParams(), new EParams()
+        };
+        set
+        {
+            if (this.ElectricalProgressive != null) this.ElectricalProgressive.AllEparams = value;
+        }
+    }
 
 
     public TextureAtlasPosition this[string textureCode]
@@ -48,7 +75,7 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
     /// </summary>
     public BlockEntityECharger()
     {
-        Inventory = new(1, "charger", null, null, null);
+        inventory = new(1, "charger-"+ Pos, null, null, null);
     }
 
 
@@ -59,7 +86,8 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
-        Inventory.LateInitialize("charger-" + Pos, api);
+
+        Inventory.LateInitialize( "charger-" + Pos, api);
         Inventory.ResolveBlocksOrItems();
 
         if (api is ICoreClientAPI)
@@ -70,6 +98,8 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
         {
             listenerId=RegisterGameTickListener(OnTick, 500);
         }
+
+        MarkDirty(true);
     }
 
 
@@ -87,6 +117,9 @@ public class BlockEntityECharger : BlockEntityEBase, ITexPositionSource
 
         UnregisterGameTickListener(listenerId); //отменяем слушатель тика, если он есть
     }
+
+
+
 
 
 
