@@ -92,7 +92,7 @@
   "block-handbooktext-ehorn": "The electric forge fully replaces the traditional forge.<br><br>Maximum heating temperature: 1100 °C.",
 
   "block-handbooktitle-charger": "Usage",
-  "block-handbooktext-charger": "The charging station allows recharging batteries and devices with built-in batteries.",
+  "block-handbooktext-charger": "The charging station allows recharging batteries and devices with built-in batteries.<br>Supports automatic loading and unloading via chutes.",
 
   "block-handbooktitle-estove": "Usage",
   "block-handbooktext-estove": "The electric stove completely replaces a conventional campfire.<br>Supports automatic loading and unloading via chutes.<br><br>Maximum heating temperature of the stove: 1350 °C.",

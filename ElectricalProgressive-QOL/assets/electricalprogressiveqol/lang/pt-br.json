@@ -86,7 +86,7 @@
   "block-handbooktext-ehorn": "A forja elétrica substitui totalmente a forja tradicional.<br><br>Temperatura máxima de aquecimento: 1100 °C.",
 
   "block-handbooktitle-charger": "Uso",
-  "block-handbooktext-charger": "A estação de carregamento permite recarregar baterias e dispositivos com baterias embutidas.",
+  "block-handbooktext-charger": "A estação de carregamento permite recarregar baterias e dispositivos com baterias embutidas.<br>Suporta carregamento e descarregamento automáticos por meio de calhas.",
 
   "block-handbooktitle-estove": "Uso",
   "block-handbooktext-estove": "O fogão elétrico permite substituir completamente uma fogueira comum.<br>Suporta carregamento e descarregamento automáticos por meio de calhas.<br><br>Temperatura máxima de aquecimento da chapa: 1350 °C.",

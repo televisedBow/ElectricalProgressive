@@ -83,7 +83,7 @@
   "block-handbooktext-ehorn": "Elektrická kovárna plně nahrazuje tradiční kovárnu.<br><br>Maximální teplota ohřevu: 1100 °C.",
 
   "block-handbooktitle-charger": "Použití",
-  "block-handbooktext-charger": "Nabíjecí stanice umožňuje dobíjení baterií a zařízení s vestavěnými bateriemi.",
+  "block-handbooktext-charger": "Nabíjecí stanice umožňuje dobíjení baterií a zařízení s vestavěnými bateriemi.<br>Podporuje automatické nakládání a vykládání pomocí žlabů.",
 
   "block-handbooktitle-estove": "Použití",
   "block-handbooktext-estove": "Elektrosporák umožňuje plně nahradit klasický táborák.<br>Podporuje automatické nakládání a vykládání pomocí žlabů.<br><br>Maximální teplota ohřevu plotny: 1350 °C.",

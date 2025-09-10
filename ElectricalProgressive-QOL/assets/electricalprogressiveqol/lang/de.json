@@ -87,7 +87,7 @@
   "block-handbooktext-ehorn": "Der elektrische Schmiedehafen ersetzt den herkömmlichen Schmiedehafen.<br><br>Maximale Temperatur: 1100 °C.",
 
   "block-handbooktitle-charger": "Verwendung",
-  "block-handbooktext-charger": "Ladestation für Akkus und Geräte mit integriertem Akku.",
+  "block-handbooktext-charger": "Ladestation für Akkus und Geräte mit integriertem Akku.<br>Unterstützt automatisches Be- und Entladen über Rutschen.",
 
   "block-handbooktitle-estove": "Verwendung",
   "block-handbooktext-estove": "Der Elektroherd ermöglicht den vollständigen Ersatz eines herkömmlichen Lagerfeuers.<br>Unterstützt automatisches Be- und Entladen über Rutschen.<br><br>Maximale Heiztemperatur des Herdes: 1350 °C.",

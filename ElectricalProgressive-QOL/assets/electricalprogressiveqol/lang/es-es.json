@@ -85,7 +85,7 @@
   "block-handbooktext-ehorn": "El horno eléctrico reemplaza al horno de fragua tradicional.<br><br>Temperatura máxima de calentamiento: 1100 °C.",
 
   "block-handbooktitle-charger": "Uso",
-  "block-handbooktext-charger": "La estación de carga permite cargar baterías y dispositivos con batería integrada.",
+  "block-handbooktext-charger": "La estación de carga permite cargar baterías y dispositivos con batería integrada.<br>Admite carga y descarga automáticas mediante canaletas.",
 
   "block-handbooktitle-estove": "Uso",
   "block-handbooktext-estove": "La placa eléctrica permite reemplazar por completo una hoguera tradicional.<br>Admite carga y descarga automáticas mediante canaletas.<br><br>Temperatura máxima de calentamiento de la placa: 1350 °C.",
