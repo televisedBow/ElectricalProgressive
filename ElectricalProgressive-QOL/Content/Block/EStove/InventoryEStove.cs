@@ -10,55 +10,22 @@ namespace ElectricalProgressive.Content.Block.EStove;
 public class InventoryEStove : InventorySmelting
 {
 
-    private ItemSlot[] slots;
-    private ItemSlot[] cookingSlots;
-    
-    private int defaultStorageType = 189;
-
-
 
     public InventoryEStove(string inventoryID, ICoreAPI api)
       : base(inventoryID, api)
     {
-        this.slots = this.GenEmptySlots(7);
-        this.cookingSlots = new ItemSlot[4]
-        {
-        this.slots[3],
-        this.slots[4],
-        this.slots[5],
-        this.slots[6]
-        };
-        this.baseWeight = 4f;
+      
     }
 
     public InventoryEStove(string className, string instanceID, ICoreAPI api)
       : base(className, instanceID, api)
     {
-        this.slots = this.GenEmptySlots(7);
-        this.cookingSlots = new ItemSlot[4]
-        {
-        this.slots[3],
-        this.slots[4],
-        this.slots[5],
-        this.slots[6]
-        };
-        this.baseWeight = 4f;
+       
     }
 
 
 
 
-
-    public override ItemSlot this[int slotId]
-    {
-        get => slotId < 0 || slotId >= this.Count ? (ItemSlot)null : this.slots[slotId];
-        set
-        {
-            if (slotId < 0 || slotId >= this.Count)
-                throw new ArgumentOutOfRangeException(nameof(slotId));
-            this.slots[slotId] = value != null ? value : throw new ArgumentNullException(nameof(value));
-        }
-    }
 
     /// <summary>
     /// Автозагрузка духовки
@@ -91,7 +58,7 @@ public class InventoryEStove : InventorySmelting
         }
         else
         {
-            return slots[1];
+            return this[1];
         }
         
 
@@ -107,7 +74,7 @@ public class InventoryEStove : InventorySmelting
     /// <returns></returns>
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
-        return slots[2];
+        return this[2];
     }
 
 }
