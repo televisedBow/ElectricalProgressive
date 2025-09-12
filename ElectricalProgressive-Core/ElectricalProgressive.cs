@@ -595,7 +595,7 @@ namespace ElectricalProgressive
                     && electricConsumer.Consume_request() > 0)             // Проверяем, что потребитель запрашивает энергию вообще
                 {
                     context.LocalConsumers.Add(new Consumer(electricConsumer));
-                    requestedEnergy = electricConsumer.Consume_request();
+                    requestedEnergy =2* electricConsumer.Consume_request()- electricConsumer.getPowerReceive();
                     context.ConsumerPositions.Add(electricConsumer.Pos);
                     context.ConsumerRequests.Add(requestedEnergy);
                 }

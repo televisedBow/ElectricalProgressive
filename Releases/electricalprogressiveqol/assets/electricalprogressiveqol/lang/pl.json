@@ -87,7 +87,7 @@
   "block-handbooktext-ehorn": "Piec kowalski elektryczny zastępuje tradycyjny piec kowalski.<br><br>Maksymalna temperatura: 1100 °C.",
 
   "block-handbooktitle-charger": "Użycie",
-  "block-handbooktext-charger": "Stacja ładowania do akumulatorów i urządzeń z wbudowanym akumulatorem.",
+  "block-handbooktext-charger": "Stacja ładowania do akumulatorów i urządzeń z wbudowanym akumulatorem.<br>Obsługuje automatyczny załadunek i rozładunek za pomocą zsypów.",
 
   "block-handbooktitle-estove": "Użycie",
   "block-handbooktext-estove": "Płyta elektryczna pozwala całkowicie zastąpić zwykłe ognisko.<br>Obsługuje automatyczny załadunek i rozładunek za pomocą zsypów.<br><br>Maksymalna temperatura nagrzewania płyty: 1350 °C.",
