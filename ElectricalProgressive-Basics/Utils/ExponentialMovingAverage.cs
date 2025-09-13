@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ElectricalProgressive.Utils
 {
@@ -22,6 +18,7 @@ namespace ElectricalProgressive.Utils
         }
 
         // Создание фильтра с заданным периодом усреднения (period ≥ 1)
+        /*
         public ExponentialMovingAverage(int period)
         {
             if (period < 1)
@@ -29,6 +26,7 @@ namespace ElectricalProgressive.Utils
 
             _alpha = 2.0 / (period + 1);
         }
+        */
 
         // Обновление значения фильтра новым измерением
         public double Update(double nextValue)

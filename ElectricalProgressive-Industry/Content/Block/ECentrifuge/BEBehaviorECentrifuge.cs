@@ -18,7 +18,7 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
 
     public const string PowerSettingKey = "electricalprogressive:powersetting";
 
-
+    public float AvgConsumeCoeff { get; set; }
 
     /// <summary>
     /// Максимальное потребление

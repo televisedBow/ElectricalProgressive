@@ -19,7 +19,7 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
     /// </summary>
     private readonly int _maxConsumption;
 
-
+    public float AvgConsumeCoeff { get; set; }
 
     public BEBehaviorEFreezer2(BlockEntity blockEntity) : base(blockEntity)
     {

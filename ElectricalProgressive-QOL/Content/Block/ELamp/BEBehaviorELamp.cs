@@ -21,7 +21,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
         /// </summary>
         public const string LightLevelKey = "electricalprogressive:LightLevel";
 
-
+        public float AvgConsumeCoeff { get; set; }
 
         /// <summary>
         /// Максимальное потребление

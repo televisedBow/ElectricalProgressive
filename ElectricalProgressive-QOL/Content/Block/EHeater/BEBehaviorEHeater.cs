@@ -26,7 +26,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
             _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 4);
         }
 
-
+        public float AvgConsumeCoeff { get; set; }
 
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder stringBuilder)
         {

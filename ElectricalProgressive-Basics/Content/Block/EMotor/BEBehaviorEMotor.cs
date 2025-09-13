@@ -146,6 +146,8 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
  
     public new BlockPos Pos => Position;
 
+    public float AvgConsumeCoeff { get; set; }
+
     /// <inheritdoc />
     public BEBehaviorEMotor(BlockEntity blockentity) : base(blockentity)
     {
@@ -275,8 +277,9 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
         if (I_amount <= I_min)                   // Если ток меньше минимального, двигатель не работает
             return torque;
 
-        I_value = Math.Min(I_amount, I_max);    // Берем, что дают
+        I_value = I_amount;    // Берем, что дают
 
+        // I_value = Math.Min(I_amount, I_max);    // Берем, что дают
 
         if (I_value < I_min)                                        // Если ток меньше минимального, двигатель не работает
             torque = 0.0F;

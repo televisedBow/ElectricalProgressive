@@ -28,7 +28,7 @@ namespace ElectricalProgressive.Content.Block.EFonar
         /// </summary>
         private readonly int _maxConsumption;
 
-
+        public float AvgConsumeCoeff { get; set; }
 
         public BEBehaviorEFonar(BlockEntity blockEntity) : base(blockEntity)
         {

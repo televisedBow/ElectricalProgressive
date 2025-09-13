@@ -43,7 +43,7 @@ public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
             return working;
         }
     }
-
+    public float AvgConsumeCoeff { get; set; }
     public override void GetBlockInfo(IPlayer forPlayer, StringBuilder stringBuilder)
     {
         base.GetBlockInfo(forPlayer, stringBuilder);

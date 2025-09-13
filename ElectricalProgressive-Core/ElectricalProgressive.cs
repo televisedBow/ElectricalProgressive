@@ -22,7 +22,7 @@ using static ElectricalProgressive.ElectricalProgressive;
     "electricalprogressivecore",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electrical logic library.",
-    Version = "2.2.0",
+    Version = "2.3.0",
     Authors = new[] { "Tehtelev", "Kotl" }
 )]
 
@@ -65,6 +65,7 @@ namespace ElectricalProgressive
         public static int cacheTimeoutCleanupMinutes; // Время очистки кэша путей в минутах
         public static int maxDistanceForFinding; // Максимальное расстояние для поиска пути
         public static float energyLossFactor; // Коэффициент потерь энергии на проводах
+        public static bool enableLossCompensation; // Включить компенсацию потерь энергии на проводах
 
 
 
@@ -162,6 +163,7 @@ namespace ElectricalProgressive
             cacheTimeoutCleanupMinutes = Math.Clamp(config.CacheTimeoutCleanupMinutes, 1, 60);
             maxDistanceForFinding = Math.Clamp(config.MaxDistanceForFinding, 8, 1000);
             energyLossFactor = Math.Clamp(config.EnergyLossFactor, 0.0f, 2.0f);
+            enableLossCompensation = config.EnableLossCompensation;
 
             // устанавливаем время между тиками
             tickTimeMs = 1000 / speedOfElectricity;
@@ -595,7 +597,48 @@ namespace ElectricalProgressive
                     && electricConsumer.Consume_request() > 0)             // Проверяем, что потребитель запрашивает энергию вообще
                 {
                     context.LocalConsumers.Add(new Consumer(electricConsumer));
-                    requestedEnergy =2* electricConsumer.Consume_request()- electricConsumer.getPowerReceive();
+
+                    // Если включена компенсация потерь
+                    if (enableLossCompensation)
+                    {
+                        float received = electricConsumer.getPowerReceive();
+                        float requested = electricConsumer.Consume_request();
+
+                        // если ниже нуля, то ставим 1.0
+                        if (electricConsumer.AvgConsumeCoeff < 1.0f)
+                            electricConsumer.AvgConsumeCoeff = 1.0f;
+
+                        float smoothedCoeff = electricConsumer.AvgConsumeCoeff;
+
+
+                        // если запрошено больше, чем получено, то увеличиваем коэффициент сглаживания
+                        if (requested > received)
+                        {
+                            if (smoothedCoeff < 2.0)
+                            {
+                                smoothedCoeff += 0.1f;
+                                smoothedCoeff = CalculateEMA(0.05f, smoothedCoeff, electricConsumer.AvgConsumeCoeff);
+                            }
+                        }
+                        else
+                        {
+                            if (smoothedCoeff > 1.0)
+                            {
+                                smoothedCoeff -= 0.1f;
+                                smoothedCoeff = CalculateEMA(0.05f, smoothedCoeff, electricConsumer.AvgConsumeCoeff);
+                            }
+                        }
+                        
+                         
+                        requestedEnergy = requested * smoothedCoeff; // Запрашиваем с учётом сглаженного коэффициента
+                        electricConsumer.AvgConsumeCoeff = smoothedCoeff;  // Храним сглаженный coeff (не энергию!)
+                    }
+                    else
+                    {
+                        requestedEnergy = electricConsumer.Consume_request();
+                    }
+
+
                     context.ConsumerPositions.Add(electricConsumer.Pos);
                     context.ConsumerRequests.Add(requestedEnergy);
                 }
@@ -710,6 +753,7 @@ namespace ElectricalProgressive
                 {
                     context.LocalAccums.Add(new Accumulator(electricAccum));
                     requestedEnergy = electricAccum.canStore();
+                    
                     context.Consumer2Positions.Add(electricAccum.Pos);
                     context.Consumer2Requests.Add(requestedEnergy);
                 }
@@ -1823,6 +1867,18 @@ namespace ElectricalProgressive
         }
 
 
+        /// <summary>
+        /// Вычисление экспоненциального скользящего среднего (EMA) на лету
+        /// </summary>
+        /// <param name="alpha"></param>
+        /// <param name="currentValue"></param>
+        /// <param name="previousSmoothedValue"></param>
+        /// <returns></returns>
+        public static float CalculateEMA(float alpha, float currentValue, float previousSmoothedValue)
+        {
+            return alpha * currentValue + (1 - alpha) * previousSmoothedValue;
+        }
+
     }
 
 
@@ -1889,6 +1945,7 @@ namespace ElectricalProgressive
         public int CacheTimeoutCleanupMinutes = 2;
         public int MaxDistanceForFinding = 200;
         public float EnergyLossFactor = 1.0f;
+        public bool EnableLossCompensation = false;
     }
 
     /// <summary>

@@ -32,6 +32,9 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
     }
 
+    public float AvgConsumeCoeff { get; set; }
+
+
     public bool Working
     {
         get

@@ -10,6 +10,11 @@ public interface IElectricConsumer
     public BlockPos Pos { get; }
 
     /// <summary>
+    /// Храним среднее значение потребления
+    /// </summary>
+    public float AvgConsumeCoeff { get; set; }
+
+    /// <summary>
     /// Система запрашивает у потребителя сколько ей нужно в данный момент энергии
     /// </summary>
     public float Consume_request();
@@ -35,4 +40,6 @@ public interface IElectricConsumer
     /// </summary>
     /// <returns></returns>
     public float getPowerRequest();
+
+
 }

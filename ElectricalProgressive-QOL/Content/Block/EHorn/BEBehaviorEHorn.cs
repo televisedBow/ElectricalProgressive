@@ -32,6 +32,8 @@ public class BEBehaviorEHorn : BEBehaviorBase, IElectricConsumer
     /// </summary>
     private readonly float _maxTargetTemp;
 
+    public float AvgConsumeCoeff { get; set; }
+
     public bool HasItems
     {
         get

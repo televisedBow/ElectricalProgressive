@@ -67,6 +67,8 @@ public class BEBehaviorECharger : BEBehaviorBase, IElectricConsumer
         }
     }
 
+    public float AvgConsumeCoeff { get; set; }
+
     public void Consume_receive(float amount)
     {
         if (!Working)

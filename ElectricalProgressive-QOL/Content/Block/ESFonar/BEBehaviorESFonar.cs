@@ -70,6 +70,9 @@ namespace ElectricalProgressive.Content.Block.ESFonar
             return _maxConsumption;
         }
 
+
+        public float AvgConsumeCoeff { get; set; }
+
         public void Consume_receive(float amount)
         {
             if (Api is null)

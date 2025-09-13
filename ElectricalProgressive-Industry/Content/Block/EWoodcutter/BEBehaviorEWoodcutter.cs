@@ -19,6 +19,8 @@ public class BEBehaviorEWoodcutter : BEBehaviorBase, IElectricConsumer
 
     private readonly BlockEntityEWoodcutter _entityEWoodcutter;
 
+    public float AvgConsumeCoeff { get; set; }
+
     public BEBehaviorEWoodcutter(BlockEntity blockentity) : base(blockentity)
     {
 
