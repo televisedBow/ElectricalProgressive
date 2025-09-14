@@ -12,7 +12,7 @@ namespace ElectricalProgressive.Content.Block.ECentrifuge;
 
 public class BlockECentrifuge : Vintagestory.API.Common.Block
 {
-    private BlockEntityECentrifuge? _blockEntityECentrifuge;
+
     
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection? blockSel)
     {
@@ -33,6 +33,8 @@ public class BlockECentrifuge : Vintagestory.API.Common.Block
 
         return true;
     }
+
+
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
         var newState = this.Variant["state"] switch
@@ -56,19 +58,7 @@ public class BlockECentrifuge : Vintagestory.API.Common.Block
         return new[] { OnPickBlock(world, pos) };
     }
 
-    public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
-    {
-        base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        if (
-            !world.BlockAccessor
-                .GetBlock(pos.AddCopy(BlockFacing.DOWN))
-                .SideSolid[BlockFacing.indexUP]
-        )
-        {
-            world.BlockAccessor.BreakBlock(pos, null);
-        }
-    }
 
     /// <summary>
     /// Получение информации о предмете в инвентаре

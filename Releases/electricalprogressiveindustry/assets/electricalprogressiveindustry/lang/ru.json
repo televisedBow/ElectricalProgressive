@@ -1,6 +1,11 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Рецепт успешно загружен",
 
+  "block-ecentrifuge-*": "Центрифуга",
+  "block-handbooktitle-ecentrifuge": "Используется",
+  "block-handbooktext-ecentrifuge": "Позволяет измельчать и перерабатывать все портящиеся предметы/продукты сразу в компост. Количество получаемого компоста в два раза меньше, чем при использовании ванильного способа. Также поддерживает кастомные рецепты переработки, которые будут отображаться в описании центрифуги и самого предмета.<br>Поддерживает автоматическую загрузку и разгрузку с помощью желобов.",
+
+
   "game:ewoodcutter-title-gui": "Электрический лесоруб",
   "block-ewoodcutter-normal": "Электрический лесоруб",
   "block-ewoodcutter-normal-burned": "Электрический лесоруб (сгоревший)",
@@ -15,7 +20,7 @@
   "block-pressform-hammer": "Прессформа молота",
   "block-pressform-hoe": "Прессформа мотыги",
   "block-pressform-prospectingpick": "Прессформа геологического молотка",
-  
+
   "electricalprogressive:produced-in": "Обрабатывается в:",
   "electricalprogressive:energy-required": "Требуется энергии",
   "electricalprogressive:energy-unit": "Дж",

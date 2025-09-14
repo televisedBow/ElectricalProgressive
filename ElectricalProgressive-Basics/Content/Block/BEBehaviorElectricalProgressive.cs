@@ -5,7 +5,6 @@ using ElectricalProgressive.Utils;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;

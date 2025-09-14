@@ -5,10 +5,9 @@
     "ingredients": [
       {
         "type": "item",
-        "code": "game:vegetable-*",
-        "name": "vegetable",
-        "quantity": 8,
-        "allowedVariants": ["carrot","cabbage","onion","turnip","parsnip" ]
+        "code": "game:drygrass",
+        "name": "drygrass",
+        "quantity": 64
       }
     ],
     "output": {
@@ -23,8 +22,59 @@
     "ingredients": [
       {
         "type": "item",
-        "code": "game:bushmeat-raw",
-        "quantity": 1
+        "code": "game:seeds-*",
+        "name": "seeds",
+        "quantity": 32
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:compost",
+      "stackSize": 1
+    }
+  },
+  {
+    "code": "compost",
+    "EnergyOperation": 10000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:treeseed-*",
+        "name": "treeseed",
+        "quantity": 32
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:compost",
+      "stackSize": 1
+    }
+  },
+  {
+    "code": "compost",
+    "EnergyOperation": 10000,
+    "ingredients": [
+      {
+        "type": "block",
+        "code": "game:flower-*",
+        "name": "flower",
+        "quantity": 64
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:compost",
+      "stackSize": 1
+    }
+  },
+  {
+    "code": "default_perish",
+    "EnergyOperation": 10000,
+    "ingredients": [
+      {
+        "quantity": 1,
+        "name": "default",
+        "code": "game:air"
       }
     ],
     "output": {

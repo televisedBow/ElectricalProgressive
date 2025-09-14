@@ -42,7 +42,23 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
         {
             if (Blockentity is BlockEntityECentrifuge entity)
             {
-                bool hasRecipe = entity.FindMatchingRecipe();
+                if (entity.AllEparams.Any(e => e.burnout))
+                    return false;
+
+
+                var entityStack = entity.Inventory[0]?.Itemstack;
+
+                // со стаком что - то не так?
+                if (entityStack is null ||
+                    entityStack.StackSize == 0 ||
+                    entityStack.Collectible == null ||
+                    entityStack.Collectible.Attributes == null)
+                    return false;
+
+
+
+                bool hasRecipe = BlockEntityECentrifuge.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.Inventory[0])
+                                 || BlockEntityECentrifuge.FindPerishProperties(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.Inventory[0]);
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;
                     
@@ -92,7 +108,7 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
     public void Update()
     {
         //смотрим надо ли обновить модельку когда сгорает прибор
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityECentrifuge entity ||
+        if (this.Blockentity is not BlockEntityECentrifuge entity ||
             entity.AllEparams == null)
         {
             return;
@@ -108,17 +124,7 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
             ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
         }
 
-        if (!hasBurnout || entity.Block.Variant["state"] == "burned")
-            return;
-
-        var side = entity.Block.Variant["side"];
-
-        var types = new string[2] { "state", "side" };   //типы горна
-        var variants = new string[2] { "burned", side };  //нужный вариант 
-
-        this.Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariants(types, variants)).BlockId, Pos);
-
-        // MarkDirty не нужен тут
+        
     }
 
     public float getPowerReceive()

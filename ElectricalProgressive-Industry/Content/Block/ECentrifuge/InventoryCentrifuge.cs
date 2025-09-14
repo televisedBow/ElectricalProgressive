@@ -1,78 +1,87 @@
-﻿using System;
-using Vintagestory.API.Common;
-using Vintagestory.API.Datastructures;
+﻿using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.ECentrifuge;
 
-public class InventoryCentrifuge : InventoryBase, ISlotProvider
+public class InventoryCentrifuge : InventoryGeneric
 {
-    private ItemSlot[] slots;
+    private BlockEntityECentrifuge _entity;
 
-    public ItemSlot[] Slots => this.slots;
 
-    public InventoryCentrifuge(string inventoryID, ICoreAPI api)
-        : base(inventoryID, api)
+    private int lastSlot0Count = -1;
+    private long lastSlot0UpdateTime = 0;
+    private const long DelayMs = 2000; // задержка 2 секунды
+
+
+
+    public InventoryCentrifuge(ICoreAPI api)
+        : base(api)
     {
-        this.slots = this.GenEmptySlots(2);
+
     }
 
-    public InventoryCentrifuge(string className, string instanceID, ICoreAPI api)
-        : base(className, instanceID, api)
+    public InventoryCentrifuge(int slots, string className, string instanceID, ICoreAPI api, NewSlotDelegate onNewSlot, BlockEntityECentrifuge entity)
+        : base(slots, className, instanceID, api)
     {
-        this.slots = this.GenEmptySlots(2);
+        _entity = entity;
     }
 
-    public override int Count => 2;
 
-    public override ItemSlot this[int slotId]
-    {
-        get => slotId < 0 || slotId >= this.Count ? (ItemSlot)null : this.slots[slotId];
-        set
-        {
-            if (slotId < 0 || slotId >= this.Count)
-                throw new ArgumentOutOfRangeException(nameof(slotId));
-            this.slots[slotId] = value != null ? value : throw new ArgumentNullException(nameof(value));
-        }
-    }
-
-    public override void FromTreeAttributes(ITreeAttribute tree)
-    {
-        this.slots = this.SlotsFromTreeAttributes(tree, this.slots);
-    }
-
-    public override void ToTreeAttributes(ITreeAttribute tree)
-    {
-        this.SlotsToTreeAttributes(this.slots, tree);
-    }
-
-    protected override ItemSlot NewSlot(int i)
-    {
-        return (ItemSlot)new ItemSlotSurvival((InventoryBase)this);
-    }
-
-    public override float GetSuitability(ItemSlot sourceSlot, ItemSlot targetSlot, bool isMerge)
-    {
-        return targetSlot == this.slots[0] && sourceSlot.Itemstack.Collectible.GrindingProps != null
-            ? 4f
-            : base.GetSuitability(sourceSlot, targetSlot, isMerge);
-    }
-
+    /// <summary>
+    /// Автозагрузка центрифуги
+    /// </summary>
+    /// <param name="atBlockFace"></param>
+    /// <param name="fromSlot"></param>
+    /// <returns></returns>
     public override ItemSlot GetAutoPushIntoSlot(BlockFacing atBlockFace, ItemSlot fromSlot)
     {
-        return this.slots[0];
+        
+        return this[0];
     }
 
+
+    /// <summary>
+    /// Автопулл из центрифуги
+    /// </summary>
+    /// <param name="atBlockFace"></param>
+    /// <returns></returns>
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
-        for (var i = 1; i < Slots.Length; i++)
+        // Проверяем входной слот
+        int currentCount = this[0].Itemstack?.StackSize ?? 0;
+
+        // Если количество изменилось (например, загрузился новый предмет)
+        if (currentCount != lastSlot0Count)
         {
-            var slot = Slots[i];
-            if (!slot.Empty)
-                return slot;
+            lastSlot0Count = currentCount;
+            lastSlot0UpdateTime = _entity.Api.World.ElapsedMilliseconds; // запоминаем время
+        }
+
+        // есть рецепт?
+        bool hasRecipe = !this[0].Empty
+                         && (BlockEntityECentrifuge.FindMatchingRecipe(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this[0])
+                             || BlockEntityECentrifuge.FindPerishProperties(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this[0]));
+
+        if (!hasRecipe || _entity.CurrentRecipe == null)
+        {
+            // Выгружаем слот 0 только если прошло время задержки
+            if (_entity.Api.World.ElapsedMilliseconds - lastSlot0UpdateTime > DelayMs)
+            {
+                lastSlot0UpdateTime = _entity.Api.World.ElapsedMilliseconds;
+                return this[0];
+            }
+
+        }
+
+        // выдаем непустые выходные
+        for (var i = 1; i < this.Count; i++)
+        {
+            if (!this[i].Empty)
+                return this[i];
         }
 
         return null!;
     }
+
 }
 

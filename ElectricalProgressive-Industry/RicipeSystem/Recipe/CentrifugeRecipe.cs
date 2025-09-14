@@ -51,7 +51,7 @@ namespace ElectricalProgressive.RicipeSystem.Recipe;
 
       foreach (CraftingRecipeIngredient ingred in Ingredients)
       {
-        if (!ingred.Code.Path.Contains("*")) continue;
+        if (ingred.Code==null || !ingred.Code.Path.Contains("*")) continue;
 
         int wildcardStartLen = ingred.Code.Path.IndexOf("*");
         int wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;

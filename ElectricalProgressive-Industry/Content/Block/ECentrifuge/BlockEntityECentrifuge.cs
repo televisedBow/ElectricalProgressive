@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -29,14 +30,13 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
     public virtual string DialogTitle => Lang.Get("ecentrifuge-title-gui");
 
-    public override InventoryBase Inventory => (InventoryBase)this.inventory;
-
-    private Facing facing = Facing.None;
-
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    public override InventoryBase Inventory => this.inventory;
 
     private BlockEntityAnimationUtil animUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
+
+    //-------------------------------------------------------------------------------------------------------
+    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
 
     public Facing Facing
@@ -81,10 +81,17 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     }
 
 
+    //-------------------------------------------------------------------------------------------------------
+
+
+    private Facing facing = Facing.None;
+
+
+
     public BlockEntityECentrifuge()
-    { 
+    {
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
-        this.inventory = new InventoryCentrifuge((string)null, (ICoreAPI)null);
+        this.inventory = new InventoryCentrifuge(2, InventoryClassName, (string)null, (ICoreAPI)null, null, this);
         this.inventory.SlotModified += new Action<int>(this.OnSlotModifid);
     }
 
@@ -93,10 +100,12 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
+
         this.inventory.LateInitialize(
-          "ecentrifuge-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
+            InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
+
         this.RegisterGameTickListener(new Action<float>(this.Every500ms), 500);
-        
+
         if (api.Side == EnumAppSide.Client)
         {
             _capi = api as ICoreClientAPI;
@@ -106,57 +115,129 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             }
         }
     }
-    
+
     public int GetRotation()
     {
         string side = Block.Variant["side"];
         int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
-    
+
+    /// <summary>
+    /// При модификации слота
+    /// </summary>
+    /// <param name="slotid"></param>
     private void OnSlotModifid(int slotid)
     {
-        if (this.Api is ICoreClientAPI)
+        if (this.Api is ICoreClientAPI && this.clientDialog!=null)
             this.clientDialog.Update(RecipeProgress);
+
         if (slotid != 0)
             return;
+
         if (this.InputSlot.Empty)
         {
             RecipeProgress = 0;
             StopAnimation();
         }
         this.MarkDirty();
+
         if (this.clientDialog == null || !this.clientDialog.IsOpened())
             return;
+
         this.clientDialog.SingleComposer.ReCompose();
+
         if (Api?.Side == EnumAppSide.Server)
         {
-            FindMatchingRecipe();
+            BlockEntityECentrifuge.FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, Inventory[0]);
             MarkDirty(true);
         }
     }
-    
-    public bool FindMatchingRecipe()
+
+    /// <summary>
+    /// Ищем рецепт для текущего стака
+    /// </summary>
+    /// <returns></returns>
+    public static bool FindMatchingRecipe(ref CentrifugeRecipe currentRecipe, ref string currentRecipeName, ItemSlot inputSlot)
     {
-        ItemSlot[] inputSlots = new ItemSlot[] { inventory[0] };
-        CurrentRecipe = null;
-        CurrentRecipeName = string.Empty;
+        ItemSlot[] inputSlots = new ItemSlot[] { inputSlot };
+        currentRecipe = null;
+        currentRecipeName = string.Empty;
 
         foreach (CentrifugeRecipe recipe in RecipeManager.CentrifugeRecipes)
         {
-            int outsize;
-
-            if (recipe.Matches(inputSlots, out outsize))
+            if (recipe.Matches(inputSlots, out var outsize))
             {
-                CurrentRecipe = recipe;
-                CurrentRecipeName = recipe.Output.ResolvedItemstack.GetName();
-                MarkDirty(true);
+                currentRecipe = recipe;
+                currentRecipeName = recipe.Output.ResolvedItemstack.GetName();
+                //MarkDirty(true);
                 return true;
             }
         }
         return false;
     }
 
+
+    /// <summary>
+    /// Ищем свойства порчи для стака и создаем рецепт на лету
+    /// </summary>
+    /// <returns></returns>
+    public static bool FindPerishProperties(ref CentrifugeRecipe currentRecipe, ref string currentRecipeName, ItemSlot inputSlot)
+    {
+        var transProps = inputSlot.Itemstack.Collectible.TransitionableProps;
+        if (transProps != null)
+        {
+            foreach (var prop in transProps)
+            {
+                if (prop.Type == EnumTransitionType.Perish) // может гнить?
+                {
+                    int inputSize = 1;
+                    int outputSize = 1;
+                    double coeff = 0;
+
+                    if (prop.TransitionedStack.Code.Path == "rot") // гниль?
+                    {
+                        // здесь считаем входные и выходные количества
+                        coeff = Math.Ceiling(8.0f / (prop.TransitionedStack.StackSize* prop.TransitionRatio));
+                        inputSize = (int)coeff;
+                        if (coeff < 1)
+                        {
+                            outputSize = (int)Math.Floor((prop.TransitionedStack.StackSize * prop.TransitionRatio) / 8.0f);
+                        }
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+
+
+                    foreach (CentrifugeRecipe recipe in RecipeManager.CentrifugeRecipes)
+                    {
+                        if (recipe.Code == "default_perish" && inputSlot.StackSize >= inputSize) // нашли универсальный шаблон для гниения
+                        {
+                            recipe.Ingredients[0].Quantity=inputSize;
+                            recipe.Output.StackSize = outputSize;
+
+                            currentRecipe = recipe;
+                            currentRecipeName = recipe.Output.ResolvedItemstack.GetName();
+                            return true;
+                        }
+                    }
+
+
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    /// <summary>
+    /// Серверный тикер
+    /// </summary>
+    /// <param name="dt"></param>
     private void Every500ms(float dt)
     {
         var beh = GetBehavior<BEBehaviorECentrifuge>();
@@ -166,14 +247,33 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             return;
         }
 
+
+        if (this.AllEparams.Any(e => e.burnout))
+            return;
+
+
+        var stack = InputSlot?.Itemstack;
+        
+        // со стаком что-то не так?
+        if (stack is null ||
+            stack.StackSize == 0 ||
+            stack.Collectible == null ||
+            stack.Collectible.Attributes == null)
+            return;
+
+
+
+
+
         bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
-        bool hasRecipe = !InputSlot.Empty && FindMatchingRecipe();
+        bool hasRecipe = !InputSlot.Empty
+                         && (BlockEntityECentrifuge.FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, Inventory[0]) || FindPerishProperties(ref CurrentRecipe, ref CurrentRecipeName, Inventory[0]));
         bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
         if (isCraftingNow)
         {
             if (!_wasCraftingLastTick)
-            {                
+            {
                 StartAnimation();
                 startSound();
             }
@@ -211,72 +311,80 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         _wasCraftingLastTick = isCraftingNow;
     }
 
-private void ProcessCompletedCraft()
-{
-    // Проверяем наличие рецепта и API
-    if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null) 
-    {
-        return;
-    }
 
-    try
+    private void ProcessCompletedCraft()
     {
-        // Создаем копию выходного предмета
-        ItemStack outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
-
-        // Проверяем ингредиенты и слоты
-        if (CurrentRecipe.Ingredients == null || CurrentRecipe.Ingredients.Length == 0 || InputSlot == null)
+        // Проверяем наличие рецепта и API
+        if (CurrentRecipe == null
+            || Api == null
+            || CurrentRecipe.Output?.ResolvedItemstack == null)
         {
-            Api.Logger.Error("Ошибка в рецепте: отсутствуют ингредиенты или входной слот");
             return;
         }
 
-        // Обработка выходного слота
-        if (OutputSlot == null)
+        try
         {
-            Api.Logger.Error("Ошибка: выходной слот не существует");
-            return;
-        }
+            // Создаем копию выходного предмета
+            ItemStack outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
 
-        if (OutputSlot.Empty)
-        {
-            OutputSlot.Itemstack = outputItem;
-        }
-        else if (OutputSlot.Itemstack != null && 
-                outputItem.Collectible != null &&
-                OutputSlot.Itemstack.Collectible == outputItem.Collectible &&
-                OutputSlot.Itemstack.StackSize < OutputSlot.Itemstack.Collectible.MaxStackSize)
-        {
-            int freeSpace = OutputSlot.Itemstack.Collectible.MaxStackSize - OutputSlot.Itemstack.StackSize;
-            int toAdd = Math.Min(freeSpace, outputItem.StackSize);
+            // Проверяем ингредиенты и слоты
+            if (CurrentRecipe.Ingredients == null || CurrentRecipe.Ingredients.Length == 0 || InputSlot == null)
+            {
+                Api.Logger.Error("Ошибка в рецепте: отсутствуют ингредиенты или входной слот");
+                return;
+            }
 
-            OutputSlot.Itemstack.StackSize += toAdd;
-            outputItem.StackSize -= toAdd;
+            // Обработка выходного слота
+            if (OutputSlot == null)
+            {
+                Api.Logger.Error("Ошибка: выходной слот не существует");
+                return;
+            }
 
-            if (outputItem.StackSize > 0)
+            if (OutputSlot.Empty)
+            {
+                OutputSlot.Itemstack = outputItem;
+            }
+            else if (OutputSlot.Itemstack != null &&
+                    outputItem.Collectible != null &&
+                    OutputSlot.Itemstack.Collectible == outputItem.Collectible &&
+                    OutputSlot.Itemstack.StackSize < OutputSlot.Itemstack.Collectible.MaxStackSize)
+            {
+                int freeSpace = OutputSlot.Itemstack.Collectible.MaxStackSize - OutputSlot.Itemstack.StackSize;
+                int toAdd = Math.Min(freeSpace, outputItem.StackSize);
+
+                OutputSlot.Itemstack.StackSize += toAdd;
+                outputItem.StackSize -= toAdd;
+
+                if (outputItem.StackSize > 0)
+                {
+                    Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+                }
+            }
+            else
             {
                 Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
             }
+
+            // Извлекаем ингредиенты из входного слота
+            InputSlot.TakeOut(CurrentRecipe.Ingredients[0].Quantity);
+            InputSlot.MarkDirty();
         }
-        else
+        catch (Exception ex)
         {
-            Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+            Api?.Logger.Error($"Ошибка в обработке крафта: {ex}");
         }
-
-        // Извлекаем ингредиенты из входного слота
-        InputSlot.TakeOut(CurrentRecipe.Ingredients[0].Quantity);
-        InputSlot.MarkDirty();
     }
-    catch (Exception ex)
-    {
-        Api?.Logger.Error($"Ошибка в обработке крафта: {ex}");
-    }
-}
-    
 
+    /// <summary>
+    /// Запуск анимации
+    /// </summary>
     private void StartAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null) return;
+        if (Api?.Side != EnumAppSide.Client
+            || animUtil == null
+            || CurrentRecipe == null)
+            return;
 
 
         if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
@@ -293,9 +401,13 @@ private void ProcessCompletedCraft()
 
     }
 
+    /// <summary>
+    /// Остановка анимации
+    /// </summary>
     private void StopAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null) return;
+        if (Api?.Side != EnumAppSide.Client || animUtil == null)
+            return;
 
         try
         {
@@ -306,7 +418,11 @@ private void ProcessCompletedCraft()
             Api.Logger.Error($"Ошибка в остановке анимации: {ex}");
         }
     }
-    
+
+
+    /// <summary>
+    /// Запуск звука
+    /// </summary>
     public void startSound()
     {
         if (this.ambientSound != null)
@@ -324,14 +440,22 @@ private void ProcessCompletedCraft()
         this.ambientSound.Start();
     }
 
+
+
+
+    /// <summary>
+    /// Остановка звука
+    /// </summary>
     public void stopSound()
     {
         if (this.ambientSound == null)
             return;
         this.ambientSound.Stop();
         this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound) null;
+        this.ambientSound = (ILoadedSound)null;
     }
+
+
 
     protected virtual void UpdateState(float RecipeProgress)
     {
@@ -341,7 +465,13 @@ private void ProcessCompletedCraft()
         }
         MarkDirty(true);
     }
-    
+
+    /// <summary>
+    /// Нажатие ПКМ по блоку
+    /// </summary>
+    /// <param name="byPlayer"></param>
+    /// <param name="blockSel"></param>
+    /// <returns></returns>
     public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
     {
         if (this.Api.Side == EnumAppSide.Client)
@@ -356,6 +486,13 @@ private void ProcessCompletedCraft()
     }
 
 
+
+    /// <summary>
+    /// Получен пакет от клиента
+    /// </summary>
+    /// <param name="player"></param>
+    /// <param name="packetid"></param>
+    /// <param name="data"></param>
     public override void OnReceivedClientPacket(IPlayer player, int packetid, byte[] data)
     {
         base.OnReceivedClientPacket(player, packetid, data);
@@ -363,6 +500,11 @@ private void ProcessCompletedCraft()
         ElectricalProgressive?.OnReceivedClientPacket(player, packetid, data);
     }
 
+    /// <summary>
+    /// Получен пакет от сервера
+    /// </summary>
+    /// <param name="packetid"></param>
+    /// <param name="data"></param>
     public override void OnReceivedServerPacket(int packetid, byte[] data)
     {
         base.OnReceivedServerPacket(packetid, data);
@@ -398,7 +540,12 @@ private void ProcessCompletedCraft()
         tree["inventory"] = (IAttribute)tree1;
         tree.SetFloat("PowerCurrent", this.RecipeProgress);
     }
-    
+
+
+    /// <summary>
+    /// Блок установлен
+    /// </summary>
+    /// <param name="byItemStack"></param>
     public override void OnBlockPlaced(ItemStack? byItemStack = null)
     {
         base.OnBlockPlaced(byItemStack);
@@ -406,48 +553,55 @@ private void ProcessCompletedCraft()
         if (ElectricalProgressive == null || byItemStack == null)
             return;
 
-        ElectricalProgressive.Connection = Facing.DownAll;
+        ElectricalProgressive.Connection = Facing.AllAll;
 
         var voltage = MyMiniLib.GetAttributeInt(byItemStack.Block, "voltage", 32);
         var maxCurrent = MyMiniLib.GetAttributeFloat(byItemStack.Block, "maxCurrent", 5.0F);
         var isolated = MyMiniLib.GetAttributeBool(byItemStack.Block, "isolated", false);
         var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
 
-        this.ElectricalProgressive.Eparams = (
-            new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
-            FacingHelper.Faces(Facing.DownAll).First().Index);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 3);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 4);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 5);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 6);
     }
 
+
+    /// <summary>
+    /// Блок уничтожен
+    /// </summary>
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
 
-        var electricity = ElectricalProgressive;
-        if (electricity != null)
+        if (ElectricalProgressive != null)
         {
-            electricity.Connection = Facing.None;
+            ElectricalProgressive.Connection = Facing.None;
         }
-        
+
         if (this.Api is ICoreClientAPI && this.clientDialog != null)
         {
             this.clientDialog.TryClose();
             this.clientDialog = null;
         }
-        
+
         StopAnimation();
-        
+
         if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
         {
             this.animUtil.Dispose();
         }
-        
+
         if (this.ambientSound != null)
         {
             this.ambientSound.Stop();
             this.ambientSound.Dispose();
         }
     }
-    
+
     public ItemSlot InputSlot => this.inventory[0];
     public ItemSlot OutputSlot => this.inventory[1];
 
@@ -470,7 +624,11 @@ private void ProcessCompletedCraft()
             this.inventory[1].MarkDirty();
         }
     }
-    
+
+
+    /// <summary>
+    /// Блок выгружен из памяти
+    /// </summary>
     public override void OnBlockUnloaded()
     {
         base.OnBlockUnloaded();
@@ -479,6 +637,6 @@ private void ProcessCompletedCraft()
             return;
         this.ambientSound.Stop();
         this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound) null;
+        this.ambientSound = (ILoadedSound)null;
     }
 }

@@ -1,7 +1,6 @@
 ﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +10,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 using static ElectricalProgressive.ElectricalProgressive;
 
@@ -172,7 +170,7 @@ namespace ElectricalProgressive
 
 
         /// <summary>
-        /// Запуск клиентcкой стороны
+        /// Запуск клиентской стороны
         /// </summary>
         /// <param name="api"></param>
         public override void StartClientSide(ICoreClientAPI api)
