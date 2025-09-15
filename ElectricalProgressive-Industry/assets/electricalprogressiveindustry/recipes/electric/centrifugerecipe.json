@@ -1,6 +1,6 @@
 ﻿[
   {
-    "code": "compost",
+    "code": "compost1",
     "EnergyOperation": 10000,
     "ingredients": [
       {
@@ -17,7 +17,7 @@
     }
   },
   {
-    "code": "compost",
+    "code": "compost2",
     "EnergyOperation": 10000,
     "ingredients": [
       {
@@ -34,7 +34,7 @@
     }
   },
   {
-    "code": "compost",
+    "code": "compost3",
     "EnergyOperation": 10000,
     "ingredients": [
       {
@@ -51,7 +51,7 @@
     }
   },
   {
-    "code": "compost",
+    "code": "compost4",
     "EnergyOperation": 10000,
     "ingredients": [
       {

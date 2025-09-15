@@ -131,7 +131,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             CurrentRecipe = null;
             CurrentRecipeName = string.Empty;
 
-            foreach (PressRecipe recipe in RecipeManager.PressRecipes)
+            foreach (PressRecipe recipe in ElectricalProgressiveRecipeManager.PressRecipes)
             {
                 if (MatchesRecipe(recipe))
                 {

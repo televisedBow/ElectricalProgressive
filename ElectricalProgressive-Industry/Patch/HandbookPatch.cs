@@ -61,35 +61,30 @@ public class HandbookPatch
         }
 
         private static void CheckAndAddRecipes(
-            List<RichTextComponentBase> components, 
+            List<RichTextComponentBase> components,
             ICoreClientAPI capi,
-            ItemStack stack, 
+            ItemStack stack,
             ActionConsumable<string> openDetailPageFor,
             ref bool haveText)
         {
-            var machines = new Dictionary<string, (string code, IEnumerable<dynamic> recipes)>
-            {
-                { "ecentrifuge-", ("electricalprogressiveindustry:ecentrifuge-north", RecipeManager.CentrifugeRecipes) },
-                { "ehammer-", ("electricalprogressiveindustry:ehammer-north", RecipeManager.HammerRecipes) },
-                { "epress-", ("electricalprogressiveindustry:epress-north", RecipeManager.PressRecipes) }
-            };
 
-            var machine = machines.FirstOrDefault(m => stack.Collectible.Code.Path.StartsWith(m.Key));
+
+            var machine = ElectricalProgressiveRecipeManager.machines.FirstOrDefault(m => stack.Collectible.Code.Path.StartsWith(m.Key));
 
             if (machine.Value != default)
             {
                 if (machine.Value.recipes != null)
                 {
                     AddMachineInfo(components, capi, machine.Value.code,
-                        GetCachedTranslation("electricalprogressive:produced-in"), 
-                        openDetailPageFor, 
+                        GetCachedTranslation("electricalprogressive:produced-in"),
+                        openDetailPageFor,
                         ref haveText);
                     AddRecipes(components, capi, machine.Value.recipes, openDetailPageFor);
                 }
             }
             else
             {
-                foreach (var m in machines)
+                foreach (var m in ElectricalProgressiveRecipeManager.machines)
                 {
                     if (m.Value.recipes == null) continue;
 
@@ -115,9 +110,9 @@ public class HandbookPatch
         }
 
         private static void AddMachineInfo(
-            List<RichTextComponentBase> components, 
+            List<RichTextComponentBase> components,
             ICoreClientAPI capi,
-            string machineCode, 
+            string machineCode,
             string title,
             ActionConsumable<string> openDetailPageFor,
             ref bool haveText)
@@ -130,7 +125,7 @@ public class HandbookPatch
             components.Add(new RichTextComponent(capi, title + " ",
                 CairoFont.WhiteSmallText().WithWeight(FontWeight.Bold))
             {
-                VerticalAlign = EnumVerticalAlign.Middle, 
+                VerticalAlign = EnumVerticalAlign.Middle,
                 Float = EnumFloat.Inline
             });
 
@@ -144,100 +139,200 @@ public class HandbookPatch
             }
         }
 
+
+
+
+        /// <summary>
+        /// Добавление рецептов с поддержкой слайд-шоу 
+        /// </summary>
+        /// <param name="components"></param>
+        /// <param name="capi"></param>
+        /// <param name="recipes"></param>
+        /// <param name="openDetailPageFor"></param>
         private static void AddRecipes(
-            List<RichTextComponentBase> components, 
+            List<RichTextComponentBase> components,
             ICoreClientAPI capi,
             IEnumerable<dynamic> recipes,
             ActionConsumable<string> openDetailPageFor)
         {
             components.Add(new ClearFloatTextComponent(capi, SmallPadding));
 
-            foreach (var recipe in recipes)
-            {
-                try
-                {
-                    if (components.Count > 0 && components.Last() is not ClearFloatTextComponent)
-                    {
-                        components.Add(new ClearFloatTextComponent(capi, RecipeSpacing));
-                    }
+            // Группируем рецепты по Code
+            var groupedRecipes = recipes
+                .Select(r => (dynamic)r)
+                .GroupBy(r => (string)r.Code)
+                .ToList();
 
-                    bool firstIngredient = true;
+            foreach (var group in groupedRecipes)
+            {
+                var recipeList = group.ToList();
+                if (recipeList.Count == 0 || recipeList[0].Code == "default_perish")
+                    continue;
+
+                components.Add(new ClearFloatTextComponent(capi, RecipeSpacing));
+
+                // Для групп с одним рецептом отображаем обычным образом
+                if (recipeList.Count == 1)
+                {
+                    AddSingleRecipe(components, capi, recipeList[0], openDetailPageFor);
+                    continue;
+                }
+
+                // Для групп с несколькими рецептами создаем слайд-шоу
+                // Собираем все ингредиенты и выходы для слайд-шоу
+                var allIngredients = new List<List<ItemStack>>();
+                var outputStacks = new List<ItemStack>();
+
+                foreach (var recipe in recipeList)
+                {
+                    // Обрабатываем ингредиенты
+                    int ingIndex = 0;
                     foreach (var ing in recipe.Ingredients)
                     {
-                        if (!firstIngredient)
-                        {
-                            var plus = new RichTextComponent(capi, "+ ",
-                                CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
-                            {
-                                VerticalAlign = EnumVerticalAlign.Middle
-                            };
-                            components.Add(plus);
-                        }
-
-                        var resolved = GetOrCreateStack(ing.Code, (int)ing.Quantity, capi.World);
+                        var resolved = GetOrCreateStack((AssetLocation)ing.Code, (int)ing.Quantity, capi.World);
                         if (resolved != null)
                         {
-                            components.Add(CreateItemStackComponent(capi, resolved, openDetailPageFor));
+                            // Добавляем в соответствующий слот
+                            if (ingIndex >= allIngredients.Count)
+                            {
+                                allIngredients.Add(new List<ItemStack>());
+                            }
+                            allIngredients[ingIndex].Add(resolved);
+                            ingIndex++;
                         }
-
-                        firstIngredient = false;
                     }
 
-                    var arrow = new RichTextComponent(capi, "→ ",
+                    // Обрабатываем выход
+                    var outputStack = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
+                    if (outputStack != null)
+                    {
+                        outputStacks.Add(outputStack);
+                    }
+                }
+
+                // Отображаем ингредиенты с слайд-шоу
+                bool firstIngredient = true;
+                foreach (var ingredientOptions in allIngredients)
+                {
+                    if (!firstIngredient)
+                    {
+                        var plus = new RichTextComponent(capi, "+ ",
+                            CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+                        {
+                            VerticalAlign = EnumVerticalAlign.Middle
+                        };
+                        components.Add(plus);
+                    }
+
+                    var ingredientSlideShow = new SlideshowItemstackTextComponent(
+                        capi,
+                        ingredientOptions.ToArray(),
+                        40.0,
+                        EnumFloat.Inline,
+                        (Action<ItemStack>)(cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
+                    )
+                    {
+                        ShowStackSize = true,
+                        VerticalAlign = EnumVerticalAlign.Middle
+                    };
+                    components.Add(ingredientSlideShow);
+
+                    firstIngredient = false;
+                }
+
+                // Стрелка
+                var arrow = new RichTextComponent(capi, "→ ",
+                    CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+                {
+                    VerticalAlign = EnumVerticalAlign.Middle
+                };
+                components.Add(arrow);
+
+                // Выход с слайд-шоу
+                var outputSlideShow = new SlideshowItemstackTextComponent(
+                    capi,
+                    outputStacks.ToArray(),
+                    40.0,
+                    EnumFloat.Inline,
+                    (Action<ItemStack>)(cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
+                )
+                {
+                    ShowStackSize = true,
+                    VerticalAlign = EnumVerticalAlign.Middle
+                };
+                components.Add(outputSlideShow);
+
+                // Добавляем информацию об энергии (берем из первого рецепта в группе)
+                components.Add(new RichTextComponent(capi,
+                    $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipeList[0].EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}\n",
+                    CairoFont.WhiteSmallText()));
+            }
+        }
+
+
+        /// <summary>
+        /// Добавляем рецепт, когда он один
+        /// </summary>
+        /// <param name="components"></param>
+        /// <param name="capi"></param>
+        /// <param name="recipe"></param>
+        /// <param name="openDetailPageFor"></param>
+        private static void AddSingleRecipe(
+            List<RichTextComponentBase> components,
+            ICoreClientAPI capi,
+            dynamic recipe,
+            ActionConsumable<string> openDetailPageFor)
+        {
+            components.Add(new ClearFloatTextComponent(capi, RecipeSpacing));
+
+            bool firstIngredient = true;
+            foreach (var ing in recipe.Ingredients)
+            {
+                if (!firstIngredient)
+                {
+                    var plus = new RichTextComponent(capi, "+ ",
                         CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
                     {
                         VerticalAlign = EnumVerticalAlign.Middle
                     };
-                    components.Add(arrow);
-
-                    var outputStack = GetOrCreateStack(recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
-                    if (outputStack != null)
-                    {
-                        components.Add(CreateItemStackComponent(capi, outputStack, openDetailPageFor));
-                    }
-
-                    try
-                    {
-                        if (recipe.SecondaryOutput != null)
-                        {
-                            float chance = 0f;
-                            try { chance = recipe.SecondaryOutputChance; }
-                            catch { }
-
-                            var chanceText = new RichTextComponent(capi, $"~{(int)(chance * 100)}%",
-                                CairoFont.WhiteSmallText()) { VerticalAlign = EnumVerticalAlign.Middle };
-                            components.Add(chanceText);
-
-                            var secondaryOutputStack = GetOrCreateStack(recipe.SecondaryOutput.Code,
-                                (int)recipe.SecondaryOutput.Quantity, capi.World);
-                            if (secondaryOutputStack != null)
-                            {
-                                components.Add(CreateItemStackComponent(capi, secondaryOutputStack, openDetailPageFor));
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // Игнорируем ошибки вторичных продуктов
-                    }
-
-                    components.Add(new RichTextComponent(capi,
-                        $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipe.EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}\n",
-                        CairoFont.WhiteSmallText()));
+                    components.Add(plus);
                 }
-                catch (Exception ex)
+
+                var resolved = GetOrCreateStack((AssetLocation)ing.Code, (int)ing.Quantity, capi.World);
+                if (resolved != null)
                 {
-                    capi.Logger.Error($"Error rendering recipe: {ex}");
+                    components.Add(CreateItemStackComponent(capi, resolved, openDetailPageFor));
                 }
+
+                firstIngredient = false;
             }
+
+            var arrow = new RichTextComponent(capi, "→ ",
+                CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+            {
+                VerticalAlign = EnumVerticalAlign.Middle
+            };
+            components.Add(arrow);
+
+            var outputStack = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
+            if (outputStack != null)
+            {
+                components.Add(CreateItemStackComponent(capi, outputStack, openDetailPageFor));
+            }
+
+            components.Add(new RichTextComponent(capi,
+                $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipe.EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}\n",
+                CairoFont.WhiteSmallText()));
         }
 
+
+
         private static ItemstackTextComponent CreateItemStackComponent(
-            ICoreClientAPI capi, 
+            ICoreClientAPI capi,
             ItemStack stack,
             ActionConsumable<string> openDetailPageFor)
         {
-            var component = new ItemstackTextComponent(capi, stack, ItemSize, 10.0, EnumFloat.Inline, 
+            var component = new ItemstackTextComponent(capi, stack, ItemSize, 10.0, EnumFloat.Inline,
                 onStackClicked: (cs) => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
             {
                 ShowStacksize = true,

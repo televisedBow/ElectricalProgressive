@@ -164,7 +164,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         currentRecipe = null;
         currentRecipeName = string.Empty;
 
-        foreach (CentrifugeRecipe recipe in RecipeManager.CentrifugeRecipes)
+        foreach (CentrifugeRecipe recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
         {
             if (recipe.Matches(inputSlots, out var outsize))
             {
@@ -212,7 +212,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
 
 
-                    foreach (CentrifugeRecipe recipe in RecipeManager.CentrifugeRecipes)
+                    foreach (CentrifugeRecipe recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
                     {
                         if (recipe.Code == "default_perish" && inputSlot.StackSize >= inputSize) // нашли универсальный шаблон для гниения
                         {

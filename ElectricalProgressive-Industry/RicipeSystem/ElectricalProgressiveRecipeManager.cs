@@ -8,11 +8,12 @@ using Vintagestory.ServerMods;
 namespace ElectricalProgressive.RicipeSystem;
 
 
-public class RecipeManager : ModSystem
+public class ElectricalProgressiveRecipeManager : ModSystem
 {
     public static List<CentrifugeRecipe> CentrifugeRecipes;
     public static List<HammerRecipe> HammerRecipes;
     public static List<PressRecipe> PressRecipes;
+    public static Dictionary<string, (string code, IEnumerable<dynamic> recipes)> machines;
 
     private ICoreServerAPI api;
 
@@ -22,6 +23,11 @@ public class RecipeManager : ModSystem
         api.Event.SaveGameLoaded += CentrifugeRecipe;
         api.Event.SaveGameLoaded += HammerRecipe;
         api.Event.SaveGameLoaded += PressRecipe;
+
+        // инициализация словаря машин с их кодами и рецептами
+        machines = new Dictionary<string, (string code, IEnumerable<dynamic> recipes)>(3);
+        
+
     }
 
     public void CentrifugeRecipe()
@@ -30,6 +36,9 @@ public class RecipeManager : ModSystem
         RecipeLoader recipeLoader = api.ModLoader.GetModSystem<RecipeLoader>();
         recipeLoader.LoadRecipes<CentrifugeRecipe>("Centrifuge Recipe", "recipes/electric/centrifugerecipe", (r) => CentrifugeRecipes.Add(r));
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
+
+        // инициализация словаря машин с их кодами и рецептами
+        machines.Add("ecentrifuge-", ("electricalprogressiveindustry:ecentrifuge-north", ElectricalProgressiveRecipeManager.CentrifugeRecipes));
     }
     
     public void HammerRecipe()
@@ -38,6 +47,9 @@ public class RecipeManager : ModSystem
         RecipeLoader recipeLoader = api.ModLoader.GetModSystem<RecipeLoader>();
         recipeLoader.LoadRecipes<HammerRecipe>("Hammer Recipe", "recipes/electric/hammerrecipe", (r) => HammerRecipes.Add(r));
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
+
+        // инициализация словаря машин с их кодами и рецептами
+        machines.Add("ehammer-", ("electricalprogressiveindustry:ehammer-north", ElectricalProgressiveRecipeManager.HammerRecipes));
     }
     
     public void PressRecipe()
@@ -46,5 +58,8 @@ public class RecipeManager : ModSystem
         RecipeLoader recipeLoader = api.ModLoader.GetModSystem<RecipeLoader>();
         recipeLoader.LoadRecipes<PressRecipe>("Press Recipe", "recipes/electric/pressrecipe", (r) => PressRecipes.Add(r));
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
+
+        // инициализация словаря машин с их кодами и рецептами
+        machines.Add("epress-", ("electricalprogressiveindustry:epress-north", ElectricalProgressiveRecipeManager.PressRecipes));
     }
 }

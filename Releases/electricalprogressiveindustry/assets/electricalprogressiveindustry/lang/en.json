@@ -1,11 +1,27 @@
 ﻿{
-  "electricalprogressiveindustry:recipeloading": "Рецепт успешно загружен",
+  "electricalprogressiveindustry:recipeloading": "Recipe successfully loaded",
 
-  "game:ewoodcutter-title-gui": "Электрический лесоруб",
-  "block-ewoodcutter-normal": "Электрический лесоруб",
-  "block-ewoodcutter-normal-burned": "Электрический лесоруб (сгоревший)",
-  
+  "block-ecentrifuge-*": "Centrifuge",
+  "block-handbooktitle-ecentrifuge": "Usage",
+  "block-handbooktext-ecentrifuge": "Allows grinding and processing all perishable items/food directly into compost. The amount of compost obtained is half that of the vanilla method. Also supports custom processing recipes, which will be displayed in the description of the centrifuge and the item itself.<br>Supports automatic loading and unloading via chutes.",
+
+  "game:ewoodcutter-title-gui": "Electric Woodcutter",
+  "block-ewoodcutter-normal": "Electric Woodcutter",
+  "block-ewoodcutter-normal-burned": "Electric Woodcutter (Burned)",
+  "game:ecentrifuge-title-gui": "Centrifuge",
+  "game:ehammer-title-gui": "Auto-Hammer",
+  "game:epress-title-gui": "Auto-Press",
+
+  "block-pressform-axe": "Axe Press Form",
+  "block-pressform-pickaxe": "Pickaxe Press Form",
+  "block-pressform-shovel": "Shovel Press Form",
+  "block-pressform-falx": "Falx Press Form",
+  "block-pressform-hammer": "Hammer Press Form",
+  "block-pressform-hoe": "Hoe Press Form",
+  "block-pressform-prospectingpick": "Prospecting Pick Press Form",
+
   "electricalprogressive:produced-in": "Processed in:",
-  "electricalprogressive:energy-required": "Energy required: {0} J",
+  "electricalprogressive:energy-required": "Energy required",
+  "electricalprogressive:energy-unit": "J",
   "electricalprogressive:recipe-chance": "~{0}%"
 }

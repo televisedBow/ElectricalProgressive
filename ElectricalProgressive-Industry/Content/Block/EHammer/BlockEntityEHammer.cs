@@ -145,7 +145,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         CurrentRecipe = null;
         CurrentRecipeName = string.Empty;
 
-        foreach (HammerRecipe recipe in RecipeManager.HammerRecipes)
+        foreach (HammerRecipe recipe in ElectricalProgressiveRecipeManager.HammerRecipes)
         {
             int outsize;
 
