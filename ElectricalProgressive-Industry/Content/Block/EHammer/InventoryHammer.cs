@@ -1,60 +1,28 @@
-﻿using System;
-using Vintagestory.API.Common;
-using Vintagestory.API.Datastructures;
+﻿using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
-namespace ElectricalProgressive.Content.Block.ECentrifuge;
+namespace ElectricalProgressive.Content.Block.EHammer;
 
-public class InventoryHammer : InventoryBase, ISlotProvider
+public class InventoryHammer : InventoryGeneric
 {
-    private ItemSlot[] slots;
-
-    public ItemSlot[] Slots => this.slots;
-
-    public InventoryHammer(string inventoryID, ICoreAPI api)
-        : base(inventoryID, api)
+    
+    public InventoryHammer(ICoreAPI api)
+        : base(api)
     {
-        this.slots = this.GenEmptySlots(3); // Теперь 3 слота
+
     }
 
-    public InventoryHammer(string className, string instanceID, ICoreAPI api)
-        : base(className, instanceID, api)
+    public InventoryHammer(int slots, string className, string instanceID, ICoreAPI api, NewSlotDelegate onNewSlot, BlockEntityEHammer entity)
+        : base(slots, className, instanceID, api)
     {
-        this.slots = this.GenEmptySlots(3); // Теперь 3 слота
+ 
     }
 
-    public override int Count => 3; // Теперь 3 слота
-
-    public override ItemSlot this[int slotId]
-    {
-        get => slotId < 0 || slotId >= this.Count ? (ItemSlot)null : this.slots[slotId];
-        set
-        {
-            if (slotId < 0 || slotId >= this.Count)
-                throw new ArgumentOutOfRangeException(nameof(slotId));
-            this.slots[slotId] = value != null ? value : throw new ArgumentNullException(nameof(value));
-        }
-    }
-
-    public override void FromTreeAttributes(ITreeAttribute tree)
-    {
-        this.slots = this.SlotsFromTreeAttributes(tree, this.slots);
-    }
-
-    public override void ToTreeAttributes(ITreeAttribute tree)
-    {
-        this.SlotsToTreeAttributes(this.slots, tree);
-    }
-
-    protected override ItemSlot NewSlot(int i)
-    {
-        return (ItemSlot)new ItemSlotSurvival((InventoryBase)this);
-    }
 
     public override float GetSuitability(ItemSlot sourceSlot, ItemSlot targetSlot, bool isMerge)
     {
         // Слот 0 - только для входных предметов
-        if (targetSlot == this.slots[0])
+        if (targetSlot == this[0])
         {
             return sourceSlot.Itemstack.Collectible.GrindingProps != null ? 4f : 0f;
         }
@@ -65,25 +33,26 @@ public class InventoryHammer : InventoryBase, ISlotProvider
 
     public override ItemSlot GetAutoPushIntoSlot(BlockFacing atBlockFace, ItemSlot fromSlot)
     {
-        // Автозаполнение только в входной слот
-        return this.slots[0];
+        // Автозаполнение только во входной слот
+        return this[0];
     }
+
 
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
-        // Автовывод сначала из основного выхода (слот 1), затем из дополнительного (слот 2)
-        for (var i = 1; i < this.slots.Length; i++)
+        //Автовывод сначала из основного выхода (слот 1), затем из дополнительного (слот 2)
+        for (var i = 1; i < this.Count; i++)
         {
-            var slot = this.slots[i];
-            if (!slot.Empty)
-                return slot;
+            if (!this[i].Empty)
+                return this[i];
         }
 
-        return null;
+        return null!;
     }
 
+
     // Методы для удобного доступа к слотам
-    public ItemSlot InputSlot => this.slots[0];
-    public ItemSlot OutputSlot => this.slots[1];
-    public ItemSlot SecondaryOutputSlot => this.slots[2];
+    public ItemSlot InputSlot => this[0];
+    public ItemSlot OutputSlot => this[1];
+    public ItemSlot SecondaryOutputSlot => this[2];
 }

@@ -13,7 +13,6 @@ namespace ElectricalProgressive.Content.Block.ECentrifuge;
 public class BlockECentrifuge : Vintagestory.API.Common.Block
 {
 
-    
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection? blockSel)
     {
         if (blockSel is null)
@@ -37,17 +36,7 @@ public class BlockECentrifuge : Vintagestory.API.Common.Block
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
-        var newState = this.Variant["state"] switch
-        {
-            "frozen" => "melted",
-            "melted" => "melted",
-            _ => "burned"
-        };
-        var blockCode = CodeWithVariants(new()
-        {
-            { "state", newState },
-            { "side", "north" }
-        });
+        var blockCode = CodeWithVariant("side", "north");
 
         var block = world.BlockAccessor.GetBlock(blockCode);
         return new(block);

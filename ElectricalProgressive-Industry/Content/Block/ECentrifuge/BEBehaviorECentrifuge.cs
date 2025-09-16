@@ -72,7 +72,7 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityECentrifuge entity)
+        if (this.Blockentity is not BlockEntityECentrifuge entity)
             return;
 
         if (IsBurned)

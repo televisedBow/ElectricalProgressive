@@ -1,4 +1,5 @@
 ﻿using ElectricalProgressive.Content.Block.ECentrifuge;
+using ElectricalProgressive.Content.Block.EHammer;
 using ElectricalProgressive.Content.Block.EPress;
 using Vintagestory.API.Common;
 using Vintagestory.API.Client;

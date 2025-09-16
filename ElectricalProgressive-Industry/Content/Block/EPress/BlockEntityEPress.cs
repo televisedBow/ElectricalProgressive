@@ -1,4 +1,5 @@
-﻿using ElectricalProgressive.RicipeSystem;
+﻿using ElectricalProgressive.Content.Block.EHammer;
+using ElectricalProgressive.RicipeSystem;
 using ElectricalProgressive.RicipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
@@ -38,10 +39,14 @@ namespace ElectricalProgressive.Content.Block.EPress
         public virtual string DialogTitle => Lang.Get("epress-title-gui");
         public override InventoryBase Inventory => inventory;
 
+        private BlockEntityAnimationUtil animUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+
+
+        //------------------------------------------------------------------------------------------------------------------
         // Электрические параметры (без изменений)
         private Facing facing = Facing.None;
         private BEBehaviorElectricalProgressive ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
-        private BlockEntityAnimationUtil animUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+        
 
         public Facing Facing
         {
@@ -82,19 +87,19 @@ namespace ElectricalProgressive.Content.Block.EPress
             }
         }
 
+        //----------------------------------------------------------------------------------------------------------------------------
 
         public BlockEntityEPress()
         {
             _maxConsumption = MyMiniLib.GetAttributeInt(Block, "maxConsumption", 100);
-            inventory = new InventoryPress(null, null); // Теперь 2 входа + 1 выход
+            this.inventory = new InventoryPress(3, InventoryClassName, (string)null, (ICoreAPI)null, null, this);
             inventory.SlotModified += OnSlotModified;
         }
 
         public override void Initialize(ICoreAPI api)
         {
             base.Initialize(api);
-            this.inventory.LateInitialize(
-                "ehammer-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
+            this.inventory.LateInitialize(InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
             this.RegisterGameTickListener(new Action<float>(this.Every500ms), 500);
         
             if (api.Side == EnumAppSide.Client)
@@ -114,6 +119,10 @@ namespace ElectricalProgressive.Content.Block.EPress
             return adjustedIndex * 90;
         }
 
+        /// <summary>
+        /// Слот изменен
+        /// </summary>
+        /// <param name="slotid"></param>
         private void OnSlotModified(int slotid)
         {
             if (Api is ICoreClientAPI)
@@ -126,6 +135,10 @@ namespace ElectricalProgressive.Content.Block.EPress
         }
 
         #region Логика рецептов (адаптирована под 2 слота)
+        /// <summary>
+        /// Ищем подходящий рецепт для текущих ингредиентов
+        /// </summary>
+        /// <returns></returns>
         public bool FindMatchingRecipe()
         {
             CurrentRecipe = null;
@@ -145,6 +158,11 @@ namespace ElectricalProgressive.Content.Block.EPress
             return false;
         }
 
+        /// <summary>
+        /// Проверка соответствия текущих слотов рецепту
+        /// </summary>
+        /// <param name="recipe"></param>
+        /// <returns></returns>
         private bool MatchesRecipe(PressRecipe recipe)
         {
             Dictionary<string, string> wildcardMatches = new Dictionary<string, string>();
@@ -200,6 +218,10 @@ namespace ElectricalProgressive.Content.Block.EPress
             return true;
         }
 
+        /// <summary>
+        /// Проверка наличия всех необходимых ингредиентов для текущего рецепта
+        /// </summary>
+        /// <returns></returns>
         private bool HasRequiredItems()
         {
             if (CurrentRecipe == null) return false;
@@ -226,6 +248,10 @@ namespace ElectricalProgressive.Content.Block.EPress
             return true;
         }
 
+
+        /// <summary>
+        /// Завершение крафта: создание выходного предмета и удаление ингредиентов
+        /// </summary>
         private void ProcessCompletedCraft()
         {
             if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null)
@@ -304,7 +330,13 @@ namespace ElectricalProgressive.Content.Block.EPress
                 Api.Logger.Error($"Crafting error in EPress at {Pos}: {ex}");
             }
         }
-        
+
+
+        /// <summary>
+        /// Создание выходного предмета с учетом wildcard-значений
+        /// </summary>
+        /// <param name="wildcardMatches"></param>
+        /// <returns></returns>
         private ItemStack CreateOutputStack(Dictionary<string, string> wildcardMatches)
         {
             if (CurrentRecipe?.Output == null || Api == null) 
@@ -329,7 +361,14 @@ namespace ElectricalProgressive.Content.Block.EPress
 
             return new ItemStack(outputItem, CurrentRecipe.Output.StackSize);
         }
-        
+
+        /// <summary>
+        /// Проверка, удовлетворяет ли ItemStack требуемому ингредиенту (с учетом wildcard)
+        /// </summary>
+        /// <param name="stack"></param>
+        /// <param name="ingred"></param>
+        /// <param name="wildcardMatches"></param>
+        /// <returns></returns>
         private bool SatisfiesIngredient(ItemStack stack, CraftingRecipeIngredient ingred, ref Dictionary<string, string> wildcardMatches)
         {
             // Проверка wildcard-ингредиентов (например, "gear-*")
@@ -347,7 +386,14 @@ namespace ElectricalProgressive.Content.Block.EPress
             // Стандартная проверка (совпадение кода и свойств)
             return ingred.SatisfiesAsIngredient(stack);
         }
-        
+
+
+        /// <summary>
+        /// Соответствие wildcard-шаблону
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <param name="itemCode"></param>
+        /// <returns></returns>
         private string GetWildcardMatch(AssetLocation pattern, AssetLocation itemCode)
         {
             if (!WildcardUtil.Match(pattern, itemCode))
@@ -388,8 +434,8 @@ namespace ElectricalProgressive.Content.Block.EPress
             }
 
             bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1f;
-            bool hasRecipe = CurrentRecipe != null && HasRequiredItems();
-            bool isCraftingNow = hasPower && hasRecipe;
+            bool hasRecipe = !InputSlot1.Empty && !InputSlot2.Empty && FindMatchingRecipe();
+            bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
             // Проверяем, не изменилось ли состояние крафта
             if (isCraftingNow != _wasCraftingLastTick)
@@ -568,19 +614,22 @@ namespace ElectricalProgressive.Content.Block.EPress
             var isolated = MyMiniLib.GetAttributeBool(byItemStack.Block, "isolated", false);
             var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
 
-            this.ElectricalProgressive.Eparams = (
-                new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
-                FacingHelper.Faces(Facing.DownAll).First().Index);
+            this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
+            this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
+            this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
+            this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 3);
+            this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 4);
+            this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 5);
         }
 
         public override void OnBlockRemoved()
         {
             base.OnBlockRemoved();
 
-            var electricity = ElectricalProgressive;
-            if (electricity != null)
+
+            if (ElectricalProgressive != null)
             {
-                electricity.Connection = Facing.None;
+                ElectricalProgressive.Connection = Facing.None;
             }
         
             if (this.Api is ICoreClientAPI && this.clientDialog != null)

@@ -1,4 +1,5 @@
-﻿using ElectricalProgressive.RicipeSystem;
+﻿using ElectricalProgressive.Content.Block.ECentrifuge;
+using ElectricalProgressive.RicipeSystem;
 using ElectricalProgressive.RicipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
@@ -10,7 +11,7 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
-namespace ElectricalProgressive.Content.Block.ECentrifuge;
+namespace ElectricalProgressive.Content.Block.EHammer;
 
 public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 {
@@ -34,26 +35,14 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
     public override InventoryBase Inventory => (InventoryBase)this.inventory;
 
-    private Facing facing = Facing.None;
-
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
-
+    
     private BlockEntityAnimationUtil animUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
 
+    //--------------------------------------------------------------------------------
 
-    public Facing Facing
-    {
-        get => this.facing;
-        set
-        {
-            if (value != this.facing)
-            {
-                this.ElectricalProgressive!.Connection =
-                    FacingHelper.FullFace(this.facing = value);
-            }
-        }
-    }
+
+    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
     //передает значения из Block в BEBehaviorElectricalProgressive
     public (EParams, int) Eparams
@@ -83,12 +72,29 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
     }
 
+    public Facing Facing
+    {
+        get => this.facing;
+        set
+        {
+            if (value != this.facing)
+            {
+                this.ElectricalProgressive!.Connection =
+                    FacingHelper.FullFace(this.facing = value);
+            }
+        }
+    }
 
+    //--------------------------------------------------------------------------------
+
+
+
+    private Facing facing = Facing.None;
 
     public BlockEntityEHammer()
     { 
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
-        this.inventory = new InventoryHammer((string)null, (ICoreAPI)null);
+        this.inventory = new InventoryHammer(3, InventoryClassName, (string)null, (ICoreAPI)null, null, this);
         this.inventory.SlotModified += new Action<int>(this.OnSlotModifid);
     }
 
@@ -96,8 +102,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
-        this.inventory.LateInitialize(
-          "ehammer-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
+        this.inventory.LateInitialize(InventoryClassName +"-"+ this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
         this.RegisterGameTickListener(new Action<float>(this.Every500ms), 500);
         
         if (api.Side == EnumAppSide.Client)
@@ -117,12 +122,19 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         return adjustedIndex * 90;
     }
     
+
+    /// <summary>
+    /// Слот модифицирован
+    /// </summary>
+    /// <param name="slotid"></param>
     private void OnSlotModifid(int slotid)
     {
-        if (this.Api is ICoreClientAPI)
+        if (this.Api is ICoreClientAPI && this.clientDialog!=null)
             this.clientDialog.Update(RecipeProgress);
+
         if (slotid != 0)
             return;
+
         if (this.InputSlot.Empty)
         {
             RecipeProgress = 0;
@@ -139,6 +151,13 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
     }
     
+
+
+
+    /// <summary>
+    /// Ищет подходящий рецепт
+    /// </summary>
+    /// <returns></returns>
     public bool FindMatchingRecipe()
     {
         ItemSlot[] inputSlots = new ItemSlot[] { inventory[0] };
@@ -147,9 +166,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
         foreach (HammerRecipe recipe in ElectricalProgressiveRecipeManager.HammerRecipes)
         {
-            int outsize;
-
-            if (recipe.Matches(inputSlots, out outsize))
+            
+            if (recipe.Matches(inputSlots, out int outsize))
             {
                 CurrentRecipe = recipe;
                 CurrentRecipeName = recipe.Output.ResolvedItemstack.GetName();
@@ -160,6 +178,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         return false;
     }
 
+
+    /// <summary>
+    /// Тикер
+    /// </summary>
+    /// <param name="dt"></param>
     private void Every500ms(float dt)
     {
         var beh = GetBehavior<BEBehaviorEHammer>();
@@ -215,6 +238,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         _wasCraftingLastTick = isCraftingNow;
     }
 
+
+    /// <summary>
+    /// Обработка завершенного крафта
+    /// </summary>
     private void ProcessCompletedCraft()
     {
         if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null) 
@@ -247,6 +274,12 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
     }
 
+
+    /// <summary>
+    /// Попытка сложить в слот или заспавнить в мир
+    /// </summary>
+    /// <param name="stack"></param>
+    /// <param name="targetSlot"></param>
     private void TryMergeOrSpawn(ItemStack stack, ItemSlot targetSlot)
     {
         if (targetSlot.Empty)
@@ -273,8 +306,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
         targetSlot.MarkDirty();
     }
-    
 
+
+    /// <summary>
+    /// Старт анимации
+    /// </summary>
     private void StartAnimation()
     {
         if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null) return;
@@ -286,7 +322,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             {
                 Animation = "craft",
                 Code = "craft",
-                AnimationSpeed = 5f,
+                AnimationSpeed = 4.3f,
                 EaseOutSpeed = 4f,
                 EaseInSpeed = 1f
             });
@@ -294,6 +330,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
     }
 
+    /// <summary>
+    /// Стоп анимации
+    /// </summary>
     private void StopAnimation()
     {
         if (Api?.Side != EnumAppSide.Client || animUtil == null) return;
@@ -308,6 +347,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
     }    
     
+    /// <summary>
+    /// Включение звука
+    /// </summary>
     public void startSound()
     {
         if (this.ambientSound != null)
@@ -326,6 +368,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         this.ambientSound.Start();
     }
 
+
+    /// <summary>
+    /// Выключение звука
+    /// </summary>
     public void stopSound()
     {
         if (this.ambientSound == null)
@@ -334,6 +380,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         this.ambientSound.Dispose();
         this.ambientSound = (ILoadedSound) null;
     }
+
+    /// <summary>
+    /// Обновление состояния
+    /// </summary>
+    /// <param name="RecipeProgress"></param>
     protected virtual void UpdateState(float RecipeProgress)
     {
         if (Api != null && Api.Side == EnumAppSide.Client && clientDialog != null && clientDialog.IsOpened())
@@ -342,7 +393,13 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
         MarkDirty(true);
     }
-    
+
+    /// <summary>
+    /// Игрок нажал ПКМ по блоку
+    /// </summary>
+    /// <param name="byPlayer"></param>
+    /// <param name="blockSel"></param>
+    /// <returns></returns>
     public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
     {
         if (this.Api.Side == EnumAppSide.Client)
@@ -357,6 +414,13 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     }
 
 
+
+    /// <summary>
+    /// Получение пакета с клиента
+    /// </summary>
+    /// <param name="player"></param>
+    /// <param name="packetid"></param>
+    /// <param name="data"></param>
     public override void OnReceivedClientPacket(IPlayer player, int packetid, byte[] data)
     {
         base.OnReceivedClientPacket(player, packetid, data);
@@ -364,6 +428,13 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         ElectricalProgressive?.OnReceivedClientPacket(player, packetid, data);
     }
 
+
+
+    /// <summary>
+    /// Получение пакета с сервера
+    /// </summary>
+    /// <param name="packetid"></param>
+    /// <param name="data"></param>
     public override void OnReceivedServerPacket(int packetid, byte[] data)
     {
         base.OnReceivedServerPacket(packetid, data);
@@ -400,6 +471,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         tree.SetFloat("PowerCurrent", this.RecipeProgress);
     }
     
+    /// <summary>
+    /// Блок установлен
+    /// </summary>
+    /// <param name="byItemStack"></param>
     public override void OnBlockPlaced(ItemStack? byItemStack = null)
     {
         base.OnBlockPlaced(byItemStack);
@@ -414,19 +489,26 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         var isolated = MyMiniLib.GetAttributeBool(byItemStack.Block, "isolated", false);
         var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
 
-        this.ElectricalProgressive.Eparams = (
-            new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
-            FacingHelper.Faces(Facing.DownAll).First().Index);
+
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 3);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 4);
+        this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 5);
     }
 
+    /// <summary>
+    /// Блок удален
+    /// </summary>
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
 
-        var electricity = ElectricalProgressive;
-        if (electricity != null)
+
+        if (ElectricalProgressive != null)
         {
-            electricity.Connection = Facing.None;
+            ElectricalProgressive.Connection = Facing.None;
         }
         
         if (this.Api is ICoreClientAPI && this.clientDialog != null)
@@ -468,7 +550,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             this.inventory[1].MarkDirty();
         }
     }
-    
+
+
+    /// <summary>
+    /// Выгрузка блока из памяти
+    /// </summary>
     public override void OnBlockUnloaded()
     {
         base.OnBlockUnloaded();

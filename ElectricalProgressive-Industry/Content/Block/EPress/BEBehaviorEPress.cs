@@ -57,7 +57,7 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEPress entity)
+        if (this.Blockentity is not BlockEntityEPress entity)
             return;
 
         if (IsBurned)
@@ -93,7 +93,7 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
     public void Update()
     {
         //смотрим надо ли обновить модельку когда сгорает прибор
-        if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEPress entity ||
+        if (this.Blockentity is not BlockEntityEPress entity ||
             entity.AllEparams == null)
         {
             return;
@@ -109,17 +109,6 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
             ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
         }
 
-        if (!hasBurnout || entity.Block.Variant["state"] == "burned")
-            return;
-
-        var side = entity.Block.Variant["side"];
-
-        var types = new string[2] { "state", "side" };   //типы горна
-        var variants = new string[2] { "burned", side };  //нужный вариант 
-
-        this.Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariants(types, variants)).BlockId, Pos);
-
-        // MarkDirty не нужен тут
     }
 
     public float getPowerReceive()

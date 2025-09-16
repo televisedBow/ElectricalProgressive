@@ -74,19 +74,7 @@ class BlockEFreezer2 : BlockEBase
     }
 
 
-    public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
-    {
-        base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        if (
-            !world.BlockAccessor
-                .GetBlock(pos.AddCopy(BlockFacing.DOWN))
-                .SideSolid[BlockFacing.indexUP]
-        )
-        {
-            world.BlockAccessor.BreakBlock(pos, null);
-        }
-    }
 
     /// <summary>
     /// Получение информации о предмете в инвентаре

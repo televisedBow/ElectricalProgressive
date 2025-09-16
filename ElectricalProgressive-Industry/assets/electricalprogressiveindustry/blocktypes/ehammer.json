@@ -3,17 +3,17 @@
   "class": "BlockEHammer",
   "entityClass": "BlockEntityEHammer",
   "attributes": {
-    "maxConsumption": 100,
-    "voltage": 32,
-    "maxCurrent": 20.0,
+    "maxConsumption": 200,
+    "voltage": 128,
+    "maxCurrent": 100.0,
     "isolated": true,
     "isolatedEnvironment": true,
     "handbook": {
-      "groupBy": [ "efreezer2-*" ],
+      "groupBy": [ "ehammer" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveqol:block-handbooktitle-efreezer2",
-          "text": "electricalprogressiveqol:block-handbooktext-efreezer2"
+          "title": "electricalprogressiveindustry:block-handbooktitle-ehammer",
+          "text": "electricalprogressiveindustry:block-handbooktext-ehammer"
         }
       ]
     }

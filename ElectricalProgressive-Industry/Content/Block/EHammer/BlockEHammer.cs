@@ -8,11 +8,11 @@ using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
-namespace ElectricalProgressive.Content.Block.ECentrifuge;
+namespace ElectricalProgressive.Content.Block.EHammer;
 
 public class BlockEHammer : Vintagestory.API.Common.Block
 {
-    private BlockEntityEHammer? _blockEntityEHammer;
+
     
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection? blockSel)
     {
@@ -33,42 +33,23 @@ public class BlockEHammer : Vintagestory.API.Common.Block
 
         return true;
     }
+
+
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
-        var newState = this.Variant["state"] switch
-        {
-            "frozen" => "melted",
-            "melted" => "melted",
-            _ => "burned"
-        };
-        var blockCode = CodeWithVariants(new()
-        {
-            { "state", newState },
-            { "side", "north" }
-        });
+        var blockCode = CodeWithVariant("side", "north");
 
         var block = world.BlockAccessor.GetBlock(blockCode);
         return new(block);
     }
+
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
         return new[] { OnPickBlock(world, pos) };
     }
 
-    public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
-    {
-        base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        if (
-            !world.BlockAccessor
-                .GetBlock(pos.AddCopy(BlockFacing.DOWN))
-                .SideSolid[BlockFacing.indexUP]
-        )
-        {
-            world.BlockAccessor.BreakBlock(pos, null);
-        }
-    }
 
     /// <summary>
     /// Получение информации о предмете в инвентаре

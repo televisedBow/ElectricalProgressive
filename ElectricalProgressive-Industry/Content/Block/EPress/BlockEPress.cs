@@ -1,19 +1,14 @@
-﻿using ElectricalProgressive.Content.Block.EPress;
-using ElectricalProgressive.Utils;
-using System.Collections.Generic;
+﻿using ElectricalProgressive.Utils;
 using System.Text;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
-namespace ElectricalProgressive.Content.Block.ECentrifuge;
+namespace ElectricalProgressive.Content.Block.EPress;
 
 public class BlockEPress : Vintagestory.API.Common.Block
 {
-    private BlockEntityEPress? _blockEntityEPress;
     
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection? blockSel)
     {
@@ -34,19 +29,10 @@ public class BlockEPress : Vintagestory.API.Common.Block
 
         return true;
     }
+
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
-        var newState = this.Variant["state"] switch
-        {
-            "frozen" => "melted",
-            "melted" => "melted",
-            _ => "burned"
-        };
-        var blockCode = CodeWithVariants(new()
-        {
-            { "state", newState },
-            { "side", "north" }
-        });
+        var blockCode = CodeWithVariant("side", "north");
 
         var block = world.BlockAccessor.GetBlock(blockCode);
         return new(block);
@@ -57,19 +43,7 @@ public class BlockEPress : Vintagestory.API.Common.Block
         return new[] { OnPickBlock(world, pos) };
     }
 
-    public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
-    {
-        base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        if (
-            !world.BlockAccessor
-                .GetBlock(pos.AddCopy(BlockFacing.DOWN))
-                .SideSolid[BlockFacing.indexUP]
-        )
-        {
-            world.BlockAccessor.BreakBlock(pos, null);
-        }
-    }
 
     /// <summary>
     /// Получение информации о предмете в инвентаре
