@@ -10,12 +10,13 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using Vintagestory.GameContent.Mechanics;
 
 namespace ElectricalProgressive.Content.Block.EHammer;
 
 public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 {
-    
+
     internal InventoryHammer inventory;
     private GuiDialogHammer clientDialog;
     public override string InventoryClassName => "ehammer";
@@ -35,7 +36,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
     public override InventoryBase Inventory => (InventoryBase)this.inventory;
 
-    
+    // Добавьте эти поля в класс
+    private int _lastSoundFrame = -1;
+    private long _lastAnimationCheckTime;
     private BlockEntityAnimationUtil animUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
 
@@ -87,12 +90,12 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
     //--------------------------------------------------------------------------------
 
-
+    private AssetLocation soundHammer;
 
     private Facing facing = Facing.None;
 
     public BlockEntityEHammer()
-    { 
+    {
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
         this.inventory = new InventoryHammer(3, InventoryClassName, (string)null, (ICoreAPI)null, null, this);
         this.inventory.SlotModified += new Action<int>(this.OnSlotModifid);
@@ -102,9 +105,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
-        this.inventory.LateInitialize(InventoryClassName +"-"+ this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
+        this.inventory.LateInitialize(InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
         this.RegisterGameTickListener(new Action<float>(this.Every500ms), 500);
-        
+
         if (api.Side == EnumAppSide.Client)
         {
             _capi = api as ICoreClientAPI;
@@ -112,16 +115,74 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             {
                 animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
             }
+
         }
+        soundHammer = new AssetLocation("electricalprogressiveindustry:sounds/ehammer/hammer.ogg");
+
+        // Регистрируем частый тикер для проверки анимации на клиенте
+        this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
     }
-    
+
     public int GetRotation()
     {
         string side = Block.Variant["side"];
         int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
-    
+
+
+    // Новый метод для проверки кадра анимации
+    private void CheckAnimationFrame(float dt)
+    {
+        if (Api?.Side != EnumAppSide.Client || animUtil == null)
+            return;
+
+        // Проверяем, активна ли анимация
+        if (animUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
+        {
+            // Получаем текущее время в миллисекундах
+            long currentTime = Api.World.ElapsedMilliseconds;
+
+
+
+            _lastAnimationCheckTime = currentTime;
+
+            var currentFrame = animUtil.animator.Animations[0].CurrentFrame;
+            // Воспроизводим звук на определенном кадре
+            if (currentFrame >= 29 && _lastSoundFrame != 29)
+            {
+                PlayHammerSound();
+                _lastSoundFrame = 29;
+            }
+            else if ((int)currentFrame < 29)
+            {
+                _lastSoundFrame = -1;
+            }
+
+        }
+        else
+        {
+            _lastSoundFrame = -1;
+        }
+    }
+
+    // Метод для воспроизведения звука
+    private void PlayHammerSound()
+    {
+        if (Api?.Side != EnumAppSide.Client) return;
+
+        ICoreClientAPI capi = Api as ICoreClientAPI;
+        capi.World.PlaySoundAt(
+            soundHammer,
+            Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
+            null,
+            false,
+            32,
+            0.75f
+        );
+    }
+
+
 
     /// <summary>
     /// Слот модифицирован
@@ -129,20 +190,30 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     /// <param name="slotid"></param>
     private void OnSlotModifid(int slotid)
     {
-        if (this.Api is ICoreClientAPI && this.clientDialog!=null)
+        if (this.Api is ICoreClientAPI && this.clientDialog != null)
             this.clientDialog.Update(RecipeProgress);
 
         if (slotid != 0)
             return;
+
+        // защита от горячей смены стака
+        if (slotid == 0 && RecipeProgress < 1f)
+        {
+            // в любом случае сбрасываем прогресс
+            RecipeProgress = 0f;
+            UpdateState(RecipeProgress);
+        }
 
         if (this.InputSlot.Empty)
         {
             RecipeProgress = 0;
             StopAnimation();
         }
+
         this.MarkDirty();
         if (this.clientDialog == null || !this.clientDialog.IsOpened())
             return;
+
         this.clientDialog.SingleComposer.ReCompose();
         if (Api?.Side == EnumAppSide.Server)
         {
@@ -150,7 +221,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             MarkDirty(true);
         }
     }
-    
+
 
 
 
@@ -166,7 +237,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
         foreach (HammerRecipe recipe in ElectricalProgressiveRecipeManager.HammerRecipes)
         {
-            
+
             if (recipe.Matches(inputSlots, out int outsize))
             {
                 CurrentRecipe = recipe;
@@ -177,6 +248,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
         return false;
     }
+
+
 
 
     /// <summary>
@@ -200,7 +273,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         if (isCraftingNow)
         {
             if (!_wasCraftingLastTick)
-            {                
+            {
                 StartAnimation();
                 startSound();
             }
@@ -221,11 +294,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
                     StopAnimation();
                     stopSound();
                 }
-                else
-                {
-                    RecipeProgress = 0f; // Сбрасываем для нового цикла
-                    UpdateState(RecipeProgress);
-                }
+
+                // в любом случае сбрасываем прогресс
+                RecipeProgress = 0f;
+                UpdateState(RecipeProgress);
             }
         }
         else if (_wasCraftingLastTick)
@@ -244,7 +316,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     /// </summary>
     private void ProcessCompletedCraft()
     {
-        if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null) 
+        if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null)
         {
             return;
         }
@@ -256,7 +328,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             TryMergeOrSpawn(outputItem, OutputSlot);
 
             // Обработка дополнительного выхода с шансом
-            if (CurrentRecipe.SecondaryOutput != null && 
+            if (CurrentRecipe.SecondaryOutput != null &&
                 CurrentRecipe.SecondaryOutput.ResolvedItemstack != null &&
                 Api.World.Rand.NextDouble() < CurrentRecipe.SecondaryOutputChance)
             {
@@ -313,19 +385,22 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     /// </summary>
     private void StartAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null) return;
+        if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null)
+            return;
 
 
         if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
         {
+
             animUtil.StartAnimation(new AnimationMetaData()
             {
-                Animation = "craft",
+                Animation = "Animation1",
                 Code = "craft",
-                AnimationSpeed = 4.3f,
-                EaseOutSpeed = 4f,
+                AnimationSpeed = 2.0f,
+                EaseOutSpeed = 2.0f,
                 EaseInSpeed = 1f
             });
+
         }
 
     }
@@ -335,7 +410,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     /// </summary>
     private void StopAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null) return;
+        if (Api?.Side != EnumAppSide.Client || animUtil == null)
+            return;
 
         try
         {
@@ -345,8 +421,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         {
             Api.Logger.Error($"Error stopping animation: {ex}");
         }
-    }    
-    
+    }
+
     /// <summary>
     /// Включение звука
     /// </summary>
@@ -354,6 +430,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     {
         if (this.ambientSound != null)
             return;
+        /*
         ICoreAPI api = this.Api;
         if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0)
             return;
@@ -366,6 +443,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             Volume = 0.75f
         });
         this.ambientSound.Start();
+        */
     }
 
 
@@ -378,7 +456,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             return;
         this.ambientSound.Stop();
         this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound) null;
+        this.ambientSound = (ILoadedSound)null;
     }
 
     /// <summary>
@@ -470,7 +548,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         tree["inventory"] = (IAttribute)tree1;
         tree.SetFloat("PowerCurrent", this.RecipeProgress);
     }
-    
+
     /// <summary>
     /// Блок установлен
     /// </summary>
@@ -510,27 +588,27 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         {
             ElectricalProgressive.Connection = Facing.None;
         }
-        
+
         if (this.Api is ICoreClientAPI && this.clientDialog != null)
         {
             this.clientDialog.TryClose();
             this.clientDialog = null;
         }
-        
+
         StopAnimation();
-        
+
         if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
         {
             this.animUtil.Dispose();
         }
-        
+
         if (this.ambientSound != null)
         {
             this.ambientSound.Stop();
             this.ambientSound.Dispose();
         }
     }
-    
+
     public ItemStack InputStack
     {
         get => this.inventory[0].Itemstack;
@@ -563,6 +641,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             return;
         this.ambientSound.Stop();
         this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound) null;
+        this.ambientSound = (ILoadedSound)null;
     }
 }

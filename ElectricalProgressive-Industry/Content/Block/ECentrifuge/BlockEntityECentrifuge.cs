@@ -135,6 +135,14 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         if (slotid != 0)
             return;
 
+        // защита от горячей смены стака
+        if (slotid == 0 && RecipeProgress<1f)
+        {
+            // в любом случае сбрасываем прогресс
+            RecipeProgress = 0f;
+            UpdateState(RecipeProgress);
+        }
+
         if (this.InputSlot.Empty)
         {
             RecipeProgress = 0;
@@ -281,6 +289,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
             UpdateState(RecipeProgress);
 
+            // Обработка закончена?
             if (RecipeProgress >= 1f)
             {
                 ProcessCompletedCraft();
@@ -294,11 +303,10 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
                     StopAnimation();
                     stopSound();
                 }
-                else
-                {
-                    RecipeProgress = 0f; // Сбрасываем для нового цикла
-                    UpdateState(RecipeProgress);
-                }
+
+                // в любом случае сбрасываем прогресс
+                RecipeProgress = 0f; 
+                UpdateState(RecipeProgress);
             }
         }
         else if (_wasCraftingLastTick)

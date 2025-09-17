@@ -30,7 +30,7 @@ public class HandbookPatch
     public static class HandbookPageComposer
     {
         private const float ItemSize = 40.0f;
-        private const float LineSpacing = 20f;
+        private const float LineSpacing = 14f;
         private const float SmallPadding = 2f;
         private const float RecipeSpacing = 14f;
 

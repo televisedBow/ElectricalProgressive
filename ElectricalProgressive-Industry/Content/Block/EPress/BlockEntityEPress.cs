@@ -128,6 +128,9 @@ namespace ElectricalProgressive.Content.Block.EPress
             if (Api is ICoreClientAPI)
                 clientDialog?.Update(RecipeProgress);
 
+
+
+
             if (slotid != 3) // Если изменился не выходной слот
                 FindMatchingRecipe();
 
@@ -461,14 +464,16 @@ namespace ElectricalProgressive.Content.Block.EPress
                 if (RecipeProgress >= 1f)
                 {
                     ProcessCompletedCraft();
-                    RecipeProgress = 0f; // Сбрасываем после завершения
 
                     if (!HasRequiredItems()) // Проверяем возможность следующего цикла
                     {
                         StopAnimation();
                         StopSound();
-                        RecipeProgress = 0f; // Сбрасываем прогресс при остановке
                     }
+
+                    // в любом случае сбрасываем прогресс
+                    RecipeProgress = 0f;
+                    UpdateState(RecipeProgress);
                 }
             }
 
