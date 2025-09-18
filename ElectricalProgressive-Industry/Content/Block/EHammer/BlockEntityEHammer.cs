@@ -1,6 +1,6 @@
 ﻿using ElectricalProgressive.Content.Block.ECentrifuge;
-using ElectricalProgressive.RicipeSystem;
-using ElectricalProgressive.RicipeSystem.Recipe;
+using ElectricalProgressive.RecipeSystem;
+using ElectricalProgressive.RecipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
 using System.Linq;
@@ -36,7 +36,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
     public override InventoryBase Inventory => (InventoryBase)this.inventory;
 
-    // Добавьте эти поля в класс
+
     private int _lastSoundFrame = -1;
     private long _lastAnimationCheckTime;
     private BlockEntityAnimationUtil animUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
@@ -116,11 +116,12 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
                 animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
             }
 
-        }
-        soundHammer = new AssetLocation("electricalprogressiveindustry:sounds/ehammer/hammer.ogg");
+            soundHammer = new AssetLocation("electricalprogressiveindustry:sounds/ehammer/hammer.ogg");
 
-        // Регистрируем частый тикер для проверки анимации на клиенте
-        this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
+            // Регистрируем частый тикер для проверки анимации на клиенте
+            this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
+        }
+        
     }
 
     public int GetRotation()
@@ -131,30 +132,32 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     }
 
 
-    // Новый метод для проверки кадра анимации
+    /// <summary>
+    /// Новый метод для проверки кадра анимации
+    /// </summary>
+    /// <param name="dt"></param>
     private void CheckAnimationFrame(float dt)
     {
         if (Api?.Side != EnumAppSide.Client || animUtil == null)
             return;
 
+        const int startFrame = 27; // Кадр, на котором нужно воспроизвести звук
         // Проверяем, активна ли анимация
         if (animUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
         {
             // Получаем текущее время в миллисекундах
             long currentTime = Api.World.ElapsedMilliseconds;
-
-
-
+            
             _lastAnimationCheckTime = currentTime;
 
             var currentFrame = animUtil.animator.Animations[0].CurrentFrame;
             // Воспроизводим звук на определенном кадре
-            if (currentFrame >= 29 && _lastSoundFrame != 29)
+            if (currentFrame >= startFrame && _lastSoundFrame != startFrame)
             {
                 PlayHammerSound();
-                _lastSoundFrame = 29;
+                _lastSoundFrame = startFrame;
             }
-            else if ((int)currentFrame < 29)
+            else if ((int)currentFrame < startFrame)
             {
                 _lastSoundFrame = -1;
             }
@@ -166,10 +169,13 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
     }
 
-    // Метод для воспроизведения звука
+    /// <summary>
+    /// Метод для воспроизведения звука
+    /// </summary>
     private void PlayHammerSound()
     {
-        if (Api?.Side != EnumAppSide.Client) return;
+        if (Api?.Side != EnumAppSide.Client)
+            return;
 
         ICoreClientAPI capi = Api as ICoreClientAPI;
         capi.World.PlaySoundAt(
@@ -275,7 +281,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             if (!_wasCraftingLastTick)
             {
                 StartAnimation();
-                startSound();
             }
 
             RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
@@ -413,38 +418,15 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         if (Api?.Side != EnumAppSide.Client || animUtil == null)
             return;
 
-        try
+        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
         {
+            
             animUtil.StopAnimation("craft");
         }
-        catch (Exception ex)
-        {
-            Api.Logger.Error($"Error stopping animation: {ex}");
-        }
+        
     }
 
-    /// <summary>
-    /// Включение звука
-    /// </summary>
-    public void startSound()
-    {
-        if (this.ambientSound != null)
-            return;
-        /*
-        ICoreAPI api = this.Api;
-        if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0)
-            return;
-        this.ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
-        {
-            Location = new AssetLocation("electricalprogressiveindustry:sounds/ehammer/hammer.ogg"),
-            ShouldLoop = true,
-            Position = this.Pos.ToVec3f().Add(0.5f, 0.25f, 0.5f),
-            DisposeOnFinish = false,
-            Volume = 0.75f
-        });
-        this.ambientSound.Start();
-        */
-    }
+
 
 
     /// <summary>

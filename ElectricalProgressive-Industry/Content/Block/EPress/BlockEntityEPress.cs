@@ -1,6 +1,6 @@
 ﻿using ElectricalProgressive.Content.Block.EHammer;
-using ElectricalProgressive.RicipeSystem;
-using ElectricalProgressive.RicipeSystem.Recipe;
+using ElectricalProgressive.RecipeSystem;
+using ElectricalProgressive.RecipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
 using System.Collections.Generic;
@@ -40,7 +40,8 @@ namespace ElectricalProgressive.Content.Block.EPress
         public override InventoryBase Inventory => inventory;
 
         private BlockEntityAnimationUtil animUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
-
+        private int _lastSoundFrame = -1;
+        private long _lastAnimationCheckTime;
 
         //------------------------------------------------------------------------------------------------------------------
         // Электрические параметры (без изменений)
@@ -89,6 +90,9 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         //----------------------------------------------------------------------------------------------------------------------------
 
+
+        private AssetLocation soundPress;
+
         public BlockEntityEPress()
         {
             _maxConsumption = MyMiniLib.GetAttributeInt(Block, "maxConsumption", 100);
@@ -109,6 +113,11 @@ namespace ElectricalProgressive.Content.Block.EPress
                 {
                     animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
                 }
+
+                soundPress = new AssetLocation("electricalprogressiveindustry:sounds/epress/press.ogg");
+
+                // Регистрируем частый тикер для проверки анимации на клиенте
+                this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
             }
         }
 
@@ -128,11 +137,12 @@ namespace ElectricalProgressive.Content.Block.EPress
             if (Api is ICoreClientAPI)
                 clientDialog?.Update(RecipeProgress);
 
-
-
-
-            if (slotid != 3) // Если изменился не выходной слот
-                FindMatchingRecipe();
+            
+            if (slotid != 2) // Если изменился не выходной слот, то сбрасываем прогресс 
+            {
+                RecipeProgress = 0f;
+                UpdateState(RecipeProgress);
+            }
 
             MarkDirty();
         }
@@ -157,7 +167,10 @@ namespace ElectricalProgressive.Content.Block.EPress
                     return true;
                 }
             }
+
             RecipeProgress = 0f;
+            UpdateState(RecipeProgress);
+
             return false;
         }
 
@@ -432,7 +445,6 @@ namespace ElectricalProgressive.Content.Block.EPress
             if (beh == null)
             {
                 StopAnimation();
-                StopSound();
                 return;
             }
 
@@ -446,13 +458,11 @@ namespace ElectricalProgressive.Content.Block.EPress
                 if (isCraftingNow)
                 {
                     StartAnimation();
-                    StartSound();
                 }
                 else
                 {
                     RecipeProgress = 0f; // Сбрасываем прогресс при остановке
                     StopAnimation();
-                    StopSound();
                 }
             }
 
@@ -468,7 +478,6 @@ namespace ElectricalProgressive.Content.Block.EPress
                     if (!HasRequiredItems()) // Проверяем возможность следующего цикла
                     {
                         StopAnimation();
-                        StopSound();
                     }
 
                     // в любом случае сбрасываем прогресс
@@ -490,57 +499,108 @@ namespace ElectricalProgressive.Content.Block.EPress
         #endregion
 
         #region Визуальные эффекты
+        /// <summary>
+        /// Старт анимации
+        /// </summary>
         private void StartAnimation()
         {
-            if (Api?.Side == EnumAppSide.Client)
+            if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null)
+                return;
+
+
+            if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
             {
-                animUtil?.StartAnimation(new AnimationMetaData
+
+                animUtil.StartAnimation(new AnimationMetaData()
                 {
-                    Animation = "craft",
+                    Animation = "Animation1",
                     Code = "craft",
-                    AnimationSpeed = 4f,
-                    EaseOutSpeed = 4f,
+                    AnimationSpeed = 2.0f,
+                    EaseOutSpeed = 2.0f,
                     EaseInSpeed = 1f
                 });
+
             }
+
         }
 
+        /// <summary>
+        /// Стоп анимации
+        /// </summary>
         private void StopAnimation()
         {
-            if (Api?.Side == EnumAppSide.Client)
+            if (Api?.Side != EnumAppSide.Client || animUtil == null)
+                return;
+
+            if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
             {
-                try
+               
+                animUtil.StopAnimation("craft");
+            }
+         
+        }
+
+
+
+        /// <summary>
+        /// Новый метод для проверки кадра анимации
+        /// </summary>
+        /// <param name="dt"></param>
+        private void CheckAnimationFrame(float dt)
+        {
+            if (Api?.Side != EnumAppSide.Client || animUtil == null)
+                return;
+
+            const int startFrame = 20; // Кадр, на котором нужно воспроизвести звук
+            // Проверяем, активна ли анимация
+            if (animUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
+            {
+                // Получаем текущее время в миллисекундах
+                long currentTime = Api.World.ElapsedMilliseconds;
+
+                _lastAnimationCheckTime = currentTime;
+
+                var currentFrame = animUtil.animator.Animations[0].CurrentFrame;
+                // Воспроизводим звук на определенном кадре
+                if (currentFrame >= startFrame && _lastSoundFrame != startFrame)
                 {
-                    animUtil?.StopAnimation("craft");
+                    PlayHammerSound();
+                    _lastSoundFrame = startFrame;
                 }
-                catch (Exception ex)
+                else if ((int)currentFrame < startFrame)
                 {
-                    Api.Logger.Error($"Animation stop error: {ex}");
+                    _lastSoundFrame = -1;
                 }
+
+            }
+            else
+            {
+                _lastSoundFrame = -1;
             }
         }
 
-        private void StartSound()
+        /// <summary>
+        /// Метод для воспроизведения звука
+        /// </summary>
+        private void PlayHammerSound()
         {
-            if (Api?.Side != EnumAppSide.Client || ambientSound != null) return;
-            
-            ambientSound = _capi.World.LoadSound(new SoundParams
-            {
-                Location = new AssetLocation("electricalprogressiveindustry:sounds/epress/press.ogg"),
-                ShouldLoop = true,
-                Position = Pos.ToVec3f().Add(0.5f, 0.25f, 0.5f),
-                DisposeOnFinish = false,
-                Volume = 0.75f
-            });
-            ambientSound?.Start();
+            if (Api?.Side != EnumAppSide.Client)
+                return;
+
+            ICoreClientAPI capi = Api as ICoreClientAPI;
+            capi.World.PlaySoundAt(
+                soundPress,
+                Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
+                null,
+                false,
+                32,
+                0.75f
+            );
         }
 
-        private void StopSound()
-        {
-            ambientSound?.Stop();
-            ambientSound?.Dispose();
-            ambientSound = null;
-        }
+
+
+
         #endregion
 
         #region GUI и взаимодействие

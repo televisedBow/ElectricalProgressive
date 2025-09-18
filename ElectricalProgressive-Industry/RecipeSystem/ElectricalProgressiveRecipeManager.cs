@@ -1,11 +1,11 @@
-﻿using ElectricalProgressive.RicipeSystem.Recipe;
+﻿using ElectricalProgressive.RecipeSystem.Recipe;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using Vintagestory.ServerMods;
 
-namespace ElectricalProgressive.RicipeSystem;
+namespace ElectricalProgressive.RecipeSystem;
 
 
 public class ElectricalProgressiveRecipeManager : ModSystem

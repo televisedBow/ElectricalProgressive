@@ -1,5 +1,5 @@
-﻿using ElectricalProgressive.RicipeSystem;
-using ElectricalProgressive.RicipeSystem.Recipe;
+﻿using ElectricalProgressive.RecipeSystem;
+using ElectricalProgressive.RecipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
 using System.Linq;
@@ -417,14 +417,11 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         if (Api?.Side != EnumAppSide.Client || animUtil == null)
             return;
 
-        try
+        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
         {
             animUtil.StopAnimation("craft");
         }
-        catch (Exception ex)
-        {
-            Api.Logger.Error($"Ошибка в остановке анимации: {ex}");
-        }
+        
     }
 
 

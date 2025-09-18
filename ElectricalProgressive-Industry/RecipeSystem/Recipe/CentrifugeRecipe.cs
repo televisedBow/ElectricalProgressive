@@ -4,7 +4,7 @@ using System.IO;
 using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 
-namespace ElectricalProgressive.RicipeSystem.Recipe;
+namespace ElectricalProgressive.RecipeSystem.Recipe;
 
   public class CentrifugeRecipe : IByteSerializable, IRecipeBase<CentrifugeRecipe>
   {

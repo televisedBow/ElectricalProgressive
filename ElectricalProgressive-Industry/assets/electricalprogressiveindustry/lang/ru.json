@@ -33,5 +33,6 @@
   "electricalprogressive:produced-in": "Обрабатывается в:",
   "electricalprogressive:energy-required": "Требуется энергии",
   "electricalprogressive:energy-unit": "Дж",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "шанс"
 }

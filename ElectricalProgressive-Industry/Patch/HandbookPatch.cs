@@ -1,5 +1,6 @@
 ﻿using Cairo;
-using ElectricalProgressive.RicipeSystem;
+using ElectricalProgressive.RecipeSystem;
+using ElectricalProgressive.RecipeSystem.Recipe;
 using HarmonyLib;
 using System;
 using System.Collections.Concurrent;
@@ -202,11 +203,21 @@ public class HandbookPatch
                         }
                     }
 
-                    // Обрабатываем выход
-                    var outputStack = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
-                    if (outputStack != null)
+                    // Обрабатываем выход(ы)
+                    var outputStack1 = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
+                    if (outputStack1 != null)
                     {
-                        outputStacks.Add(outputStack);
+                        outputStacks.Add(outputStack1);
+                    }
+
+                    if (recipe is HammerRecipe)
+                    {
+                        var outputStack2 = GetOrCreateStack((AssetLocation)recipe.SecondaryOutput.Code,
+                            (int)recipe.SecondaryOutput.Quantity, capi.World);
+                        if (outputStack1 != null)
+                        {
+                            outputStacks.Add(outputStack2);
+                        }
                     }
                 }
 
@@ -260,11 +271,20 @@ public class HandbookPatch
                     ShowStackSize = true,
                     VerticalAlign = EnumVerticalAlign.Middle
                 };
+                
                 components.Add(outputSlideShow);
+
+                if (recipeList[0] is HammerRecipe)
+                {
+                    // выводим шанс после стака с вторым выходом
+                    components.Add(new RichTextComponent(capi,
+                        $"({GetCachedTranslation("electricalprogressive:chance")}: {(int)(recipeList[0].SecondaryOutputChance * 100)} %)",
+                        CairoFont.WhiteSmallText()) { VerticalAlign = EnumVerticalAlign.Middle });
+                }
 
                 // Добавляем информацию об энергии (берем из первого рецепта в группе)
                 components.Add(new RichTextComponent(capi,
-                    $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipeList[0].EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}\n",
+                    $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipeList[0].EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}",
                     CairoFont.WhiteSmallText()));
             }
         }
@@ -314,14 +334,45 @@ public class HandbookPatch
             };
             components.Add(arrow);
 
-            var outputStack = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
-            if (outputStack != null)
+
+
+            // Обрабатываем выход(ы)
+            var outputStack1 = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
+            if (outputStack1 != null)
             {
-                components.Add(CreateItemStackComponent(capi, outputStack, openDetailPageFor));
+                components.Add(CreateItemStackComponent(capi, outputStack1, openDetailPageFor));
             }
 
+            if (recipe is HammerRecipe)
+            {
+                // Второй выход +
+                var plus = new RichTextComponent(capi, "+ ",
+                    CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+                {
+                    VerticalAlign = EnumVerticalAlign.Middle
+                };
+                components.Add(plus);
+
+                var outputStack2 = GetOrCreateStack((AssetLocation)recipe.SecondaryOutput.Code,
+                    (int)recipe.SecondaryOutput.Quantity, capi.World);
+                if (outputStack1 != null)
+                {
+                    components.Add(CreateItemStackComponent(capi, outputStack2, openDetailPageFor));
+                }
+
+                // выводим шанс после стака с вторым выходом
+                components.Add(new RichTextComponent(capi,
+                    $"({GetCachedTranslation("electricalprogressive:chance")}: {(int)(recipe.SecondaryOutputChance*100)} %)",
+                    CairoFont.WhiteSmallText())
+                {
+                    VerticalAlign = EnumVerticalAlign.Middle
+                });
+                
+            }
+
+            
             components.Add(new RichTextComponent(capi,
-                $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipe.EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}\n",
+                $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipe.EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}",
                 CairoFont.WhiteSmallText()));
         }
 
