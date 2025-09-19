@@ -20,7 +20,7 @@ using static ElectricalProgressive.ElectricalProgressive;
     "electricalprogressivecore",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electrical logic library.",
-    Version = "2.3.0",
+    Version = "2.3.1",
     Authors = new[] { "Tehtelev", "Kotl" }
 )]
 
@@ -1802,6 +1802,10 @@ namespace ElectricalProgressive
         {
             result.Reset(); // сбрасываем значения
 
+            // такое редко, но может произойти, поэтому сбрасываем и выходим
+            if (facing == Facing.None)
+                return result;
+
             if (this.parts.TryGetValue(position, out var part))
             {
                 if (method == "thisFace" || method == "firstFace") // пока так, возможно потом по-разному будет обработка
@@ -1811,8 +1815,8 @@ namespace ElectricalProgressive
                     if (part.Networks[blockFacing.Index] is { } net)
                     {
                         localNetwork = net;                                              //выдаем найденную цепь
-                        result.Facing |= FacingHelper.FromFace(blockFacing);        //выдаем ее направления
-                        result.eParamsInNetwork = part.eparams[blockFacing.Index];  //выдаем ее текущие параметры
+                        result.Facing |= FacingHelper.FromFace(blockFacing);            //выдаем ее направления
+                        result.eParamsInNetwork = part.eparams[blockFacing.Index];      //выдаем ее текущие параметры
                         result.current = part.eparams[blockFacing.Index].current;           //выдаем текущий ток в этой грани
                     }
                     else

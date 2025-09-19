@@ -6,7 +6,7 @@
     "Tehtelev",
     "Kotl"
   ],
-  "description": "Brings electricity into the game!",
+  "description": "Electric weapons, armor and tools",
   "Version": "2.2.1",
   "dependencies": {
     "game": "1.21.0",
