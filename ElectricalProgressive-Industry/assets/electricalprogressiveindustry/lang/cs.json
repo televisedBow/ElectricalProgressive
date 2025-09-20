@@ -1,27 +1,36 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Recept byl úspěšně načten",
 
-  "block-ecentrifuge-*": "Centrifuga",
+  "block-ecentrifuge-*": "Recyklátor",
   "block-handbooktitle-ecentrifuge": "Použití",
-  "block-handbooktext-ecentrifuge": "Umožňuje drcení a zpracování všech podléhajících předmětů/potravin přímo na kompost. Množství získaného kompostu je poloviční oproti vanilkové metodě. Také podporuje vlastní receptury, které se zobrazí v popisu centrifugy a samotného předmětu.<br>Podporuje automatické nakládání a vykládání pomocí žlabů.",
+  "block-handbooktext-ecentrifuge": "Umožňuje drtit a recyklovat všechny rychle se kazící předměty/produkty přímo na kompost. Množství získaného kompostu je poloviční oproti základní metodě. Podporuje také vlastní recepty recyklace, které se zobrazí v popisu recyklátoru a samotného předmětu.<br>Podporuje automatické nakládání a vykládání pomocí skluzů.",
 
-  "game:ewoodcutter-title-gui": "Elektrická Pila",
-  "block-ewoodcutter-normal": "Elektrická Pila",
-  "block-ewoodcutter-normal-burned": "Elektrická Pila (Spálená)",
-  "game:ecentrifuge-title-gui": "Centrifuga",
-  "game:ehammer-title-gui": "Automatické Kladivo",
-  "game:epress-title-gui": "Automatický Lis",
+  "block-ehammer-*": "Automatické kladivo",
+  "block-handbooktitle-ehammer": "Použití",
+  "block-handbooktext-ehammer": "Zjednodušuje a automatizuje práci na kovadlině. Existuje šance získat další materiály během zpracování.<br>Podporuje automatické nakládání a vykládání pomocí skluzů.",
 
-  "block-pressform-axe": "Forma na Sekery",
-  "block-pressform-pickaxe": "Forma na Krumpáče",
-  "block-pressform-shovel": "Forma na Lopaty",
-  "block-pressform-falx": "Forma na Falxy",
-  "block-pressform-hammer": "Forma na Kladiva",
-  "block-pressform-hoe": "Forma na Motyky",
-  "block-pressform-prospectingpick": "Forma na Geol. Kladivo",
+  "block-epress-*": "Automatický lis",
+  "block-handbooktitle-epress": "Použití",
+  "block-handbooktext-epress": "Umožňuje vytvářet některé předměty lisováním do formy.<br>Podporuje automatické nakládání a vykládání pomocí skluzů.",
+
+  "game:ewoodcutter-title-gui": "Elektrická pila",
+  "block-ewoodcutter-normal": "Elektrická pila",
+  "block-ewoodcutter-normal-burned": "Elektrická pila (spálená)",
+  "game:ecentrifuge-title-gui": "Recyklátor",
+  "game:ehammer-title-gui": "Automatické kladivo",
+  "game:epress-title-gui": "Automatický lis",
+
+  "block-pressform-axe": "Forma na sekeru",
+  "block-pressform-pickaxe": "Forma na krumpáč",
+  "block-pressform-shovel": "Forma na lopatu",
+  "block-pressform-falx": "Forma na falx",
+  "block-pressform-hammer": "Forma na kladivo",
+  "block-pressform-hoe": "Forma na motyku",
+  "block-pressform-prospectingpick": "Forma na prospektorský krumpáč",
 
   "electricalprogressive:produced-in": "Zpracováno v:",
-  "electricalprogressive:energy-required": "Potřebná energie",
+  "electricalprogressive:energy-required": "Požadovaná energie",
   "electricalprogressive:energy-unit": "J",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "šance"
 }

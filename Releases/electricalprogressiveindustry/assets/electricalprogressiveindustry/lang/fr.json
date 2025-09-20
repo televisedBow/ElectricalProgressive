@@ -1,27 +1,36 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Recette chargée avec succès",
 
-  "block-ecentrifuge-*": "Centrifugeuse",
+  "block-ecentrifuge-*": "Recycleur",
   "block-handbooktitle-ecentrifuge": "Utilisation",
-  "block-handbooktext-ecentrifuge": "Permet de broyer et de transformer tous les objets/aliments périssables directement en compost. La quantité de compost obtenue est deux fois moindre qu'avec la méthode vanilla. Prend également en charge les recettes de traitement personnalisées, qui seront affichées dans la description de la centrifugeuse et de l'objet lui-même.<br>Prend en charge le chargement et le déchargement automatiques via des goulottes.",
+  "block-handbooktext-ecentrifuge": "Permet de broyer et recycler tous les objets/produits périssables directement en compost. La quantité de compost obtenue est deux fois moindre que par la méthode classique. Prend également en charge les recettes personnalisées de recyclage, qui seront affichées dans la description du recycleur et de l’objet.<br>Prend en charge le chargement et le déchargement automatiques via des goulottes.",
 
-  "game:ewoodcutter-title-gui": "Bûcheron Électrique",
-  "block-ewoodcutter-normal": "Bûcheron Électrique",
-  "block-ewoodcutter-normal-burned": "Bûcheron Électrique (Brûlé)",
-  "game:ecentrifuge-title-gui": "Centrifugeuse",
-  "game:ehammer-title-gui": "Marteau Automatique",
-  "game:epress-title-gui": "Presse Automatique",
+  "block-ehammer-*": "Marteau automatique",
+  "block-handbooktitle-ehammer": "Utilisation",
+  "block-handbooktext-ehammer": "Simplifie et automatise le travail sur l’enclume. Il y a une chance d’obtenir des matériaux supplémentaires lors du traitement.<br>Prend en charge le chargement et le déchargement automatiques via des goulottes.",
 
-  "block-pressform-axe": "Forme à Presser Hache",
-  "block-pressform-pickaxe": "Forme à Presser Pioche",
-  "block-pressform-shovel": "Forme à Presser Pelle",
-  "block-pressform-falx": "Forme à Presser Falx",
-  "block-pressform-hammer": "Forme à Presser Marteau",
-  "block-pressform-hoe": "Forme à Presser Houe",
-  "block-pressform-prospectingpick": "Forme à Presser Pioche de Prospection",
+  "block-epress-*": "Presse automatique",
+  "block-handbooktitle-epress": "Utilisation",
+  "block-handbooktext-epress": "Permet de créer certains objets en les pressant dans un moule.<br>Prend en charge le chargement et le déchargement automatiques via des goulottes.",
 
-  "electricalprogressive:produced-in": "Transformé dans :",
+  "game:ewoodcutter-title-gui": "Bûcheron électrique",
+  "block-ewoodcutter-normal": "Bûcheron électrique",
+  "block-ewoodcutter-normal-burned": "Bûcheron électrique (brûlé)",
+  "game:ecentrifuge-title-gui": "Recycleur",
+  "game:ehammer-title-gui": "Marteau automatique",
+  "game:epress-title-gui": "Presse automatique",
+
+  "block-pressform-axe": "Moule de hache",
+  "block-pressform-pickaxe": "Moule de pioche",
+  "block-pressform-shovel": "Moule de pelle",
+  "block-pressform-falx": "Moule de falx",
+  "block-pressform-hammer": "Moule de marteau",
+  "block-pressform-hoe": "Moule de houe",
+  "block-pressform-prospectingpick": "Moule de pioche de prospection",
+
+  "electricalprogressive:produced-in": "Traité dans :",
   "electricalprogressive:energy-required": "Énergie requise",
   "electricalprogressive:energy-unit": "J",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "chance"
 }

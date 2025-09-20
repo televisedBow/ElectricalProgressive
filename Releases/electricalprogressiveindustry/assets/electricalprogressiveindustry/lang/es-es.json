@@ -1,27 +1,36 @@
 ﻿{
-  "electricalprogressiveindustry:recipeloading": "Receta cargada correctamente",
+  "electricalprogressiveindustry:recipeloading": "Receta cargada con éxito",
 
-  "block-ecentrifuge-*": "Centrífuga",
+  "block-ecentrifuge-*": "Reciclador",
   "block-handbooktitle-ecentrifuge": "Uso",
-  "block-handbooktext-ecentrifuge": "Permite moler y procesar todos los objetos/alimentos perecederos directamente en compost. La cantidad de compost obtenido es la mitad que con el método vanilla. También admite recetas de procesamiento personalizadas, que se mostrarán en la descripción de la centrífuga y del propio objeto.<br>Admite carga y descarga automática mediante tolvas.",
+  "block-handbooktext-ecentrifuge": "Permite triturar y reciclar todos los objetos/productos perecederos directamente en compost. La cantidad de compost obtenida es la mitad en comparación con el método estándar. También admite recetas personalizadas de reciclaje, que se mostrarán en la descripción del reciclador y del propio objeto.<br>Admite carga y descarga automáticas mediante conductos.",
 
-  "game:ewoodcutter-title-gui": "Cortadora de Madera Eléctrica",
-  "block-ewoodcutter-normal": "Cortadora de Madera Eléctrica",
-  "block-ewoodcutter-normal-burned": "Cortadora de Madera Eléctrica (Quemada)",
-  "game:ecentrifuge-title-gui": "Centrífuga",
+  "block-ehammer-*": "Martillo Automático",
+  "block-handbooktitle-ehammer": "Uso",
+  "block-handbooktext-ehammer": "Simplifica y automatiza el trabajo en el yunque. Existe la posibilidad de obtener materiales adicionales durante el procesamiento.<br>Admite carga y descarga automáticas mediante conductos.",
+
+  "block-epress-*": "Prensa Automática",
+  "block-handbooktitle-epress": "Uso",
+  "block-handbooktext-epress": "Permite crear algunos objetos presionándolos en un molde.<br>Admite carga y descarga automáticas mediante conductos.",
+
+  "game:ewoodcutter-title-gui": "Leñador Eléctrico",
+  "block-ewoodcutter-normal": "Leñador Eléctrico",
+  "block-ewoodcutter-normal-burned": "Leñador Eléctrico (quemado)",
+  "game:ecentrifuge-title-gui": "Reciclador",
   "game:ehammer-title-gui": "Martillo Automático",
   "game:epress-title-gui": "Prensa Automática",
 
-  "block-pressform-axe": "Molde de Prensa de Hacha",
-  "block-pressform-pickaxe": "Molde de Prensa de Pico",
-  "block-pressform-shovel": "Molde de Prensa de Pala",
-  "block-pressform-falx": "Molde de Prensa de Falx",
-  "block-pressform-hammer": "Molde de Prensa de Martillo",
-  "block-pressform-hoe": "Molde de Prensa de Azada",
-  "block-pressform-prospectingpick": "Molde de Prensa de Pico de Prospección",
+  "block-pressform-axe": "Molde de Hacha",
+  "block-pressform-pickaxe": "Molde de Pico",
+  "block-pressform-shovel": "Molde de Pala",
+  "block-pressform-falx": "Molde de Falx",
+  "block-pressform-hammer": "Molde de Martillo",
+  "block-pressform-hoe": "Molde de Azada",
+  "block-pressform-prospectingpick": "Molde de Pico de Prospección",
 
   "electricalprogressive:produced-in": "Procesado en:",
-  "electricalprogressive:energy-required": "Energía requerida",
+  "electricalprogressive:energy-required": "Energía necesaria",
   "electricalprogressive:energy-unit": "J",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "probabilidad"
 }

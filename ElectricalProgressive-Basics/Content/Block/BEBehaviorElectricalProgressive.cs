@@ -207,10 +207,18 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         else
             Epar = Eparams;
 
-
+        // обновляем параметры
         if (system.Update(this.Blockentity.Pos, this.connection & ~this.interruption, Epar, ref allEparams!, isLoaded))
         {
-            this.Blockentity.MarkDirty(true);
+            try
+            {
+                this.Blockentity.MarkDirty(true);
+            }
+            catch
+            {
+            
+            }
+            
         }
     }
 

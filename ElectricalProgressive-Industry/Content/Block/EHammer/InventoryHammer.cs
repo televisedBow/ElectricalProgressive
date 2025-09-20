@@ -5,7 +5,11 @@ namespace ElectricalProgressive.Content.Block.EHammer;
 
 public class InventoryHammer : InventoryGeneric
 {
-    
+    private BlockEntityEHammer _entity;     // ссылка на блок-сущность молота
+    private int lastSlot0Count = -1;        // для отслеживания изменений в слоте 0
+    private long lastSlot0UpdateTime = 0;   // время последнего изменения в слоте 0
+    private const long DelayMs = 2000;      // задержка 2 секунды
+
     public InventoryHammer(ICoreAPI api)
         : base(api)
     {
@@ -15,7 +19,7 @@ public class InventoryHammer : InventoryGeneric
     public InventoryHammer(int slots, string className, string instanceID, ICoreAPI api, NewSlotDelegate onNewSlot, BlockEntityEHammer entity)
         : base(slots, className, instanceID, api)
     {
- 
+        _entity = entity;
     }
 
 
@@ -38,9 +42,39 @@ public class InventoryHammer : InventoryGeneric
     }
 
 
+
+    /// <summary>
+    /// Автопулл из молота
+    /// </summary>
+    /// <param name="atBlockFace"></param>
+    /// <returns></returns>
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
-        //Автовывод сначала из основного выхода (слот 1), затем из дополнительного (слот 2)
+        // Проверяем входной слот
+        int currentCount = this[0].Itemstack?.StackSize ?? 0;
+
+        // Если количество изменилось (например, загрузился новый предмет)
+        if (currentCount != lastSlot0Count)
+        {
+            lastSlot0Count = currentCount;
+            lastSlot0UpdateTime = _entity.Api.World.ElapsedMilliseconds; // запоминаем время
+        }
+
+        // есть рецепт?
+        bool hasRecipe = !this[0].Empty && BlockEntityEHammer.FindMatchingRecipe(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this[0]);
+
+        if (!hasRecipe || _entity.CurrentRecipe == null)
+        {
+            // Выгружаем слот 0 только если прошло время задержки
+            if (_entity.Api.World.ElapsedMilliseconds - lastSlot0UpdateTime > DelayMs)
+            {
+                lastSlot0UpdateTime = _entity.Api.World.ElapsedMilliseconds;
+                return this[0];
+            }
+
+        }
+
+        // выдаем непустые выходные
         for (var i = 1; i < this.Count; i++)
         {
             if (!this[i].Empty)

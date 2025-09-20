@@ -5,7 +5,6 @@ using System;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -85,8 +84,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
 
     private Facing facing = Facing.None;
-
-
+    private AssetLocation centrifugeSound;
 
     public BlockEntityECentrifuge()
     {
@@ -113,6 +111,8 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             {
                 animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
             }
+
+            centrifugeSound = new AssetLocation("electricalprogressiveindustry:sounds/ecentrifuge/centrifuge.ogg");
         }
     }
 
@@ -174,7 +174,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
         foreach (CentrifugeRecipe recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
         {
-            if (recipe.Matches(inputSlots, out var outsize))
+            if (recipe.Matches(inputSlots, out _))
             {
                 currentRecipe = recipe;
                 currentRecipeName = recipe.Output.ResolvedItemstack.GetName();
@@ -436,12 +436,13 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             return;
         this.ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
         {
-            Location = new AssetLocation("electricalprogressiveindustry:sounds/ecentrifuge/centrifuge.ogg"),
+            Location = centrifugeSound,
             ShouldLoop = true,
             Position = this.Pos.ToVec3f().Add(0.5f, 0.25f, 0.5f),
             DisposeOnFinish = false,
-            Volume = 0.75f,
+            Volume = 1f,
         });
+
         this.ambientSound.Start();
     }
 

@@ -1,5 +1,4 @@
-﻿using ElectricalProgressive.Content.Block.EPress;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Linq;
@@ -43,7 +42,7 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
         {
             if (Blockentity is BlockEntityEPress entity)
             {
-                bool hasRecipe = entity.FindMatchingRecipe();
+                bool hasRecipe = BlockEntityEPress.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory);
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;
                     
@@ -101,12 +100,12 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
 
         var hasBurnout = entity.AllEparams.Any(e => e.burnout);
         if (hasBurnout)
-            ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+            ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
 
         bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
         if (prepareBurnout)
         {
-            ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+            ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
         }
 
     }

@@ -5,12 +5,10 @@ namespace ElectricalProgressive.Content.Block.ECentrifuge;
 
 public class InventoryCentrifuge : InventoryGeneric
 {
-    private BlockEntityECentrifuge _entity;
-
-
-    private int lastSlot0Count = -1;
-    private long lastSlot0UpdateTime = 0;
-    private const long DelayMs = 2000; // задержка 2 секунды
+    private BlockEntityECentrifuge _entity; // ссылка на блок-сущность центрифуги
+    private int lastSlot0Count = -1;        // для отслеживания изменений в слоте 0
+    private long lastSlot0UpdateTime = 0;   // время последнего изменения в слоте 0
+    private const long DelayMs = 2000;      // задержка 2 секунды
 
 
 

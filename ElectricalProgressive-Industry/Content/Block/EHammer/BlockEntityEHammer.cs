@@ -30,7 +30,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
     public string CurrentRecipeName;
     public float RecipeProgress;
-    private ILoadedSound ambientSound;
+
 
     public virtual string DialogTitle => Lang.Get("ehammer-title-gui");
 
@@ -184,7 +184,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             null,
             false,
             32,
-            0.75f
+            1f
         );
     }
 
@@ -223,7 +223,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         this.clientDialog.SingleComposer.ReCompose();
         if (Api?.Side == EnumAppSide.Server)
         {
-            FindMatchingRecipe();
+            FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]);
             MarkDirty(true);
         }
     }
@@ -235,20 +235,18 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     /// Ищет подходящий рецепт
     /// </summary>
     /// <returns></returns>
-    public bool FindMatchingRecipe()
+    public static bool FindMatchingRecipe(ref HammerRecipe currentRecipe, ref string currentRecipeName, ItemSlot inputSlot)
     {
-        ItemSlot[] inputSlots = new ItemSlot[] { inventory[0] };
-        CurrentRecipe = null;
-        CurrentRecipeName = string.Empty;
+        ItemSlot[] inputSlots = new ItemSlot[] { inputSlot };
+        currentRecipe = null;
+        currentRecipeName = string.Empty;
 
         foreach (HammerRecipe recipe in ElectricalProgressiveRecipeManager.HammerRecipes)
         {
-
-            if (recipe.Matches(inputSlots, out int outsize))
+            if (recipe.Matches(inputSlots, out _))
             {
-                CurrentRecipe = recipe;
-                CurrentRecipeName = recipe.Output.ResolvedItemstack.GetName();
-                MarkDirty(true);
+                currentRecipe = recipe;
+                currentRecipeName = recipe.Output.ResolvedItemstack.GetName();
                 return true;
             }
         }
@@ -268,12 +266,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         if (beh == null)
         {
             StopAnimation();
-            stopSound();
             return;
         }
 
         bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
-        bool hasRecipe = !InputSlot.Empty && FindMatchingRecipe();
+        bool hasRecipe = !InputSlot.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]); ;
         bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
         if (isCraftingNow)
@@ -297,7 +294,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
                 if (!canContinueCrafting)
                 {
                     StopAnimation();
-                    stopSound();
                 }
 
                 // в любом случае сбрасываем прогресс
@@ -308,7 +304,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         else if (_wasCraftingLastTick)
         {
             StopAnimation();
-            stopSound();
             MarkDirty(true);
         }
 
@@ -420,7 +415,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
         if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
         {
-            
             animUtil.StopAnimation("craft");
         }
         
@@ -429,17 +423,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
 
 
-    /// <summary>
-    /// Выключение звука
-    /// </summary>
-    public void stopSound()
-    {
-        if (this.ambientSound == null)
-            return;
-        this.ambientSound.Stop();
-        this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound)null;
-    }
+
 
     /// <summary>
     /// Обновление состояния
@@ -453,6 +437,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
         }
         MarkDirty(true);
     }
+
+
 
     /// <summary>
     /// Игрок нажал ПКМ по блоку
@@ -584,11 +570,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             this.animUtil.Dispose();
         }
 
-        if (this.ambientSound != null)
-        {
-            this.ambientSound.Stop();
-            this.ambientSound.Dispose();
-        }
+
     }
 
     public ItemStack InputStack
@@ -619,10 +601,5 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
     {
         base.OnBlockUnloaded();
         this.clientDialog?.TryClose();
-        if (this.ambientSound == null)
-            return;
-        this.ambientSound.Stop();
-        this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound)null;
     }
 }

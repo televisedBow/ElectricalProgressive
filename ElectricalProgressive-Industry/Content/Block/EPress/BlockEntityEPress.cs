@@ -1,5 +1,4 @@
-﻿using ElectricalProgressive.Content.Block.EHammer;
-using ElectricalProgressive.RecipeSystem;
+﻿using ElectricalProgressive.RecipeSystem;
 using ElectricalProgressive.RecipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
@@ -24,7 +23,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         private readonly int _maxConsumption;
         private ICoreClientAPI _capi;
         private bool _wasCraftingLastTick;
-        private ILoadedSound ambientSound;
+
 
         // Состояние крафта
         public PressRecipe CurrentRecipe;
@@ -148,28 +147,28 @@ namespace ElectricalProgressive.Content.Block.EPress
         }
 
         #region Логика рецептов (адаптирована под 2 слота)
+
+
         /// <summary>
         /// Ищем подходящий рецепт для текущих ингредиентов
         /// </summary>
         /// <returns></returns>
-        public bool FindMatchingRecipe()
+        public static bool FindMatchingRecipe(ref PressRecipe currentRecipe, ref string currentRecipeName, InventoryPress inventory)
         {
-            CurrentRecipe = null;
-            CurrentRecipeName = string.Empty;
+            currentRecipe = null;
+            currentRecipeName = string.Empty;
 
             foreach (PressRecipe recipe in ElectricalProgressiveRecipeManager.PressRecipes)
             {
-                if (MatchesRecipe(recipe))
+                if (MatchesRecipe(recipe, inventory))
                 {
-                    CurrentRecipe = recipe;
-                    CurrentRecipeName = recipe.Output.ResolvedItemstack?.GetName() ?? "Unknown";
-                    MarkDirty(true);
+                    currentRecipe = recipe;
+                    currentRecipeName = recipe.Output.ResolvedItemstack?.GetName() ?? "Unknown";
+                    //MarkDirty(true);
                     return true;
                 }
             }
 
-            RecipeProgress = 0f;
-            UpdateState(RecipeProgress);
 
             return false;
         }
@@ -179,7 +178,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         /// </summary>
         /// <param name="recipe"></param>
         /// <returns></returns>
-        private bool MatchesRecipe(PressRecipe recipe)
+        private static bool MatchesRecipe(PressRecipe recipe, InventoryPress inventory)
         {
             Dictionary<string, string> wildcardMatches = new Dictionary<string, string>();
             List<int> usedSlots = new List<int>();
@@ -195,7 +194,7 @@ namespace ElectricalProgressive.Content.Block.EPress
                 {
                     if (usedSlots.Contains(slotIndex)) continue;
 
-                    var slot = GetInputSlot(slotIndex);
+                    var slot = inventory[slotIndex];
 
                     // Для quantity=0 проверяем только наличие
                     if (ingred.Quantity == 0)
@@ -385,7 +384,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         /// <param name="ingred"></param>
         /// <param name="wildcardMatches"></param>
         /// <returns></returns>
-        private bool SatisfiesIngredient(ItemStack stack, CraftingRecipeIngredient ingred, ref Dictionary<string, string> wildcardMatches)
+        private static bool SatisfiesIngredient(ItemStack stack, CraftingRecipeIngredient ingred, ref Dictionary<string, string> wildcardMatches)
         {
             // Проверка wildcard-ингредиентов (например, "gear-*")
             if (ingred.Code.Path.Contains("*"))
@@ -410,7 +409,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         /// <param name="pattern"></param>
         /// <param name="itemCode"></param>
         /// <returns></returns>
-        private string GetWildcardMatch(AssetLocation pattern, AssetLocation itemCode)
+        private static string GetWildcardMatch(AssetLocation pattern, AssetLocation itemCode)
         {
             if (!WildcardUtil.Match(pattern, itemCode))
                 return null;
@@ -449,7 +448,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             }
 
             bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1f;
-            bool hasRecipe = !InputSlot1.Empty && !InputSlot2.Empty && FindMatchingRecipe();
+            bool hasRecipe = !InputSlot1.Empty && !InputSlot2.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory);
             bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
             // Проверяем, не изменилось ли состояние крафта
@@ -594,7 +593,7 @@ namespace ElectricalProgressive.Content.Block.EPress
                 null,
                 false,
                 32,
-                0.75f
+                1f
             );
         }
 
@@ -710,22 +709,14 @@ namespace ElectricalProgressive.Content.Block.EPress
                 this.animUtil.Dispose();
             }
         
-            if (this.ambientSound != null)
-            {
-                this.ambientSound.Stop();
-                this.ambientSound.Dispose();
-            }
+
         }
 
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
             this.clientDialog?.TryClose();
-            if (this.ambientSound == null)
-                return;
-            this.ambientSound.Stop();
-            this.ambientSound.Dispose();
-            this.ambientSound = (ILoadedSound) null;
+
         }
         #endregion
     }

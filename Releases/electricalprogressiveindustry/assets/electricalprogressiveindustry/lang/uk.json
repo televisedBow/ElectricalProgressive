@@ -1,27 +1,36 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Рецепт успішно завантажено",
 
-  "block-ecentrifuge-*": "Центрифуга",
-  "block-handbooktitle-ecentrifuge": "Використання",
-  "block-handbooktext-ecentrifuge": "Дозволяє подрібнювати та переробляти всі псуючі предмети/продукти одразу в компост. Кількість отриманого компосту удвічі менша, ніж при використанні ванильного способу. Також підтримує кастомні рецепти переробки, які будуть відображатися в описі центрифуги та самого предмета.<br>Підтримує автоматичне завантаження та розвантаження за допомогою жолобів.",
+  "block-ecentrifuge-*": "Переробник",
+  "block-handbooktitle-ecentrifuge": "Використовується",
+  "block-handbooktext-ecentrifuge": "Дозволяє подрібнювати та переробляти всі швидкопсувні предмети/продукти одразу на компост. Кількість отриманого компосту удвічі менша, ніж при використанні ванільного способу. Також підтримує кастомні рецепти переробки, які будуть відображатися в описі переробника та самого предмета.<br>Підтримує автоматичне завантаження та розвантаження за допомогою жолобів.",
+
+  "block-ehammer-*": "Автомолот",
+  "block-handbooktitle-ehammer": "Використовується",
+  "block-handbooktext-ehammer": "Спрощує та автоматизує роботу на ковадлі. Є шанс отримати додаткові матеріали під час обробки.<br>Підтримує автоматичне завантаження та розвантаження за допомогою жолобів.",
+
+  "block-epress-*": "Автопрес",
+  "block-handbooktitle-epress": "Використовується",
+  "block-handbooktext-epress": "Дозволяє створювати деякі предмети шляхом пресування у форму.<br>Підтримує автоматичне завантаження та розвантаження за допомогою жолобів.",
 
   "game:ewoodcutter-title-gui": "Електричний лісоруб",
   "block-ewoodcutter-normal": "Електричний лісоруб",
   "block-ewoodcutter-normal-burned": "Електричний лісоруб (згорілий)",
-  "game:ecentrifuge-title-gui": "Центрифуга",
+  "game:ecentrifuge-title-gui": "Переробник",
   "game:ehammer-title-gui": "Автомолот",
   "game:epress-title-gui": "Автопрес",
 
-  "block-pressform-axe": "Прессформа сокири",
-  "block-pressform-pickaxe": "Прессформа кирки",
-  "block-pressform-shovel": "Прессформа лопати",
-  "block-pressform-falx": "Прессформа фалькса",
-  "block-pressform-hammer": "Прессформа молота",
-  "block-pressform-hoe": "Прессформа мотики",
-  "block-pressform-prospectingpick": "Прессформа геологічного молотка",
+  "block-pressform-axe": "Пресформа сокири",
+  "block-pressform-pickaxe": "Пресформа кирки",
+  "block-pressform-shovel": "Пресформа лопати",
+  "block-pressform-falx": "Пресформа фалькса",
+  "block-pressform-hammer": "Пресформа молота",
+  "block-pressform-hoe": "Пресформа мотики",
+  "block-pressform-prospectingpick": "Пресформа геологічного молотка",
 
   "electricalprogressive:produced-in": "Обробляється в:",
-  "electricalprogressive:energy-required": "Потрібно енергії",
+  "electricalprogressive:energy-required": "Потрібна енергія",
   "electricalprogressive:energy-unit": "Дж",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "шанс"
 }

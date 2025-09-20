@@ -1,27 +1,36 @@
 ﻿{
-  "electricalprogressiveindustry:recipeloading": "Przepis został pomyślnie załadowany",
+  "electricalprogressiveindustry:recipeloading": "Przepis pomyślnie załadowany",
 
-  "block-ecentrifuge-*": "Wirówka",
-  "block-handbooktitle-ecentrifuge": "Zastosowanie",
-  "block-handbooktext-ecentrifuge": "Umożliwia mielenie i przetwarzanie wszystkich psujących się przedmiotów/żywności bezpośrednio na kompost. Ilość uzyskanego kompostu jest o połowę mniejsza niż w metodzie vanilla. Obsługuje również niestandardowe receptury przetwarzania, które będą wyświetlane w opisie wirówki i samego przedmiotu.<br>Obsługuje automatyczne ładowanie i rozładowywanie za pomocą zsypów.",
+  "block-ecentrifuge-*": "Recykler",
+  "block-handbooktitle-ecentrifuge": "Użycie",
+  "block-handbooktext-ecentrifuge": "Umożliwia mielenie i recykling wszystkich łatwo psujących się przedmiotów/produktów bezpośrednio na kompost. Ilość uzyskanego kompostu jest o połowę mniejsza niż w metodzie podstawowej. Obsługuje także niestandardowe przepisy recyklingu, które będą wyświetlane w opisie recyklera i samego przedmiotu.<br>Obsługuje automatyczne ładowanie i rozładowywanie za pomocą zsypów.",
 
-  "game:ewoodcutter-title-gui": "Elektryczna Piła",
-  "block-ewoodcutter-normal": "Elektryczna Piła",
-  "block-ewoodcutter-normal-burned": "Elektryczna Piła (Spalona)",
-  "game:ecentrifuge-title-gui": "Wirówka",
-  "game:ehammer-title-gui": "Młot Automatyczny",
-  "game:epress-title-gui": "Prasa Automatyczna",
+  "block-ehammer-*": "Automatyczny młot",
+  "block-handbooktitle-ehammer": "Użycie",
+  "block-handbooktext-ehammer": "Ułatwia i automatyzuje pracę na kowadle. Istnieje szansa uzyskania dodatkowych materiałów podczas obróbki.<br>Obsługuje automatyczne ładowanie i rozładowywanie za pomocą zsypów.",
 
-  "block-pressform-axe": "Forma do Osi",
-  "block-pressform-pickaxe": "Forma do Kilofów",
-  "block-pressform-shovel": "Forma do Łopat",
-  "block-pressform-falx": "Forma do Falxów",
-  "block-pressform-hammer": "Forma do Młotów",
-  "block-pressform-hoe": "Forma do Motyk",
-  "block-pressform-prospectingpick": "Forma do Kilofów Poszukiwacza",
+  "block-epress-*": "Automatyczna prasa",
+  "block-handbooktitle-epress": "Użycie",
+  "block-handbooktext-epress": "Umożliwia tworzenie niektórych przedmiotów poprzez prasowanie w formie.<br>Obsługuje automatyczne ładowanie i rozładowywanie za pomocą zsypów.",
+
+  "game:ewoodcutter-title-gui": "Elektryczna pilarka",
+  "block-ewoodcutter-normal": "Elektryczna pilarka",
+  "block-ewoodcutter-normal-burned": "Elektryczna pilarka (spalona)",
+  "game:ecentrifuge-title-gui": "Recykler",
+  "game:ehammer-title-gui": "Automatyczny młot",
+  "game:epress-title-gui": "Automatyczna prasa",
+
+  "block-pressform-axe": "Forma topora",
+  "block-pressform-pickaxe": "Forma kilofa",
+  "block-pressform-shovel": "Forma łopaty",
+  "block-pressform-falx": "Forma falxa",
+  "block-pressform-hammer": "Forma młota",
+  "block-pressform-hoe": "Forma motyki",
+  "block-pressform-prospectingpick": "Forma kilofa poszukiwacza",
 
   "electricalprogressive:produced-in": "Przetwarzane w:",
   "electricalprogressive:energy-required": "Wymagana energia",
   "electricalprogressive:energy-unit": "J",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "szansa"
 }

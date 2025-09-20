@@ -42,7 +42,7 @@ public class BEBehaviorEHammer : BEBehaviorBase, IElectricConsumer
         {
             if (Blockentity is BlockEntityEHammer entity)
             {
-                bool hasRecipe = entity.FindMatchingRecipe();
+                bool hasRecipe = BlockEntityEHammer.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory[0]); ;
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;
                     
@@ -100,12 +100,12 @@ public class BEBehaviorEHammer : BEBehaviorBase, IElectricConsumer
 
         var hasBurnout = entity.AllEparams.Any(e => e.burnout);
         if (hasBurnout)
-            ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+            ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
 
         bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
         if (prepareBurnout)
         {
-            ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+            ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
         }
 
 

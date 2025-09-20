@@ -68,6 +68,23 @@
     }
   },
   {
+    "code": "compost5",
+    "EnergyOperation": 10000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:thatch",
+        "name": "thatch",
+        "quantity": 64
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:compost",
+      "stackSize": 1
+    }
+  },
+  {
     "code": "default_perish",
     "EnergyOperation": 10000,
     "ingredients": [

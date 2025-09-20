@@ -47,11 +47,13 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
     {
         Dictionary<string, string[]> mappings = new Dictionary<string, string[]>();
 
-        if (Ingredients == null || Ingredients.Length == 0) return mappings;
+        if (Ingredients == null || Ingredients.Length == 0)
+            return mappings;
 
         foreach (CraftingRecipeIngredient ingred in Ingredients)
         {
-            if (!ingred.Code.Path.Contains("*")) continue;
+            if (!ingred.Code.Path.Contains("*"))
+                continue;
 
             int wildcardStartLen = ingred.Code.Path.IndexOf("*");
             int wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;

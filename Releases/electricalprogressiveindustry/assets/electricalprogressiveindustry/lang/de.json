@@ -1,27 +1,36 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Rezept erfolgreich geladen",
 
-  "block-ecentrifuge-*": "Zentrifuge",
+  "block-ecentrifuge-*": "Recycler",
   "block-handbooktitle-ecentrifuge": "Verwendung",
-  "block-handbooktext-ecentrifuge": "Ermöglicht das Zerkleinern und Verarbeiten aller verderblichen Gegenstände/Lebensmittel direkt zu Kompost. Die Menge des erhaltenen Komposts ist halb so hoch wie bei der Vanille-Methode. Unterstützt auch benutzerdefinierte Verarbeitungsrezepte, die in der Beschreibung der Zentrifuge und des Gegenstands selbst angezeigt werden.<br>Unterstützt automatisches Laden und Entladen über Rutsche.",
+  "block-handbooktext-ecentrifuge": "Ermöglicht das Zerkleinern und Recyceln aller verderblichen Gegenstände/Produkte direkt zu Kompost. Die Menge an erhaltenem Kompost ist halb so groß wie bei der Vanilla-Methode. Unterstützt auch benutzerdefinierte Recyclingrezepte, die in der Beschreibung des Recyclers und des Gegenstands angezeigt werden.<br>Unterstützt automatisches Be- und Entladen über Rutschen.",
 
-  "game:ewoodcutter-title-gui": "Elektro-Holzfäller",
-  "block-ewoodcutter-normal": "Elektro-Holzfäller",
-  "block-ewoodcutter-normal-burned": "Elektro-Holzfäller (Verbrannt)",
-  "game:ecentrifuge-title-gui": "Zentrifuge",
-  "game:ehammer-title-gui": "Auto-Hammer",
-  "game:epress-title-gui": "Auto-Presse",
+  "block-ehammer-*": "Auto Hammer",
+  "block-handbooktitle-ehammer": "Verwendung",
+  "block-handbooktext-ehammer": "Vereinfacht und automatisiert die Arbeit am Amboss. Es besteht die Chance, zusätzliche Materialien während der Verarbeitung zu erhalten.<br>Unterstützt automatisches Be- und Entladen über Rutschen.",
 
-  "block-pressform-axe": "Axt Pressform",
-  "block-pressform-pickaxe": "Spitzhacken Pressform",
-  "block-pressform-shovel": "Schaufel Pressform",
-  "block-pressform-falx": "Falx Pressform",
-  "block-pressform-hammer": "Hammer Pressform",
-  "block-pressform-hoe": "Hacke Pressform",
-  "block-pressform-prospectingpick": "Schürfspitzhacken Pressform",
+  "block-epress-*": "Auto Presse",
+  "block-handbooktitle-epress": "Verwendung",
+  "block-handbooktext-epress": "Ermöglicht die Herstellung einiger Gegenstände durch Pressen in einer Form.<br>Unterstützt automatisches Be- und Entladen über Rutschen.",
+
+  "game:ewoodcutter-title-gui": "Elektrischer Holzfäller",
+  "block-ewoodcutter-normal": "Elektrischer Holzfäller",
+  "block-ewoodcutter-normal-burned": "Elektrischer Holzfäller (verbrannt)",
+  "game:ecentrifuge-title-gui": "Recycler",
+  "game:ehammer-title-gui": "Auto Hammer",
+  "game:epress-title-gui": "Auto Presse",
+
+  "block-pressform-axe": "Axtform",
+  "block-pressform-pickaxe": "Spitzhackenform",
+  "block-pressform-shovel": "Schaufelform",
+  "block-pressform-falx": "Falxform",
+  "block-pressform-hammer": "Hammerform",
+  "block-pressform-hoe": "Hackeform",
+  "block-pressform-prospectingpick": "Prospektorhackenform",
 
   "electricalprogressive:produced-in": "Verarbeitet in:",
-  "electricalprogressive:energy-required": "Energie benötigt",
+  "electricalprogressive:energy-required": "Benötigte Energie",
   "electricalprogressive:energy-unit": "J",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "Chance"
 }

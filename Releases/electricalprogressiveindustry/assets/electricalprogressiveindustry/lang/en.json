@@ -1,27 +1,36 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Recipe successfully loaded",
 
-  "block-ecentrifuge-*": "Centrifuge",
-  "block-handbooktitle-ecentrifuge": "Usage",
-  "block-handbooktext-ecentrifuge": "Allows grinding and processing all perishable items/food directly into compost. The amount of compost obtained is half that of the vanilla method. Also supports custom processing recipes, which will be displayed in the description of the centrifuge and the item itself.<br>Supports automatic loading and unloading via chutes.",
+  "block-ecentrifuge-*": "Recycler",
+  "block-handbooktitle-ecentrifuge": "Used",
+  "block-handbooktext-ecentrifuge": "Allows grinding and recycling of all perishable items/products directly into compost. The amount of compost obtained is half compared to the vanilla method. Also supports custom recycling recipes, which will be displayed in the recycler and item description.<br>Supports automatic loading and unloading via chutes.",
+
+  "block-ehammer-*": "Auto Hammer",
+  "block-handbooktitle-ehammer": "Used",
+  "block-handbooktext-ehammer": "Simplifies and automates work on the anvil. There is a chance to obtain extra materials during processing.<br>Supports automatic loading and unloading via chutes.",
+
+  "block-epress-*": "Auto Press",
+  "block-handbooktitle-epress": "Used",
+  "block-handbooktext-epress": "Allows creating some items by pressing them in a mold.<br>Supports automatic loading and unloading via chutes.",
 
   "game:ewoodcutter-title-gui": "Electric Woodcutter",
   "block-ewoodcutter-normal": "Electric Woodcutter",
-  "block-ewoodcutter-normal-burned": "Electric Woodcutter (Burned)",
-  "game:ecentrifuge-title-gui": "Centrifuge",
-  "game:ehammer-title-gui": "Auto-Hammer",
-  "game:epress-title-gui": "Auto-Press",
+  "block-ewoodcutter-normal-burned": "Electric Woodcutter (burned)",
+  "game:ecentrifuge-title-gui": "Recycler",
+  "game:ehammer-title-gui": "Auto Hammer",
+  "game:epress-title-gui": "Auto Press",
 
-  "block-pressform-axe": "Axe Press Form",
-  "block-pressform-pickaxe": "Pickaxe Press Form",
-  "block-pressform-shovel": "Shovel Press Form",
-  "block-pressform-falx": "Falx Press Form",
-  "block-pressform-hammer": "Hammer Press Form",
-  "block-pressform-hoe": "Hoe Press Form",
-  "block-pressform-prospectingpick": "Prospecting Pick Press Form",
+  "block-pressform-axe": "Axe Mold",
+  "block-pressform-pickaxe": "Pickaxe Mold",
+  "block-pressform-shovel": "Shovel Mold",
+  "block-pressform-falx": "Falx Mold",
+  "block-pressform-hammer": "Hammer Mold",
+  "block-pressform-hoe": "Hoe Mold",
+  "block-pressform-prospectingpick": "Prospecting Pick Mold",
 
   "electricalprogressive:produced-in": "Processed in:",
   "electricalprogressive:energy-required": "Energy required",
   "electricalprogressive:energy-unit": "J",
-  "electricalprogressive:recipe-chance": "~{0}%"
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "chance"
 }
