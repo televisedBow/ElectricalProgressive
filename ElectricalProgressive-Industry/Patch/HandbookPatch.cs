@@ -475,7 +475,14 @@ public class HandbookPatch
             var outputStack = GetOrCreateStack(recipe.Output.Code, (int)recipe.Output.Quantity, _capi.World);
             return outputStack != null && outputStack.Collectible.Code == stack.Collectible.Code;
         }
+
+
+       
     }
+
+
+
+
 
     public class SyncedSlideshowItemstackTextComponent : SlideshowItemstackTextComponent
     {
@@ -531,7 +538,7 @@ public class HandbookPatch
             }
 
             // Листаем только если ни один элемент группы не под мышкой
-            if (state.HoverCount == 0 && api.World.ElapsedMilliseconds - state.LastSwitchTime > 2000)
+            if (state.HoverCount == 0 && api.World.ElapsedMilliseconds - state.LastSwitchTime > 1000)
             {
                 state.Index++;
                 state.LastSwitchTime = api.World.ElapsedMilliseconds;
@@ -582,6 +589,7 @@ public class HandbookPatch
             {
                 groups[groupKey].HoverCount--;
             }
+            _stackCache.Clear();
             base.Dispose();
         }
     }

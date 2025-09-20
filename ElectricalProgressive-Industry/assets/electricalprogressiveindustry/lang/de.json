@@ -1,6 +1,6 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Rezept erfolgreich geladen",
-
+  "electricalprogressiveindustry:blockhelp-pickup": "Form aufheben",
   "block-ecentrifuge-*": "Recycler",
   "block-handbooktitle-ecentrifuge": "Verwendung",
   "block-handbooktext-ecentrifuge": "Ermöglicht das Zerkleinern und Recyceln aller verderblichen Gegenstände/Produkte direkt zu Kompost. Die Menge an erhaltenem Kompost ist halb so groß wie bei der Vanilla-Methode. Unterstützt auch benutzerdefinierte Recyclingrezepte, die in der Beschreibung des Recyclers und des Gegenstands angezeigt werden.<br>Unterstützt automatisches Be- und Entladen über Rutschen.",

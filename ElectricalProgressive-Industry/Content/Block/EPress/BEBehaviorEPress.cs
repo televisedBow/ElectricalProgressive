@@ -42,6 +42,30 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
         {
             if (Blockentity is BlockEntityEPress entity)
             {
+                // прибор сгорел?
+                if (entity.AllEparams.Any(e => e.burnout))
+                    return false;
+
+
+                var entityStack = entity.Inventory[0]?.Itemstack;
+
+                // со стаком что - то не так?
+                if (entityStack is null ||
+                    entityStack.StackSize == 0 ||
+                    entityStack.Collectible == null ||
+                    entityStack.Collectible.Attributes == null)
+                    return false;
+
+                entityStack = entity.Inventory[1]?.Itemstack;
+
+                // со стаком что - то не так?
+                if (entityStack is null ||
+                    entityStack.StackSize == 0 ||
+                    entityStack.Collectible == null ||
+                    entityStack.Collectible.Attributes == null)
+                    return false;
+
+
                 bool hasRecipe = BlockEntityEPress.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory);
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;

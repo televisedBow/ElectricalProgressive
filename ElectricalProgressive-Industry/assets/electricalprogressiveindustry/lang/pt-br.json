@@ -1,6 +1,6 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Receita carregada com sucesso",
-
+  "electricalprogressiveindustry:blockhelp-pickup": "Pegar forma",
   "block-ecentrifuge-*": "Reciclador",
   "block-handbooktitle-ecentrifuge": "Uso",
   "block-handbooktext-ecentrifuge": "Permite triturar e reciclar todos os itens/produtos perecíveis diretamente em composto. A quantidade de composto obtida é metade em comparação ao método padrão. Também suporta receitas personalizadas de reciclagem, que serão exibidas na descrição do reciclador e do próprio item.<br>Suporta carregamento e descarregamento automáticos através de dutos.",

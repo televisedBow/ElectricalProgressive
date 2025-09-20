@@ -4,6 +4,7 @@ using ElectricalProgressive.Content.Block.EPress;
 using Vintagestory.API.Common;
 using Vintagestory.API.Client;
 using ElectricalProgressive.Content.Block.EWoodcutter;
+using ElectricalProgressive.Content.Block.PressForm;
 using ElectricalProgressive.Patch;
 
 
@@ -51,7 +52,9 @@ public class ElectricalProgressiveIndustry : ModSystem
         api.RegisterBlockClass("BlockEWoodcutter", typeof(BlockEWoodcutter));
         api.RegisterBlockEntityClass("BlockEntityEWoodcutter", typeof(BlockEntityEWoodcutter));
         api.RegisterBlockEntityBehaviorClass("BEBehaviorEWoodcutter", typeof(BEBehaviorEWoodcutter));
-        
+
+        api.RegisterBlockClass("BlockPressForm", typeof(BlockPressForm));
+
     }        
     
     public override void StartClientSide(ICoreClientAPI api)

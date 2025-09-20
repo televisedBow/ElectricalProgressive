@@ -447,6 +447,27 @@ namespace ElectricalProgressive.Content.Block.EPress
                 return;
             }
 
+
+            var stack = InputSlot1?.Itemstack;
+
+            // со стаком что-то не так?
+            if (stack is null ||
+                stack.StackSize == 0 ||
+                stack.Collectible == null ||
+                stack.Collectible.Attributes == null)
+                return;
+
+            stack = InputSlot2?.Itemstack;
+
+            // со стаком что-то не так?
+            if (stack is null ||
+                stack.StackSize == 0 ||
+                stack.Collectible == null ||
+                stack.Collectible.Attributes == null)
+                return;
+
+
+
             bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1f;
             bool hasRecipe = !InputSlot1.Empty && !InputSlot2.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory);
             bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;

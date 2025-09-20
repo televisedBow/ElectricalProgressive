@@ -269,6 +269,17 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
             return;
         }
 
+        var stack = InputSlot?.Itemstack;
+
+        // со стаком что-то не так?
+        if (stack is null ||
+            stack.StackSize == 0 ||
+            stack.Collectible == null ||
+            stack.Collectible.Attributes == null)
+            return;
+
+
+
         bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
         bool hasRecipe = !InputSlot.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]); ;
         bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;

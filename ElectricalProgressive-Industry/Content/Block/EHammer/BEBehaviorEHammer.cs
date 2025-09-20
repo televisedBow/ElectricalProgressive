@@ -42,6 +42,21 @@ public class BEBehaviorEHammer : BEBehaviorBase, IElectricConsumer
         {
             if (Blockentity is BlockEntityEHammer entity)
             {
+                // прибор сгорел?
+                if (entity.AllEparams.Any(e => e.burnout))
+                    return false;
+
+
+                var entityStack = entity.Inventory[0]?.Itemstack;
+
+                // со стаком что - то не так?
+                if (entityStack is null ||
+                    entityStack.StackSize == 0 ||
+                    entityStack.Collectible == null ||
+                    entityStack.Collectible.Attributes == null)
+                    return false;
+
+
                 bool hasRecipe = BlockEntityEHammer.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory[0]); ;
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;

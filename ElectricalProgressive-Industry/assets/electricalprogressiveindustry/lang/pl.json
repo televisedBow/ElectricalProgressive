@@ -1,6 +1,6 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Przepis pomyślnie załadowany",
-
+  "electricalprogressiveindustry:blockhelp-pickup": "Podnieś formę",
   "block-ecentrifuge-*": "Recykler",
   "block-handbooktitle-ecentrifuge": "Użycie",
   "block-handbooktext-ecentrifuge": "Umożliwia mielenie i recykling wszystkich łatwo psujących się przedmiotów/produktów bezpośrednio na kompost. Ilość uzyskanego kompostu jest o połowę mniejsza niż w metodzie podstawowej. Obsługuje także niestandardowe przepisy recyklingu, które będą wyświetlane w opisie recyklera i samego przedmiotu.<br>Obsługuje automatyczne ładowanie i rozładowywanie za pomocą zsypów.",

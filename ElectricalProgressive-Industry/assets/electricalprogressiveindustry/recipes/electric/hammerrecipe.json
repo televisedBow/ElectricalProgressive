@@ -19,9 +19,9 @@
     "secondaryOutput": {
       "type": "item",
       "code": "game:metalbit-{metal}",
-      "stackSize": 2
+      "stackSize": 4
     },
-    "secondaryOutputChance": 0.4
+    "secondaryOutputChance": 0.357
   },
   {
     "code": "blistersteel",
@@ -40,8 +40,8 @@
     },
     "secondaryOutput": {
       "type": "item",
-      "code": "game:metalbit-blistersteel",
-      "stackSize": 3
+      "code": "game:metalbit-steel",
+      "stackSize": 4
     },
     "secondaryOutputChance": 0.3
   },
