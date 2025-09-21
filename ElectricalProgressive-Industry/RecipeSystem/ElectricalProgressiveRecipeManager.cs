@@ -160,11 +160,17 @@ public class ElectricalProgressiveRecipeManager : ModSystem
                     }
                     obj2.Output.FillPlaceHolder(keyValuePair.Key, strArray[index % strArray.Length]);
 
-                    // Обработка SecondaryOutput только для HammerRecipe
+                    // Обработка SecondaryOutput только для двух выходов
                     if (obj2 is HammerRecipe hammerRecipe)
                     {
                         hammerRecipe.SecondaryOutput?.FillPlaceHolder(keyValuePair.Key, strArray[index % strArray.Length]);
                     }
+
+                    if (obj2 is PressRecipe pressRecipe)
+                    {
+                        pressRecipe.SecondaryOutput?.FillPlaceHolder(keyValuePair.Key, strArray[index % strArray.Length]);
+                    }
+
                 }
                 flag2 = false;
             }

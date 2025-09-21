@@ -1,5 +1,7 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Рецепт успешно загружен",
+  "electricalprogressiveindustry:blockhelp-pickup": "Поднять форму",
+
 
   "block-ecentrifuge-*": "Переработчик",
   "block-handbooktitle-ecentrifuge": "Используется",

@@ -1,6 +1,6 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Recette chargée avec succès",
-
+  "electricalprogressiveindustry:blockhelp-pickup": "Prendre la forme",
   "block-ecentrifuge-*": "Recycleur",
   "block-handbooktitle-ecentrifuge": "Utilisation",
   "block-handbooktext-ecentrifuge": "Permet de broyer et recycler tous les objets/produits périssables directement en compost. La quantité de compost obtenue est deux fois moindre que par la méthode classique. Prend également en charge les recettes personnalisées de recyclage, qui seront affichées dans la description du recycleur et de l’objet.<br>Prend en charge le chargement et le déchargement automatiques via des goulottes.",

@@ -40,7 +40,7 @@ public class GuiDialogPress : GuiDialogBlockEntity
       itemSlot = (ItemSlot)null;
     ElementBounds bounds1 = ElementBounds.Fixed(0.0, 0.0, 200.0, 190.0);
     ElementBounds bounds2 = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0.0, 55.0, 1, 2);
-    ElementBounds bounds3 = ElementStdBounds.SlotGrid(EnumDialogArea.None, 153.0, 80.0, 1, 1);
+    ElementBounds bounds3 = ElementStdBounds.SlotGrid(EnumDialogArea.None, 153.0, 55.0, 1, 2);
     ElementBounds bounds4 = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
     bounds4.BothSizing = ElementSizing.FitToChildren;
     bounds4.WithChildren(bounds1);
@@ -51,16 +51,17 @@ public class GuiDialogPress : GuiDialogBlockEntity
       .CreateCompo("blockentitymillstone" + this.BlockEntityPosition?.ToString(), bounds5).AddShadedDialogBG(bounds4)
       .AddDialogTitleBar(this.DialogTitle, new Action(this.OnTitleBarClose)).BeginChildElements(bounds4)
       .AddDynamicCustomDraw(bounds1, new DrawDelegateWithBounds(this.OnBgDraw), "symbolDrawer")
-      .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new []{0,1}, bounds2,
-        "inputSlot").AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new []
-      {
-        2
-      }, bounds3, "outputslot").EndChildElements().Compose();
+      .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new []{0,1}, bounds2, "inputSlot")
+      .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new [] { 2, 3 }, bounds3, "outputslot")
+      .EndChildElements().Compose();
+
     this.lastRedrawMs = this.capi.ElapsedMilliseconds;
     if (itemSlot == null)
       return;
     this.SingleComposer.OnMouseMove(new MouseEvent(this.capi.Input.MouseX, this.capi.Input.MouseY));
   }
+
+
 
   public void Update(float RecipeProgress)
   {

@@ -8,7 +8,7 @@
         "code": "game:ingot-*",
         "quantity": 1,
         "name": "metal",
-        "allowedVariants": ["copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel"]
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
       },
       {
         "type": "block",
@@ -20,7 +20,13 @@
       "type": "item",
       "code": "game:hammerhead-{metal}",
       "stacksize": 1
-    }
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 1
+    },
+    "secondaryOutputChance": 0.5
   },
   {
     "code": "axe",
@@ -31,7 +37,7 @@
         "code": "game:ingot-*",
         "quantity": 1,
         "name": "metal",
-        "allowedVariants": ["copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel"]
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
       },
       {
         "type": "block",
@@ -43,7 +49,13 @@
       "type": "item",
       "code": "game:axehead-{metal}",
       "stacksize": 1
-    }
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 2
+    },
+    "secondaryOutputChance": 1
   },
   {
     "code": "pickaxe",
@@ -54,7 +66,7 @@
         "code": "game:ingot-*",
         "quantity": 1,
         "name": "metal",
-        "allowedVariants": ["copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel"]
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
       },
       {
         "type": "block",
@@ -66,7 +78,13 @@
       "type": "item",
       "code": "game:pickaxehead-{metal}",
       "stacksize": 1
-    }
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 8
+    },
+    "secondaryOutputChance": 1
   },
   {
     "code": "shovel",
@@ -77,7 +95,7 @@
         "code": "game:ingot-*",
         "quantity": 1,
         "name": "metal",
-        "allowedVariants": ["copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel"]
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
       },
       {
         "type": "block",
@@ -89,7 +107,13 @@
       "type": "item",
       "code": "game:shovelhead-{metal}",
       "stacksize": 1
-    }
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 2
+    },
+    "secondaryOutputChance": 1
   },
   {
     "code": "falx",
@@ -100,7 +124,7 @@
         "code": "game:ingot-*",
         "quantity": 1,
         "name": "metal",
-        "allowedVariants": ["copper", "tinbronze", "bismuthbronze", "blackbronze", "iron", "meteoriciron", "steel"]
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "iron", "meteoriciron", "steel" ]
       },
       {
         "type": "block",
@@ -112,7 +136,13 @@
       "type": "item",
       "code": "game:bladehead-falx-{metal}",
       "stacksize": 1
-    }
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 1
+    },
+    "secondaryOutputChance": 0.5
   },
   {
     "code": "hoe",
@@ -123,7 +153,7 @@
         "code": "game:ingot-*",
         "quantity": 1,
         "name": "metal",
-        "allowedVariants": ["copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel"]
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
       },
       {
         "type": "block",
@@ -135,7 +165,13 @@
       "type": "item",
       "code": "game:hoehead-{metal}",
       "stacksize": 1
-    }
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 3
+    },
+    "secondaryOutputChance": 1
   },
   {
     "code": "prospectingpick",
@@ -146,7 +182,7 @@
         "code": "game:ingot-*",
         "quantity": 1,
         "name": "metal",
-        "allowedVariants": ["copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel"]
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
       },
       {
         "type": "block",
@@ -158,6 +194,216 @@
       "type": "item",
       "code": "game:prospectingpickhead-{metal}",
       "stacksize": 1
-    }
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 12
+    },
+    "secondaryOutputChance": 1
+  },
+
+  {
+    "code": "hammerplate",
+    "energyOperation": 8000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "quantity": 1,
+        "name": "metal",
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
+      },
+      {
+        "type": "block",
+        "code": "electricalprogressiveindustry:pressform-hammer",
+        "quantity": 0
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:hammerhead-{metal}",
+      "stacksize": 1
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 19
+    },
+    "secondaryOutputChance": 1
+  },
+  {
+    "code": "axeplate",
+    "energyOperation": 8000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "quantity": 1,
+        "name": "metal",
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
+      },
+      {
+        "type": "block",
+        "code": "electricalprogressiveindustry:pressform-axe",
+        "quantity": 0
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:axehead-{metal}",
+      "stacksize": 1
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 20
+    },
+    "secondaryOutputChance": 1
+  },
+  {
+    "code": "pickaxeplate",
+    "energyOperation": 8000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "quantity": 1,
+        "name": "metal",
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
+      },
+      {
+        "type": "block",
+        "code": "electricalprogressiveindustry:pressform-pickaxe",
+        "quantity": 0
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:pickaxehead-{metal}",
+      "stacksize": 1
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 27
+    },
+    "secondaryOutputChance": 1
+  },
+  {
+    "code": "shovelplate",
+    "energyOperation": 8000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "quantity": 1,
+        "name": "metal",
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
+      },
+      {
+        "type": "block",
+        "code": "electricalprogressiveindustry:pressform-shovel",
+        "quantity": 0
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:shovelhead-{metal}",
+      "stacksize": 1
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 21
+    },
+    "secondaryOutputChance": 1
+  },
+  {
+    "code": "falxplate",
+    "energyOperation": 8000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "quantity": 1,
+        "name": "metal",
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "iron", "meteoriciron", "steel" ]
+      },
+      {
+        "type": "block",
+        "code": "electricalprogressiveindustry:pressform-falx",
+        "quantity": 0
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:bladehead-falx-{metal}",
+      "stacksize": 1
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 19
+    },
+    "secondaryOutputChance": 1
+  },
+  {
+    "code": "hoeplate",
+    "energyOperation": 8000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "quantity": 1,
+        "name": "metal",
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
+      },
+      {
+        "type": "block",
+        "code": "electricalprogressiveindustry:pressform-hoe",
+        "quantity": 0
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:hoehead-{metal}",
+      "stacksize": 1
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 21
+    },
+    "secondaryOutputChance": 1
+  },
+  {
+    "code": "prospectingpickplate",
+    "energyOperation": 8000,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:metalplate-*",
+        "quantity": 1,
+        "name": "metal",
+        "allowedVariants": [ "copper", "tinbronze", "bismuthbronze", "blackbronze", "silver", "gold", "iron", "meteoriciron", "steel" ]
+      },
+      {
+        "type": "block",
+        "code": "electricalprogressiveindustry:pressform-prospectingpick",
+        "quantity": 0
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:prospectingpickhead-{metal}",
+      "stacksize": 1
+    },
+    "secondaryOutput": {
+      "type": "item",
+      "code": "game:metalbit-{metal}",
+      "stackSize": 30
+    },
+    "secondaryOutputChance": 1
   }
 ]

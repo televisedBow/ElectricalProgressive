@@ -215,7 +215,7 @@ public class HandbookPatch
                     }
 
                     // только у молота есть второй выход
-                    if (recipe is HammerRecipe)
+                    if (recipe is HammerRecipe || recipe is PressRecipe)
                     {
                         var outputStack2 = GetOrCreateStack((AssetLocation)recipe.SecondaryOutput.Code,
                             (int)recipe.SecondaryOutput.Quantity, capi.World);
@@ -282,7 +282,7 @@ public class HandbookPatch
                 
                 components.Add(outputSlideShow);
 
-                if (recipeList[0] is HammerRecipe)
+                if (recipeList[0] is HammerRecipe || recipeList[0] is PressRecipe)
                 {
                     // Плюсик между ингредиентами
                     var plus = new RichTextComponent(capi, " + ",
@@ -375,7 +375,7 @@ public class HandbookPatch
                 components.Add(CreateItemStackComponent(capi, outputStack1, openDetailPageFor));
             }
 
-            if (recipe is HammerRecipe)
+            if (recipe is HammerRecipe || recipe is PressRecipe)
             {
                 // Второй выход +
                 var plus = new RichTextComponent(capi, "+ ",
@@ -483,7 +483,9 @@ public class HandbookPatch
 
 
 
-
+    /// <summary>
+    /// Класс для синхронизированного слайд-шоу
+    /// </summary>
     public class SyncedSlideshowItemstackTextComponent : SlideshowItemstackTextComponent
     {
         private int CurItemIndex;
@@ -582,13 +584,10 @@ public class HandbookPatch
             }
         }
 
-        // Добавляем метод для очистки при уничтожении компонента
+        // Добавляем метод для очистки при уничтожении компонента (важно)
         public override void Dispose()
         {
-            if (isHovered && groups.ContainsKey(groupKey))
-            {
-                groups[groupKey].HoverCount--;
-            }
+            groups.Clear();
             _stackCache.Clear();
             base.Dispose();
         }

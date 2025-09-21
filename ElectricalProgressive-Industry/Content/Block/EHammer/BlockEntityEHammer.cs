@@ -286,10 +286,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer
 
         if (isCraftingNow)
         {
-            if (!_wasCraftingLastTick)
-            {
-                StartAnimation();
-            }
+
+            StartAnimation();
+
 
             RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
             UpdateState(RecipeProgress);

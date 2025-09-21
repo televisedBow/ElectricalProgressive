@@ -282,9 +282,10 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         {
             if (!_wasCraftingLastTick)
             {
-                StartAnimation();
                 startSound();
             }
+
+            StartAnimation();
 
             RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
             UpdateState(RecipeProgress);

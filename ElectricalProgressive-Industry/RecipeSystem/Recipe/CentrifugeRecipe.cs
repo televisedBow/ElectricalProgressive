@@ -47,11 +47,13 @@ namespace ElectricalProgressive.RecipeSystem.Recipe;
     {
       Dictionary<string, string[]> mappings = new Dictionary<string, string[]>();
 
-      if (Ingredients == null || Ingredients.Length == 0) return mappings;
+      if (Ingredients == null || Ingredients.Length == 0)
+          return mappings;
 
       foreach (CraftingRecipeIngredient ingred in Ingredients)
       {
-        if (ingred.Code==null || !ingred.Code.Path.Contains("*")) continue;
+        if (ingred.Code==null || !ingred.Code.Path.Contains("*"))
+            continue;
 
         int wildcardStartLen = ingred.Code.Path.IndexOf("*");
         int wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;
@@ -62,13 +64,15 @@ namespace ElectricalProgressive.RecipeSystem.Recipe;
         {
           for (int i = 0; i < world.Blocks.Count; i++)
           {
-            if (world.Blocks[i].Code == null || world.Blocks[i].IsMissing) continue;
+            if (world.Blocks[i].Code == null || world.Blocks[i].IsMissing)
+                continue;
 
             if (WildcardUtil.Match(ingred.Code, world.Blocks[i].Code))
             {
               string code = world.Blocks[i].Code.Path.Substring(wildcardStartLen);
               string codepart = code.Substring(0, code.Length - wildcardEndLen);
-              if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart)) continue;
+              if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
+                  continue;
 
               codes.Add(codepart);
 
@@ -79,13 +83,15 @@ namespace ElectricalProgressive.RecipeSystem.Recipe;
         {
           for (int i = 0; i < world.Items.Count; i++)
           {
-            if (world.Items[i].Code == null || world.Items[i].IsMissing) continue;
+            if (world.Items[i].Code == null || world.Items[i].IsMissing)
+                continue;
 
             if (WildcardUtil.Match(ingred.Code, world.Items[i].Code))
             {
               string code = world.Items[i].Code.Path.Substring(wildcardStartLen);
               string codepart = code.Substring(0, code.Length - wildcardEndLen);
-              if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart)) continue;
+              if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
+                  continue;
 
               codes.Add(codepart);
             }

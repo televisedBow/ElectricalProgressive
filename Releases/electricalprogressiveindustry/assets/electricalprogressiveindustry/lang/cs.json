@@ -1,6 +1,6 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Recept byl úspěšně načten",
-
+  "electricalprogressiveindustry:blockhelp-pickup": "Sebrat formu",
   "block-ecentrifuge-*": "Recyklátor",
   "block-handbooktitle-ecentrifuge": "Použití",
   "block-handbooktext-ecentrifuge": "Umožňuje drtit a recyklovat všechny rychle se kazící předměty/produkty přímo na kompost. Množství získaného kompostu je poloviční oproti základní metodě. Podporuje také vlastní recepty recyklace, které se zobrazí v popisu recyklátoru a samotného předmětu.<br>Podporuje automatické nakládání a vykládání pomocí skluzů.",

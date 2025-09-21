@@ -1,6 +1,6 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Receta cargada con éxito",
-
+  "electricalprogressiveindustry:blockhelp-pickup": "Recoger forma",
   "block-ecentrifuge-*": "Reciclador",
   "block-handbooktitle-ecentrifuge": "Uso",
   "block-handbooktext-ecentrifuge": "Permite triturar y reciclar todos los objetos/productos perecederos directamente en compost. La cantidad de compost obtenida es la mitad en comparación con el método estándar. También admite recetas personalizadas de reciclaje, que se mostrarán en la descripción del reciclador y del propio objeto.<br>Admite carga y descarga automáticas mediante conductos.",
