@@ -13,6 +13,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     public static List<CentrifugeRecipe> CentrifugeRecipes;
     public static List<HammerRecipe> HammerRecipes;
     public static List<PressRecipe> PressRecipes;
+    public static List<DrawingRecipe> DrawingRecipes;
     public static Dictionary<string, (string code, IEnumerable<dynamic> recipes)> machines;
 
     private ICoreServerAPI api;
@@ -23,6 +24,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         api.Event.SaveGameLoaded += CentrifugeRecipe;
         api.Event.SaveGameLoaded += HammerRecipe;
         api.Event.SaveGameLoaded += PressRecipe;
+        api.Event.SaveGameLoaded += DrawingRecipe;
 
         machines = new Dictionary<string, (string code, IEnumerable<dynamic> recipes)>(3);
     }
@@ -63,6 +65,19 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
 
         machines.Add("epress-", ("electricalprogressiveindustry:epress-north", ElectricalProgressiveRecipeManager.PressRecipes));
+    }
+
+
+    /// <summary>
+    /// Загружает рецепты для волочильного станка из JSON-файлов.
+    /// </summary>
+    public void DrawingRecipe()
+    {
+        DrawingRecipes = new List<DrawingRecipe>();
+        LoadRecipes<DrawingRecipe>("Drawing Recipe", "recipes/electric/drawingrecipe", (r) => DrawingRecipes.Add(r));
+        api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
+
+        machines.Add("edrawing-", ("electricalprogressiveindustry:edrawing-north", ElectricalProgressiveRecipeManager.DrawingRecipes));
     }
 
 

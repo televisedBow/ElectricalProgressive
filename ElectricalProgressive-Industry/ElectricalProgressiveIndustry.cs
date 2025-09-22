@@ -1,11 +1,12 @@
 ﻿using ElectricalProgressive.Content.Block.ECentrifuge;
+using ElectricalProgressive.Content.Block.EDrawing;
 using ElectricalProgressive.Content.Block.EHammer;
 using ElectricalProgressive.Content.Block.EPress;
-using Vintagestory.API.Common;
-using Vintagestory.API.Client;
 using ElectricalProgressive.Content.Block.EWoodcutter;
 using ElectricalProgressive.Content.Block.PressForm;
 using ElectricalProgressive.Patch;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
 
 
 [assembly: ModDependency("game", "1.21.0")]
@@ -16,7 +17,7 @@ using ElectricalProgressive.Patch;
     "electricalprogressiveindustry",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Additional electrical devices.",
-    Version = "0.1.2",
+    Version = "0.1.3",
     Authors = new[] {
         "Tehtelev",
         "Kotl"
@@ -48,6 +49,10 @@ public class ElectricalProgressiveIndustry : ModSystem
         api.RegisterBlockClass("BlockEPress", typeof(BlockEPress));
         api.RegisterBlockEntityClass("BlockEntityEPress", typeof(BlockEntityEPress));
         api.RegisterBlockEntityBehaviorClass("BEBehaviorEPress", typeof(BEBehaviorEPress));
+
+        api.RegisterBlockClass("BlockEDrawing", typeof(BlockEDrawing));
+        api.RegisterBlockEntityClass("BlockEntityEDrawing", typeof(BlockEntityEDrawing));
+        api.RegisterBlockEntityBehaviorClass("BEBehaviorEDrawing", typeof(BEBehaviorEDrawing));
 
         api.RegisterBlockClass("BlockEWoodcutter", typeof(BlockEWoodcutter));
         api.RegisterBlockEntityClass("BlockEntityEWoodcutter", typeof(BlockEntityEWoodcutter));

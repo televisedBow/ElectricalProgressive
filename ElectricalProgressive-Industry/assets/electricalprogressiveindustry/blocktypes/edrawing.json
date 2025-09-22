@@ -1,19 +1,19 @@
 ﻿{
-  "code": "ehammer",
-  "class": "BlockEHammer",
-  "entityClass": "BlockEntityEHammer",
+  "code": "edrawing",
+  "class": "BlockEDrawing",
+  "entityClass": "BlockEntityEDrawing",
   "attributes": {
-    "maxConsumption": 200,
+    "maxConsumption": 100,
     "voltage": 128,
     "maxCurrent": 100.0,
     "isolated": true,
     "isolatedEnvironment": true,
     "handbook": {
-      "groupBy": [ "ehammer" ],
+      "groupBy": [ "edrawing-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveindustry:block-handbooktitle-ehammer",
-          "text": "electricalprogressiveindustry:block-handbooktext-ehammer"
+          "title": "electricalprogressiveindustry:block-handbooktitle-edrawing",
+          "text": "electricalprogressiveindustry:block-handbooktext-edrawing"
         }
       ]
     }
@@ -25,7 +25,7 @@
       "name": "Animatable"
     },
     {
-      "name": "BEBehaviorEHammer"
+      "name": "BEBehaviorEDrawing"
     },
     {
       "name": "ElectricalProgressive"
@@ -69,19 +69,19 @@
 
   "shapebytype": {
     "*-north": {
-      "base": "block/ehammer/ehammer",
+      "base": "block/edrawing/edrawing",
       "rotateY": 0
     },
     "*-east": {
-      "base": "block/ehammer/ehammer",
+      "base": "block/edrawing/edrawing",
       "rotateY": 270
     },
     "*-south": {
-      "base": "block/ehammer/ehammer",
+      "base": "block/edrawing/edrawing",
       "rotateY": 180
     },
     "*-west": {
-      "base": "block/ehammer/ehammer",
+      "base": "block/edrawing/edrawing",
       "rotateY": 90
     }
   },

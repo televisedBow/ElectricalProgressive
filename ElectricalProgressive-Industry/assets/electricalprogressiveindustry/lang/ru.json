@@ -16,6 +16,9 @@
   "block-handbooktitle-epress": "Используется",
   "block-handbooktext-epress": "Позволяет создавать некоторые предметы путем выдавливания в пресс-форме<br>Поддерживает автоматическую загрузку и разгрузку с помощью желобов.",
 
+  "block-edrawing-*": "Волочильная машина",
+  "block-handbooktitle-edrawing": "Используется",
+  "block-handbooktext-edrawing": "Позволяет создавать некоторые предметы путем продавливания металла через калибры вытягивая металл нужной формы.<br>Поддерживает автоматическую загрузку и разгрузку с помощью желобов.",
 
   "game:ewoodcutter-title-gui": "Электрический лесоруб",
   "block-ewoodcutter-normal": "Электрический лесоруб",
@@ -23,6 +26,7 @@
   "game:ecentrifuge-title-gui": "Переработчик",
   "game:ehammer-title-gui": "Автомолот",
   "game:epress-title-gui": "Автопресс",
+  "game:edrawing-title-gui": "Волочильная машина",
 
   "block-pressform-axe": "Прессформа топора",
   "block-pressform-pickaxe": "Прессформа кирки",

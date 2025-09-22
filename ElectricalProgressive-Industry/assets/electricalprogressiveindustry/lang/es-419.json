@@ -1,0 +1,37 @@
+﻿{
+  "electricalprogressiveindustry:recipeloading": "Receta cargada exitosamente",
+  "electricalprogressiveindustry:blockhelp-pickup": "Recoger molde",
+
+  "block-ecentrifuge-*": "Recicladora",
+  "block-handbooktitle-ecentrifuge": "Uso",
+  "block-handbooktext-ecentrifuge": "Permite triturar y procesar todos los objetos/productos perecederos directamente en compost. La cantidad de compost obtenido es la mitad que con el método vanilla. También admite recetas de reciclaje personalizadas, que se mostrarán en la descripción de la recicladora y del objeto mismo.<br>Admite carga y descarga automática mediante tolvas.",
+
+  "block-ehammer-*": "Martillo Automático",
+  "block-handbooktitle-ehammer": "Uso",
+  "block-handbooktext-ehammer": "Permite simplificar y automatizar el trabajo en el yunque. Existe la posibilidad de obtener materiales adicionales durante el procesamiento.<br>Admite carga y descarga automática mediante tolvas.",
+
+  "block-epress-*": "Prensa Automática",
+  "block-handbooktitle-epress": "Uso",
+  "block-handbooktext-epress": "Permite crear algunos objetos mediante extrusión en un molde.<br>Admite carga y descarga automática mediante tolvas.",
+
+  "game:ewoodcutter-title-gui": "Cortadora de Madera Eléctrica",
+  "block-ewoodcutter-normal": "Cortadora de Madera Eléctrica",
+  "block-ewoodcutter-normal-burned": "Cortadora de Madera Eléctrica (quemada)",
+  "game:ecentrifuge-title-gui": "Recicladora",
+  "game:ehammer-title-gui": "Martillo Automático",
+  "game:epress-title-gui": "Prensa Automática",
+
+  "block-pressform-axe": "Molde de Hacha",
+  "block-pressform-pickaxe": "Molde de Pico",
+  "block-pressform-shovel": "Molde de Pala",
+  "block-pressform-falx": "Molde de Falx",
+  "block-pressform-hammer": "Molde de Martillo",
+  "block-pressform-hoe": "Molde de Azada",
+  "block-pressform-prospectingpick": "Molde de Pico de Prospección",
+
+  "electricalprogressive:produced-in": "Procesado en:",
+  "electricalprogressive:energy-required": "Energía requerida",
+  "electricalprogressive:energy-unit": "J",
+  "electricalprogressive:recipe-chance": "~{0}%",
+  "electricalprogressive:chance": "probabilidad"
+}
