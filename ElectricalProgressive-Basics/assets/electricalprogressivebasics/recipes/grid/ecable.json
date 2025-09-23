@@ -49,7 +49,7 @@
       "I": {
         "type": "block",
         "code": "electricalprogressivebasics:ecable-32v-*-single-part",
-        "quantity": 8,
+        "quantity": 16,
         "name": "metal",
         "allowedVariants": [
           "copper",
@@ -175,7 +175,7 @@
       "I": {
         "type": "block",
         "code": "electricalprogressivebasics:ecable-32v-*-single-isolated",
-        "quantity": 8,
+        "quantity": 16,
         "name": "metal",
         "allowedVariants": [
           "copper",
@@ -248,7 +248,7 @@
       "I": {
         "type": "block",
         "code": "electricalprogressivebasics:ecable-128v-*-single-part",
-        "quantity": 4,
+        "quantity": 8,
         "name": "metal",
         "allowedVariants": [
           "copper",
@@ -372,7 +372,7 @@
       "I": {
         "type": "block",
         "code": "electricalprogressivebasics:ecable-128v-*-single-isolated",
-        "quantity": 4,
+        "quantity": 8,
         "name": "metal",
         "allowedVariants": [
           "copper",

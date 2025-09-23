@@ -22,7 +22,7 @@
       },
       {
         "type": "block",
-        "code": "electricalprogressiveindustry:pressform-hammer",
+        "code": "electricalprogressiveindustry:gauge-32v",
         "quantity": 0
       }
     ],
@@ -55,7 +55,7 @@
       },
       {
         "type": "block",
-        "code": "electricalprogressiveindustry:pressform-axe",
+        "code": "electricalprogressiveindustry:gauge-128v",
         "quantity": 0
       }
     ],

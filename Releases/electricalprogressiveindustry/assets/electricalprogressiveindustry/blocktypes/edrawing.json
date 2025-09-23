@@ -69,19 +69,19 @@
 
   "shapebytype": {
     "*-north": {
-      "base": "block/epress/edrawing",
+      "base": "block/edrawing/edrawing",
       "rotateY": 0
     },
     "*-east": {
-      "base": "block/epress/edrawing",
+      "base": "block/edrawing/edrawing",
       "rotateY": 270
     },
     "*-south": {
-      "base": "block/epress/edrawing",
+      "base": "block/edrawing/edrawing",
       "rotateY": 180
     },
     "*-west": {
-      "base": "block/epress/edrawing",
+      "base": "block/edrawing/edrawing",
       "rotateY": 90
     }
   },

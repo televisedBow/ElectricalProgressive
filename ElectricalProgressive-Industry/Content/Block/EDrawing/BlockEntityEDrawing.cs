@@ -85,7 +85,8 @@ namespace ElectricalProgressive.Content.Block.EDrawing
 
         //----------------------------------------------------------------------------------------------------------------------------
 
-        private AssetLocation soundPress;
+        private ILoadedSound ambientSound;
+        private AssetLocation centrifugeSound;
 
         public BlockEntityEDrawing()
         {
@@ -108,7 +109,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
                     animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
                 }
 
-                soundPress = new AssetLocation("electricalprogressiveindustry:sounds/epress/press.ogg");
+                centrifugeSound = new AssetLocation("electricalprogressiveindustry:sounds/ecentrifuge/centrifuge.ogg");
 
                 this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
             }
@@ -315,6 +316,11 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             
             if (isCraftingNow)
             {
+                if (!_wasCraftingLastTick)
+                {
+                    startSound();
+                }
+
                 StartAnimation();
 
                 RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
@@ -328,6 +334,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
                     if (!HasRequiredItems())
                     {
                         StopAnimation();
+                        stopSound();
                     }
 
                     // в любом случае сбрасываем прогресс
@@ -338,6 +345,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             else if (_wasCraftingLastTick)
             {
                 StopAnimation();
+                stopSound();
                 MarkDirty(true);
             }
 
@@ -354,6 +362,46 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             MarkDirty(true);
         }
         #endregion
+
+
+
+        /// <summary>
+        /// Запуск звука
+        /// </summary>
+        public void startSound()
+        {
+            if (this.ambientSound != null)
+                return;
+            if ((Api != null ? (Api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0)
+                return;
+            this.ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
+            {
+                Location = centrifugeSound,
+                ShouldLoop = true,
+                Position = this.Pos.ToVec3f().Add(0.5f, 0.25f, 0.5f),
+                DisposeOnFinish = false,
+                Volume = 1f,
+            });
+
+            this.ambientSound.Start();
+        }
+
+
+
+        /// <summary>
+        /// Остановка звука
+        /// </summary>
+        public void stopSound()
+        {
+            if (this.ambientSound == null)
+                return;
+            this.ambientSound.Stop();
+            this.ambientSound.Dispose();
+            this.ambientSound = (ILoadedSound)null;
+        }
+
+
+
 
         #region Визуальные эффекты
         private void StartAnimation()
@@ -420,7 +468,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
 
             ICoreClientAPI capi = Api as ICoreClientAPI;
             capi.World.PlaySoundAt(
-                soundPress,
+                centrifugeSound,
                 Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
                 null,
                 false,
@@ -533,12 +581,23 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             {
                 this.animUtil.Dispose();
             }
+
+            if (this.ambientSound != null)
+            {
+                this.ambientSound.Stop();
+                this.ambientSound.Dispose();
+            }
         }
 
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
             this.clientDialog?.TryClose();
+            if (this.ambientSound == null)
+                return;
+            this.ambientSound.Stop();
+            this.ambientSound.Dispose();
+            this.ambientSound = (ILoadedSound)null;
         }
         #endregion
     }

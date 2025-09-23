@@ -3,6 +3,7 @@ using ElectricalProgressive.Content.Block.EDrawing;
 using ElectricalProgressive.Content.Block.EHammer;
 using ElectricalProgressive.Content.Block.EPress;
 using ElectricalProgressive.Content.Block.EWoodcutter;
+using ElectricalProgressive.Content.Block.Gauge;
 using ElectricalProgressive.Content.Block.PressForm;
 using ElectricalProgressive.Patch;
 using Vintagestory.API.Client;
@@ -59,6 +60,8 @@ public class ElectricalProgressiveIndustry : ModSystem
         api.RegisterBlockEntityBehaviorClass("BEBehaviorEWoodcutter", typeof(BEBehaviorEWoodcutter));
 
         api.RegisterBlockClass("BlockPressForm", typeof(BlockPressForm));
+
+        api.RegisterBlockClass("BlockGauge", typeof(BlockGauge));
 
     }        
     

@@ -32,7 +32,6 @@
 	"combustibleProps": {
 		"meltingPoint": 1084,
 		"meltingDuration": 30,
-		"smeltingType": "bake",
 		"requiresContainer": true,
 		"smeltedRatio": 8,
 		"smeltedStack": {
