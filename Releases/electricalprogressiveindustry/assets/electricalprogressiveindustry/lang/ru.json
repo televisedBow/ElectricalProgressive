@@ -1,6 +1,6 @@
 ﻿{
   "electricalprogressiveindustry:recipeloading": "Рецепт успешно загружен",
-  "electricalprogressiveindustry:blockhelp-pickup": "Поднять форму",
+  "electricalprogressiveindustry:blockhelp-pickup": "Поднять",
 
 
   "block-ecentrifuge-*": "Переработчик",
@@ -35,6 +35,9 @@
   "block-pressform-hammer": "Прессформа молота",
   "block-pressform-hoe": "Прессформа мотыги",
   "block-pressform-prospectingpick": "Прессформа геологического молотка",
+
+  "block-gauge-32v": "Калибр для кабелей 32В",
+  "block-gauge-128v": "Калибр для кабелей 128В",
 
   "electricalprogressive:produced-in": "Обрабатывается в:",
   "electricalprogressive:energy-required": "Требуется энергии",

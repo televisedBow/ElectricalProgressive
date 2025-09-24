@@ -22,14 +22,14 @@
       },
       {
         "type": "block",
-        "code": "electricalprogressiveindustry:pressform-hammer",
+        "code": "electricalprogressiveindustry:gauge-32v",
         "quantity": 0
       }
     ],
     "output": {
       "type": "block",
       "code": "electricalprogressivebasics:ecable-32v-{metal}-single-part",
-      "quantity": 16
+      "quantity": 8
     }
   },
   {
@@ -55,14 +55,14 @@
       },
       {
         "type": "block",
-        "code": "electricalprogressiveindustry:pressform-axe",
+        "code": "electricalprogressiveindustry:gauge-128v",
         "quantity": 0
       }
     ],
     "output": {
       "type": "block",
       "code": "electricalprogressivebasics:ecable-128v-{metal}-single-part",
-      "quantity": 8
+      "quantity": 4
     }
   }
 ]

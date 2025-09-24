@@ -18,7 +18,7 @@ using Vintagestory.API.Common;
     "electricalprogressiveindustry",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Additional electrical devices.",
-    Version = "0.1.3",
+    Version = "0.2.0",
     Authors = new[] {
         "Tehtelev",
         "Kotl"
