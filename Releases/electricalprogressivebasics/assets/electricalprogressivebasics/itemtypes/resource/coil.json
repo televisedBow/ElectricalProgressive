@@ -33,10 +33,10 @@
 		"meltingPoint": 1084,
 		"meltingDuration": 30,
 		"requiresContainer": true,
-		"smeltedRatio": 8,
+		"smeltedRatio": 1,
 		"smeltedStack": {
 			"type": "item",
-			"code": "game:ingot-copper"
+			"code": "game:metalbit-copper"
 		}
 	},
 	"guiTransform": {

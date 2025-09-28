@@ -29,16 +29,6 @@
 		"height": 0.0625,
 		"length": 0.0625
 	},
-	"combustibleProps": {
-		"meltingPoint": 1084,
-		"meltingDuration": 30,
-		"requiresContainer": true,
-		"smeltedRatio": 8,
-		"smeltedStack": {
-			"type": "item",
-			"code": "game:ingot-copper"
-		}
-	},
 	"guiTransform": {
 		"translation": {
 			"x": 2,
