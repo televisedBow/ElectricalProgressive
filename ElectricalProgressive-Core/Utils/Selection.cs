@@ -68,63 +68,42 @@ public class Selection
         }
     }
 
+    /// <summary>
+    /// Берем сторону, на которую указывает вектор от центра блока к точке попадания.
+    /// </summary>
     public BlockFacing Face
     {
         get
         {
             var normalize = this.hitPosition.SubCopy(0.5f, 0.5f, 0.5f);
 
-            if (normalize.X > normalize.Y && normalize.X > normalize.Z && normalize.X > -normalize.Y &&
-                normalize.X > -normalize.Z)
-            {
-                return this.didOffset
-                    ? BlockFacing.WEST
-                    : BlockFacing.EAST;
-            }
+            // Находим координату с наибольшим абсолютным значением
+            float absX = (float)Math.Abs(normalize.X);
+            float absY = (float)Math.Abs(normalize.Y);
+            float absZ = (float)Math.Abs(normalize.Z);
 
-            if (normalize.X < normalize.Y && normalize.X < normalize.Z && normalize.X < -normalize.Y &&
-                normalize.X < -normalize.Z)
+            if (absX >= absY && absX >= absZ)
             {
-                return this.didOffset
+                return (normalize.X > 0) ^ this.didOffset
                     ? BlockFacing.EAST
                     : BlockFacing.WEST;
             }
 
-            if (normalize.Z > normalize.Y && normalize.Z > normalize.X && normalize.Z > -normalize.Y &&
-                normalize.Z > -normalize.X)
+            if (absZ >= absX && absZ >= absY)
             {
-                return this.didOffset
-                    ? BlockFacing.NORTH
-                    : BlockFacing.SOUTH;
-            }
-
-            if (normalize.Z < normalize.Y && normalize.Z < normalize.X && normalize.Z < -normalize.Y &&
-                normalize.Z < -normalize.X)
-            {
-                return this.didOffset
+                return (normalize.Z > 0) ^ this.didOffset
                     ? BlockFacing.SOUTH
                     : BlockFacing.NORTH;
             }
 
-            if (normalize.Y > normalize.X && normalize.Y > normalize.Z && normalize.Y > -normalize.X &&
-                normalize.Y > -normalize.Z)
-            {
-                return this.didOffset
-                    ? BlockFacing.DOWN
-                    : BlockFacing.UP;
-            }
-
-            if (normalize.Y < normalize.X && normalize.Y < normalize.Z && normalize.Y < -normalize.X &&
-                normalize.Y < -normalize.Z)
-            {
-                return this.didOffset
-                    ? BlockFacing.UP
-                    : BlockFacing.DOWN;
-            }
-
-            throw new Exception();
+            // Оставшийся случай (Y)
+            return (normalize.Y > 0) ^ this.didOffset
+                ? BlockFacing.UP
+                : BlockFacing.DOWN;
         }
     }
+
+
 
     public Facing Facing => FacingHelper.From(this.Face, this.Direction);
 
@@ -136,30 +115,61 @@ public class Selection
         );
     }
 
+
+
+    /// <summary>
+    /// Берем направление, на которое указывает вектор от центра грани к точке попадания.
+    /// </summary>
+    /// <param name="mapping"></param>
+    /// <returns></returns>
     private BlockFacing DirectionHelper(params BlockFacing[] mapping)
     {
         var hitPosition = Rotate(this.Position2D, new Vec2d(0.5, 0.5), 45.0 * GameMath.DEG2RAD);
 
-        if (hitPosition.X > 0.5 && hitPosition.Y > 0.5)
+        // Добавляем небольшую погрешность для обработки граничных случаев
+        const float epsilon = 0.0001f;
+
+        bool right = hitPosition.X >= 0.5f - epsilon;
+        bool left = hitPosition.X <= 0.5f + epsilon;
+        bool top = hitPosition.Y >= 0.5f - epsilon;
+        bool bottom = hitPosition.Y <= 0.5f + epsilon;
+
+        // Обрабатываем все возможные комбинации
+        if (right && top && !left && !bottom) // правый верхний угол
         {
             return mapping[0];
         }
 
-        if (hitPosition.X < 0.5 && hitPosition.Y < 0.5)
+        if (left && bottom && !right && !top) // левый нижний угол
         {
             return mapping[1];
         }
 
-        if (hitPosition.X < 0.5 && hitPosition.Y > 0.5)
+        if (left && top && !right && !bottom) // левый верхний угол
         {
             return mapping[2];
         }
 
-        if (hitPosition.X > 0.5 && hitPosition.Y < 0.5)
+        if (right && bottom && !left && !top) // правый нижний угол
         {
             return mapping[3];
         }
 
-        throw new Exception();
+        // Обработка граничных случаев
+        if (Math.Abs(hitPosition.X - 0.5f) < epsilon)
+        {
+            // Вертикальная линия через центр
+            return hitPosition.Y > 0.5f ? mapping[2] : mapping[3];
+        }
+
+        if (Math.Abs(hitPosition.Y - 0.5f) < epsilon)
+        {
+            // Горизонтальная линия через центр
+            return hitPosition.X > 0.5f ? mapping[0] : mapping[1];
+        }
+
+        // Если попали точно в центр (оба условия выше не сработали)
+        // Выбираем направление по умолчанию или на основе дополнительной логики
+        return mapping[0]; // или другое значение по умолчанию
     }
 }

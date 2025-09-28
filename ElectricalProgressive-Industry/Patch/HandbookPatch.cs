@@ -46,7 +46,8 @@ public class HandbookPatch
             try
             {
                 var stack = inSlot.Itemstack;
-                if (stack == null) return;
+                if (stack == null)
+                    return;
 
                 var components = new List<RichTextComponentBase>(__result);
                 bool haveText = components.Count > 0;
@@ -60,6 +61,8 @@ public class HandbookPatch
                 capi.Logger.Error($"Handbook error: {ex}");
             }
         }
+        
+
 
         private static void CheckAndAddRecipes(
             List<RichTextComponentBase> components,
@@ -68,9 +71,18 @@ public class HandbookPatch
             ActionConsumable<string> openDetailPageFor,
             ref bool haveText)
         {
+            // Добавляем проверки на null
+            if (stack == null ||
+                stack.Collectible == null)
+                return;
 
+            // мало ли машин нет
+            if (ElectricalProgressiveRecipeManager.machines == null)
+                return;
 
-            var machine = ElectricalProgressiveRecipeManager.machines.FirstOrDefault(m => stack.Collectible.Code.Path.StartsWith(m.Key));
+            var machine = ElectricalProgressiveRecipeManager.machines
+                .Where(m => m.Key != null)
+                .FirstOrDefault(m => stack.Collectible.Code.Path.StartsWith(m.Key));
 
             if (machine.Value != default)
             {
@@ -87,10 +99,11 @@ public class HandbookPatch
             {
                 foreach (var m in ElectricalProgressiveRecipeManager.machines)
                 {
-                    if (m.Value.recipes == null) continue;
+                    if (m.Value.recipes == null)
+                        continue;
 
                     var relevantRecipes = m.Value.recipes
-                        .Where(r => IsItemInRecipe(stack, r))
+                        .Where(r => r != null && IsItemInRecipe(stack, r))
                         .ToList();
 
                     if (relevantRecipes.Count > 0)
@@ -426,7 +439,8 @@ public class HandbookPatch
 
         private static ItemStack GetOrCreateStack(AssetLocation code, int quantity, IWorldAccessor world)
         {
-            if (code == null) return null;
+            if (code == null)
+                return null;
 
             string cacheKey = $"{code}-{quantity}";
             if (_stackCache.TryGetValue(cacheKey, out var cachedStack))
@@ -463,17 +477,18 @@ public class HandbookPatch
 
         private static bool IsItemInRecipe(ItemStack stack, dynamic recipe)
         {
-            if (stack == null || recipe == null) return false;
+            if (stack == null || stack.Collectible == null ||  recipe == null)
+                return false;
 
             foreach (var ing in recipe.Ingredients)
             {
                 var resolved = GetOrCreateStack(ing.Code, (int)ing.Quantity, _capi.World);
-                if (resolved != null && resolved.Collectible.Code == stack.Collectible.Code)
+                if (resolved != null && resolved.Collectible != null && resolved.Collectible.Code == stack.Collectible.Code)
                     return true;
             }
 
             var outputStack = GetOrCreateStack(recipe.Output.Code, (int)recipe.Output.Quantity, _capi.World);
-            return outputStack != null && outputStack.Collectible.Code == stack.Collectible.Code;
+            return outputStack != null && outputStack.Collectible!=null &&  outputStack.Collectible.Code == stack.Collectible.Code;
         }
 
 
