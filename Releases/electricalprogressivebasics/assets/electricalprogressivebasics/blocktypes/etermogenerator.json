@@ -3,6 +3,7 @@
   "class": "BlockETermoGenerator",
   "entityClass": "BlockEntityETermoGenerator",
   "behaviors": [
+    { "name": "Lockable" },
     { "name": "Container" },
     {
       "name": "HorizontalOrientable",

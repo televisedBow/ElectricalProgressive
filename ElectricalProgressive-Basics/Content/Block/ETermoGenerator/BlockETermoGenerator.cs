@@ -11,6 +11,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
+using Vintagestory.GameContent;
 using Vintagestory.GameContent.Mechanics;
 
 namespace ElectricalProgressive.Content.Block.ETermoGenerator;
@@ -20,19 +21,6 @@ public class BlockETermoGenerator : BlockEBase
 
 
 
-    public override void OnUnloaded(ICoreAPI api)
-    {
-        base.OnUnloaded(api);
-        
-    }
-
-
-
-    public override bool CanAttachBlockAt(IBlockAccessor blockAccessor, Vintagestory.API.Common.Block block, BlockPos pos,
-        BlockFacing blockFace, Cuboidi attachmentArea = null!)
-    {
-        return true;
-    }
 
 
 
@@ -157,7 +145,76 @@ public class BlockETermoGenerator : BlockEBase
     }
 
 
+    /// <summary>
+    /// Взаимодействие с блоком
+    /// </summary>
+    /// <param name="world"></param>
+    /// <param name="byPlayer"></param>
+    /// <param name="blockSel"></param>
+    /// <returns></returns>
+    public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+    {
+        // Проверка прав на использование
+        if (blockSel != null && !world.Claims.TryAccess(byPlayer, blockSel.Position, EnumBlockAccessFlags.Use))
+        {
+            return false;
+        }
 
+        // текущее выбранное в руке
+        ItemStack stack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
+
+        // получаем блокэнтити
+        BlockEntityETermoGenerator bef = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityETermoGenerator;
+
+
+        // если есть блокэнтити и в руке что-то есть
+        if (bef != null && stack != null)
+        {
+            // флаг, что что-то поменяли
+            bool activated = false;
+
+            // шифт нажата
+            if (byPlayer.Entity.Controls.CtrlKey)
+            {
+                if (stack.Collectible.CombustibleProps != null && stack.Collectible.CombustibleProps.MeltingPoint > 0)
+                {
+                    ItemStackMoveOperation op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
+                    byPlayer.InventoryManager.ActiveHotbarSlot.TryPutInto(bef.FuelSlot, ref op);
+                    if (op.MovedQuantity > 0)
+                        activated = true;
+                }
+
+                if (stack.Collectible.CombustibleProps != null && stack.Collectible.CombustibleProps.BurnTemperature > 0)
+                {
+                    ItemStackMoveOperation op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
+                    byPlayer.InventoryManager.ActiveHotbarSlot.TryPutInto(bef.FuelSlot, ref op);
+                    if (op.MovedQuantity > 0)
+                        activated = true;
+                }
+            }
+
+            if (activated)
+            {
+                (byPlayer as IClientPlayer)?.TriggerFpAnimation(EnumHandInteract.HeldItemInteract);
+
+                var loc = stack.ItemAttributes?["placeSound"].Exists == true ? AssetLocation.Create(stack.ItemAttributes["placeSound"].AsString(), stack.Collectible.Code.Domain) : null;
+
+                if (loc != null)
+                {
+                    api.World.PlaySoundAt(loc.WithPathPrefixOnce("sounds/"), blockSel.Position.X, blockSel.Position.InternalY, blockSel.Position.Z, byPlayer, 0.88f + (float)api.World.Rand.NextDouble() * 0.24f, 16);
+                }
+
+                return true;
+            }
+        }
+
+        return base.OnBlockInteractStart(world, byPlayer, blockSel);
+
+
+    }
+
+
+    
 
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer,
@@ -183,6 +240,12 @@ public class BlockETermoGenerator : BlockEBase
                 {
                     ActionLangCode = "blockhelp-door-openclose",
                     MouseButton = EnumMouseButton.Right
+                },
+                new WorldInteraction()
+                {
+                    ActionLangCode = "blockhelp-firepit-refuel",
+                    MouseButton = EnumMouseButton.Right,
+                    HotKeyCode = "ctrl"
                 }
         }.Append(base.GetPlacedBlockInteractionHelp(world, selection, forPlayer));
     }

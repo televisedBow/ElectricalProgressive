@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using ElectricalProgressive;
+﻿using ElectricalProgressive;
 using ElectricalProgressive.Content.Block;
 using ElectricalProgressive.Content.Block.Termoplastini;
 using ElectricalProgressive.Utils;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -160,7 +161,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// <summary>
     /// Слот для топлива в инвентаре генератора
     /// </summary>
-    private ItemSlot FuelSlot => this.inventory[0];
+    public ItemSlot FuelSlot => this.inventory[0];
 
     /// <summary>
     /// Сколько термопластин установлено в генераторе по высоте
@@ -749,6 +750,23 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         {
             this.Api?.Logger.Error(exception.ToString());
         }
+    }
+
+
+    /// <summary>
+    /// Получение информации о блоке 
+    /// </summary>
+    /// <param name="forPlayer"></param>
+    /// <param name="dsc"></param>
+    public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
+    {
+        base.GetBlockInfo(forPlayer, dsc);
+
+        if (this.FuelStack == null)
+            return;
+        
+        dsc.AppendLine((object)this.FuelStack.StackSize +"x"+ (object)this.FuelStack.GetName());
+        
     }
 
 }
