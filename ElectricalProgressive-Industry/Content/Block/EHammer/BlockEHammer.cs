@@ -1,5 +1,7 @@
 ﻿using ElectricalProgressive.Utils;
+using System.Collections.Generic;
 using System.Text;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
@@ -10,7 +12,67 @@ namespace ElectricalProgressive.Content.Block.EHammer;
 public class BlockEHammer : Vintagestory.API.Common.Block
 {
 
-    
+    public static Dictionary<Item, ToolTextures> ToolTextureSubIds(ICoreAPI api)
+    {
+        Dictionary<Item, ToolTextures> result;
+
+        if (api.ObjectCache.TryGetValue("hammerToolTextureSubIds", out var obj)
+            && obj is Dictionary<Item, ToolTextures> hammerToolTextureSubIds)
+        {
+            result = hammerToolTextureSubIds;
+        }
+        else
+        {
+            api.ObjectCache["hammerToolTextureSubIds"] = result = new();
+        }
+
+        return result;
+    }
+
+
+    // Нужно, чтобы текстуры предметов также были в атласе блоков
+    public override void OnCollectTextures(ICoreAPI api, ITextureLocationDictionary textureDict)
+    {
+        base.OnCollectTextures(api, textureDict);
+
+        foreach (var item in api.World.Items)
+        {
+            // Здесь можно добавить условия для фильтрации предметов
+            // Например, только те предметы, которые могут быть обработаны в молоте
+            // if (item.Attributes?["processableInHammer"].AsBool() != true)
+            //     continue;
+
+            var toolTextures = new ToolTextures();
+
+            if (item.Shape != null)
+            {
+                var asset = api.Assets.TryGet(item.Shape.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json"));
+                if (asset != null)
+                {
+                    var shape = asset.ToObject<Shape>();
+                    foreach (var val in shape.Textures)
+                    {
+                        var ctex = new CompositeTexture(val.Value.Clone());
+                        ctex.Bake(api.Assets);
+
+                        textureDict.AddTextureLocation(new AssetLocationAndSource(ctex.Baked.BakedName, "Shape code " + item.Shape.Base));
+                        toolTextures.TextureSubIdsByCode[val.Key] = textureDict[new(ctex.Baked.BakedName)];
+                    }
+                }
+            }
+
+            foreach (var val in item.Textures)
+            {
+                val.Value.Bake(api.Assets);
+                textureDict.AddTextureLocation(new(val.Value.Baked.BakedName, "Item code " + item.Code));
+                toolTextures.TextureSubIdsByCode[val.Key] = textureDict[new(val.Value.Baked.BakedName)];
+            }
+
+            ToolTextureSubIds(api)[item] = toolTextures;
+        }
+    }
+
+
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection? blockSel)
     {
         if (blockSel is null)
