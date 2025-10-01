@@ -235,8 +235,21 @@ namespace ElectricalProgressive.Utils
 
                 //рисуем искры
                 ParticleManager.SpawnElectricSparks(entity.World, entity.Pos.XYZ);
+
+                //воспроизводим звук
+                world.PlaySoundAt(
+                    ElectricalProgressive.soundElectricShok,
+                    pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5,
+                    null,
+                    false,
+                    32,
+                    0.6f
+                );
             }
         }
+
+
+
 
 
         /// <summary>

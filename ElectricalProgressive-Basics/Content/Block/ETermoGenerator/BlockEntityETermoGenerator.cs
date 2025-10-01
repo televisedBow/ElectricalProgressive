@@ -765,7 +765,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         if (this.FuelStack == null)
             return;
         
-        dsc.AppendLine((object)this.FuelStack.StackSize +"x"+ (object)this.FuelStack.GetName());
+        dsc.AppendLine(Lang.Get("Contents") + ": "+(object)this.FuelStack.StackSize +"x"+ (object)this.FuelStack.GetName());
         
     }
 

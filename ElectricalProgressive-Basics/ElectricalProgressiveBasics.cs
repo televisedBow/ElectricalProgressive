@@ -49,7 +49,7 @@ public class ElectricalProgressiveBasics : ModSystem
         { 3, Lang.Get("causeEnvironment") }
     };
 
-
+    
 
     /// <summary>
     /// Старт общего потока

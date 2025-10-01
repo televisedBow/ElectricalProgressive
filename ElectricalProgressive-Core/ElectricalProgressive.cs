@@ -66,7 +66,7 @@ namespace ElectricalProgressive
         public static bool enableLossCompensation; // Включить компенсацию потерь энергии на проводах
 
 
-
+        public static AssetLocation soundElectricShok;
 
         public int tickTimeMs;
         private float elapsedMs = 0f;
@@ -87,6 +87,8 @@ namespace ElectricalProgressive
             base.Start(api);
 
             this.api = api;
+
+            soundElectricShok = new AssetLocation("electricalprogressivecore:sounds/electric-shock.ogg");
         }
 
 
@@ -106,21 +108,13 @@ namespace ElectricalProgressive
                 asyncPathFinder.Stop();
                 asyncPathFinder = null;
             }
-            //if (capi != null)
-            //{
-            //    capi.Event.UnregisterGameTickListener(listenerId2);
-            //}
 
-
-            // Очистка глобальных коллекций и ресурсов
 
             globalEnergyPackets.Clear();
 
 
-
             sumEnergy.Clear();
             packetsByPosition.Clear();
-
 
 
             api = null!;
@@ -130,13 +124,12 @@ namespace ElectricalProgressive
             WeatherSystemServer = null;
 
 
-
             networks.Clear();
             parts.Clear();
 
 
             PathCacheManager.Dispose();
-            //localPackets.Clear();
+            
 
         }
 
