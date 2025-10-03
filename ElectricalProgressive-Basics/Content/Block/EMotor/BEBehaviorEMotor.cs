@@ -189,7 +189,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     public void Update()
     {
         // Если нет сети, пытаемся создать/подключиться
-        if (network==null)
+        if (network == null && OutFacingForNetworkDiscovery != null)
         {
             CreateJoinAndDiscoverNetwork(OutFacingForNetworkDiscovery);
         }
@@ -363,6 +363,12 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
         base.ToTreeAttributes(tree);
         tree.SetFloat(PowerRequestKey, powerRequest);
         tree.SetFloat(PowerReceiveKey, powerReceive);
+
+        // Сохраняем текущее направление
+        if (_outFacingForNetworkDiscovery != null)
+        {
+            tree.SetInt("savedOutFacing", _outFacingForNetworkDiscovery.Index);
+        }
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
@@ -370,6 +376,13 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
         base.FromTreeAttributes(tree, worldAccessForResolve);
         powerRequest = tree.GetFloat(PowerRequestKey);
         powerReceive = tree.GetFloat(PowerReceiveKey);
+
+        // Восстанавливаем направление из сохраненных данных
+        int savedFacingIndex = tree.GetInt("savedOutFacing", -1);
+        if (savedFacingIndex >= 0 && savedFacingIndex < BlockFacing.ALLFACES.Length)
+        {
+            _outFacingForNetworkDiscovery = BlockFacing.ALLFACES[savedFacingIndex];
+        }
     }
 
 

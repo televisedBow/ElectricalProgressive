@@ -128,7 +128,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             // Регистрируем частый тикер для проверки анимации на клиенте
             this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
         }
-        
+
+
+
     }
 
     public int GetRotation()
@@ -154,7 +156,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         {
             // Получаем текущее время в миллисекундах
             long currentTime = Api.World.ElapsedMilliseconds;
-            
+
             _lastAnimationCheckTime = currentTime;
 
             var currentFrame = animUtil.animator.Animations[0].CurrentFrame;
@@ -300,6 +302,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     private void Every500ms(float dt)
     {
         var beh = GetBehavior<BEBehaviorEHammer>();
+        // мало ли поведение не загрузилось еще
         if (beh == null)
         {
             StopAnimation();
@@ -321,14 +324,32 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         bool hasRecipe = !InputSlot.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]); ;
         bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
-        if (isCraftingNow)
+        if (isCraftingNow) // крафтим?
         {
-
+            // старт анимации
             StartAnimation();
 
-
+            // меняем прогресс текущего крафта
             RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
             UpdateState(RecipeProgress);
+
+
+
+            var temperature = stack.Collectible.GetTemperature(this.Api.World, stack);
+
+            float maxTargetTemp = 1350f; //максимальная температура для нагрева
+
+            if (RecipeProgress<0.5f)
+            {
+                stack.Collectible.SetTemperature(this.Api.World, stack, RecipeProgress*2* maxTargetTemp);
+            }
+            else
+            {
+                stack.Collectible.SetTemperature(this.Api.World, stack, maxTargetTemp);
+            }
+
+
+
 
             if (RecipeProgress >= 1f)
             {
@@ -464,7 +485,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         {
             animUtil.StopAnimation("craft");
         }
-        
+
     }
 
 
@@ -557,7 +578,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
         tmpItem = stack.Collectible;
 
-        Vec3f origin = new Vec3f(0.5f,0,0.5f);
+        Vec3f origin = new Vec3f(0.5f, 0, 0.5f);
         var clientApi = (ICoreClientAPI)Api;
 
         if (stack.Class == EnumItemClass.Item)
@@ -580,7 +601,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             var rotateZ = MyMiniLib.GetAttributeFloat(stack.Item, "rotateZ", 0F);
 
             toolMesh.Scale(origin, scaleX, scaleY, scaleZ);
-            toolMesh.Translate(translateX, translateY+0.95f, translateZ);
+            toolMesh.Translate(translateX, translateY + 0.95f, translateZ);
             toolMesh.Rotate(origin, rotateX, rotateY, rotateZ);
         }
         else

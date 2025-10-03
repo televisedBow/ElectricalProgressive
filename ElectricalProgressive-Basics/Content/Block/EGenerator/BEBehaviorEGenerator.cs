@@ -136,7 +136,10 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         }
     }
 
-
+    public override void Initialize(ICoreAPI api, JsonObject properties)
+    {
+        base.Initialize(api, properties);
+    }
 
     /// <inheritdoc />
     public BEBehaviorEGenerator(BlockEntity blockEntity) : base(blockEntity)
@@ -217,7 +220,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     {
 
         // Если нет сети, пытаемся создать/подключиться
-        if (network == null)
+        if (network == null && OutFacingForNetworkDiscovery!=null)
         {
             CreateJoinAndDiscoverNetwork(OutFacingForNetworkDiscovery);
         }
@@ -267,6 +270,12 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         base.ToTreeAttributes(tree);
         tree.SetFloat(PowerOrderKey, PowerOrder);
         tree.SetFloat(PowerGiveKey, PowerGive);
+
+        // Сохраняем текущее направление
+        if (_outFacingForNetworkDiscovery != null)
+        {
+            tree.SetInt("savedOutFacing", _outFacingForNetworkDiscovery.Index);
+        }
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
@@ -274,6 +283,13 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         base.FromTreeAttributes(tree, worldAccessForResolve);
         PowerOrder = tree.GetFloat(PowerOrderKey);
         PowerGive = tree.GetFloat(PowerGiveKey);
+
+        // Восстанавливаем направление из сохраненных данных
+        int savedFacingIndex = tree.GetInt("savedOutFacing", -1);
+        if (savedFacingIndex >= 0 && savedFacingIndex < BlockFacing.ALLFACES.Length)
+        {
+            _outFacingForNetworkDiscovery = BlockFacing.ALLFACES[savedFacingIndex];
+        }
     }
 
     /// <summary>

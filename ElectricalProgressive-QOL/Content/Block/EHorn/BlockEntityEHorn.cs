@@ -10,11 +10,13 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using Vintagestory.GameContent.Mechanics;
 
 namespace ElectricalProgressive.Content.Block.EHorn;
 
 public class BlockEntityEHorn : BlockEntityEBase, IHeatSource
 {
+ 
     private readonly Vec3d tmpPos = new();
     private ILoadedSound? ambientSound;
     private bool burning;
