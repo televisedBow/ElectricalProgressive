@@ -111,13 +111,13 @@
 
 
   "block-handbooktitle-ecable": "Используется",
-  "block-handbooktext-ecable": "Позволяет передавать электрическую энергию на расстояние. <br>Об особенностях работы читайте в <a href=\"handbook:\/\/gamemechanicinfo-electricalprogressive-princip\">руководстве<\/a>.",
+  "block-handbooktext-ecable": "Позволяет передавать электрическую энергию на расстояние. Изолированные варианты кабеля снижают потери в два раза!<br>Об особенностях работы читайте в <a href=\"handbook:\/\/gamemechanicinfo-electricalprogressive-princip\">руководстве<\/a>.",
 
   "block-handbooktitle-switch": "Используется",
   "block-handbooktext-switch": "Позволяет разрывать электрическую цепь. Устанавливается на кабель. Кликните по нему, чтобы переключить его.",
 
   "block-handbooktitle-transformator": "Используется",
-  "block-handbooktext-transformator": "Служит для преобразования электрической энергии с одного напряжения в другое. Рекомендуется подключать кабеля/устройства только с двух любых сторон трансформатора!<br>Коэффициент трансформации: 1:4.",
+  "block-handbooktext-transformator": "Служит для преобразования электрической энергии с одного напряжения в другое: может понижать и повышать напряжение. Рекомендуется подключать кабеля/устройства только с двух любых сторон трансформатора!<br>Коэффициент трансформации: 1:4.",
 
 
   "game:gamemechanicinfo-electricalprogressive-title": "Электричество: модификация ElectricalProgressive",

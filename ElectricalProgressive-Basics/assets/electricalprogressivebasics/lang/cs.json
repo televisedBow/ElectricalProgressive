@@ -1,4 +1,4 @@
-{
+﻿{
   "block-emotor-tier1-*": "Motor",
   "block-emotor-tier1-burned": "Motor (Spálený)",
 
@@ -107,13 +107,13 @@
   "block-handbooktext-accumulator-tier2": "Umožňuje ukládání elektrické energie. Verze s vyšší kapacitou než standardní <a href=\"handbooksearch:\/\/battery\">baterie</a>.<br>Nabitou baterii lze přenášet, ale pouze v pozici batohu.",
 
   "block-handbooktitle-ecable": "Použití",
-  "block-handbooktext-ecable": "Umožňuje přenos elektrické energie na vzdálenost. <br>Více o provozních charakteristikách najdete v <a href=\"handbook://gamemechanicinfo-electricalprogressive-princip\">manuálu</a>.",
+  "block-handbooktext-ecable": "Umožňuje přenos elektrické energie na dálku. Izolované verze kabelů sníží ztráty na polovinu!<br>Podrobnosti o provozu si přečtěte v <a href=\"handbook:\/\/gamemechanicinfo-electricalprogressive-princip\">příručce<\/a>.",
 
   "block-handbooktitle-switch": "Použití",
   "block-handbooktext-switch": "Umožňuje přerušení elektrického obvodu. Instaluje se na kabel. Kliknutím přepnete.",
 
   "block-handbooktitle-transformator": "Použití",
-  "block-handbooktext-transformator": "Převádí elektrickou energii z jednoho napětí na druhé. Připojte kabely/zařízení k libovolným dvěma stranám transformátoru!<br>Transformační poměr: 1:4.",
+  "block-handbooktext-transformator": "Převádí elektrickou energii z jednoho napětí na jiné: může napětí snižovat nebo zvyšovat. Doporučuje se připojovat kabely/zařízení pouze ke dvěma libovolným stranám transformátoru!<br>Transformační poměr: 1:4.",
 
   "game:gamemechanicinfo-electricalprogressive-title": "Elektřina: ElectricalProgressive Mod",
   "game:gamemechanicinfo-electricalprogressive-text": "<strong>Elektřina: ElectricalProgressive Mod</strong><br>Tento mod přidává do hry elektrickou energii, elektrické spotřebiče, zařízení, zbraně a brnění. Tyto doplňky mají za cíl zjednodušit (nebo zkomplikovat) přežití, snížit opakující se úkoly a zpestřit hratelnost.<br><br><strong>Základy</strong><br>Zákon zachování energie říká, že energie nemůže být vytvořena ani zničena—pouze se transformuje nebo přenáší mezi formami. Tento princip platí i ve hře.<br><br>Primárním zdrojem mechanické energie jsou větrné mlýny. Generátory převádějí mechanickou energii na elektrickou energii přenosem točivého momentu z větrného mlýna do generátoru prostřednictvím hřídelí a/nebo převodů. Po připojení začne generátor vyrábět elektřinu.<br><br>Elektrická energie se přenáší prostřednictvím kabelů ke spotřebičům. Položte kabely podél bloků v požadovaném směru. Každá strana bloku může pojmout až 4 kabely, což umožňuje větvení a složité uspořádání obvodů. Kabely se musí připojit k železné desce elektrického zařízení, aby se aktivovalo. Elektrická zařízení a kovové bloky mohou také vést proud.<br><br>Protože síla větru kolísá, generátory nemusí vždy produkovat dostatek energie. Pro zmírnění tohoto problému připojte svůj obvod k bateriím. Ty ukládají přebytečnou energii a dodávají ji zařízením i při nedostatku větru.<br><br>Pro úsporu energie odpojte nepoužívaná zařízení pomocí ručního spínače. Instalujte spínače v částech obvodu, kde je potřeba rychle přepínat napájení.<br><br>Pro zařízení vyžadující mechanickou energii použijte motory. Motory převádějí elektrickou energii zpět na mechanickou energii. Připojte je k zařízením prostřednictvím hřídelí. Když jsou aktivní, motory se snaží dodat maximální točivý moment, takže zajistěte dostatečnou energii v obvodu.",
