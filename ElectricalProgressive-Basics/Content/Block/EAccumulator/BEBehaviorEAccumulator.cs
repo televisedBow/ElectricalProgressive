@@ -1,7 +1,6 @@
 ﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
-using System.Linq;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -16,12 +15,7 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
     public BEBehaviorEAccumulator(BlockEntity blockEntity) : base(blockEntity)
     {
     }
-
-
-
-
-
-
+    
     public bool IsBurned => this.Block.Variant["state"] == "burned";
 
     /// <summary>
@@ -78,13 +72,17 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
 
         // не позволяем одним пакетом сохранить больше максимального тока.
         // В теории такого превышения и не должно случиться
-        Capacity += buf;
+
+        // увеличиваем емкость с учетом скорости распространения электричества
+        Capacity += buf*1.0f/ElectricalProgressive.speedOfElectricity;
     }
 
     public float Release(float amount)
     {
         var buf = Math.Min(Capacity, Math.Min(amount, power));
-        Capacity -= buf;
+
+        // уменьшаем емкость с учетом скорости распространения электричества
+        Capacity -= buf * 1.0f / ElectricalProgressive.speedOfElectricity;
 
         // выдаем пакет c учетом тока и запасов
         return buf;
