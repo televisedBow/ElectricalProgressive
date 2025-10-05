@@ -23,7 +23,7 @@ using System.Collections.Generic;
     "electricalprogressivebasics",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Basic electrical devices.",
-    Version = "2.3.3",
+    Version = "2.3.4",
     Authors = new[] {
         "Tehtelev",
         "Kotl"

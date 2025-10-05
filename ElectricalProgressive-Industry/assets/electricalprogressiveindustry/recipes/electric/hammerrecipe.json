@@ -1,7 +1,7 @@
 ﻿[
   {
     "code": "metalplate",
-    "EnergyOperation": 6000,
+    "EnergyOperation": 10000,
     "ingredients": [
       {
         "type": "item",
@@ -25,7 +25,7 @@
   },
   {
     "code": "blistersteel",
-    "EnergyOperation": 10000,
+    "EnergyOperation": 12000,
     "ingredients": [
       {
         "type": "item",
@@ -47,7 +47,7 @@
   },
   {
     "code": "ironbloom",
-    "EnergyOperation": 10000,
+    "EnergyOperation": 12000,
     "ingredients": [
       {
         "type": "item",

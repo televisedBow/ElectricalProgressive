@@ -103,7 +103,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         {
             base.Initialize(api);
             this.inventory.LateInitialize(InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
-            this.RegisterGameTickListener(new Action<float>(this.Every500ms), 500);
+            this.RegisterGameTickListener(new Action<float>(this.Every1000ms), 1000);
 
             if (api.Side == EnumAppSide.Client)
             {
@@ -344,7 +344,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         #endregion
 
         #region Основной цикл работы
-        private void Every500ms(float dt)
+        private void Every1000ms(float dt)
         {
             var beh = GetBehavior<BEBehaviorEPress>();
             if (beh == null)

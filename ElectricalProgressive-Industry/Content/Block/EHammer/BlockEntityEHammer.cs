@@ -3,6 +3,7 @@ using ElectricalProgressive.RecipeSystem;
 using ElectricalProgressive.RecipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
@@ -32,6 +33,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     public string CurrentRecipeName;
     public float RecipeProgress;
 
+    private static float  maxTargetTemp = 1350f; //максимальная температура для нагрева
 
     public virtual string DialogTitle => Lang.Get("ehammer-title-gui");
 
@@ -109,7 +111,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     {
         base.Initialize(api);
         this.inventory.LateInitialize(InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
-        this.RegisterGameTickListener(new Action<float>(this.Every500ms), 500);
+
+        this.RegisterGameTickListener(new Action<float>(this.Every1000ms), 1000);
 
         if (api.Side == EnumAppSide.Client)
         {
@@ -201,7 +204,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
 
 
-
+    /// <summary>
+    /// Необходимо для отрисовки текстур
+    /// </summary>
+    /// <param name="textureCode"></param>
+    /// <returns></returns>
     public TextureAtlasPosition this[string textureCode]
     {
         get
@@ -299,7 +306,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// Тикер
     /// </summary>
     /// <param name="dt"></param>
-    private void Every500ms(float dt)
+    private void Every1000ms(float dt)
     {
         var beh = GetBehavior<BEBehaviorEHammer>();
         // мало ли поведение не загрузилось еще
@@ -337,7 +344,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
             var temperature = stack.Collectible.GetTemperature(this.Api.World, stack);
 
-            float maxTargetTemp = 1350f; //максимальная температура для нагрева
+            
 
             if (RecipeProgress<0.5f)
             {
@@ -393,6 +400,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         {
             // Обработка основного выхода
             ItemStack outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
+
+            outputItem.Collectible.SetTemperature(this.Api.World, outputItem, maxTargetTemp);
+
             TryMergeOrSpawn(outputItem, OutputSlot);
 
             // Обработка дополнительного выхода с шансом
@@ -401,6 +411,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
                 Api.World.Rand.NextDouble() < CurrentRecipe.SecondaryOutputChance)
             {
                 ItemStack secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
+
+                secondaryOutput.Collectible.SetTemperature(this.Api.World, secondaryOutput, maxTargetTemp);
+
                 TryMergeOrSpawn(secondaryOutput, SecondaryOutputSlot);
             }
 
@@ -432,7 +445,18 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             int freeSpace = targetSlot.Itemstack.Collectible.MaxStackSize - targetSlot.Itemstack.StackSize;
             int toAdd = Math.Min(freeSpace, stack.StackSize);
 
+            // учитываем температуру при объединении
+            float stackTemp = stack.Collectible.GetTemperature(this.Api.World, stack);
+            float targetstackTemp = targetSlot.Itemstack.Collectible.GetTemperature(this.Api.World, targetSlot.Itemstack);
+
+            float stackCapacity = stackTemp * toAdd;
+            float targetCapacity = targetstackTemp * targetSlot.Itemstack.StackSize;
+
             targetSlot.Itemstack.StackSize += toAdd;
+
+            targetSlot.Itemstack.Collectible.SetTemperature(this.Api.World, targetSlot.Itemstack, (stackCapacity+ targetCapacity)/ targetSlot.Itemstack.StackSize);
+
+
             stack.StackSize -= toAdd;
 
             if (stack.StackSize > 0)
