@@ -96,7 +96,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         }
         else
         {
-            listenerId=RegisterGameTickListener(OnTick, 500);
+            listenerId=RegisterGameTickListener(OnTick, 1000);
         }
 
         MarkDirty(true);

@@ -228,7 +228,7 @@ public class ESpear : Vintagestory.API.Common.Item
         }
 
         float pitchModifier = (byEntity as EntityPlayer)!.talkUtil.pitchModifier;
-        player.Entity.World.PlaySoundAt(new AssetLocation("game:sounds/player/strike"), player.Entity, player, pitchModifier * 0.9f + (float)api.World.Rand.NextDouble() * 0.2f, 16f, 0.35f);
+        player.Entity.World.PlaySoundAt(new AssetLocation("game:sounds/player/strike2"), player.Entity, player, pitchModifier * 0.9f + (float)api.World.Rand.NextDouble() * 0.2f, 16f, 0.35f);
     }
 
 
