@@ -50,13 +50,17 @@ public class BlockEHammer : Vintagestory.API.Common.Block
                 if (asset != null)
                 {
                     var shape = asset.ToObject<Shape>();
-                    foreach (var val in shape.Textures)
+                    if (shape.Textures != null) // Нет текстур? 
                     {
-                        var ctex = new CompositeTexture(val.Value.Clone());
-                        ctex.Bake(api.Assets);
+                        foreach (var val in shape.Textures)
+                        {
+                            var ctex = new CompositeTexture(val.Value.Clone());
+                            ctex.Bake(api.Assets);
 
-                        textureDict.AddTextureLocation(new AssetLocationAndSource(ctex.Baked.BakedName, "Shape code " + item.Shape.Base));
-                        toolTextures.TextureSubIdsByCode[val.Key] = textureDict[new(ctex.Baked.BakedName)];
+                            textureDict.AddTextureLocation(new AssetLocationAndSource(ctex.Baked.BakedName,
+                                "Shape code " + item.Shape.Base));
+                            toolTextures.TextureSubIdsByCode[val.Key] = textureDict[new(ctex.Baked.BakedName)];
+                        }
                     }
                 }
             }

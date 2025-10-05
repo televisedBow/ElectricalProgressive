@@ -19,7 +19,7 @@ public class EWeapon : Vintagestory.API.Common.Item
     private double lastUpdateTime = 0;
     private const double interval = 5000; //интервал обновления меча
 
-   ItemSpear
+
 
     public override void OnLoaded(ICoreAPI api)
     {

@@ -605,6 +605,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         Vec3f origin = new Vec3f(0.5f, 0, 0.5f);
         var clientApi = (ICoreClientAPI)Api;
 
+        
         if (stack.Class == EnumItemClass.Item)
             clientApi.Tesselator.TesselateItem(stack.Item, out toolMesh, this);
         else
