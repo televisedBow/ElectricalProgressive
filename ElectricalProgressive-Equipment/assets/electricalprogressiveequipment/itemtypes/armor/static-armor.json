@@ -52,9 +52,9 @@
 		"scaleX": 0.5,
 		"scaleY": 0.5,
 		"scaleZ": 0.5,
-		"translateX": 0.18,
-		"translateY": 0.4,
-		"translateZ": 0.15,
+		"translateX": 0.0,
+		"translateY": 0.0,
+		"translateZ": 0.0,
 		"rotateX": 0,
 		"rotateY": 0,
 		"rotateZ": 0

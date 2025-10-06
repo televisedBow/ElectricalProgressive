@@ -11,6 +11,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 using Vintagestory.GameContent.Mechanics;
 
@@ -18,7 +19,6 @@ namespace ElectricalProgressive.Content.Block.EHammer;
 
 public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPositionSource
 {
-
     internal InventoryHammer inventory;
     private GuiDialogHammer clientDialog;
     public override string InventoryClassName => "ehammer";
@@ -33,22 +33,22 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     public string CurrentRecipeName;
     public float RecipeProgress;
 
-    private static float  maxTargetTemp = 1350f; //максимальная температура для нагрева
+    private static float maxTargetTemp = 1350f; //максимальная температура для нагрева
 
     public virtual string DialogTitle => Lang.Get("ehammer-title-gui");
 
     public override InventoryBase Inventory => (InventoryBase)this.inventory;
 
-
     private int _lastSoundFrame = -1;
     private long _lastAnimationCheckTime;
     private BlockEntityAnimationUtil animUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
-    private MeshData toolMesh;
-    private CollectibleObject tmpItem;
+    // Новые поля для системы мешей (как в холодильнике)
+    private MeshData?[] _meshes;
+    private Shape? _nowTesselatingShape;
+    private CollectibleObject _nowTesselatingObj;
 
     //--------------------------------------------------------------------------------
-
 
     private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
@@ -96,7 +96,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     //--------------------------------------------------------------------------------
 
     private AssetLocation soundHammer;
-
     private Facing facing = Facing.None;
 
     public BlockEntityEHammer()
@@ -105,7 +104,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         this.inventory = new InventoryHammer(3, InventoryClassName, (string)null, (ICoreAPI)null, null, this);
         this.inventory.SlotModified += new Action<int>(this.OnSlotModifid);
     }
-
 
     public override void Initialize(ICoreAPI api)
     {
@@ -118,8 +116,17 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         {
             _capi = api as ICoreClientAPI;
 
-            // Загружаем мэш
-            LoadToolMesh();
+            // Инициализируем массив мешей как в холодильнике
+            _meshes = new MeshData[this.inventory.Count];
+
+            // Подписываемся на изменения инвентаря
+            this.inventory.SlotModified += slotId =>
+            {
+                UpdateMeshes();
+            };
+
+            // Первоначальное создание мешей
+            UpdateMeshes();
 
             if (animUtil != null)
             {
@@ -131,9 +138,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             // Регистрируем частый тикер для проверки анимации на клиенте
             this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
         }
-
-
-
     }
 
     public int GetRotation()
@@ -142,7 +146,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
-
 
     /// <summary>
     /// Новый метод для проверки кадра анимации
@@ -200,10 +203,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         );
     }
 
-
-
-
-
     /// <summary>
     /// Необходимо для отрисовки текстур
     /// </summary>
@@ -213,21 +212,202 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     {
         get
         {
-            if (BlockEHammer.ToolTextureSubIds(Api).TryGetValue((Item)tmpItem!, out var toolTextures))
-            {
-                if (toolTextures.TextureSubIdsByCode.TryGetValue(textureCode, out var textureSubId))
-                    return ((ICoreClientAPI)Api).BlockTextureAtlas.Positions[textureSubId];
+            var assetLocation = default(AssetLocation?);
 
-                return ((ICoreClientAPI)Api).BlockTextureAtlas.Positions[toolTextures.TextureSubIdsByCode.First().Value];
+            // Пробуем получить текстуру из item.Textures
+            if (_nowTesselatingObj is Vintagestory.API.Common.Item item)
+            {
+                if (item.Textures.TryGetValue(textureCode, out var compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
+                else if (item.Textures.TryGetValue("all", out compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
+            }
+            else if (_nowTesselatingObj is Vintagestory.API.Common.Block block)
+            {
+                if (block.Textures.TryGetValue(textureCode, out var compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
+                else if (block.Textures.TryGetValue("all", out compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
             }
 
-            return null!;
+            // Если не нашли, пробуем из shape.Textures
+            if (assetLocation == null && _nowTesselatingShape != null)
+            {
+                _nowTesselatingShape.Textures.TryGetValue(textureCode, out assetLocation);
+            }
+
+            // Если все еще не нашли, используем домен предмета и предполагаемый путь
+            if (assetLocation == null)
+            {
+                var domain = _nowTesselatingObj.Code.Domain;
+                assetLocation = new(domain, "textures/item/" + textureCode);
+                Api.World.Logger.Warning("Текстура {0} не найдена в текстурах предмета или формы, используется путь: {1}", textureCode, assetLocation);
+            }
+
+            return getOrCreateTexPos(assetLocation);
         }
     }
 
-    public Size2i AtlasSize => ((ICoreClientAPI)Api).BlockTextureAtlas.Size;
+    private TextureAtlasPosition? getOrCreateTexPos(AssetLocation texturePath)
+    {
+        var textureAtlasPosition = _capi.BlockTextureAtlas[texturePath];
+        if (textureAtlasPosition != null)
+            return textureAtlasPosition;
 
+        // берем только base текстуру (первую из кучи наваленных)
+        var pos = texturePath.Path.IndexOf("++");
+        if (pos >= 0)
+            texturePath.Path = texturePath.Path.Substring(0, pos);
 
+        var asset = _capi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+        if (asset != null)
+        {
+            _capi.BlockTextureAtlas.GetOrInsertTexture(texturePath, out var num, out textureAtlasPosition, null, 0.005f);
+        }
+        else
+        {
+            Api.World.Logger.Warning("Текстура не найдена по пути: {0}", texturePath);
+        }
+
+        return textureAtlasPosition;
+    }
+
+    public Size2i AtlasSize => _capi.BlockTextureAtlas.Size;
+
+    /// <summary>
+    /// Обновляем mesh для конкретного слота
+    /// </summary>
+    public void UpdateMesh(int slotid)
+    {
+        if (Api == null || Api.Side == EnumAppSide.Server || _capi == null)
+            return;
+
+        if (slotid >= this.inventory.Count)
+            return;
+
+        // В молоте отображаем только слот 0 (инструмент)
+        if (slotid != 0)
+        {
+            _meshes[slotid] = null;
+            return;
+        }
+
+        if (this.inventory[slotid].Empty)
+        {
+            _meshes[slotid] = null;
+            return;
+        }
+
+        var meshData = GenMesh(this.inventory[slotid].Itemstack);
+        if (meshData != null)
+        {
+            TranslateMesh(meshData, slotid);
+            _meshes[slotid] = meshData;
+        }
+        else
+        {
+            _meshes[slotid] = null;
+        }
+    }
+
+    /// <summary>
+    /// Перемещаем mesh в нужную позицию для молота
+    /// </summary>
+    public void TranslateMesh(MeshData? meshData, int slotId)
+    {
+        if (meshData == null || slotId != 0)
+            return;
+
+        var stack = this.inventory[slotId].Itemstack;
+        Vec3f origin = new Vec3f(0.5f, 0, 0.5f);
+
+        if (stack.Class == EnumItemClass.Item)
+        {
+            var scaleX = MyMiniLib.GetAttributeFloat(stack.Item, "scaleX", 0.8F);
+            var scaleY = MyMiniLib.GetAttributeFloat(stack.Item, "scaleY", 0.8F);
+            var scaleZ = MyMiniLib.GetAttributeFloat(stack.Item, "scaleZ", 0.8F);
+            var translateX = MyMiniLib.GetAttributeFloat(stack.Item, "translateX", 0F);
+            var translateY = MyMiniLib.GetAttributeFloat(stack.Item, "translateY", 0F);
+            var translateZ = MyMiniLib.GetAttributeFloat(stack.Item, "translateZ", 0F);
+            var rotateX = MyMiniLib.GetAttributeFloat(stack.Item, "rotateX", 0F);
+            var rotateY = MyMiniLib.GetAttributeFloat(stack.Item, "rotateY", 0F);
+            var rotateZ = MyMiniLib.GetAttributeFloat(stack.Item, "rotateZ", 0F);
+
+            meshData.Scale(origin, scaleX, scaleY, scaleZ);
+            meshData.Translate(translateX, translateY + 0.95f, translateZ);
+            meshData.Rotate(origin, rotateX * GameMath.DEG2RAD, rotateY * GameMath.DEG2RAD, rotateZ * GameMath.DEG2RAD);
+        }
+        else
+        {
+            meshData.Scale(origin, 0.3f, 0.3f, 0.3f);
+            meshData.Translate(0f, 0.95f, 0f);
+        }
+    }
+
+    /// <summary>
+    /// Генерация меша для предмета (как в холодильнике)
+    /// </summary>
+    public MeshData? GenMesh(ItemStack stack)
+    {
+        if (stack == null)
+            return null;
+
+        MeshData meshData;
+        try
+        {
+            var meshSource = stack.Collectible as IContainedMeshSource;
+
+            if (meshSource != null)
+            {
+                meshData = meshSource.GenMesh(stack, _capi.BlockTextureAtlas, Pos);
+                meshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, Block.Shape.rotateY * 0.0174532924f, 0f);
+            }
+            else
+            {
+                if (stack.Class == EnumItemClass.Block)
+                {
+                    meshData = _capi.TesselatorManager.GetDefaultBlockMesh(stack.Block).Clone();
+                }
+                else
+                {
+                    _nowTesselatingObj = stack.Collectible;
+                    _nowTesselatingShape = null;
+
+                    if (stack.Item.Shape != null)
+                        _nowTesselatingShape = _capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
+
+                    _capi.Tesselator.TesselateItem(stack.Item, out meshData, this);
+                    meshData.RenderPassesAndExtraBits.Fill((short)2);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Api.World.Logger.Error("Не удалось выполнить тесселяцию предмета {0}: {1}", stack.Item.Code, e.Message);
+            meshData = null;
+        }
+
+        return meshData;
+    }
+
+    /// <summary>
+    /// Обновляет все meshы в инвентаре
+    /// </summary>
+    public void UpdateMeshes()
+    {
+        for (var i = 0; i < this.inventory.Count; i++)
+            UpdateMesh(i);
+
+        MarkDirty(true);
+    }
 
     /// <summary>
     /// Слот модифицирован
@@ -249,12 +429,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             UpdateState(RecipeProgress);
         }
 
+        // Обновляем меш при изменении входного слота
         if (slotid == 0 && Api.Side == EnumAppSide.Client)
         {
-            LoadToolMesh(); // Обновляем меш при изменении входного слота
-            MarkDirty(true);
+            UpdateMesh(0);
         }
-
 
         if (this.InputSlot.Empty)
         {
@@ -273,9 +452,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             MarkDirty(true);
         }
     }
-
-
-
 
     /// <summary>
     /// Ищет подходящий рецепт
@@ -298,9 +474,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
         return false;
     }
-
-
-
 
     /// <summary>
     /// Тикер
@@ -325,8 +498,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             stack.Collectible.Attributes == null)
             return;
 
-
-
         bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
         bool hasRecipe = !InputSlot.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]); ;
         bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
@@ -340,23 +511,16 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
             UpdateState(RecipeProgress);
 
-
-
             var temperature = stack.Collectible.GetTemperature(this.Api.World, stack);
 
-            
-
-            if (RecipeProgress<0.5f)
+            if (RecipeProgress < 0.5f)
             {
-                stack.Collectible.SetTemperature(this.Api.World, stack, RecipeProgress*2* maxTargetTemp);
+                stack.Collectible.SetTemperature(this.Api.World, stack, RecipeProgress * 2 * maxTargetTemp);
             }
             else
             {
                 stack.Collectible.SetTemperature(this.Api.World, stack, maxTargetTemp);
             }
-
-
-
 
             if (RecipeProgress >= 1f)
             {
@@ -384,7 +548,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
         _wasCraftingLastTick = isCraftingNow;
     }
-
 
     /// <summary>
     /// Обработка завершенного крафта
@@ -427,7 +590,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
     }
 
-
     /// <summary>
     /// Попытка сложить в слот или заспавнить в мир
     /// </summary>
@@ -454,8 +616,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
             targetSlot.Itemstack.StackSize += toAdd;
 
-            targetSlot.Itemstack.Collectible.SetTemperature(this.Api.World, targetSlot.Itemstack, (stackCapacity+ targetCapacity)/ targetSlot.Itemstack.StackSize);
-
+            targetSlot.Itemstack.Collectible.SetTemperature(this.Api.World, targetSlot.Itemstack, (stackCapacity + targetCapacity) / targetSlot.Itemstack.StackSize);
 
             stack.StackSize -= toAdd;
 
@@ -471,7 +632,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         targetSlot.MarkDirty();
     }
 
-
     /// <summary>
     /// Старт анимации
     /// </summary>
@@ -480,10 +640,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null)
             return;
 
-
         if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
         {
-
             animUtil.StartAnimation(new AnimationMetaData()
             {
                 Animation = "Animation1",
@@ -492,9 +650,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
                 EaseOutSpeed = 2.0f,
                 EaseInSpeed = 1f
             });
-
         }
-
     }
 
     /// <summary>
@@ -509,13 +665,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         {
             animUtil.StopAnimation("craft");
         }
-
     }
-
-
-
-
-
 
     /// <summary>
     /// Обновление состояния
@@ -529,8 +679,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
         MarkDirty(true);
     }
-
-
 
     /// <summary>
     /// Игрок нажал ПКМ по блоку
@@ -551,8 +699,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         return true;
     }
 
-
-
     /// <summary>
     /// Получение пакета с клиента
     /// </summary>
@@ -565,8 +711,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
         ElectricalProgressive?.OnReceivedClientPacket(player, packetid, data);
     }
-
-
 
     /// <summary>
     /// Получение пакета с сервера
@@ -587,57 +731,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         this.invDialog = (GuiDialogBlockEntity)null;
     }
 
-
-    /// <summary>
-    /// Загружает меш предмета для отображения в молоте
-    /// </summary>
-    void LoadToolMesh()
-    {
-        toolMesh = null!; // сбрасываем предыдущий меш
-        tmpItem = null!;
-
-        var stack = InputSlot?.Itemstack;
-        if (stack == null) // пустой стак не отображаем
-            return;
-
-        tmpItem = stack.Collectible;
-
-        Vec3f origin = new Vec3f(0.5f, 0, 0.5f);
-        var clientApi = (ICoreClientAPI)Api;
-
-        
-        if (stack.Class == EnumItemClass.Item)
-            clientApi.Tesselator.TesselateItem(stack.Item, out toolMesh, this);
-        else
-            clientApi.Tesselator.TesselateBlock(stack.Block, out toolMesh);
-
-        clientApi.TesselatorManager.ThreadDispose(); // обязательно
-
-        if (stack.Class == EnumItemClass.Item)
-        {
-            var scaleX = MyMiniLib.GetAttributeFloat(stack.Item, "scaleX", 0.8F);
-            var scaleY = MyMiniLib.GetAttributeFloat(stack.Item, "scaleY", 0.8F);
-            var scaleZ = MyMiniLib.GetAttributeFloat(stack.Item, "scaleZ", 0.8F);
-            var translateX = MyMiniLib.GetAttributeFloat(stack.Item, "translateX", 0F);
-            var translateY = MyMiniLib.GetAttributeFloat(stack.Item, "translateY", 0F);
-            var translateZ = MyMiniLib.GetAttributeFloat(stack.Item, "translateZ", 0F);
-            var rotateX = MyMiniLib.GetAttributeFloat(stack.Item, "rotateX", 0F);
-            var rotateY = MyMiniLib.GetAttributeFloat(stack.Item, "rotateY", 0F);
-            var rotateZ = MyMiniLib.GetAttributeFloat(stack.Item, "rotateZ", 0F);
-
-            toolMesh.Scale(origin, scaleX, scaleY, scaleZ);
-            toolMesh.Translate(translateX, translateY + 0.95f, translateZ);
-            toolMesh.Rotate(origin, rotateX, rotateY, rotateZ);
-        }
-        else
-        {
-            toolMesh.Scale(origin, 0.3f, 0.3f, 0.3f);
-            toolMesh.Translate(0f, 0.95f, 0f);
-        }
-    }
-
-
-
     /// <summary>
     /// Вызывается при тесселяции блока
     /// </summary>
@@ -646,17 +739,17 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// <returns></returns>
     public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
     {
-        base.OnTesselation(mesher, tesselator); // вызываем базовую логику тесселяции
+        base.OnTesselation(mesher, tesselator);
 
-        if (toolMesh != null)
-            try
+        // Отрисовываем меши предметов (как в холодильнике)
+        if (_meshes != null)
+        {
+            for (var i = 0; i < _meshes.Length; i++)
             {
-                mesher.AddMeshData(toolMesh);
+                if (_meshes[i] != null)
+                    mesher.AddMeshData(_meshes[i]);
             }
-            catch
-            {
-                // мэш поврежден
-            }
+        }
 
         // если анимации нет, то рисуем блок базовый
         if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
@@ -665,22 +758,20 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
 
         return true;  // не рисует базовый блок, если есть анимация
-
     }
-
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
         this.Inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
         this.RecipeProgress = tree.GetFloat("PowerCurrent");
+
         if (this.Api != null)
             this.Inventory.AfterBlocksLoaded(this.Api.World);
 
         if (Api is ICoreClientAPI)
         {
-            LoadToolMesh(); // обновляем меш при загрузке
-            Api.World.BlockAccessor.MarkBlockDirty(Pos);
+            UpdateMeshes(); // обновляем меши при загрузке
         }
 
         ICoreAPI api = this.Api;
@@ -716,7 +807,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         var isolated = MyMiniLib.GetAttributeBool(byItemStack.Block, "isolated", false);
         var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
 
-
         this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
         this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
         this.ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
@@ -731,7 +821,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
-
 
         if (ElectricalProgressive != null)
         {
@@ -751,11 +840,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             this.animUtil.Dispose();
         }
 
-        // Очистка мусора
-        toolMesh = null!;
-        tmpItem = null!;
-
-
+        // Очистка как в холодильнике
+        _meshes = null;
+        _nowTesselatingShape = null;
+        _nowTesselatingObj = null;
     }
 
     public ItemStack InputStack
@@ -778,7 +866,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
     }
 
-
     /// <summary>
     /// Выгрузка блока из памяти
     /// </summary>
@@ -787,8 +874,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         base.OnBlockUnloaded();
         this.clientDialog?.TryClose();
 
-        // Очистка мусора
-        toolMesh = null!;
-        tmpItem = null!;
+        // Очищаем ссылки как в холодильнике
+        _meshes = null;
+        _nowTesselatingShape = null;
+        _nowTesselatingObj = null;
+        _capi = null;
     }
 }

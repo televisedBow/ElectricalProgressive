@@ -13,23 +13,6 @@ namespace ElectricalProgressive.Content.Block.ECharger;
 
 public class BlockECharger : BlockEBase
 {
-    public static Dictionary<Item, ToolTextures> ToolTextureSubIds(ICoreAPI api)
-    {
-        Dictionary<Item, ToolTextures> result;
-
-        if (api.ObjectCache.TryGetValue("toolTextureSubIdsTest", out var obj)
-            && obj is Dictionary<Item, ToolTextures> toolTextureSubIdsTest)
-        {
-            result = toolTextureSubIdsTest;
-        }
-        else
-        {
-            api.ObjectCache["toolTextureSubIdsTest"] = result = new();
-        }
-
-        return result;
-    }
-
     private WorldInteraction[]? _interactions;
     private int _output;
 
@@ -83,45 +66,7 @@ public class BlockECharger : BlockEBase
         return false;
     }
 
-    // We need the tool item textures also in the block atlas
-    public override void OnCollectTextures(ICoreAPI api, ITextureLocationDictionary textureDict)
-    {
-        base.OnCollectTextures(api, textureDict);
-
-        foreach (var item in api.World.Items)
-        {
-            if (item.Attributes?["chargable"].AsBool() != true)
-                continue;
-
-            var toolTextures = new ToolTextures();
-
-            if (item.Shape != null)
-            {
-                var asset = api.Assets.TryGet(item.Shape.Base.Clone().WithPathPrefixOnce("shapes/").WithPathAppendixOnce(".json"));
-                if (asset != null)
-                {
-                    var shape = asset.ToObject<Shape>();
-                    foreach (var val in shape.Textures)
-                    {
-                        var ctex = new CompositeTexture(val.Value.Clone());
-                        ctex.Bake(api.Assets);
-
-                        textureDict.AddTextureLocation(new AssetLocationAndSource(ctex.Baked.BakedName, "Shape code " + item.Shape.Base));
-                        toolTextures.TextureSubIdsByCode[val.Key] = textureDict[new(ctex.Baked.BakedName)];
-                    }
-                }
-            }
-
-            foreach (var val in item.Textures)
-            {
-                val.Value.Bake(api.Assets);
-                textureDict.AddTextureLocation(new(val.Value.Baked.BakedName, "Item code " + item.Code));
-                toolTextures.TextureSubIdsByCode[val.Key] = textureDict[new(val.Value.Baked.BakedName)];
-            }
-
-            ToolTextureSubIds(api)[item] = toolTextures;
-        }
-    }
+    
 
     public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
     {
@@ -133,11 +78,6 @@ public class BlockECharger : BlockEBase
         return true;
     }
 
-    public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
-    {
-        base.OnNeighbourBlockChange(world, pos, neibpos);
-
-    }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {

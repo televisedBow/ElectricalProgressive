@@ -10,6 +10,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 using Facing = ElectricalProgressive.Utils.Facing;
 
@@ -17,24 +18,20 @@ namespace ElectricalProgressive.Content.Block.ECharger;
 
 public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 {
-
     private InventoryECharger inventory;
     public override InventoryBase Inventory => inventory;
-
     public override string InventoryClassName => "charger";
 
-    MeshData[] toolMeshes = new MeshData[1];
-
-    public Size2i AtlasSize => ((ICoreClientAPI)Api).BlockTextureAtlas.Size;
-
-    CollectibleObject? tmpItem;
+    // Новые поля для системы мешей (как в холодильнике)
+    private MeshData?[] _meshes;
+    private Shape? _nowTesselatingShape;
+    private CollectibleObject _nowTesselatingObj;
+    private ICoreClientAPI _capi;
 
     private long listenerId;
 
-
-
-
     private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+
     public (EParams, int) Eparams
     {
         get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
@@ -53,21 +50,81 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         }
     }
 
+    public Size2i AtlasSize => _capi?.BlockTextureAtlas.Size ?? ((ICoreClientAPI)Api)?.BlockTextureAtlas.Size;
 
+    /// <summary>
+    /// Необходимо для отрисовки текстур
+    /// </summary>
     public TextureAtlasPosition this[string textureCode]
     {
         get
         {
-            if (BlockECharger.ToolTextureSubIds(Api).TryGetValue((Item)tmpItem!, out var toolTextures))
-            {
-                if (toolTextures.TextureSubIdsByCode.TryGetValue(textureCode, out var textureSubId))
-                    return ((ICoreClientAPI)Api).BlockTextureAtlas.Positions[textureSubId];
+            var assetLocation = default(AssetLocation?);
 
-                return ((ICoreClientAPI)Api).BlockTextureAtlas.Positions[toolTextures.TextureSubIdsByCode.First().Value];
+            // Пробуем получить текстуру из item.Textures
+            if (_nowTesselatingObj is Vintagestory.API.Common.Item item)
+            {
+                if (item.Textures.TryGetValue(textureCode, out var compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
+                else if (item.Textures.TryGetValue("all", out compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
+            }
+            else if (_nowTesselatingObj is Vintagestory.API.Common.Block block)
+            {
+                if (block.Textures.TryGetValue(textureCode, out var compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
+                else if (block.Textures.TryGetValue("all", out compositeTexture))
+                {
+                    assetLocation = compositeTexture.Baked.BakedName;
+                }
             }
 
-            return null!;
+            // Если не нашли, пробуем из shape.Textures
+            if (assetLocation == null && _nowTesselatingShape != null)
+            {
+                _nowTesselatingShape.Textures.TryGetValue(textureCode, out assetLocation);
+            }
+
+            // Если все еще не нашли, используем домен предмета и предполагаемый путь
+            if (assetLocation == null)
+            {
+                var domain = _nowTesselatingObj.Code.Domain;
+                assetLocation = new(domain, "textures/item/" + textureCode);
+                Api.World.Logger.Warning("Текстура {0} не найдена в текстурах предмета или формы, используется путь: {1}", textureCode, assetLocation);
+            }
+
+            return getOrCreateTexPos(assetLocation);
         }
+    }
+
+    private TextureAtlasPosition? getOrCreateTexPos(AssetLocation texturePath)
+    {
+        var textureAtlasPosition = _capi.BlockTextureAtlas[texturePath];
+        if (textureAtlasPosition != null)
+            return textureAtlasPosition;
+
+        // берем только base текстуру (первую из кучи наваленных)
+        var pos = texturePath.Path.IndexOf("++");
+        if (pos >= 0)
+            texturePath.Path = texturePath.Path.Substring(0, pos);
+
+        var asset = _capi.Assets.TryGet(texturePath.Clone().WithPathPrefixOnce("textures/").WithPathAppendixOnce(".png"));
+        if (asset != null)
+        {
+            _capi.BlockTextureAtlas.GetOrInsertTexture(texturePath, out var num, out textureAtlasPosition, null, 0.005f);
+        }
+        else
+        {
+            Api.World.Logger.Warning("Текстура не найдена по пути: {0}", texturePath);
+        }
+
+        return textureAtlasPosition;
     }
 
     /// <summary>
@@ -75,9 +132,8 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     /// </summary>
     public BlockEntityECharger()
     {
-        inventory = new(1, "charger-"+ Pos, null, null, null);
+        inventory = new(1, "charger-" + Pos, null, null, null);
     }
-
 
     /// <summary>
     /// Инициализация блока-зарядника
@@ -87,21 +143,32 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     {
         base.Initialize(api);
 
-        Inventory.LateInitialize( "charger-" + Pos, api);
+        Inventory.LateInitialize("charger-" + Pos, api);
         Inventory.ResolveBlocksOrItems();
 
-        if (api is ICoreClientAPI)
+        if (api.Side == EnumAppSide.Client)
         {
-            loadToolMeshes();
+            _capi = api as ICoreClientAPI;
+
+            // Инициализируем массив мешей как в холодильнике
+            _meshes = new MeshData[this.inventory.Count];
+
+            // Подписываемся на изменения инвентаря
+            this.inventory.SlotModified += slotId =>
+            {
+                UpdateMeshes();
+            };
+
+            // Первоначальное создание мешей
+            UpdateMeshes();
         }
         else
         {
-            listenerId=RegisterGameTickListener(OnTick, 1000);
+            listenerId = RegisterGameTickListener(OnTick, 1000);
         }
 
         MarkDirty(true);
     }
-
 
     /// <summary>
     /// Вызывается при выгрузке блока из мира
@@ -110,18 +177,14 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     {
         base.OnBlockUnloaded();
 
-
-        // Очистка мусора
-        toolMeshes[0] = null!;
-        tmpItem = null!;
+        // Очищаем ссылки как в холодильнике
+        _meshes = null;
+        _nowTesselatingShape = null;
+        _nowTesselatingObj = null;
+        _capi = null;
 
         UnregisterGameTickListener(listenerId); //отменяем слушатель тика, если он есть
     }
-
-
-
-
-
 
     //проверка, нужно ли заряжать
     private void OnTick(float dt)
@@ -130,7 +193,6 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
             return;
 
         var stack = Inventory[0]?.Itemstack;
-
 
         // со стаком что-то не так?
         if (stack is null ||
@@ -151,7 +213,6 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
                     Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant("state", "enabled")).BlockId, Pos);
                     MarkDirty(true);
                 }
-
 
                 int maxReceive = GetBehavior<BEBehaviorECharger>().PowerSetting;        // мощность в заряднике
                 int consume = MyMiniLib.GetAttributeInt(stack.Item, "consume", 20);     //размер минимальной порции          
@@ -198,29 +259,52 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         MarkDirty();
     }
 
-
     /// <summary>
-    /// Загружает меши инструментов 
+    /// Обновляем mesh для конкретного слота
     /// </summary>
-    void loadToolMeshes()
+    public void UpdateMesh(int slotid)
     {
-        toolMeshes[0] = null!; //должна быть сброшена сразу же 
-
-        var stack = Inventory[0].Itemstack;
-        if (stack == null) //пустой стак нам не интересен
+        if (Api == null || Api.Side == EnumAppSide.Server || _capi == null)
             return;
 
-        tmpItem = stack.Collectible;
+        if (slotid >= this.inventory.Count)
+            return;
 
-        var origin = new Vec3f(0.5f, 0.5f, 0.5f);
-        var clientApi = (ICoreClientAPI)Api;
+        // В заряднике отображаем только слот 0
+        if (slotid != 0)
+        {
+            _meshes[slotid] = null;
+            return;
+        }
 
-        if (stack.Class == EnumItemClass.Item)
-            clientApi.Tesselator.TesselateItem(stack.Item, out toolMeshes[0], this);
+        if (this.inventory[slotid].Empty)
+        {
+            _meshes[slotid] = null;
+            return;
+        }
+
+        var meshData = GenMesh(this.inventory[slotid].Itemstack);
+        if (meshData != null)
+        {
+            TranslateMesh(meshData, slotid);
+            _meshes[slotid] = meshData;
+        }
         else
-            clientApi.Tesselator.TesselateBlock(stack.Block, out toolMeshes[0]);
+        {
+            _meshes[slotid] = null;
+        }
+    }
 
-        clientApi.TesselatorManager.ThreadDispose(); //обязательно
+    /// <summary>
+    /// Перемещаем mesh в нужную позицию для зарядника
+    /// </summary>
+    public void TranslateMesh(MeshData? meshData, int slotId)
+    {
+        if (meshData == null || slotId != 0)
+            return;
+
+        var stack = this.inventory[slotId].Itemstack;
+        Vec3f origin = new Vec3f(0.5f, 0.5f, 0.5f);
 
         if (stack.Class == EnumItemClass.Item)
         {
@@ -234,15 +318,73 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
             var rotateY = MyMiniLib.GetAttributeFloat(stack.Item, "rotateY", 0F);
             var rotateZ = MyMiniLib.GetAttributeFloat(stack.Item, "rotateZ", 0F);
 
+
             origin.Y = 1f / 30f;
-            toolMeshes[0].Scale(origin, scaleX, scaleY, scaleZ);
-            toolMeshes[0].Translate(translateX, translateY, translateZ);
-            toolMeshes[0].Rotate(origin, rotateX, rotateY, rotateZ);
+            meshData.Scale(origin, scaleX, scaleY, scaleZ);
+            meshData.Translate(translateX, translateY, translateZ);
+            meshData.Rotate(origin, rotateX * GameMath.DEG2RAD, rotateY * GameMath.DEG2RAD, rotateZ * GameMath.DEG2RAD);
         }
         else
         {
-            toolMeshes[0].Scale(origin, 0.3f, 0.3f, 0.3f);
+            meshData.Scale(origin, 0.3f, 0.3f, 0.3f);
         }
+    }
+
+    /// <summary>
+    /// Генерация меша для предмета (как в холодильнике)
+    /// </summary>
+    public MeshData? GenMesh(ItemStack stack)
+    {
+        if (stack == null)
+            return null;
+
+        MeshData meshData;
+        try
+        {
+            var meshSource = stack.Collectible as IContainedMeshSource;
+
+            if (meshSource != null)
+            {
+                meshData = meshSource.GenMesh(stack, _capi.BlockTextureAtlas, Pos);
+                meshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0f, Block.Shape.rotateY * 0.0174532924f, 0f);
+            }
+            else
+            {
+                if (stack.Class == EnumItemClass.Block)
+                {
+                    meshData = _capi.TesselatorManager.GetDefaultBlockMesh(stack.Block).Clone();
+                }
+                else
+                {
+                    _nowTesselatingObj = stack.Collectible;
+                    _nowTesselatingShape = null;
+
+                    if (stack.Item.Shape != null)
+                        _nowTesselatingShape = _capi.TesselatorManager.GetCachedShape(stack.Item.Shape.Base);
+
+                    _capi.Tesselator.TesselateItem(stack.Item, out meshData, this);
+                    meshData.RenderPassesAndExtraBits.Fill((short)2);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Api.World.Logger.Error("Не удалось выполнить тесселяцию предмета {0}: {1}", stack.Item.Code, e.Message);
+            meshData = null;
+        }
+
+        return meshData;
+    }
+
+    /// <summary>
+    /// Обновляет все meshы в инвентаре
+    /// </summary>
+    public void UpdateMeshes()
+    {
+        for (var i = 0; i < this.inventory.Count; i++)
+            UpdateMesh(i);
+
+        MarkDirty(true);
     }
 
     internal bool OnPlayerInteract(IPlayer byPlayer, Vec3d hit)
@@ -292,11 +434,10 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
             Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
 
         // обновляем модель блока
-        if (this.Block.Variant["state"] == "enabled") 
+        if (this.Block.Variant["state"] == "enabled")
             Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant("state", "disabled")).BlockId, Pos);
         else if (this.Block.Variant["state"] == "burned")
             Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant("state", "burned")).BlockId, Pos);
-
 
         didInteract(player);
 
@@ -307,7 +448,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     {
         Api.World.PlaySoundAt(new AssetLocation("sounds/player/buildhigh"), Pos.X, Pos.Y, Pos.Z, player, false);
         if (Api is ICoreClientAPI)
-            loadToolMeshes();
+            UpdateMeshes();
 
         MarkDirty(true);
     }
@@ -342,7 +483,6 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         base.OnBlockRemoved();
     }
 
-
     /// <summary>
     /// Вызывается при разрушении блока игроком
     /// </summary>
@@ -354,7 +494,6 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         if (stack != null)
             Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
     }
-
 
     /// <summary>
     /// Вызывается при тесселяции блока
@@ -368,20 +507,20 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         var block = Api.World.BlockAccessor.GetBlock(Pos);
         var mesh = clientApi.TesselatorManager.GetDefaultBlockMesh(block);
 
-        if (mesh == null || mesher==null)
+        if (mesh == null || mesher == null)
             return true;
 
         mesher.AddMeshData(mesh);
 
-        if (toolMeshes[0] != null)
-            try
+        // Отрисовываем меши предметов (как в холодильнике)
+        if (_meshes != null)
+        {
+            for (var i = 0; i < _meshes.Length; i++)
             {
-                mesher.AddMeshData(toolMeshes[0]);
+                if (_meshes[i] != null)
+                    mesher.AddMeshData(_meshes[i]);
             }
-            catch
-            {
-                // мэш поврежден
-            }
+        }
 
         return true;
     }
@@ -389,7 +528,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        
+
         Inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
         if (Api != null)
         {
@@ -399,7 +538,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 
         if (Api is ICoreClientAPI)
         {
-            loadToolMeshes();
+            UpdateMeshes(); // обновляем меши при загрузке
             Api.World.BlockAccessor.MarkBlockDirty(Pos);
         }
     }
@@ -430,7 +569,6 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         }
     }
 
-
     public override void OnLoadCollectibleMappings(IWorldAccessor worldForNewMappings, Dictionary<int, AssetLocation> oldBlockIdMapping, Dictionary<int, AssetLocation> oldItemIdMapping, int schematicSeed, bool resolveImports)
     {
         foreach (var slot in Inventory)
@@ -444,8 +582,6 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
             }
         }
     }
-
-
 
     /// <summary>
     /// Информация о блоке
@@ -478,7 +614,6 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         }
         else if (stack?.Block is IEnergyStorageItem) //блок
         {
-
             int consume = MyMiniLib.GetAttributeInt(stack.Block, "consume", 20); //количество энергии, которое потребляет блок порцией
             int energy = stack.Attributes.GetInt("durability") * consume;
             int maxEnergy = stack.Collectible.GetMaxDurability(stack) * consume;
@@ -491,10 +626,3 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     }
 }
 
-/// <summary>
-/// Класс для хранения текстур инструментов
-/// </summary>
-public class ToolTextures
-{
-    public Dictionary<string, int> TextureSubIdsByCode = new Dictionary<string, int>();
-}

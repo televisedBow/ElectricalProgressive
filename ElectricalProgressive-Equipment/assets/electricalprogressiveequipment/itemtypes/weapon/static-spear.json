@@ -26,9 +26,6 @@
 				}
 			]
 		},
-
-
-
 		"toolrackTransform": {
 			"rotation": {
 				"x": 90,
@@ -63,7 +60,7 @@
 		"translateZ": 0,
 		"rotateX": 0,
 		"rotateY": 0,
-		"rotateZ": 1.56
+		"rotateZ": 90
 	},
 	"creativeinventory": {
 		"general": [ "*" ],
