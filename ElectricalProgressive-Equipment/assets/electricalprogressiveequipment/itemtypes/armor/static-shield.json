@@ -62,12 +62,12 @@
 		"scaleX": 0.5,
 		"scaleY": 0.5,
 		"scaleZ": 0.5,
-		"translateX": 0.0,
-		"translateY": 0.5,
-		"translateZ": 0.0,
+		"translateX": -0.6,
+		"translateY": -0.08,
+		"translateZ": 0.1,
 		"rotateX": 0,
 		"rotateY": 0,
-		"rotateZ": 0
+		"rotateZ": -90
 	},
 	"shape": { "base": "item/static-shield" },
 

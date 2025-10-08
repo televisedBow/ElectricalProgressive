@@ -89,23 +89,24 @@ namespace ElectricalProgressive.Content.Block.EOven;
                 if (bakingProperties == null || !this[i].Itemstack.Attributes.GetBool("bakeable", true)) //если свойства выпекания не найдены
                     return this[i];
                 
-                string Code="";
+                string blockCode="";
                 if (this[i].Itemstack.Item!=null)
                 {
-                    Code = this[i].Itemstack.Item.Code.ToString();
+                    blockCode = this[i].Itemstack.Item.Code.ToString();
                 }
                 else if (this[i].Itemstack.Block != null)
                 {
-                    Code = this[i].Itemstack.Block.Code.ToString();
+                    blockCode = this[i].Itemstack.Block.Code.ToString();
                 }
 
-                if (Code.Contains("perfect") ||
-                    Code.Contains("charred") ||
-                    Code.Contains("rot") ||
-                    Code.Contains("bake1") ||
-                    Code.Contains("bake2") ||
-                    Code.Contains("cooked") ||
-                    Code.Contains("dry"))
+                if (blockCode.Contains("perfect") ||
+                    blockCode.Contains("charred") ||
+                    blockCode.Contains("rot") ||
+                    blockCode.Contains("-cooked") ||
+                    blockCode.Contains("bake1") ||
+                    blockCode.Contains("bake2") ||
+                    blockCode.Contains("tender") ||
+                    blockCode.Contains("dry"))
                 {
                     return this[i];
                 }

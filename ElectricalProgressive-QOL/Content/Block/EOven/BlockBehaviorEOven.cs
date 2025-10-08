@@ -6,6 +6,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
+using XSkills;
 
 namespace ElectricalProgressive.Content.Block.EOven;
 
@@ -71,9 +72,10 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
                     if (blockCode.Contains("perfect") ||
                         blockCode.Contains("charred") ||
                         blockCode.Contains("rot") ||
+                        blockCode.Contains("-cooked") ||
                         blockCode.Contains("bake1") ||
                         blockCode.Contains("bake2") ||
-                        blockCode.Contains("cooked") ||
+                        blockCode.Contains("tender") ||
                         blockCode.Contains("dry"))
                     {
                         stack_count_perfect++;
@@ -85,9 +87,10 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
                     if (itemCode.Contains("perfect") ||
                         itemCode.Contains("charred") ||
                         itemCode.Contains("rot") ||
+                        itemCode.Contains("-cooked") ||
                         itemCode.Contains("bake1") ||
                         itemCode.Contains("bake2") ||
-                        itemCode.Contains("cooked") ||
+                        itemCode.Contains("tender") ||
                         itemCode.Contains("dry"))
                     {
                         stack_count_perfect++;

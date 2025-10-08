@@ -589,9 +589,17 @@ private object GetBehaviorByType(Type behaviorType)
             string resultCode = bakingProperties?.ResultCode;
             if (resultCode != null)
             {
-                ItemStack itemStack = itemSlot.Itemstack.Class == EnumItemClass.Block
-                    ? new ItemStack(this.Api.World.GetBlock(new AssetLocation(resultCode)))
-                    : new ItemStack(this.Api.World.GetItem(new AssetLocation(resultCode)));
+                ItemStack itemStack = (ItemStack)null;
+                // на выходе рецепта блок?
+                Vintagestory.API.Common.Block block = this.Api.World.GetBlock(new AssetLocation(resultCode));
+                if (block != null)
+                    itemStack = new ItemStack(block, 1);
+
+                // на выходе рецепта предмет?
+                Vintagestory.API.Common.Item obj = this.Api.World.GetItem(new AssetLocation(resultCode));
+                if (obj != null)
+                    itemStack = new ItemStack(obj, 1);
+                
 
                 if (itemStack != null)
                 {
