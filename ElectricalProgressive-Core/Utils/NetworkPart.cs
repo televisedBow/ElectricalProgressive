@@ -9,7 +9,7 @@ namespace ElectricalProgressive.Utils
     /// </summary>
     public class NetworkPart
     {
-        public readonly Network?[] Networks = new Network?[6];
+        public readonly List<Network>[] Networks = new List<Network>[6];
         public EParams[] eparams = new EParams[] { };
         public readonly BlockPos Position;
         public Facing Connection = Facing.None;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
@@ -368,7 +369,7 @@ public class PathFinder
 
         // Определение доступных соединений
         for (byte i = 0; i < 6; i++)
-            if (part.Networks[i] == network && !processFaces[i])
+            if (part.Networks[i].Any(n => n == network) && !processFaces[i])
                 hereConnections |= Connections & faceMasks[i];
 
         // BFS по направлениям
