@@ -1,18 +1,15 @@
-﻿using Cairo.Freetype;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 using static ElectricalProgressive.ElectricalProgressive;
 
@@ -23,7 +20,7 @@ using static ElectricalProgressive.ElectricalProgressive;
     "electricalprogressivecore",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electrical logic library.",
-    Version = "2.3.3",
+    Version = "2.3.4",
     Authors = new[] { "Tehtelev", "Kotl" }
 )]
 
@@ -1328,7 +1325,6 @@ namespace ElectricalProgressive
         {
             Network? outNetwork = null;
 
-            // выбираем сеть с наибольшим количеством элементов
             foreach (var network in networks)
             {
                 if (outNetwork == null || outNetwork.PartPositions.Count < network.PartPositions.Count)
@@ -1337,55 +1333,40 @@ namespace ElectricalProgressive
                 }
             }
 
-            // переносим все элементы в одну сеть
             if (outNetwork != null)
             {
-                // перебираем все сети
                 foreach (var network in networks)
                 {
-                    // пропускаем ту сеть, которая уже выбрана
-                    // или нулевую
-                    if (outNetwork == network || network==null)
+                    if (outNetwork == network)
                     {
                         continue;
                     }
 
-                    // перебираем все элементы в этой сети
                     foreach (var position in network.PartPositions)
                     {
                         var part = this.parts[position];
-
-                        // меняем ссылку на сеть в каждой части
                         foreach (var face in BlockFacing.ALLFACES)
                         {
-                            for(int i = 0; i< part.Networks[face.Index].Count(); i++)
+                            if (part.Networks[face.Index] == network)
                             {
-                                if (part.Networks[face.Index][i] == network)
-                                {
-                                    part.Networks[face.Index][i] = outNetwork;
-                                    break;
-                                }
+                                part.Networks[face.Index] = outNetwork;
                             }
                         }
 
-                        // переносим компоненты в новую сеть
                         if (part.Conductor is { } conductor) outNetwork.Conductors.Add(conductor);
                         if (part.Consumer is { } consumer) outNetwork.Consumers.Add(consumer);
                         if (part.Producer is { } producer) outNetwork.Producers.Add(producer);
                         if (part.Accumulator is { } accumulator) outNetwork.Accumulators.Add(accumulator);
                         if (part.Transformator is { } transformator) outNetwork.Transformators.Add(transformator);
 
-                        // переносим позицию в новую сеть
                         outNetwork.PartPositions.Add(position);
                     }
 
-                    // очищаем старую сеть и удаляем ее из списка сетей
                     network.PartPositions.Clear();
                     this.networks.Remove(network);
                 }
             }
 
-            // если не было ни одной сети, то создаем новую
             outNetwork ??= this.CreateNetwork();
 
             return outNetwork;
@@ -1404,21 +1385,15 @@ namespace ElectricalProgressive
             network.version++;
             this.networks.Remove(network);                                  //удаляем цепь из списка цепей
 
-            // перебираем все элементы в этой цепи
             foreach (var position in partPositions)                         //перебираем по всем бывшим элементам этой цепи
             {
                 if (this.parts.TryGetValue(position, out var part))         //есть такое соединение?
                 {
-                    // меняем ссылку на сеть в каждой части
-                    foreach (var face in BlockFacing.ALLFACES)
+                    foreach (var face in BlockFacing.ALLFACES)              //перебираем по всем 6 направлениям
                     {
-                        for (int i = 0; i < part.Networks[face.Index].Count; i++)
+                        if (part.Networks[face.Index] == network)           //если нашли привязку к этой цепи
                         {
-                            if (part.Networks[face.Index][i] == network)
-                            {
-                                part.Networks[face.Index][i] = null;
-                                break;
-                            }
+                            part.Networks[face.Index] = null;               //обнуляем ее
                         }
                     }
                 }
@@ -1456,7 +1431,6 @@ namespace ElectricalProgressive
         /// <exception cref="Exception"></exception>
         private void AddConnections(ref NetworkPart part, Facing addedConnections, (EParams, int) setEparams)
         {
-            // сети по направлениям
             var networksByFace = new[]
             {
                 new HashSet<Network>(),
@@ -1469,19 +1443,12 @@ namespace ElectricalProgressive
 
             var transByFace = new IElectricTransformator[6];
 
-            // если трансформатора нет, то ищем сети, к которым может относиться этот провод
+
             if (part.Transformator == null)
             {
                 foreach (var face in FacingHelper.Faces(part.Connection)) //ищет к каким сетям эти провода могут относиться
                 {
-                    if (part.Networks[face.Index].Count > 0)
-                    {
-                        networksByFace[face.Index].AddRange(part.Networks[face.Index]);
-                    }
-                    else
-                    {
-                        networksByFace[face.Index].Add(this.CreateNetwork());
-                    }
+                    networksByFace[face.Index].Add(part.Networks[face.Index] ?? this.CreateNetwork());
                 }
             }
 
@@ -1499,18 +1466,15 @@ namespace ElectricalProgressive
                         // 1) Соединение своей грани face с противоположной гранью соседа
                         if ((neighborPart.Connection & FacingHelper.From(face, direction.Opposite)) != 0)
                         {
-                            for (int i = 0; i < neighborPart.Networks[face.Index].Count; i++)
+                            if (neighborPart.Networks[face.Index] is { } network)
                             {
-                                if (neighborPart.Networks[face.Index][i] is { } network)
+                                if (neighborPart.Transformator != null)
                                 {
-                                    if (neighborPart.Transformator != null)
-                                    {
-                                        transByFace[face.Index] = neighborPart.Transformator;
-                                    }
-                                    else
-                                    {
-                                        networksByFace[face.Index].Add(network);
-                                    }
+                                    transByFace[face.Index] = neighborPart.Transformator;
+                                }
+                                else
+                                {
+                                    networksByFace[face.Index].Add(network);
                                 }
                             }
                         }
@@ -1518,18 +1482,15 @@ namespace ElectricalProgressive
                         // 2) Тоже, но наоборот
                         if ((neighborPart.Connection & FacingHelper.From(direction.Opposite, face)) != 0)
                         {
-                            for (int i = 0; i < neighborPart.Networks[direction.Opposite.Index].Count; i++)
+                            if (neighborPart.Networks[direction.Opposite.Index] is { } network)
                             {
-                                if (neighborPart.Networks[direction.Opposite.Index][i] is { } network)
+                                if (neighborPart.Transformator != null)
                                 {
-                                    if (neighborPart.Transformator != null)
-                                    {
-                                        transByFace[face.Index] = neighborPart.Transformator;
-                                    }
-                                    else
-                                    {
-                                        networksByFace[face.Index].Add(network);
-                                    }
+                                    transByFace[face.Index] = neighborPart.Transformator;
+                                }
+                                else
+                                {
+                                    networksByFace[face.Index].Add(network);
                                 }
                             }
                         }
@@ -1548,18 +1509,15 @@ namespace ElectricalProgressive
                         // 1) Проверяем соединение через ребро direction–face
                         if ((neighborPart.Connection & FacingHelper.From(direction.Opposite, face.Opposite)) != 0)
                         {
-                            for (int i = 0; i < neighborPart.Networks[direction.Opposite.Index].Count; i++)
+                            if (neighborPart.Networks[direction.Opposite.Index] is { } network)
                             {
-                                if (neighborPart.Networks[direction.Opposite.Index][i] is { } network)
+                                if (neighborPart.Transformator != null)
                                 {
-                                    if (neighborPart.Transformator != null)
-                                    {
-                                        transByFace[face.Index] = neighborPart.Transformator;
-                                    }
-                                    else
-                                    {
-                                        networksByFace[face.Index].Add(network);
-                                    }
+                                    transByFace[face.Index] = neighborPart.Transformator;
+                                }
+                                else
+                                {
+                                    networksByFace[face.Index].Add(network);
                                 }
                             }
                         }
@@ -1567,18 +1525,15 @@ namespace ElectricalProgressive
                         // 2) Тоже, но наоборот
                         if ((neighborPart.Connection & FacingHelper.From(face.Opposite, direction.Opposite)) != 0)
                         {
-                            for (int i = 0; i < neighborPart.Networks[face.Opposite.Index].Count; i++)
+                            if (neighborPart.Networks[face.Opposite.Index] is { } network)
                             {
-                                if (neighborPart.Networks[face.Opposite.Index][i] is { } network)
+                                if (neighborPart.Transformator != null)
                                 {
-                                    if (neighborPart.Transformator != null)
-                                    {
-                                        transByFace[face.Index] = neighborPart.Transformator;
-                                    }
-                                    else
-                                    {
-                                        networksByFace[face.Index].Add(network);
-                                    }
+                                    transByFace[face.Index] = neighborPart.Transformator;
+                                }
+                                else
+                                {
+                                    networksByFace[face.Index].Add(network);
                                 }
                             }
                         }
@@ -1598,18 +1553,15 @@ namespace ElectricalProgressive
                         // 1) Проверяем перпендикулярную грань соседа
                         if ((neighborPart.Connection & FacingHelper.From(direction, face.Opposite)) != 0)
                         {
-                            for (int i = 0; i < neighborPart.Networks[direction.Index].Count; i++)
+                            if (neighborPart.Networks[direction.Index] is { } network)
                             {
-                                if (neighborPart.Networks[direction.Index][i] is { } network)
+                                if (neighborPart.Transformator != null)
                                 {
-                                    if (neighborPart.Transformator != null)
-                                    {
-                                        transByFace[face.Index] = neighborPart.Transformator;
-                                    }
-                                    else
-                                    {
-                                        networksByFace[face.Index].Add(network);
-                                    }
+                                    transByFace[face.Index] = neighborPart.Transformator;
+                                }
+                                else
+                                {
+                                    networksByFace[face.Index].Add(network);
                                 }
                             }
                         }
@@ -1617,18 +1569,15 @@ namespace ElectricalProgressive
                         // 2) Тоже, но наоборот
                         if ((neighborPart.Connection & FacingHelper.From(face.Opposite, direction)) != 0)
                         {
-                            for (int i = 0; i < neighborPart.Networks[face.Opposite.Index].Count; i++)
+                            if (neighborPart.Networks[face.Opposite.Index] is { } network)
                             {
-                                if (neighborPart.Networks[face.Opposite.Index][i] is { } network)
+                                if (neighborPart.Transformator != null)
                                 {
-                                    if (neighborPart.Transformator != null)
-                                    {
-                                        transByFace[face.Index] = neighborPart.Transformator;
-                                    }
-                                    else
-                                    {
-                                        networksByFace[face.Index].Add(network);
-                                    }
+                                    transByFace[face.Index] = neighborPart.Transformator;
+                                }
+                                else
+                                {
+                                    networksByFace[face.Index].Add(network);
                                 }
                             }
                         }
@@ -1644,10 +1593,6 @@ namespace ElectricalProgressive
             // присваиваем сети и обьединяем при необходимости
             foreach (var face in FacingHelper.Faces(part.Connection))
             {
-                // очищаем старые сети на этой грани
-                if (addedConnections!=Facing.None)
-                    part.Networks[face.Index].Clear();
-
                 if (part.Transformator == null)
                 {
                     var network = this.MergeNetworks(networksByFace[face.Index]);
@@ -1680,42 +1625,41 @@ namespace ElectricalProgressive
                         network.Accumulators.Add(accumulator);
                     }
 
-                    
+
 
                     network.PartPositions.Add(part.Position);
                     network.version++; // Увеличиваем версию сети 
 
-                    
-                    part.Networks[face.Index].Add(network);            //присваиваем в этой точке эту цепь
+                    part.Networks[face.Index] = network;            //присваиваем в этой точке эту цепь
                 }
                 else
                 {
                     foreach (var net in networksByFace[face.Index])
                     {
-                        var network = this.MergeNetworks(new HashSet<Network> {  this.CreateNetwork(), net});
+                        var network = this.MergeNetworks(new HashSet<Network> { this.CreateNetwork(), net });
 
                         network.Transformators.Add(part.Transformator);
 
                         network.PartPositions.Add(part.Position);
                         network.version++; // Увеличиваем версию сети 
 
-                        part.Networks[face.Index].Add(network);            //присваиваем в этой точке эту цепь
+                        part.Networks[face.Index] = network;            //присваиваем в этой точке эту цепь
                     }
                 }
 
-                
+
 
                 int i = 0;
                 if (part.eparams == null)
                 {
                     part.eparams = new EParams[]
                             {
-                            new EParams(),
-                            new EParams(),
-                            new EParams(),
-                            new EParams(),
-                            new EParams(),
-                            new EParams()
+                        new EParams(),
+                        new EParams(),
+                        new EParams(),
+                        new EParams(),
+                        new EParams(),
+                        new EParams()
                             };
                 }
 
@@ -1742,7 +1686,7 @@ namespace ElectricalProgressive
                 {
                     if ((part.Connection & FacingHelper.From(direction, face)) != 0)
                     {
-                        if (part.Networks[face.Index][0] is { } network1 && part.Networks[direction.Index][0] is { } network2)
+                        if (part.Networks[face.Index] is { } network1 && part.Networks[direction.Index] is { } network2)
                         {
                             var networks = new HashSet<Network> { network1, network2 };
 
@@ -1770,13 +1714,10 @@ namespace ElectricalProgressive
         {
             foreach (var blockFacing in FacingHelper.Faces(removedConnections))
             {
-                for (int i = 0; i < part.Networks[blockFacing.Index].Count; i++)
+                if (part.Networks[blockFacing.Index] is { } network)
                 {
-                    if (part.Networks[blockFacing.Index][i] is { } network)
-                    {
-                        this.RemoveNetwork(ref network);
-                        network.version++; // Увеличиваем версию сети после удаления
-                    }
+                    this.RemoveNetwork(ref network);
+                    network.version++; // Увеличиваем версию сети после удаления
                 }
             }
         }
@@ -1872,7 +1813,6 @@ namespace ElectricalProgressive
             System.Func<Network, ICollection<T>> getCollection)
             where T : class
         {
-            // если нет такой части сети, то скорее всего надо создать
             if (!this.parts.TryGetValue(position, out var part))
             {
                 if (newComponent == null)
@@ -1881,39 +1821,25 @@ namespace ElectricalProgressive
                 }
 
                 part = this.parts[position] = new NetworkPart(position);
-
-                part.Networks[0] = new List<Network>();
-                part.Networks[1] = new List<Network>();
-                part.Networks[2] = new List<Network>();
-                part.Networks[3] = new List<Network>();
-                part.Networks[4] = new List<Network>();
-                part.Networks[5] = new List<Network>();
             }
 
             var oldComponent = getComponent(part);
             if (oldComponent != newComponent)
             {
-                foreach (var networkList in part.Networks)
+                foreach (var network in part.Networks)
                 {
-                    if (networkList is null)
-                        continue;
+                    if (network is null) continue;
 
-                    foreach (var network in networkList)
+                    var collection = getCollection(network);
+
+                    if (oldComponent != null)
                     {
-                        if (network is null)
-                            continue;
+                        collection.Remove(oldComponent);
+                    }
 
-                        var collection = getCollection(network);
-
-                        if (oldComponent != null)
-                        {
-                            collection.Remove(oldComponent);
-                        }
-
-                        if (newComponent != null)
-                        {
-                            collection.Add(newComponent);
-                        }
+                    if (newComponent != null)
+                    {
+                        collection.Add(newComponent);
                     }
                 }
 
@@ -1946,7 +1872,7 @@ namespace ElectricalProgressive
                 {
                     var blockFacing = FacingHelper.Faces(facing).First();
 
-                    if (part.Networks[blockFacing.Index].Count>0 && part.Networks[blockFacing.Index][0] is { } net)
+                    if (part.Networks[blockFacing.Index] is { } net)
                     {
                         localNetwork = net;                                              //выдаем найденную цепь
                         result.Facing |= FacingHelper.FromFace(blockFacing);            //выдаем ее направления
@@ -1971,7 +1897,7 @@ namespace ElectricalProgressive
                         }
                     }
 
-                    if (part.Networks[searchIndex].Count>0 && part.Networks[searchIndex][0] is { } net)
+                    if (part.Networks[searchIndex] is { } net)
                     {
                         localNetwork = net;                                              //выдаем найденную цепь
                         result.Facing |= FacingHelper.FromFace(blockFacing);        //выдаем ее направления
@@ -2118,4 +2044,3 @@ namespace ElectricalProgressive
         }
     }
 }
-

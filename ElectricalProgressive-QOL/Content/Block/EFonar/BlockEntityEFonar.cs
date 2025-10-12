@@ -10,7 +10,16 @@ namespace ElectricalProgressive.Content.Block.EFonar
     {
         private BEBehaviorEFonar Behavior => GetBehavior<BEBehaviorEFonar>();
 
-        public bool IsEnabled => Behavior.LightLevel >= 1;
+        public bool IsEnabled
+        {
+            get
+            {
+                if (this.Behavior == null)
+                    return false;
+
+                return this.Behavior.LightLevel >= 1;
+            }
+        }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {

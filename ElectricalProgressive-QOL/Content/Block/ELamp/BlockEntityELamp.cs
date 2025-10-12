@@ -10,7 +10,16 @@ namespace ElectricalProgressive.Content.Block.ELamp
     {
         private BEBehaviorELamp Behavior => this.GetBehavior<BEBehaviorELamp>();
 
-        public bool IsEnabled => this.Behavior.LightLevel >= 1;
+        public bool IsEnabled
+        {
+            get
+            {
+                if (this.Behavior == null)
+                    return false;
+
+                return this.Behavior.LightLevel >= 1;
+            }
+        }
 
         public override Facing GetConnection(Facing value)
         {

@@ -11,7 +11,16 @@ namespace ElectricalProgressive.Content.Block.ESFonar
     {
         private BEBehaviorESFonar Behavior => this.GetBehavior<BEBehaviorESFonar>();
 
-        public bool IsEnabled => this.Behavior.LightLevel >= 1;
+        public bool IsEnabled
+        {
+            get
+            {
+                if (this.Behavior == null)
+                    return false;
+
+                return this.Behavior.LightLevel >= 1;
+            }
+        }
 
         public override Facing GetConnection(Facing value)
         {
