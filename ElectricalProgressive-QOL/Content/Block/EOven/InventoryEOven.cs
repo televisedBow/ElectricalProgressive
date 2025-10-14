@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -29,7 +30,9 @@ namespace ElectricalProgressive.Content.Block.EOven;
         int num = Array.IndexOf(Slots, slot);
         if (num >= 0 && slot != null && slot.Itemstack!=null) 
         {
-            if (Api?.World.BlockAccessor.GetBlockEntity(Pos) is BlockEntityEOven entity && entity != null)
+            if (Api?.World.BlockAccessor.GetBlockEntity(Pos) is BlockEntityEOven entity &&
+                entity != null &&
+                BakingProperties.ReadFrom(slot.Itemstack)!=null)
             {
                 entity.bakingData[num]= new OvenItemData(slot.Itemstack);
             }
