@@ -15,8 +15,9 @@ namespace ElectricalProgressive.Content.Block.EOven;
     public InventoryEOven(string inventoryID, int bakeableSlots)
       : base(inventoryID, bakeableSlots)
     {
-        
 
+        for (int index = 0; index < bakeableSlots; ++index)
+            this.CookingSlots[index].MaxSlotStackSize = 1;
     }
 
 
@@ -55,11 +56,6 @@ namespace ElectricalProgressive.Content.Block.EOven;
         if (!BlockEntityEOven.IsValidInput(fromSlot, this))
             return null!;
 
-        bool extraItemStack = false;
-
-        // если в слоте больше 1 предмета, то временно берем один
-        if (fromSlot.StackSize>1)
-            extraItemStack= true;
 
         // если в слоты для готовки есть свободные, то выдаем первый из них
         for (int i = 0; i < this.CookingSlots.Length; i++)
@@ -68,24 +64,14 @@ namespace ElectricalProgressive.Content.Block.EOven;
             {
                 if (i == 0) // если первый пустой, то выдаем так как есть
                 {
-                    if (!extraItemStack)
-                        return this[i];
-                    else
-                    {
-                        fromSlot.TryPutInto(Api.World, this[i], 1);
-                    }
+                    return this[i];
                 }
                 else // если не первый, то проверяем, что духовка в режиме "квадраты"
                 {
                     if (Api?.World.BlockAccessor.GetBlockEntity(Pos) is BlockEntityEOven entity && entity != null &&
                         entity.OvenContentMode == EnumOvenContentMode.Quadrants)
                     {
-                        if (!extraItemStack)
-                            return this[i];
-                        else
-                        {
-                            fromSlot.TryPutInto(Api.World, this[i], 1);
-                        }
+                        return this[i];
                     }
                 }
             }

@@ -91,6 +91,7 @@ public class    BlockEntityEOven : BlockEntityDisplay, IHeatSource
         for (int index = 0; index < this.bakeableCapacity; ++index)
             this.bakingData[index] = new OvenItemData();
         this.ovenInv = new InventoryEOven("eoven-0", this.bakeableCapacity);
+        
     }
 
     public override InventoryBase Inventory => (InventoryBase)this.ovenInv;
