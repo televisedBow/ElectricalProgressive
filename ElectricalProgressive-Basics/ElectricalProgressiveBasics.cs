@@ -106,9 +106,6 @@ public class ElectricalProgressiveBasics : ModSystem
 
 
 
-
-
-
     public override void StartClientSide(ICoreClientAPI api)
     {
         base.StartClientSide(api);

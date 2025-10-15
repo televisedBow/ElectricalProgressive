@@ -1,5 +1,4 @@
-﻿using ElectricalProgressive.Content.Block.EStove;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Collections.Generic;

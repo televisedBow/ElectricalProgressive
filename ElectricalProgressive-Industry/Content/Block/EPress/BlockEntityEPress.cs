@@ -631,7 +631,7 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         private void CheckAnimationFrame(float dt)
         {
-            if (Api?.Side != EnumAppSide.Client || animUtil == null)
+            if (Api?.Side != EnumAppSide.Client || animUtil == null!)
                 return;
 
             const int startFrame = 20;
@@ -705,7 +705,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             (this.Api.World as IClientWorldAccessor).Player.InventoryManager.CloseInventory((IInventory)this.Inventory);
             this.invDialog?.TryClose();
             this.invDialog?.Dispose();
-            this.invDialog = (GuiDialogBlockEntity)null;
+            this.invDialog = (GuiDialogBlockEntity)null!;
         }
         #endregion
 
@@ -743,7 +743,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         {
             base.OnBlockPlaced(byItemStack);
 
-            if (ElectricalProgressive == null || byItemStack == null)
+            if (ElectricalProgressive == null! || byItemStack == null)
                 return;
 
             ElectricalProgressive.Connection = Facing.DownAll;
@@ -769,7 +769,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             base.OnTesselation(mesher, tesselator);
 
             // Отрисовываем меши предметов (как в холодильнике)
-            if (_meshes != null)
+            if (_meshes != null!)
             {
                 for (var i = 0; i < _meshes.Length; i++)
                 {
@@ -791,12 +791,12 @@ namespace ElectricalProgressive.Content.Block.EPress
         {
             base.OnBlockRemoved();
 
-            if (ElectricalProgressive != null)
+            if (ElectricalProgressive != null!)
             {
                 ElectricalProgressive.Connection = Facing.None;
             }
 
-            if (this.Api is ICoreClientAPI && this.clientDialog != null)
+            if (this.Api is ICoreClientAPI && this.clientDialog != null!)
             {
                 this.clientDialog.TryClose();
                 this.clientDialog = null;
@@ -804,15 +804,15 @@ namespace ElectricalProgressive.Content.Block.EPress
 
             StopAnimation();
 
-            if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+            if (this.Api.Side == EnumAppSide.Client && this.animUtil != null!)
             {
                 this.animUtil.Dispose();
             }
 
             // Очистка как в холодильнике
-            _meshes = null;
-            _nowTesselatingShape = null;
-            _nowTesselatingObj = null;
+            _meshes = null!;
+            _nowTesselatingShape = null!;
+            _nowTesselatingObj = null!;
         }
 
         public override void OnBlockUnloaded()
@@ -821,10 +821,10 @@ namespace ElectricalProgressive.Content.Block.EPress
             this.clientDialog?.TryClose();
 
             // Очищаем ссылки как в холодильнике
-            _meshes = null;
-            _nowTesselatingShape = null;
-            _nowTesselatingObj = null;
-            _capi = null;
+            _meshes = null!;
+            _nowTesselatingShape = null!;
+            _nowTesselatingObj = null!;
+            _capi = null!;
         }
         #endregion
     }

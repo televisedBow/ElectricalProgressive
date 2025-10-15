@@ -5,7 +5,6 @@ using ElectricalProgressive.Interface;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
-using System.Linq;
 using Vintagestory.API.Util;
 
 namespace ElectricalProgressive.Content.Block.ESFonar

@@ -1,11 +1,6 @@
 ﻿using ElectricalProgressive.Interface;
-using System;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
-using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.ECharger;
 public class InventoryECharger : InventoryGeneric
@@ -23,8 +18,6 @@ public class InventoryECharger : InventoryGeneric
     {
        
     }
-
-
 
 
 

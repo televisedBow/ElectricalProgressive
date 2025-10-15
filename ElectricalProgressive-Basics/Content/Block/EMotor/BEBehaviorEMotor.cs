@@ -1,7 +1,5 @@
-﻿using ElectricalProgressive.Content.Block.EGenerator;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using System.Text;

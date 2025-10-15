@@ -1,22 +1,16 @@
-﻿using ElectricalProgressive;
-using ElectricalProgressive.Content.Block;
-using ElectricalProgressive.Content.Block.Termoplastini;
+﻿using ElectricalProgressive.Content.Block.Termoplastini;
 using ElectricalProgressive.Utils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
-using Vintagestory.ServerMods;
 
 namespace ElectricalProgressive.Content.Block.ETermoGenerator;
 

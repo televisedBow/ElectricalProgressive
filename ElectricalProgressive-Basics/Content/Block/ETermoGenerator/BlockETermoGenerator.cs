@@ -1,9 +1,4 @@
-﻿using ElectricalProgressive.Content.Block;
-using ElectricalProgressive.Content.Block.EGenerator;
-using ElectricalProgressive.Content.Block.EMotor;
-using ElectricalProgressive.Utils;
-using System;
-using System.Collections.Generic;
+﻿using ElectricalProgressive.Utils;
 using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
@@ -11,19 +6,12 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
-using Vintagestory.GameContent;
-using Vintagestory.GameContent.Mechanics;
+
 
 namespace ElectricalProgressive.Content.Block.ETermoGenerator;
 
 public class BlockETermoGenerator : BlockEBase
 {
-
-
-
-
-
-
     /// <summary>
     /// Проверка возможности установки блока
     /// </summary>

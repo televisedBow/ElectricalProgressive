@@ -1,14 +1,8 @@
-﻿using ElectricalProgressive.Content.Block.EGenerator;
-using ElectricalProgressive.Content.Block.ETermoGenerator;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.ECable

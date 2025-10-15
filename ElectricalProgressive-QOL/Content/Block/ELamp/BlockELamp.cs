@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ElectricalProgressive.Content.Block.EMotor;
-using ElectricalProgressive.Content.Block.EStove;
 using ElectricalProgressive.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.ELamp
 {
@@ -21,10 +16,6 @@ namespace ElectricalProgressive.Content.Block.ELamp
         private readonly static Dictionary<CacheDataKey, Cuboidf[]> SelectionBoxesCache = new();
         private readonly static Dictionary<CacheDataKey, Cuboidf[]> CollisionBoxesCache = new();
 
-        /// <summary>
-        /// Заглушка нулевого света
-        /// </summary>
-        //private int[] null_HSV = { 0, 0, 0 };
 
         public override void OnUnloaded(ICoreAPI api)
         {

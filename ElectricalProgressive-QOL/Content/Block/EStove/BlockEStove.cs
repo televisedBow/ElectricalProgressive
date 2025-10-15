@@ -3,7 +3,6 @@ using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.EStove;
 

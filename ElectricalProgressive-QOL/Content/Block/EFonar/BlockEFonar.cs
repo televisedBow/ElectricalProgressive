@@ -7,8 +7,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Config;
-using ElectricalProgressive.Content.Block.EMotor;
-using Vintagestory.API.Common.Entities;
+
 
 
 namespace ElectricalProgressive.Content.Block.EFonar

@@ -1,7 +1,6 @@
 ﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
-using System.Linq;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;

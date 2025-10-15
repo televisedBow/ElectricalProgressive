@@ -1,12 +1,10 @@
 ﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
-using System.Linq;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
-using XSkills;
+
 
 namespace ElectricalProgressive.Content.Block.EOven;
 

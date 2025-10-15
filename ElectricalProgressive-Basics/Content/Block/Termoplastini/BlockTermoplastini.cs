@@ -1,8 +1,5 @@
 ﻿using ElectricalProgressive.Content.Block.ETermoGenerator;
-using ElectricalProgressive.Utils;
-using System.Text;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.Termoplastini;
@@ -53,10 +50,8 @@ public class BlockTermoplastini : BlockEBase
         var block = world.BlockAccessor.GetBlock(pos.AddCopy(BlockFacing.DOWN));
         if (block is not BlockETermoGenerator && block is not BlockTermoplastini)
             world.BlockAccessor.BreakBlock(pos, null);
-
-
+        
     }
-
-
+    
 
 }

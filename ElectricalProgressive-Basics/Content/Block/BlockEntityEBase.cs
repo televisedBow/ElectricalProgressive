@@ -1,6 +1,4 @@
 ﻿using ElectricalProgressive.Utils;
-using System.Text;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 
 namespace ElectricalProgressive.Content.Block;
