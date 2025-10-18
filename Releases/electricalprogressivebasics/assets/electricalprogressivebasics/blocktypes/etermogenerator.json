@@ -10,8 +10,24 @@
       "properties": {
         "dropBlockFace": "south"
       }
+    },
+    {
+      "name": "Multiblock",
+      "properties": {
+        "sizex": 3,
+        "sizey": 2,
+        "sizez": 3,
+        "cposition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+
+      }
     }
   ],
+
+
 
   "entityBehaviors": [
     {

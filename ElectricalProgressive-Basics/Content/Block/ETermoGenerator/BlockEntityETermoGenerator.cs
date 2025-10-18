@@ -138,7 +138,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
                 }
             }
             else
-                return 1f;
+                return 100f;
         }
     }
 
@@ -652,7 +652,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         var electricity = ElectricalProgressive;
         if (electricity != null)
         {
-            electricity.Connection = Facing.DownAll;
+            electricity.Connection = Facing.AllAll;
         }
     }
 

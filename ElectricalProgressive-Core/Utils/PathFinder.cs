@@ -307,45 +307,52 @@ public class PathFinder
 
     // Восстановление пути от конца к началу
     private (FastPosKey[]?, byte[]?, int) ReconstructFastPath(
-        FastPosKey start, FastPosKey end, List<byte> endFacing,
-        Dictionary<(FastPosKey, byte), (FastPosKey, byte)> cameFrom)
+    FastPosKey start, FastPosKey end, List<byte> endFacing,
+    Dictionary<(FastPosKey, byte), (FastPosKey, byte)> cameFrom)
+{
+    int length = 0;
+    var current = (end, endFacing[0]);
+    byte foundEndFace = endFacing[0];
+    bool valid = false;
+
+    // Подсчет длины пути и поиск валидного конца
+    while (!current.Item1.Equals(defaultKey))
     {
-        int length = 0;
-        var current = (end, endFacing[0]);
-
-        // Подсчет длины пути
-        while (!current.Item1.Equals(defaultKey))
+        length++;
+        if (current.Item1.Equals(end))
         {
-            length++;
-            if (current.Item1.Equals(end))
+            valid = false;
+            foreach (var eFace in endFacing)
             {
-                bool valid = false;
-                foreach (var eFace in endFacing)
+                var test = (end, eFace);
+                if (cameFrom.TryGetValue(test, out current))
                 {
-                    current = (end, eFace);
-                    if (cameFrom.TryGetValue(current, out current)) { valid = true; break; }
+                    foundEndFace = eFace;
+                    valid = true;
+                    break;
                 }
-                if (!valid) return (null, null, 0);
             }
-            else if (!cameFrom.TryGetValue(current, out current))
-                return (null, null, 0);
+            if (!valid) return (null, null, 0);
         }
-
-        // Построение массива пути
-        var pathArray = pathBuffer;
-        var faceArray = faceBuffer;
-        current = (end, endFacing[0]);
-
-        for (int i = length - 1; i >= 0; i--)
-        {
-            pathArray[i] = current.Item1;
-            faceArray[i] = current.Item2;
-            if (!cameFrom.TryGetValue(current, out current))
-                break;
-        }
-
-        return pathArray[0].Equals(start) ? (pathArray, faceArray, length) : (null, null, 0);
+        else if (!cameFrom.TryGetValue(current, out current))
+            return (null, null, 0);
     }
+
+    // Построение массива пути с найденным направлением
+    var pathArray = pathBuffer;
+    var faceArray = faceBuffer;
+    current = (end, foundEndFace);
+
+    for (int i = length - 1; i >= 0; i--)
+    {
+        pathArray[i] = current.Item1;
+        faceArray[i] = current.Item2;
+        if (!cameFrom.TryGetValue(current, out current))
+            break;
+    }
+
+    return pathArray[0].Equals(start) ? (pathArray, faceArray, length) : (null, null, 0);
+}
 
 
 

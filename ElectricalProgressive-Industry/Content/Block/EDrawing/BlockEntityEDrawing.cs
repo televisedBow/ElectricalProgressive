@@ -547,7 +547,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             if (ElectricalProgressive == null || byItemStack == null)
                 return;
 
-            ElectricalProgressive.Connection = Facing.DownAll;
+            ElectricalProgressive.Connection = Facing.AllAll;
 
             var voltage = MyMiniLib.GetAttributeInt(byItemStack.Block, "voltage", 32);
             var maxCurrent = MyMiniLib.GetAttributeFloat(byItemStack.Block, "maxCurrent", 5.0F);

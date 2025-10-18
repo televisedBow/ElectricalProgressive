@@ -3,7 +3,9 @@ using ElectricalProgressive.Content.Block.EConnector;
 using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Vintagestory.API.Client;
@@ -13,12 +15,15 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
+using Vintagestory.GameContent;
 using static ElectricalProgressive.Content.Block.ECable.BlockECable;
 
 namespace ElectricalProgressive.Content.Block;
 
 public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 {
+
+
     public const string InterruptionKey = "electricalprogressive:interruption";
     public const string ConnectionKey = "electricalprogressive:connection";
     public const string IsLoadedKey = "electricalprogressive:isloaded";
@@ -123,8 +128,10 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     private NetworkInformation? networkInformation=new();
     private DateTime lastExecution = DateTime.MinValue;
 
-    private static double intervalMSeconds; 
+    private static double intervalMSeconds;
 
+    private BlockPos[]? multiblockParts; // Все позиции частей мультиблока (включая главную)
+    private BlockPos? mainPartPos; // Позиция главной части мультиблока
 
     /// <summary>
     /// Инициализация поведения электрического блока
@@ -137,11 +144,57 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         intervalMSeconds = this.System!.tickTimeMs;
 
+
+        // Проверка мультиблока
+        var multiblockBehavior = this.Block.GetBehavior<BlockBehaviorMultiblock>();
+        if (multiblockBehavior != null)
+        {
+            var properti = multiblockBehavior.propertiesAtString;
+            
+            int sizeX = 1, sizeY = 1, sizeZ = 1;
+            int[] cposition = new int[3];
+
+            if (!string.IsNullOrEmpty(properti))
+            {
+                try
+                {
+                    JObject jo = JObject.Parse(properti);
+                    sizeX = (int)jo["sizex"]!;
+                    sizeY = (int)jo["sizey"]!;
+                    sizeZ = (int)jo["sizez"]!;
+                    cposition = jo["cposition"].ToObject<int[]>()!;
+                }
+                catch
+                {
+                    // Логирование ошибки, если требуется
+                }
+            }
+
+            // Определяем позицию главного блока
+            mainPartPos = this.Blockentity.Pos.AddCopy(-cposition[0], -cposition[1], -cposition[2]);
+
+            // Собираем все позиции частей мультиблока
+            var parts = new List<BlockPos>();
+            for (int dx = 0; dx < sizeX; dx++)
+                for (int dy = 0; dy < sizeY; dy++)
+                    for (int dz = 0; dz < sizeZ; dz++)
+                    {
+                        var partPos = mainPartPos.AddCopy(dx, dy, dz);
+                        parts.Add(partPos);
+                    }
+            multiblockParts = parts.ToArray();
+        }
+        else
+        {
+            mainPartPos = this.Blockentity.Pos;
+            multiblockParts = new[] { this.Blockentity.Pos };
+        }
+
         this.isLoaded = true;   // оно загрузилось!
         this.dirty = true;
         this.Update();          // обновляем систему, чтобы она знала, что блок загрузился
     }
-
+                                                
     /// <summary>
     /// Что-то в цепи поменялось
     /// </summary>
@@ -193,32 +246,38 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             }
         }
 
-        // задаются все поведения
+        // Главная часть мультиблока — обычная регистрация
         system.SetConductor(this.Blockentity.Pos, this.conductor);
         system.SetConsumer(this.Blockentity.Pos, this.consumer);
         system.SetProducer(this.Blockentity.Pos, this.producer);
         system.SetAccumulator(this.Blockentity.Pos, this.accumulator);
         system.SetTransformator(this.Blockentity.Pos, this.transformator);
 
-        //если обновляется connection или interrupt, то нафиг присваивать параметры
-        (EParams, int) Epar;
-        if (!this.paramsSet)
-            Epar = (new(), 0);
-        else
-            Epar = Eparams;
+        // Для всех остальных частей мультиблока (кроме главной) — регистрируем как проводник с теми же EParams
+        if (multiblockParts != null)
+        {
+            foreach (var partPos in multiblockParts)
+            {
+                if (partPos == this.Blockentity.Pos) continue; // Главная часть уже обработана выше
+                // Создаём виртуальный проводник для каждой части
+                var virtualConductor = new VirtualConductor(partPos);
+                system.SetConductor(partPos, virtualConductor);
+                // Для Update: используем те же параметры, что и у главной части
+                EParams[]? partEparams = allEparams;
+                (EParams, int) Epar = this.paramsSet ? Eparams : (new(), 0);
+                system.Update(partPos, this.connection & ~this.interruption, Epar, ref partEparams!, isLoaded);
+            }
+        }
 
-        // обновляем параметры
-        if (system.Update(this.Blockentity.Pos, this.connection & ~this.interruption, Epar, ref allEparams!, isLoaded))
+        // Главная часть — обычный Update
+        (EParams, int) mainEpar = this.paramsSet ? Eparams : (new(), 0);
+        if (system.Update(this.Blockentity.Pos, this.connection & ~this.interruption, mainEpar, ref allEparams!, isLoaded))
         {
             try
             {
                 this.Blockentity.MarkDirty(true);
             }
-            catch
-            {
-            
-            }
-            
+            catch { }
         }
     }
 
@@ -230,9 +289,16 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
-        this.System?.Remove(this.Blockentity.Pos);
-
-    
+        // Удаляем все части мультиблока из системы
+        if (multiblockParts != null)
+        {
+            foreach (var partPos in multiblockParts)
+                this.System?.Remove(partPos);
+        }
+        else
+        {
+            this.System?.Remove(this.Blockentity.Pos);
+        }
         networkInformation = null;
     }
 
@@ -244,11 +310,22 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     public override void OnBlockUnloaded()
     {
         base.OnBlockUnloaded();
-        this.isLoaded = false;  // оно выгрузилось!
+        this.isLoaded = false;
         this.dirty = true;
-        this.Update();          // обновляем систему, чтобы она знала, что блок выгрузился
-
-      
+        // Обновляем все части мультиблока
+        if (multiblockParts != null)
+        {
+            foreach (var partPos in multiblockParts)
+            {
+                EParams[]? partEparams = allEparams;
+                (EParams, int) Epar = this.paramsSet ? Eparams : (new(), 0);
+                this.System?.Update(partPos, this.connection & ~this.interruption, Epar, ref partEparams!, false);
+            }
+        }
+        else
+        {
+            this.Update();
+        }
         networkInformation = null;
     }
 

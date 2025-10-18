@@ -27,12 +27,5 @@
     "path": "/attributes/ProficiencyStat",
     "value": "oneHandedSwordsProficiency",
     "dependsOn": [ { "modid": "combatoverhaul" } ]
-  },
-  {
-    "file": "electricalprogressiveequipment:recipes/grid/eaxe.json",
-    "op": "replace",
-    "path": "/output/code/",
-    "value": "indappledgroves:forestaxehead-steel",
-    "dependsOn": [ { "modid": "indappledgroves" } ]
   }
 ]

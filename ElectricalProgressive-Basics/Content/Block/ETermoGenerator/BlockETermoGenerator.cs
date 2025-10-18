@@ -87,7 +87,6 @@ public class BlockETermoGenerator : BlockEBase
             world.BlockAccessor.GetBlockEntity(blockSel.Position) is BlockEntityETermoGenerator entity
         )
         {
-            entity.Facing = facing;    //сообщаем направление
 
             //задаем параметры блока/проводника
             var voltage = MyMiniLib.GetAttributeInt(this, "voltage", 32);
@@ -96,8 +95,20 @@ public class BlockETermoGenerator : BlockEBase
             var isolatedEnvironment = MyMiniLib.GetAttributeBool(this, "isolatedEnvironment", false);
 
             entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
-                FacingHelper.Faces(facing).First().Index);
+                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
+
+            entity.Eparams = (
+                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
+
+            entity.Eparams = (
+                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
+            entity.Eparams = (
+                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 3);
+            entity.Eparams = (
+                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 4);
+            entity.Eparams = (
+                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 5);
+
 
 
             return true;
@@ -120,12 +131,8 @@ public class BlockETermoGenerator : BlockEBase
 
         if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityETermoGenerator entity)
         {
-            var faces = FacingHelper.Faces(entity.Facing).ToList();
-            if (
-            faces != null &&
-            faces.Any() &&
-            faces.First() is { } blockFacing &&
-            !world.BlockAccessor.GetBlock(pos.AddCopy(blockFacing)).SideSolid[blockFacing.Opposite.Index]) //если блок под ним перестал быть сплошным
+
+            if (!world.BlockAccessor.GetBlock(pos.AddCopy(BlockFacing.DOWN)).SideSolid[4]) //если блок под ним перестал быть сплошным
             {
                 world.BlockAccessor.BreakBlock(pos, null);
             }
