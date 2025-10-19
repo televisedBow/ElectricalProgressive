@@ -119,15 +119,8 @@ public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
         {
             entity.Facing = facing;                             //сообщаем направление
 
-            //задаем параметры блока/проводника
-            var voltage = MyMiniLib.GetAttributeInt(this, "voltage", 32);
-            var maxCurrent = MyMiniLib.GetAttributeFloat(this, "maxCurrent", 5.0F);
-            var isolated = MyMiniLib.GetAttributeBool(this, "isolated", false);
-            var isolatedEnvironment = MyMiniLib.GetAttributeBool(this, "isolatedEnvironment", false);
-
-            entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
-                FacingHelper.Faces(facing).First().Index);
+            //задаем электрические параметры блока/проводника
+            LoadEProperties.Load(this, entity, selection.Face.Index);
 
 
             var blockFacing = FacingHelper.Directions(entity.Facing).First();

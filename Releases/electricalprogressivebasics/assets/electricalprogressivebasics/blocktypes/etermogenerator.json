@@ -10,20 +10,6 @@
       "properties": {
         "dropBlockFace": "south"
       }
-    },
-    {
-      "name": "Multiblock",
-      "properties": {
-        "sizex": 3,
-        "sizey": 2,
-        "sizez": 3,
-        "cposition": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        }
-
-      }
     }
   ],
 
@@ -42,6 +28,8 @@
   ],
 
   "attributes": {
+    "blockEProperties": "main",
+    "facesEProperties": [ "down" ],
     "voltage": 32,
     "maxCurrent": 1024.0,
     "isolated": true,

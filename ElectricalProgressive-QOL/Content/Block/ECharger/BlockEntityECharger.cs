@@ -461,17 +461,8 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         if (electricity == null || byItemStack == null)
             return;
 
-        electricity.Connection = Facing.DownAll;
-
-        //задаем параметры блока/проводника
-        var voltage = MyMiniLib.GetAttributeInt(byItemStack!.Block, "voltage", 32);
-        var maxCurrent = MyMiniLib.GetAttributeFloat(byItemStack!.Block, "maxCurrent", 5.0F);
-        var isolated = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolated", false);
-        var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
-
-        electricity.Eparams = (
-            new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
-            FacingHelper.Faces(Facing.DownAll).First().Index);
+        //задаем электрические параметры блока/проводника
+        LoadEProperties.Load(this.Block, this);
     }
 
     /// <summary>

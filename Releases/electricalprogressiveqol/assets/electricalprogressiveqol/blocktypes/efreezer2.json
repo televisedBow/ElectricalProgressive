@@ -3,6 +3,8 @@
   "class": "BlockEFreezer2",
   "entityClass": "BlockEntityEFreezer2",
   "attributes": {
+    "blockEProperties": "all",
+    "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
     "maxConsumption": 100,
     "voltage": 32,
     "maxCurrent": 20.0,

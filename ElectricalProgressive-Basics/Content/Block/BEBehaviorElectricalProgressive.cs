@@ -144,10 +144,12 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         intervalMSeconds = this.System!.tickTimeMs;
 
+        // какие блоки могут получать электричество
+        var blockEProperties = MyMiniLib.GetAttributeString(this.Block, "blockEProperties", "main");
 
         // Проверка мультиблока
         var multiblockBehavior = this.Block.GetBehavior<BlockBehaviorMultiblock>();
-        if (multiblockBehavior != null)
+        if (multiblockBehavior != null && blockEProperties=="all")
         {
             var properti = multiblockBehavior.propertiesAtString;
             
@@ -162,7 +164,10 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
                     sizeX = (int)jo["sizex"]!;
                     sizeY = (int)jo["sizey"]!;
                     sizeZ = (int)jo["sizez"]!;
-                    cposition = jo["cposition"].ToObject<int[]>()!;
+                    var cpos = jo["cposition"];
+                    cposition[0] = (int)cpos["x"];
+                    cposition[1] = (int)cpos["y"];
+                    cposition[2] = (int)cpos["z"];
                 }
                 catch
                 {
@@ -171,7 +176,9 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             }
 
             // Определяем позицию главного блока
-            mainPartPos = this.Blockentity.Pos.AddCopy(-cposition[0], -cposition[1], -cposition[2]);
+            mainPartPos = this.Blockentity.Pos;
+            // вычисляем нулевую часть мультиблока
+            var zeroPartPos = this.Blockentity.Pos.AddCopy(-cposition[0], -cposition[1], -cposition[2]);
 
             // Собираем все позиции частей мультиблока
             var parts = new List<BlockPos>();
@@ -179,7 +186,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
                 for (int dy = 0; dy < sizeY; dy++)
                     for (int dz = 0; dz < sizeZ; dz++)
                     {
-                        var partPos = mainPartPos.AddCopy(dx, dy, dz);
+                        var partPos = zeroPartPos.AddCopy(dx, dy, dz);
                         parts.Add(partPos);
                     }
             multiblockParts = parts.ToArray();
@@ -258,13 +265,16 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         {
             foreach (var partPos in multiblockParts)
             {
-                if (partPos == this.Blockentity.Pos) continue; // Главная часть уже обработана выше
+                if (partPos == this.Blockentity.Pos)
+                    continue; // Главная часть уже обработана выше
                 // Создаём виртуальный проводник для каждой части
                 var virtualConductor = new VirtualConductor(partPos);
                 system.SetConductor(partPos, virtualConductor);
                 // Для Update: используем те же параметры, что и у главной части
                 EParams[]? partEparams = allEparams;
-                (EParams, int) Epar = this.paramsSet ? Eparams : (new(), 0);
+                (EParams, int) Epar = this.paramsSet ?
+                    Eparams :
+                    (new(), 0);
                 system.Update(partPos, this.connection & ~this.interruption, Epar, ref partEparams!, isLoaded);
             }
         }

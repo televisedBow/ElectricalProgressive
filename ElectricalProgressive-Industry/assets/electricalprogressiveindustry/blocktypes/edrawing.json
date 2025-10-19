@@ -3,6 +3,8 @@
   "class": "BlockEDrawing",
   "entityClass": "BlockEntityEDrawing",
   "attributes": {
+    "blockEProperties": "all",
+    "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
     "maxConsumption": 100,
     "voltage": 128,
     "maxCurrent": 100.0,

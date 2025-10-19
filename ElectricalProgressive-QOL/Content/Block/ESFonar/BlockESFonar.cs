@@ -60,15 +60,8 @@ namespace ElectricalProgressive.Content.Block.ESFonar
             {
                 entity.Facing = facing;
 
-                //задаем параметры блока/проводника
-                var voltage = MyMiniLib.GetAttributeInt(byItemStack!.Block, "voltage", 32);
-                var maxCurrent = MyMiniLib.GetAttributeFloat(byItemStack!.Block, "maxCurrent", 5.0F);
-                var isolated = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolated", false);
-                var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
-
-                entity.Eparams = (
-                    new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
-                    FacingHelper.Faces(Facing.DownAll).First().Index);
+                //задаем электрические параметры блока/проводника
+                LoadEProperties.Load(this, entity);
 
                 return true;
             }

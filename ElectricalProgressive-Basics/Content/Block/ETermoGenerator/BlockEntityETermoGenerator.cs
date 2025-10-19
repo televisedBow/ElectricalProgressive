@@ -138,7 +138,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
                 }
             }
             else
-                return 100f;
+                return 1f;
         }
     }
 
@@ -642,19 +642,6 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     }
 
 
-    /// <summary>
-    /// При установке блока, устанавливает соединение электричества
-    /// </summary>
-    /// <param name="byItemStack"></param>
-    public override void OnBlockPlaced(ItemStack? byItemStack = null)
-    {
-        base.OnBlockPlaced(byItemStack);
-        var electricity = ElectricalProgressive;
-        if (electricity != null)
-        {
-            electricity.Connection = Facing.AllAll;
-        }
-    }
 
 
     /// <summary>

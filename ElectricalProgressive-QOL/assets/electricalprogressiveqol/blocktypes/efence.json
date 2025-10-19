@@ -20,11 +20,13 @@
 
 
 	"attributes": {
+		"blockEProperties": "main",
+		"facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
 		"voltage": 128,
 		"maxCurrent": 128.0,
 		"isolated": false,
 		"isolatedEnvironment": true,
-    "specifiedDamage": 4,
+		"specifiedDamage": 4,
 		"supportsUnstableRock": true,
 		"isFence": true,
 		"handbook": {

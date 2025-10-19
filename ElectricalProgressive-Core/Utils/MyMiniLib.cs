@@ -75,6 +75,22 @@ public static class MyMiniLib
     /// <param name="attrname"></param>
     /// <param name="def"></param>
     /// <returns></returns>
+    public static string[] GetAttributeArrayString(CollectibleObject block, string attrname, string[] def)
+    {
+        if (block != null && block.Attributes != null && block.Attributes[attrname] != null)
+        {
+            return block.Attributes[attrname].AsArray<string>(def, "string");
+        }
+        return def;
+    }
+
+    /// <summary>
+    /// Получение аттрибута в виде массива int
+    /// </summary>
+    /// <param name="block"></param>
+    /// <param name="attrname"></param>
+    /// <param name="def"></param>
+    /// <returns></returns>
     public static int[] GetAttributeArrayInt(CollectibleObject block, string attrname, int[] def)
     {
         if (block != null && block.Attributes != null && block.Attributes[attrname] != null)

@@ -555,15 +555,8 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
         if (ElectricalProgressive == null || byItemStack is null)
             return;
 
-        var voltage = MyMiniLib.GetAttributeInt(byItemStack.Block, "voltage", 32);
-        var maxCurrent = MyMiniLib.GetAttributeFloat(byItemStack.Block, "maxCurrent", 5.0F);
-        var isolated = MyMiniLib.GetAttributeBool(byItemStack.Block, "isolated", true);
-        var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack.Block, "isolatedEnvironment", true);
-
-        var faceIndex = FacingHelper.Faces(Facing.DownAll).First().Index;
-
-        ElectricalProgressive.Connection = Facing.DownAll;
-        ElectricalProgressive.Eparams = (new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), faceIndex);
+        //задаем электрические параметры блока/проводника
+        LoadEProperties.Load(this.Block, this);
     }
 
     public override void OnBlockRemoved()

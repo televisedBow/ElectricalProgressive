@@ -21,6 +21,8 @@
   },
 
   "attributes": {
+    "blockEProperties": "main",
+    "facesEProperties": [ "down" ],
     "voltage": 128,
     "lowVoltage": 32,
     "maxCurrent": 20.0,

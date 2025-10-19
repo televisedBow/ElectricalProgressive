@@ -17,13 +17,13 @@ using System.Collections.Generic;
 
 
 [assembly: ModDependency("game", "1.21.0")]
-[assembly: ModDependency("electricalprogressivecore", "2.3.3")]
+[assembly: ModDependency("electricalprogressivecore", "2.4.0")]
 [assembly: ModInfo(
     "Electrical Progressive: Basics",
     "electricalprogressivebasics",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Basic electrical devices.",
-    Version = "2.3.4",
+    Version = "2.4.0",
     Authors = new[] {
         "Tehtelev",
         "Kotl"

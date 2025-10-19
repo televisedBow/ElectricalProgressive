@@ -14,6 +14,8 @@
 
 
   "attributes": {
+    "blockEProperties": "main",
+    "facesEProperties": [ "down" ],
     "maxConsumption": 200,
     "consume": 20,
     "voltage": 128,

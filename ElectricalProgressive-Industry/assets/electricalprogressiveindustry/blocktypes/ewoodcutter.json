@@ -25,6 +25,8 @@
     ]
   },
   "attributes": {
+    "blockEProperties": "main",
+    "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
     "maxConsumption": 300,
     "voltage": 32,
     "maxCurrent": 20.0,

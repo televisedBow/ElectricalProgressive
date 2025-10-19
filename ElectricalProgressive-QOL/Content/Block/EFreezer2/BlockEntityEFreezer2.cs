@@ -623,20 +623,8 @@ class BlockEntityEFreezer2 : ContainerEFreezer2, ITexPositionSource
         if (ElectricalProgressive == null || byItemStack == null)
             return;
 
-        ElectricalProgressive.Connection = Facing.AllAll;
-
-        // Задаем параметры блока/проводника
-        var voltage = MyMiniLib.GetAttributeInt(byItemStack.Block, "voltage", 32);
-        var maxCurrent = MyMiniLib.GetAttributeFloat(byItemStack.Block, "maxCurrent", 5.0F);
-        var isolated = MyMiniLib.GetAttributeBool(byItemStack.Block, "isolated", false);
-        var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
-
-        ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
-        ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
-        ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
-        ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 3);
-        ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 4);
-        ElectricalProgressive.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 5);
+        //задаем электрические параметры блока/проводника
+        LoadEProperties.Load(this.Block, this);
     }
 
 

@@ -81,6 +81,8 @@
 
   "attributesByType": {
     "*-tier1-normal": {
+      "blockEProperties": "main",
+      "facesEProperties": [ "down" ],
       "maxcapacity": 64000,
       "voltage": 32,
       "maxCurrent": 20.0,
@@ -91,6 +93,8 @@
       "consume": 20
     },
     "*-tier2-normal": {
+      "blockEProperties": "main",
+      "facesEProperties": [ "down" ],
       "maxcapacity": 256000,
       "voltage": 128,
       "maxCurrent": 20.0,
@@ -98,7 +102,7 @@
       "isolatedEnvironment": false,
       "power": 512.0,
       "chargable": false,
-      "consume": 20     
+      "consume": 20
     },
     "*": {
       "chargable": false

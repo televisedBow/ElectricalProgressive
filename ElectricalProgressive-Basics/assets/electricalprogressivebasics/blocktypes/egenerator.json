@@ -35,6 +35,7 @@
 
 
   "attributes": {
+    "blockEProperties": "main",
     "handbook": {
       "groupBy": [ "egenerator-*" ],
       "extraSections": [

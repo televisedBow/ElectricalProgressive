@@ -53,6 +53,8 @@
   },
 
   "attributes": {
+    "blockEProperties": "main",
+    "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
     "maxConsumption": 100,
     "voltage": 128,
     "maxCurrent": 20.0,

@@ -639,18 +639,9 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         var electricity = ElectricalProgressive;
         if (electricity == null || byItemStack == null)
             return;
-        electricity.Connection = Facing.AllAll;
-        var voltage = MyMiniLib.GetAttributeInt(byItemStack!.Block, "voltage", 32);
-        var maxCurrent = MyMiniLib.GetAttributeFloat(byItemStack!.Block, "maxCurrent", 5.0F);
-        var isolated = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolated", false);
-        var isolatedEnvironment = MyMiniLib.GetAttributeBool(byItemStack!.Block, "isolatedEnvironment", false);
 
-        electricity!.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
-        electricity!.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
-        electricity!.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
-        electricity!.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 3);
-        electricity!.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 4);
-        electricity!.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 5);
+        //задаем электрические параметры блока/проводника
+        LoadEProperties.Load(this.Block, this);
     }
 
     /// <summary>

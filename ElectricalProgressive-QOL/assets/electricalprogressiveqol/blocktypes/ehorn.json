@@ -12,6 +12,8 @@
   ],
 
   "attributes": {
+    "blockEProperties": "main",
+    "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
     "maxConsumption": 200,
     "maxTargetTemp": 1100.0,
     "voltage": 128,

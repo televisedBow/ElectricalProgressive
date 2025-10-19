@@ -33,6 +33,7 @@
   ],
 
   "attributes": {
+    "blockEProperties": "main",
     "handbook": {
       "groupBy": [ "emotor-*" ],
       "extraSections": [

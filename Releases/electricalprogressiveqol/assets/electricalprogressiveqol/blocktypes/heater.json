@@ -19,6 +19,7 @@
 
 
   "attributes": {
+    "blockEProperties": "main",
     "maxConsumption": 96, //максимальное потребление
     "voltage": 32,
     "maxCurrent": 20.0,

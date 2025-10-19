@@ -87,35 +87,14 @@ public class BlockETermoGenerator : BlockEBase
             world.BlockAccessor.GetBlockEntity(blockSel.Position) is BlockEntityETermoGenerator entity
         )
         {
-
-            //задаем параметры блока/проводника
-            var voltage = MyMiniLib.GetAttributeInt(this, "voltage", 32);
-            var maxCurrent = MyMiniLib.GetAttributeFloat(this, "maxCurrent", 5.0F);
-            var isolated = MyMiniLib.GetAttributeBool(this, "isolated", false);
-            var isolatedEnvironment = MyMiniLib.GetAttributeBool(this, "isolatedEnvironment", false);
-
-            entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 0);
-
-            entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 1);
-
-            entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 2);
-            entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 3);
-            entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 4);
-            entity.Eparams = (
-                new(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), 5);
-
-
-
+            LoadEProperties.Load(this, entity);
+            
             return true;
         }
 
         return false;
     }
+
 
 
 

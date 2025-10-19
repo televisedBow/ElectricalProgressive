@@ -3,6 +3,8 @@
   "class": "BlockEStove",
   "entityClass": "BlockEntityEStove",
   "attributes": {
+    "blockEProperties": "main",
+    "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
     "maxConsumption": 150,
     "voltage": 128,
     "maxCurrent": 20.0,

@@ -12,12 +12,13 @@
   ],
 
   "attributes": {
+    "blockEProperties": "main",
     "maxConsumption": 8, //максимальное потребление
     "voltage": 128,
     "maxCurrent": 20.0,
     "isolated": true,
     "isolatedEnvironment": true,
-    "HSV":  21, //яркость свечения по умолчанию
+    "HSV": 21, //яркость свечения по умолчанию
     "handbook": {
       "groupBy": [ "elamp-*" ],
       "extraSections": [
