@@ -7,6 +7,7 @@ using ElectricalProgressive.Content.Block;
 using ElectricalProgressive.Content.Block.ESwitch;
 using Vintagestory.API.Client;
 using ElectricalProgressive.Content.Block.ECable;
+using ElectricalProgressive.Content.Block.EFuelGenerator;
 using ElectricalProgressive.Content.Block.ETransformator;
 using ElectricalProgressive.Content.Block.ETermoGenerator;
 using ElectricalProgressive.Content.Block.Termoplastini;
@@ -98,6 +99,11 @@ public class ElectricalProgressiveBasics : ModSystem
         api.RegisterBlockClass("BlockETermoGenerator", typeof(BlockETermoGenerator));
         api.RegisterBlockEntityClass("BlockEntityETermoGenerator", typeof(BlockEntityETermoGenerator));
         api.RegisterBlockEntityBehaviorClass("BEBehaviorTermoEGenerator", typeof(BEBehaviorTermoEGenerator));
+
+        api.RegisterBlockClass("BlockEFuelGenerator", typeof(BlockEFuelGenerator));
+        api.RegisterBlockEntityClass("BlockEntityEFuelGenerator", typeof(BlockEntityEFuelGenerator));
+        api.RegisterBlockEntityBehaviorClass("BEBehaviorFuelEGenerator", typeof(BEBehaviorFuelEGenerator));
+
 
         api.RegisterBlockClass("BlockTermoplastini", typeof(BlockTermoplastini));
 
