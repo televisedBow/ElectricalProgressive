@@ -149,10 +149,10 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         // Проверка мультиблока
         var multiblockBehavior = this.Block.GetBehavior<BlockBehaviorMultiblock>();
-        if (multiblockBehavior != null && blockEProperties=="all")
+        if (multiblockBehavior != null && (blockEProperties == "all" || blockEProperties == "all_down"))
         {
             var properti = multiblockBehavior.propertiesAtString;
-            
+
             int sizeX = 1, sizeY = 1, sizeZ = 1;
             int[] cposition = new int[3];
 
@@ -187,7 +187,11 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
                     for (int dz = 0; dz < sizeZ; dz++)
                     {
                         var partPos = zeroPartPos.AddCopy(dx, dy, dz);
-                        parts.Add(partPos);
+                        // Для "all_down" добавляем только нижние блоки (dy == 0), для "all" — все
+                        if (blockEProperties == "all" || (blockEProperties == "all_down" && dy == 0))
+                        {
+                            parts.Add(partPos);
+                        }
                     }
             multiblockParts = parts.ToArray();
         }

@@ -70,16 +70,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     private GuiBlockEntityEFuelGenerator? clientDialog;
 
 
-    //private float prevGenTemp = 20f;
     public float genTemp = 20f;
-
-    /// <summary>
-    /// Rэш для мэша топлива, где int - размер топлива в генераторе (от 0 до 8)
-    /// </summary>
-    private readonly static Dictionary<int, MeshData> MeshData = new();
-
-
-
 
     /// <summary>
     /// Максимальная температура топлива
@@ -289,7 +280,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     {
         base.OnBlockUnloaded();
 
-        MeshData.Clear(); //не забываем очищать кэш мэша при выгрузке блока
+        
 
         this.ElectricalProgressive?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
 
@@ -368,23 +359,6 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         }
 
 
-        if (!MeshData.TryGetValue(sizeFuel, out var fuelMesh))
-        {
-            // если есть топливо, то добавляем его в мэш
-
-            capi?.Tesselator.TesselateShape(this.Block, Vintagestory.API.Common.Shape.TryGet(Api, "electricalprogressivebasics:shapes/block/termogenerator/toplivo/toplivo-" + sizeFuel + ".json"), out fuelMesh);
-
-            capi?.TesselatorManager.ThreadDispose(); //обязательно
-
-            MeshData.TryAdd(sizeFuel, fuelMesh!);
-
-        }
-
-        if (fuelMesh != null)
-        {
-            mesher.AddMeshData(fuelMesh);
-        }
-
 
         // если анимации нет, то рисуем блок базовый
         if (animUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false)
@@ -461,11 +435,12 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         {
             this.Block.LightHsv = new byte[] { 0, 0, 14 };
 
+
             animUtil.StartAnimation(new AnimationMetaData()
             {
                 Animation = "work-on",
                 Code = "work-on",
-                AnimationSpeed = 1f,
+                AnimationSpeed = 2f,
                 EaseOutSpeed = 4f,
                 EaseInSpeed = 1f
             });
@@ -597,8 +572,6 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             electricity.Connection = Facing.None;
         }
 
-
-        MeshData.Clear(); //не забываем очищать кэш мэша при выгрузке блока
 
         // закрываем диалоговое окно, если оно открыто
         if (this.Api is ICoreClientAPI && this.clientDialog != null)
