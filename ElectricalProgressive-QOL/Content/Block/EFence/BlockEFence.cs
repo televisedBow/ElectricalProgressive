@@ -195,7 +195,7 @@ public class BlockEFence : BlockEBase
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
     {
-        var block = world.BlockAccessor.GetBlock(CodeWithVariants(new string[2] { "type", "part" }, new string[2] { "ew", "bottom" }));
+        var block = world.BlockAccessor.GetBlock(CodeWithVariants(["type", "part"], ["ew", "bottom"]));
         return new ItemStack[1]
         {
             new ItemStack(block)
@@ -204,7 +204,7 @@ public class BlockEFence : BlockEBase
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
-        return new ItemStack(world.BlockAccessor.GetBlock(CodeWithVariants(new string[2] { "type", "part" }, new string[2] { "ew", "bottom" })));
+        return new ItemStack(world.BlockAccessor.GetBlock(CodeWithVariants(["type", "part"], ["ew", "bottom"])));
     }
 
 

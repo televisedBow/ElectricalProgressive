@@ -59,8 +59,8 @@ private void SetupDialog()
         .BeginChildElements(bounds4)
         .AddDynamicCustomDraw(bounds1, new DrawDelegateWithBounds(this.OnBgDraw), "symbolDrawer")
         .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new int[1], bounds2, "inputSlot")
-        .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new int[1] { 1 }, bounds3, "outputslot")
-        .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new int[1] { 2 }, boundsChance, "chanceoutputslot") // New chance output slot
+        .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, [1], bounds3, "outputslot")
+        .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, [2], boundsChance, "chanceoutputslot") // New chance output slot
         .EndChildElements()
         .Compose();
     

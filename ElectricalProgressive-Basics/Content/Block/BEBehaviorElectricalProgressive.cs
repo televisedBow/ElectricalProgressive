@@ -78,7 +78,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
 
 
-    public EParams[] AllEparams
+    public EParams[]? AllEparams
     {
         get => allEparams!;
         set
@@ -144,6 +144,19 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         intervalMSeconds = this.System!.tickTimeMs;
 
+        InitMultiblock();
+
+        this.isLoaded = true;   // оно загрузилось!
+        this.dirty = true;
+        this.Update();          // обновляем систему, чтобы она знала, что блок загрузился
+    }
+
+
+    /// <summary>
+    /// Попытка инициализации мультиблока
+    /// </summary>
+    private void InitMultiblock()
+    {
         // какие блоки могут получать электричество
         var blockEProperties = MyMiniLib.GetAttributeString(this.Block, "blockEProperties", "main");
 
@@ -183,16 +196,16 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             // Собираем все позиции частей мультиблока
             var parts = new List<BlockPos>();
             for (int dx = 0; dx < sizeX; dx++)
-                for (int dy = 0; dy < sizeY; dy++)
-                    for (int dz = 0; dz < sizeZ; dz++)
-                    {
-                        var partPos = zeroPartPos.AddCopy(dx, dy, dz);
-                        // Для "all_down" добавляем только нижние блоки (dy == 0), для "all" — все
-                        if (blockEProperties == "all" || (blockEProperties == "all_down" && dy == 0))
-                        {
-                            parts.Add(partPos);
-                        }
-                    }
+            for (int dy = 0; dy < sizeY; dy++)
+            for (int dz = 0; dz < sizeZ; dz++)
+            {
+                var partPos = zeroPartPos.AddCopy(dx, dy, dz);
+                // Для "all_down" добавляем только нижние блоки (dy == 0), для "all" — все
+                if (blockEProperties == "all" || (blockEProperties == "all_down" && dy == 0))
+                {
+                    parts.Add(partPos);
+                }
+            }
             multiblockParts = parts.ToArray();
         }
         else
@@ -200,12 +213,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             mainPartPos = this.Blockentity.Pos;
             multiblockParts = new[] { this.Blockentity.Pos };
         }
-
-        this.isLoaded = true;   // оно загрузилось!
-        this.dirty = true;
-        this.Update();          // обновляем систему, чтобы она знала, что блок загрузился
     }
-                                                
+
     /// <summary>
     /// Что-то в цепи поменялось
     /// </summary>

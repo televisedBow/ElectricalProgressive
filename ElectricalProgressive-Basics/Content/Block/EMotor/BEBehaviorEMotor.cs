@@ -71,7 +71,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     /// <summary>
     /// Заглушка. I_min , I_max, torque_max, kpd_max, speed_max, resistance_factor, base_resistance 
     /// </summary>
-    private float[] def_Params => new[] { 10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F };
+    private static float[] def_Params => new[] { 10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F };
     /// <summary>
     /// Сюда берем параметры из ассетов
     /// </summary>
@@ -92,7 +92,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     private bool IsBurned => Block.Variant["type"] == "burned";
 
 
-    
+
     protected CompositeShape? CompositeShape;  //не трогать уровни доступа
 
 
@@ -128,7 +128,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     {
         get
         {
-            if (_axisSign == null && OutFacingForNetworkDiscovery!=null)
+            if (_axisSign == null && OutFacingForNetworkDiscovery != null)
             {
                 int index = OutFacingForNetworkDiscovery.Index;
                 _axisSign = (index >= 0 && index < _axisSigns.Length)
@@ -141,7 +141,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     }
 
 
- 
+
     public new BlockPos Pos => Position;
 
     public float AvgConsumeCoeff { get; set; }
@@ -149,7 +149,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     /// <inheritdoc />
     public BEBehaviorEMotor(BlockEntity blockentity) : base(blockentity)
     {
-       
+
         this.GetParams();
         powerReceive = 0;
         powerRequest = I_max;
@@ -192,49 +192,54 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
             CreateJoinAndDiscoverNetwork(OutFacingForNetworkDiscovery);
         }
 
-
-
-        if (Blockentity is BlockEntityEMotor { AllEparams: not null } entity)
+        if (Blockentity is not BlockEntityEMotor entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
         {
-            bool hasBurnout = false;
-            bool prepareBurnout = false;
+            return;
+        }
 
-            // Однопроходная проверка всех условий
-            foreach (var eParam in entity.AllEparams)
+        bool hasBurnout = false;
+        bool prepareBurnout = false;
+
+        // Однопроходная проверка всех условий
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
+        {
+            hasBurnout |= eParam.burnout;
+            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+            // Ранний выход если оба условия уже выполнены
+            if (hasBurnout || prepareBurnout)
+                break;
+        }
+
+        // Обработка burnout
+        if (hasBurnout)
+        {
+            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+
+            // Проверяем и обновляем состояние блока если нужно
+            if (entity.Block.Variant["type"] != "burned")
             {
-                hasBurnout |= eParam.burnout;
-                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+                // Используем константы вместо создания новых строк
+                const string type = "type";
+                const string variant = "burned";
 
-                // Ранний выход если оба условия уже выполнены
-                if (hasBurnout || prepareBurnout)
-                    break;
-            }
-
-            // Обработка burnout
-            if (hasBurnout)
-            {
-                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-
-                // Проверяем и обновляем состояние блока если нужно
-                if (entity.Block.Variant["type"] != "burned")
-                {
-                    // Используем константы вместо создания новых строк
-                    const string type = "type";
-                    const string variant = "burned";
-
-                    // Кэшируем блок для обмена
-                    var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant(type, variant));
-                    Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
-                }
-            }
-
-            // Обработка prepareBurnout
-            if (prepareBurnout)
-            {
-                ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+                // Кэшируем блок для обмена
+                var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant(type, variant));
+                Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
             }
         }
+
+        // Обработка prepareBurnout
+        if (prepareBurnout)
+        {
+            ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+        }
+
     }
+
+
 
     /// <inheritdoc />
     public float getPowerReceive() => powerReceive;
@@ -394,7 +399,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
         //проверяем не сгорел ли прибор
         if (Blockentity is not BlockEntityEMotor)
             return;
-        
+
         if (IsBurned)
             return;
 

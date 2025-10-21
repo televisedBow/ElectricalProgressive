@@ -10,7 +10,7 @@ namespace ElectricalProgressive.Utils;
 public static class LoadEProperties
 {
     // Словарь для преобразования строк в BlockFacing
-    public static readonly Dictionary<string, BlockFacing> facings = new()
+    public static readonly Dictionary<string, BlockFacing> Facings = new()
     {
         { "north", BlockFacing.NORTH },
         { "east", BlockFacing.EAST },
@@ -49,11 +49,11 @@ public static class LoadEProperties
         {
             // какие грани могут получать электричество
             var facesEProperties =
-                MyMiniLib.GetAttributeArrayString(block, "facesEProperties", new string[] { "down" });
+                MyMiniLib.GetAttributeArrayString(block, "facesEProperties", ["down"]);
 
             foreach (var Face in facesEProperties)
             {
-                var face = facings[Face];
+                var face = Facings[Face];
 
                 faceNumber = face.Index;
 
@@ -65,11 +65,11 @@ public static class LoadEProperties
 
             foreach (var Face in facesEProperties)
             {
-                var face = facings[Face];
+                var face = Facings[Face];
 
                 faceNumber = face.Index;
 
-                entity.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
+                electricity.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment),
                     faceNumber);
 
             }
@@ -81,7 +81,7 @@ public static class LoadEProperties
 
                 // сначала прокидываем соединение
             electricity.Connection = facing;
-            entity.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), faceNumber);
+            electricity.Eparams = (new EParams(voltage, maxCurrent, "", 0, 1, 1, false, isolated, isolatedEnvironment), faceNumber);
             
         }
 

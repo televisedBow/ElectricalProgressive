@@ -14,7 +14,7 @@ public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
     private readonly static Dictionary<(Facing, string), MeshData> MeshData = new();
     private static float[] def_Params = { 10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F };   //заглушка
 
-   
+
 
     public override void OnUnloaded(ICoreAPI api)
     {
@@ -37,7 +37,7 @@ public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
         if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityEMotor entity && entity.Facing != Facing.None)
         {
             var directions = FacingHelper.Directions(entity.Facing).ToList();
-            if (directions.Count>0)
+            if (directions.Count > 0)
             {
                 return directions.First() == face;
             }
@@ -63,7 +63,7 @@ public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
     {
         var selection = new Selection(blockSel);
 
-        Facing facing= Facing.None;
+        Facing facing = Facing.None;
 
 
 

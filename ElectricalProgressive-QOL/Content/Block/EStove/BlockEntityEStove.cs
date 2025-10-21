@@ -16,7 +16,7 @@ namespace ElectricalProgressive.Content.Block.EStove;
 
 public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPositionSource
 {
-    public static float maxTemperature = 1350f;
+    public const float maxTemperature = 1350f;
 
     protected Shape nowTesselatingShape;
     protected CollectibleObject nowTesselatingObj;
@@ -353,8 +353,6 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
 
     public bool IsBurning;
 
-    public int getInventoryStackLimit() => 64;
-
     private void OnBurnTick(float dt)
     {
         if (Api is ICoreClientAPI)
@@ -367,7 +365,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
 
         if (IsBurning)
         {
-            stoveTemperature = changeTemperature(stoveTemperature, beh.PowerSetting * 1.0F / maxConsumption * maxTemperature, dt);
+            stoveTemperature = ChangeTemperature(stoveTemperature, beh.PowerSetting * 1.0F / maxConsumption * maxTemperature, dt);
         }
         if (canHeatInput())
             heatInput(dt);
@@ -394,7 +392,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
             MarkDirty(true);
             Api.World.PlaySoundAt(new AssetLocation("electricalprogressiveqol:sounds/din_din_din"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
         }
-        if (!IsBurning) stoveTemperature = changeTemperature(stoveTemperature, enviromentTemperature(), dt);
+        if (!IsBurning) stoveTemperature = ChangeTemperature(stoveTemperature, enviromentTemperature(), dt);
     }
 
     private void On500msTick(float dt)
@@ -405,7 +403,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         prevStoveTemperature = stoveTemperature;
     }
 
-    public float changeTemperature(float fromTemp, float toTemp, float dt)
+    public static float ChangeTemperature(float fromTemp, float toTemp, float dt)
     {
         float diff = Math.Abs(fromTemp - toTemp);
         dt = dt + dt * (diff / 28);
@@ -423,7 +421,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         {
             float f = (1 + GameMath.Clamp((stoveTemperature - oldTemp) / 30, 0, 1.6f)) * dt;
             if (nowTemp >= meltingPoint) f /= 11;
-            float newTemp = changeTemperature(oldTemp, stoveTemperature, f);
+            float newTemp = ChangeTemperature(oldTemp, stoveTemperature, f);
             int maxTemp = 0;
             if (inputStack.ItemAttributes != null)
             {
@@ -453,7 +451,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         float oldTemp = OutputStackTemp;
         if (oldTemp < stoveTemperature)
         {
-            float newTemp = changeTemperature(oldTemp, stoveTemperature, 2 * dt);
+            float newTemp = ChangeTemperature(oldTemp, stoveTemperature, 2 * dt);
             int maxTemp = Math.Max(outputStack.Collectible.CombustibleProps?.MaxTemperature ?? 0, outputStack.ItemAttributes["maxTemperature"]?.AsInt() ?? 0);
             if (maxTemp > 0) newTemp = Math.Min(maxTemp, newTemp);
             if (oldTemp != newTemp) OutputStackTemp = newTemp;

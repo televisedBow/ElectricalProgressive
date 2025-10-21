@@ -51,8 +51,8 @@ public class GuiDialogPress : GuiDialogBlockEntity
       .CreateCompo("blockentitymillstone" + this.BlockEntityPosition?.ToString(), bounds5).AddShadedDialogBG(bounds4)
       .AddDialogTitleBar(this.DialogTitle, new Action(this.OnTitleBarClose)).BeginChildElements(bounds4)
       .AddDynamicCustomDraw(bounds1, new DrawDelegateWithBounds(this.OnBgDraw), "symbolDrawer")
-      .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new []{0,1}, bounds2, "inputSlot")
-      .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, new [] { 2, 3 }, bounds3, "outputslot")
+      .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, [0,1], bounds2, "inputSlot")
+      .AddItemSlotGrid((IInventory)this.Inventory, new Action<object>(this.SendInvPacket), 1, [2, 3], bounds3, "outputslot")
       .EndChildElements().Compose();
 
     this.lastRedrawMs = this.capi.ElapsedMilliseconds;

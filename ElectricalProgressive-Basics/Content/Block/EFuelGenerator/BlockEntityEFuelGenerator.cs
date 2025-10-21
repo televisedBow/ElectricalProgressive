@@ -15,82 +15,36 @@ namespace ElectricalProgressive.Content.Block.EFuelGenerator;
 
 public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeatSource
 {
+    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
-    private Facing facing = Facing.None;
-
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
-
-    public Facing Facing
-    {
-        get => this.facing;
-        set
-        {
-            if (value != this.facing)
-            {
-                this.ElectricalProgressive!.Connection =
-                    FacingHelper.FullFace(this.facing = value);
-            }
-        }
-    }
-
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public (EParams, int) Eparams
-    {
-        get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-        set => this.ElectricalProgressive!.Eparams = value;
-    }
-
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public EParams[] AllEparams
-    {
-        get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-                    {
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams()
-                    };
-        set
-        {
-            if (this.ElectricalProgressive != null)
-            {
-                this.ElectricalProgressive.AllEparams = value;
-            }
-        }
-    }
+    
+    ICoreClientAPI? _capi;
+    ICoreServerAPI? _sapi;
+    private InventoryFuelGenerator _inventory;
+    private GuiBlockEntityEFuelGenerator? _clientDialog;
 
 
-
-
-    ICoreClientAPI? capi;
-    ICoreServerAPI? sapi;
-    private InventoryFuelGenerator inventory;
-    private GuiBlockEntityEFuelGenerator? clientDialog;
-
-
-    public float genTemp = 20f;
+    private float _genTemp = 20f;
 
     /// <summary>
     /// Максимальная температура топлива
     /// </summary>
-    private int maxTemp;
+    private int _maxTemp;
 
     /// <summary>
     /// Текущее время горения топлива
     /// </summary>
-    private float fuelBurnTime;
+    private float _fuelBurnTime;
 
     /// <summary>
     /// Максимальное время горения топлива
     /// </summary>
-    private float maxBurnTime;
+    private float _maxBurnTime;
 
     /// <summary>
     /// Температура в генераторе
     /// </summary>
-    public float GenTemp => genTemp;
+    public float GenTemp => _genTemp;
 
 
     /// <summary>
@@ -100,15 +54,15 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     {
         get
         {
-            int envTemp = EnvironmentTemperature(); //температура окружающей среды
+            var envTemp = EnvironmentTemperature(); //температура окружающей среды
 
-            if (genTemp <= envTemp) //окружающая среда теплее? 
+            if (_genTemp <= envTemp) //окружающая среда теплее? 
             {
                 return 1f;
             }
             else
             {
-                return (genTemp - envTemp);  //учитываем разницу температур с окружающей средой 
+                return (_genTemp - envTemp);  //учитываем разницу температур с окружающей средой 
             }
 
 
@@ -121,29 +75,29 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     /// <summary>
     /// Слот для топлива в инвентаре генератора
     /// </summary>
-    public ItemSlot FuelSlot => this.inventory[0];
+    public ItemSlot FuelSlot => this._inventory[0];
 
 
 
 
 
     /// <summary>
-    /// Стак дял топлива в генераторе
+    /// Стак для топлива в генераторе
     /// </summary>
     public ItemStack FuelStack
     {
-        get { return this.inventory[0].Itemstack; }
+        get { return this._inventory[0].Itemstack; }
         set
         {
-            this.inventory[0].Itemstack = value;
-            this.inventory[0].MarkDirty();
+            this._inventory[0].Itemstack = value;
+            this._inventory[0].MarkDirty();
         }
     }
 
     /// <summary>
     /// Аниматор блока, используется для анимации открывания дверцы генератора
     /// </summary>
-    private BlockEntityAnimationUtil animUtil
+    private BlockEntityAnimationUtil AnimUtil
     {
         get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil!; }
     }
@@ -152,9 +106,9 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
 
 
 
-    private long listenerId;
+    private long _listenerId;
 
-    public override InventoryBase Inventory => inventory;
+    public override InventoryBase Inventory => _inventory;
 
     public override string DialogTitle => Lang.Get("fuelgen");
 
@@ -162,8 +116,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
 
     public BlockEntityEFuelGenerator()
     {
-        this.inventory = new InventoryFuelGenerator(null!, null!);
-        this.inventory.SlotModified += OnSlotModified;
+        this._inventory = new InventoryFuelGenerator(null!, null!);
+        this._inventory.SlotModified += OnSlotModified;
     }
 
 
@@ -177,24 +131,24 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
 
         if (api.Side == EnumAppSide.Server)
         {
-            sapi = api as ICoreServerAPI;
+            _sapi = api as ICoreServerAPI;
         }
         else
         {
-            capi = api as ICoreClientAPI;
+            _capi = api as ICoreClientAPI;
 
             // инициализируем аниматор
-            if (animUtil != null)
+            if (AnimUtil != null)
             {
-                animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
+                AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
             }
 
         }
 
-        this.inventory.Pos = this.Pos;
-        this.inventory.LateInitialize(InventoryClassName + "-" + Pos, api);
+        this._inventory.Pos = this.Pos;
+        this._inventory.LateInitialize(InventoryClassName + "-" + Pos, api);
 
-        listenerId = this.RegisterGameTickListener(new Action<float>(OnBurnTick), 1000);
+        _listenerId = this.RegisterGameTickListener(new Action<float>(OnBurnTick), 1000);
 
         CanDoBurn();
     }
@@ -253,7 +207,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
       BlockPos heatSourcePos,
       BlockPos heatReceiverPos)
     {
-        return Math.Max((float)(((float)this.genTemp - 20.0F) / ((float)1300F - 20.0F) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
+        return Math.Max((float)(((float)this._genTemp - 20.0F) / ((float)1300F - 20.0F) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
     }
 
 
@@ -285,24 +239,24 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         this.ElectricalProgressive?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
 
         // закрываем диалоговое окно, если оно открыто
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            this.clientDialog.TryClose();
-            this.clientDialog = null;
+            this._clientDialog.TryClose();
+            this._clientDialog = null;
         }
 
         // отключаем слушатель тика горения топлива
-        UnregisterGameTickListener(listenerId);
+        UnregisterGameTickListener(_listenerId);
 
         // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
         {
-            this.animUtil.Dispose();
+            this.AnimUtil.Dispose();
         }
 
         // очищаем ссылки на API
-        capi = null;
-        sapi = null;
+        _capi = null;
+        _sapi = null;
 
     }
 
@@ -317,7 +271,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             if (Inventory[0].Itemstack != null && !Inventory[0].Empty &&
                 Inventory[0].Itemstack.Collectible.CombustibleProps != null)
             {
-                if (fuelBurnTime == 0)
+                if (_fuelBurnTime == 0)
                     CanDoBurn();
             }
         }
@@ -325,9 +279,9 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         base.Block = this.Api.World.BlockAccessor.GetBlock(this.Pos);
         this.MarkDirty(this.Api.Side == EnumAppSide.Server, null);
 
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            clientDialog.Update(genTemp, fuelBurnTime);
+            _clientDialog.Update(_genTemp, _fuelBurnTime);
         }
 
         IWorldChunk chunkatPos = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
@@ -348,20 +302,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         base.OnTesselation(mesher, tesselator); // вызываем базовую логику тесселяции
 
 
-        var stack = Inventory[0].Itemstack;
-        int sizeFuel = 0; // размер топлива в генераторе
-
-        if (stack != null && stack.Collectible.CombustibleProps != null)
-        {
-            // смотрим сколько топлива в генераторе
-            sizeFuel = (int)(stack.StackSize * 8.0F / stack.Collectible.MaxStackSize) + 1;
-            sizeFuel = Math.Clamp(sizeFuel, 1, 8); // ограничиваем размер топлива от 1 до 8
-        }
-
-
-
         // если анимации нет, то рисуем блок базовый
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false)
         {
             return false;
         }
@@ -370,6 +312,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         return true;  // не рисует базовый блок, если есть анимация
     }
 
+
+
     /// <summary>
     /// Обработчик тика горения топлива
     /// </summary>
@@ -377,17 +321,17 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     public void OnBurnTick(float deltatime)
     {
 
-        if (fuelBurnTime > 0f)
+        if (_fuelBurnTime > 0f)
         {
             StartAnimation();
 
-            genTemp = ChangeTemperature(genTemp, maxTemp, deltatime);
-            fuelBurnTime -= deltatime;
-            if (fuelBurnTime <= 0f)
+            _genTemp = ChangeTemperature(_genTemp, _maxTemp, deltatime);
+            _fuelBurnTime -= deltatime;
+            if (_fuelBurnTime <= 0f)
             {
-                fuelBurnTime = 0f;
-                maxBurnTime = 0f;
-                maxTemp = 20; // важно
+                _fuelBurnTime = 0f;
+                _maxBurnTime = 0f;
+                _maxTemp = 20; // важно
                 if (!Inventory[0].Empty)
                     CanDoBurn();
             }
@@ -396,8 +340,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         {
             StopAnimation();
 
-            if (genTemp != 20f)
-                genTemp = ChangeTemperature(genTemp, 20f, deltatime);
+            if (_genTemp != 20f)
+                _genTemp = ChangeTemperature(_genTemp, 20f, deltatime);
             CanDoBurn();
         }
 
@@ -411,8 +355,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         // обновляем диалоговое окно на клиенте
         if (this.Api != null && this.Api.Side == EnumAppSide.Client)
         {
-            if (this.clientDialog != null)
-                clientDialog.Update(genTemp, fuelBurnTime);
+            if (this._clientDialog != null)
+                _clientDialog.Update(_genTemp, _fuelBurnTime);
 
         }
 
@@ -426,17 +370,17 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     private void StartAnimation()
     {
         if (Api?.Side != EnumAppSide.Client
-            || animUtil == null)
+            || AnimUtil == null)
             return;
 
         
 
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false)
         {
             this.Block.LightHsv = new byte[] { 0, 0, 14 };
 
 
-            animUtil.StartAnimation(new AnimationMetaData()
+            AnimUtil.StartAnimation(new AnimationMetaData()
             {
                 Animation = "work-on",
                 Code = "work-on",
@@ -453,16 +397,16 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     /// </summary>
     private void StopAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null)
+        if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
             return;
 
         
 
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == true)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == true)
         {
             this.Block.LightHsv = new byte[] { 0, 0, 0 };
 
-            animUtil.StopAnimation("work-on");
+            AnimUtil.StopAnimation("work-on");
         }
 
     }
@@ -478,13 +422,13 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         if (fuelProps == null)
             return;
 
-        if (fuelBurnTime > 0)
+        if (_fuelBurnTime > 0)
             return;
 
         if (fuelProps.BurnTemperature > 0f && fuelProps.BurnDuration > 0f)
         {
-            maxBurnTime = fuelBurnTime = fuelProps.BurnDuration;
-            maxTemp = fuelProps.BurnTemperature;
+            _maxBurnTime = _fuelBurnTime = fuelProps.BurnDuration;
+            _maxTemp = fuelProps.BurnTemperature;
             FuelStack.StackSize--;
             if (FuelStack.StackSize <= 0)
             {
@@ -504,9 +448,9 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     /// <param name="toTemp"></param>
     /// <param name="deltaTime"></param>
     /// <returns></returns>
-    private float ChangeTemperature(float fromTemp, float toTemp, float deltaTime)
+    private static float ChangeTemperature(float fromTemp, float toTemp, float deltaTime)
     {
-        float diff = Math.Abs(fromTemp - toTemp);
+        var diff = Math.Abs(fromTemp - toTemp);
         deltaTime += deltaTime * (diff / 28f);
         if (diff < deltaTime)
         {
@@ -546,10 +490,10 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         {
             base.toggleInventoryDialogClient(byPlayer, delegate
             {
-                this.clientDialog =
-                    new GuiBlockEntityEFuelGenerator(DialogTitle, Inventory, this.Pos, this.capi!, this);
-                clientDialog.Update(genTemp, fuelBurnTime);
-                return this.clientDialog;
+                this._clientDialog =
+                    new GuiBlockEntityEFuelGenerator(DialogTitle, Inventory, this.Pos, this._capi!, this);
+                _clientDialog.Update(_genTemp, _fuelBurnTime);
+                return this._clientDialog;
             });
         }
         return true;
@@ -574,24 +518,24 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
 
 
         // закрываем диалоговое окно, если оно открыто
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            this.clientDialog.TryClose();
-            this.clientDialog = null;
+            this._clientDialog.TryClose();
+            this._clientDialog = null;
         }
 
         // отключаем слушатель тика горения топлива
-        UnregisterGameTickListener(listenerId);
+        UnregisterGameTickListener(_listenerId);
 
         // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
         {
-            this.animUtil.Dispose();
+            this.AnimUtil.Dispose();
         }
 
         // очищаем ссылки на API
-        capi = null;
-        sapi = null;
+        _capi = null;
+        _sapi = null;
     }
 
 
@@ -604,12 +548,11 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     {
         base.ToTreeAttributes(tree);
         ITreeAttribute invtree = new TreeAttribute();
-        this.inventory.ToTreeAttributes(invtree);
+        this._inventory.ToTreeAttributes(invtree);
         tree["inventory"] = invtree;
-        tree.SetFloat("genTemp", genTemp);
-        tree.SetInt("maxTemp", maxTemp);
-        tree.SetFloat("fuelBurnTime", fuelBurnTime);
-        tree.SetBytes("electricalprogressive:facing", SerializerUtil.Serialize(this.facing));
+        tree.SetFloat("genTemp", _genTemp);
+        tree.SetInt("maxTemp", _maxTemp);
+        tree.SetFloat("fuelBurnTime", _fuelBurnTime);
     }
 
 
@@ -621,28 +564,21 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        this.inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+        this._inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
         if (Api != null)
             Inventory.AfterBlocksLoaded(this.Api.World);
-        genTemp = tree.GetFloat("genTemp", 0);
-        maxTemp = tree.GetInt("maxTemp", 0);
-        fuelBurnTime = tree.GetFloat("fuelBurnTime", 0);
+        _genTemp = tree.GetFloat("genTemp", 0);
+        _maxTemp = tree.GetInt("maxTemp", 0);
+        _fuelBurnTime = tree.GetFloat("fuelBurnTime", 0);
 
         if (Api != null && Api.Side == EnumAppSide.Client)
         {
-            if (this.clientDialog != null)
-                clientDialog.Update(genTemp, fuelBurnTime);
+            if (this._clientDialog != null)
+                _clientDialog.Update(_genTemp, _fuelBurnTime);
             MarkDirty(true, null);
         }
 
-        try
-        {
-            this.facing = SerializerUtil.Deserialize<Facing>(tree.GetBytes("electricalprogressive:facing"));
-        }
-        catch (Exception exception)
-        {
-            this.Api?.Logger.Error(exception.ToString());
-        }
+
     }
 
 

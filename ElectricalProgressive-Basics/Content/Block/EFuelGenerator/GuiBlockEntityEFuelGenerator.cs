@@ -38,11 +38,11 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
     /// </summary>
     public void SetupDialog()
     {
-        ElementBounds dialogBounds = ElementBounds.Fixed(250, 60);
-        ElementBounds dialog = ElementBounds.Fill.WithFixedPadding(0);
-        ElementBounds fuelGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 17, 50, 1, 1);
-        ElementBounds stoveBounds = ElementBounds.Fixed(17, 50, 210, 150);
-        ElementBounds textBounds = ElementBounds.Fixed(115, 60, 121, 100);
+        var dialogBounds = ElementBounds.Fixed(250, 60);
+        var dialog = ElementBounds.Fill.WithFixedPadding(0);
+        var fuelGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 17, 50, 1, 1);
+        var stoveBounds = ElementBounds.Fixed(17, 50, 210, 150);
+        var textBounds = ElementBounds.Fixed(115, 60, 121, 100);
         dialog.BothSizing = ElementSizing.FitToChildren;
         dialog.WithChildren(stoveBounds);
 
@@ -53,7 +53,7 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
             fuelGrid,
             textBounds
         });
-        ElementBounds window = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
+        var window = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
             .WithFixedAlignmentOffset(-GuiStyle.DialogToScreenPadding, 0);
         if (capi.Settings.Bool["immersiveMouseMode"])
         {

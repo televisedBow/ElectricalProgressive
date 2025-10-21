@@ -25,14 +25,5 @@ namespace ElectricalProgressive.Content.Block.EConnector
         }
 
 
-        public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
-        {
-            base.GetBlockInfo(forPlayer, dsc);
-
-            //if (this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos) is not BlockEntityEConnector entity)
-            //    return;
-
-           
-        }
     }
 }

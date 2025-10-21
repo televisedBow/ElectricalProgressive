@@ -16,11 +16,11 @@ namespace ElectricalProgressive.Content.Block.ECable
 {
     public class BlockECable : BlockEBase
     {
-        private readonly static ConcurrentDictionary<CacheDataKey, Dictionary<Facing, Cuboidf[]>> CollisionBoxesCache = new();
+        private static readonly ConcurrentDictionary<CacheDataKey, Dictionary<Facing, Cuboidf[]>> CollisionBoxesCache = new();
 
-        public readonly static ConcurrentDictionary<CacheDataKey, Dictionary<Facing, Cuboidf[]>> SelectionBoxesCache = new();
+        public static readonly ConcurrentDictionary<CacheDataKey, Dictionary<Facing, Cuboidf[]>> SelectionBoxesCache = new();
 
-        public readonly static Dictionary<CacheDataKey, MeshData> MeshDataCache = new();
+        public static readonly Dictionary<CacheDataKey, MeshData> MeshDataCache = new();
 
         public static BlockVariant? enabledSwitchVariant;
         public static BlockVariant? disabledSwitchVariant;
@@ -234,7 +234,7 @@ namespace ElectricalProgressive.Content.Block.ECable
             return true;
         }
 
-        private bool HasSolidNeighbor(IWorldAccessor world, BlockPos pos, int faceIndex)
+        private static bool HasSolidNeighbor(IWorldAccessor world, BlockPos pos, int faceIndex)
         {
             var neighborPos = pos.Copy();
             int checkFace;
@@ -622,7 +622,7 @@ namespace ElectricalProgressive.Content.Block.ECable
         /// </summary>
         /// <param name="rand"></param>
         /// <returns></returns>
-        private float RndHelp(ref Random rand)
+        private static float RndHelp(ref Random rand)
         {
             return (float)((rand.NextDouble() * 0.01F) - 0.005F + 1.0F);
         }

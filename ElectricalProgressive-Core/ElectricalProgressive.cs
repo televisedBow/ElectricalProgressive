@@ -1305,7 +1305,7 @@ namespace ElectricalProgressive
 
 
         // Вынесенный метод сброса компонентов
-        private void ResetComponents(ref NetworkPart part)
+        private static void ResetComponents(ref NetworkPart part)
         {
             part.Consumer?.Consume_receive(0f);
             part.Producer?.Produce_order(0f);

@@ -50,7 +50,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     /// <summary>
     /// Заглушка. I_max, speed_max , resistance_factor, resistance_load, base_resistance, kpd_max
     /// </summary>
-    private float[] def_Params => new[] { 100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F };
+    private static float[] def_Params => new[] { 100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F };
     /// <summary>
     /// Сюда берем параметры из ассетов
     /// </summary>
@@ -92,7 +92,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     public new BlockPos Pos => Position;
 
     private BlockFacing _outFacingForNetworkDiscovery = null!;
-    private int[] _axisSign=null!;
+    private int[] _axisSign = null!;
 
 
     /// <summary>
@@ -211,7 +211,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         return res;
     }
 
-    
+
 
 
     /// <inheritdoc />
@@ -219,47 +219,52 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     {
 
         // Если нет сети, пытаемся создать/подключиться
-        if (network == null && OutFacingForNetworkDiscovery!=null)
+        if (network == null && OutFacingForNetworkDiscovery != null)
         {
             CreateJoinAndDiscoverNetwork(OutFacingForNetworkDiscovery);
         }
 
-        if (Blockentity is BlockEntityEGenerator { AllEparams: not null } entity)
+        if (Blockentity is not BlockEntityEGenerator entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
         {
-            bool hasBurnout = false;
-            bool prepareBurnout = false;
+            return;
+        }
 
-            // Однопроходная проверка условий
-            foreach (var eParam in entity.AllEparams)
+        bool hasBurnout = false;
+        bool prepareBurnout = false;
+
+        // Однопроходная проверка условий
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
+        {
+            hasBurnout |= eParam.burnout;
+            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+            // Ранний выход если оба условия уже выполнены
+            if (hasBurnout || prepareBurnout)
+                break;
+        }
+
+        // Обработка burnout
+        if (hasBurnout)
+        {
+            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+
+            // Проверяем и обновляем состояние блока если нужно
+            if (entity.Block.Variant["type"] != "burned")
             {
-                hasBurnout |= eParam.burnout;
-                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
-
-                // Ранний выход если оба условия уже выполнены
-                if (hasBurnout || prepareBurnout)
-                    break;
-            }
-
-            // Обработка burnout
-            if (hasBurnout)
-            {
-                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-
-                // Проверяем и обновляем состояние блока если нужно
-                if (entity.Block.Variant["type"] != "burned")
-                {
-                    // Кэшируем блок для обмена
-                    var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("type", "burned"));
-                    Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
-                }
-            }
-
-            // Обработка prepareBurnout
-            if (prepareBurnout)
-            {
-                ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+                // Кэшируем блок для обмена
+                var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("type", "burned"));
+                Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
             }
         }
+
+        // Обработка prepareBurnout
+        if (prepareBurnout)
+        {
+            ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+        }
+
     }
 
 
@@ -301,7 +306,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         if (Blockentity is not BlockEntityEGenerator)
             return;
 
-        
+
 
         if (IsBurned)
             return;

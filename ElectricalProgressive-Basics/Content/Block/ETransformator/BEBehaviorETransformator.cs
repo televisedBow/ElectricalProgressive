@@ -40,7 +40,7 @@ public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransforma
         if (Blockentity is not BlockEntityETransformator entity)
             return;
 
-      
+
 
         if (IsBurned)
             return;
@@ -50,48 +50,53 @@ public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransforma
         stringBuilder.AppendLine("└ " + Lang.Get("Power") + ": " + ((int)getPower()).ToString() + " " + Lang.Get("W"));
         stringBuilder.AppendLine();
 
-        
+
     }
 
 
     public void Update()
     {
-        if (Blockentity is BlockEntityETransformator { AllEparams: not null } entity)
+        if (Blockentity is not BlockEntityETransformator entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
         {
-            bool hasBurnout = false;
-            bool prepareBurnout = false;
+            return;
+        }
 
-            // Однопроходная проверка всех условий
-            foreach (var eParam in entity.AllEparams)
+        bool hasBurnout = false;
+        bool prepareBurnout = false;
+
+        // Однопроходная проверка всех условий
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
+        {
+            hasBurnout |= eParam.burnout;
+            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+            // Ранний выход если оба условия уже выполнены
+            if (hasBurnout || prepareBurnout)
+                break;
+        }
+
+        // Обработка burnout
+        if (hasBurnout)
+        {
+            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+
+            // Проверяем и обновляем состояние блока если нужно
+            if (entity.Block.Variant["state"] != "burned")
             {
-                hasBurnout |= eParam.burnout;
-                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
-
-                // Ранний выход если оба условия уже выполнены
-                if (hasBurnout || prepareBurnout)
-                    break;
-            }
-
-            // Обработка burnout
-            if (hasBurnout)
-            {
-                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-
-                // Проверяем и обновляем состояние блока если нужно
-                if (entity.Block.Variant["state"] != "burned")
-                {
-                    // Кэшируем блок для обмена
-                    var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("state", "burned"));
-                    Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
-                }
-            }
-
-            // Обработка prepareBurnout
-            if (prepareBurnout)
-            {
-                ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+                // Кэшируем блок для обмена
+                var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("state", "burned"));
+                Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
             }
         }
+
+        // Обработка prepareBurnout
+        if (prepareBurnout)
+        {
+            ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+        }
+
     }
 
 

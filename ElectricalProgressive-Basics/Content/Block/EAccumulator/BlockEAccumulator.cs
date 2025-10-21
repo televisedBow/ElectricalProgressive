@@ -89,10 +89,9 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
-        BlockEntityEAccumulator? be = world.BlockAccessor.GetBlockEntity(pos) as BlockEntityEAccumulator;
+        var be = world.BlockAccessor.GetBlockEntity(pos) as BlockEntityEAccumulator;
         ItemStack item = new(world.BlockAccessor.GetBlock(pos));
-        // if (be != null)
-        //     item.Attributes.SetInt("electricalprogressive:energy", (int)be.GetBehavior<BEBehaviorEAccumulator>().GetCapacity());
+
 
         if (be != null)
         {
@@ -108,10 +107,9 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
-        BlockEntityEAccumulator? be = world.BlockAccessor.GetBlockEntity(pos) as BlockEntityEAccumulator;
+        var be = world.BlockAccessor.GetBlockEntity(pos) as BlockEntityEAccumulator;
         ItemStack item = new(world.BlockAccessor.GetBlock(pos));
-        // if (be != null)
-        //     item.Attributes.SetInt("electricalprogressive:energy", (int)be.GetBehavior<BEBehaviorEAccumulator>().GetCapacity());
+
 
         if (be != null)
         {
@@ -136,7 +134,7 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
         base.OnBlockPlaced(world, blockPos, byItemStack);
         if (byItemStack != null)
         {
-            BlockEntityEAccumulator? be = world.BlockAccessor.GetBlockEntity(blockPos) as BlockEntityEAccumulator;
+            var be = world.BlockAccessor.GetBlockEntity(blockPos) as BlockEntityEAccumulator;
 
             int maxDurability = byItemStack.Collectible.GetMaxDurability(byItemStack); //максимальная прочность
             int standartDurability = byItemStack.Collectible.Durability;       //стандартная прочность

@@ -23,12 +23,10 @@ namespace ElectricalProgressive.Content.Block.ECable
         {
             base.GetBlockInfo(forPlayer, stringBuilder);
 
-            
+
             //if (Blockentity is not BlockEntityECable entity)
             //    return;
-
-
-
+            
             //stringBuilder.AppendLine("Заглушка");
 
         }
@@ -39,29 +37,34 @@ namespace ElectricalProgressive.Content.Block.ECable
         /// <exception cref="NotImplementedException"></exception>
         public void Update()
         {
-            if (Blockentity is BlockEntityECable { AllEparams: not null } entity)
+            if (Blockentity is not BlockEntityECable entity ||
+                entity.ElectricalProgressive == null ||
+                entity.ElectricalProgressive.AllEparams is null)
             {
-                bool hasBurnout = false;
-                bool prepareBurnout = false;
-
-                // Проверяем все параметры на наличие перегрева
-                foreach (var eParam in entity.AllEparams) 
-                {
-                    hasBurnout |= eParam.burnout;
-                    prepareBurnout |= eParam.ticksBeforeBurnout > 0;
-
-                    if (hasBurnout || prepareBurnout)
-                        break;
-                }
-
-                // Генерируем частицы черного дыма
-                if (hasBurnout)
-                    ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-
-                // Генерируем частицы белого дыма
-                if (prepareBurnout)
-                    ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+                return;
             }
+
+            bool hasBurnout = false;
+            bool prepareBurnout = false;
+
+            // Проверяем все параметры на наличие перегрева
+            foreach (var eParam in entity.ElectricalProgressive.AllEparams)
+            {
+                hasBurnout |= eParam.burnout;
+                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+                if (hasBurnout || prepareBurnout)
+                    break;
+            }
+
+            // Генерируем частицы черного дыма
+            if (hasBurnout)
+                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+
+            // Генерируем частицы белого дыма
+            if (prepareBurnout)
+                ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+
         }
 
 

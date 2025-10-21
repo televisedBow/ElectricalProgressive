@@ -19,7 +19,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
     private Facing facing = Facing.None;
 
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
     public Facing Facing
     {
@@ -34,36 +34,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         }
     }
 
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public (EParams, int) Eparams
-    {
-        get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-        set => this.ElectricalProgressive!.Eparams = value;
-    }
-
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public EParams[] AllEparams
-    {
-        get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-                    {
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams()
-                    };
-        set
-        {
-            if (this.ElectricalProgressive != null)
-            {
-                this.ElectricalProgressive.AllEparams = value;
-            }
-        }
-    }
-
-
-
+    
 
     ICoreClientAPI? capi;
     ICoreServerAPI? sapi;
@@ -590,7 +561,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// <param name="toTemp"></param>
     /// <param name="deltaTime"></param>
     /// <returns></returns>
-    private float ChangeTemperature(float fromTemp, float toTemp, float deltaTime)
+    private static float ChangeTemperature(float fromTemp, float toTemp, float deltaTime)
     {
         float diff = Math.Abs(fromTemp - toTemp);
         deltaTime += deltaTime * (diff / 28f);

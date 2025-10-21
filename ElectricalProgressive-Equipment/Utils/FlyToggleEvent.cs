@@ -120,7 +120,7 @@ public class FlyToggleEvent : ModSystem
     /// </summary>
     /// <param name="inventory"></param>
     /// <returns></returns>
-    private (EArmor?, ItemSlot?) FindEquippedArmor(IInventory inventory)
+    private static (EArmor?, ItemSlot?) FindEquippedArmor(IInventory inventory)
     {
         foreach (int slot in ArmorSlots)
         {
@@ -164,7 +164,7 @@ public class FlyToggleEvent : ModSystem
     /// <param name="itemSlot"></param>
     /// <param name="player"></param>
     /// <returns></returns>
-    private bool IsValidForFlight(ItemSlot itemSlot, IPlayer player)
+    private static bool IsValidForFlight(ItemSlot itemSlot, IPlayer player)
     {
         return itemSlot.Itemstack.Attributes.GetBool("flying") &&
                itemSlot.Inventory.CanPlayerAccess(player, player.Entity.Pos) &&
@@ -189,7 +189,7 @@ public class FlyToggleEvent : ModSystem
     /// Отмена полета для предмета.
     /// </summary>
     /// <param name="itemSlot"></param>
-    private void DisableFlight(ItemSlot itemSlot)
+    private static void DisableFlight(ItemSlot itemSlot)
     {
         itemSlot.Itemstack.Attributes.SetBool("flying", false);
         itemSlot.MarkDirty();
@@ -200,7 +200,7 @@ public class FlyToggleEvent : ModSystem
     /// </summary>
     /// <param name="player"></param>
     /// <returns></returns>
-    private bool HasAngelBelt(IPlayer player)
+    private static bool HasAngelBelt(IPlayer player)
     {
         var inventory = player.InventoryManager.GetOwnInventory("character");
         var waistSlot = inventory[(int)EnumCharacterDressType.Waist];

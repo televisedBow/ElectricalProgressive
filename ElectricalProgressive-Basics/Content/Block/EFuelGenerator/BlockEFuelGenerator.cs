@@ -25,7 +25,7 @@ public class BlockEFuelGenerator : BlockEBase
        BlockSelection blockSel, ref string failureCode)
     {
         var selection = new Selection(blockSel);
-        Facing facing = Facing.None;
+        var facing = Facing.None;
 
         try
         {
@@ -37,10 +37,8 @@ public class BlockEFuelGenerator : BlockEBase
         }
 
 
-        if (
-            FacingHelper.Faces(facing).First() is { } blockFacing &&
-            !world.BlockAccessor
-                .GetBlock(blockSel.Position.AddCopy(blockFacing)).SideSolid[blockFacing.Opposite.Index]
+        if (FacingHelper.Faces(facing).First() is { } blockFacing &&
+            !world.BlockAccessor.GetBlock(blockSel.Position.AddCopy(blockFacing)).SideSolid[blockFacing.Opposite.Index]
         )
         {
             return false;
@@ -53,7 +51,7 @@ public class BlockEFuelGenerator : BlockEBase
 
 
     /// <summary>
-    /// ставим блок
+    /// Ставим блок
     /// </summary>
     /// <param name="world"></param>
     /// <param name="byPlayer"></param>
@@ -69,30 +67,17 @@ public class BlockEFuelGenerator : BlockEBase
             return false;
         }
 
-        var selection = new Selection(blockSel);
-
-        Facing facing = Facing.None;
-
-        try
-        {
-            facing = FacingHelper.From(selection.Face, selection.Direction);
-        }
-        catch
+        if (!base.DoPlaceBlock(world, byPlayer, blockSel, byItemStack) ||
+            world.BlockAccessor.GetBlockEntity(blockSel.Position) is not BlockEntityEFuelGenerator entity)
         {
             return false;
         }
 
-        if (
-            base.DoPlaceBlock(world, byPlayer, blockSel, byItemStack) &&
-            world.BlockAccessor.GetBlockEntity(blockSel.Position) is BlockEntityEFuelGenerator entity
-        )
-        {
-            LoadEProperties.Load(this, entity);
+        // грузим электрические параметры блока/проводника
+        LoadEProperties.Load(this, entity);
             
-            return true;
-        }
+        return true;
 
-        return false;
     }
 
 
@@ -108,7 +93,7 @@ public class BlockEFuelGenerator : BlockEBase
     {
         base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityEFuelGenerator entity)
+        if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityEFuelGenerator)
         {
 
             if (!world.BlockAccessor.GetBlock(pos.AddCopy(BlockFacing.DOWN)).SideSolid[4]) //если блок под ним перестал быть сплошным
@@ -135,33 +120,30 @@ public class BlockEFuelGenerator : BlockEBase
         }
 
         // текущее выбранное в руке
-        ItemStack stack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
-
-        // получаем блокэнтити
-        var bef = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityEFuelGenerator;
+        var stack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
 
 
         // если есть блокэнтити и в руке что-то есть
-        if (bef != null && stack != null)
+        if (world.BlockAccessor.GetBlockEntity(blockSel!.Position) is BlockEntityEFuelGenerator bef && stack != null)
         {
             // флаг, что что-то поменяли
-            bool activated = false;
+            var activated = false;
 
             // шифт нажата
             if (byPlayer.Entity.Controls.CtrlKey)
             {
                 if (stack.Collectible.CombustibleProps != null && stack.Collectible.CombustibleProps.MeltingPoint > 0)
                 {
-                    ItemStackMoveOperation op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
-                    byPlayer.InventoryManager.ActiveHotbarSlot.TryPutInto(bef.FuelSlot, ref op);
+                    var op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
+                    byPlayer.InventoryManager.ActiveHotbarSlot!.TryPutInto(bef.FuelSlot, ref op);
                     if (op.MovedQuantity > 0)
                         activated = true;
                 }
 
                 if (stack.Collectible.CombustibleProps != null && stack.Collectible.CombustibleProps.BurnTemperature > 0)
                 {
-                    ItemStackMoveOperation op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
-                    byPlayer.InventoryManager.ActiveHotbarSlot.TryPutInto(bef.FuelSlot, ref op);
+                    var op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
+                    byPlayer.InventoryManager.ActiveHotbarSlot!.TryPutInto(bef.FuelSlot, ref op);
                     if (op.MovedQuantity > 0)
                         activated = true;
                 }
@@ -210,12 +192,7 @@ public class BlockEFuelGenerator : BlockEBase
     {
         return new WorldInteraction[]
         {
-                new WorldInteraction()
-                {
-                    ActionLangCode = "blockhelp-door-openclose",
-                    MouseButton = EnumMouseButton.Right
-                },
-                new WorldInteraction()
+                new()
                 {
                     ActionLangCode = "blockhelp-firepit-refuel",
                     MouseButton = EnumMouseButton.Right,

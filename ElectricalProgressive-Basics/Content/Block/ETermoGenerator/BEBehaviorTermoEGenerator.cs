@@ -1,7 +1,7 @@
-﻿using System;
-using System.Text;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
+using System;
+using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
@@ -19,9 +19,9 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
 
 
 
-    private bool IsBurned => false;
+    private static bool IsBurned => false;
 
-    
+
 
     public new BlockPos Pos => Blockentity.Pos;
 
@@ -38,30 +38,35 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
 
     public void Update()
     {
-        if (Blockentity is BlockEntityETermoGenerator { AllEparams: not null } entity)
+        if (Blockentity is not BlockEntityETermoGenerator entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
         {
-            bool hasBurnout = false;
+            return;
+        }
 
-            // Проверяем наличие burnout без использования LINQ
-            foreach (var eParam in entity.AllEparams)
-            {
-                if (eParam.burnout)
-                {
-                    hasBurnout = true;
-                    break; // Ранний выход при нахождении первого burnout
-                }
-            }
+        bool hasBurnout = false;
 
-            if (hasBurnout)
+        // Проверяем наличие burnout без использования LINQ
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
+        {
+            if (eParam.burnout)
             {
-                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
-            }
-            else if (entity.GenTemp > 20)
-            {
-                // Кэшируем вычисление позиции
-                ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin + 0.9, 0.4));
+                hasBurnout = true;
+                break; // Ранний выход при нахождении первого burnout
             }
         }
+
+        if (hasBurnout)
+        {
+            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+        }
+        else if (entity.GenTemp > 20)
+        {
+            // Кэшируем вычисление позиции
+            ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin + 0.9, 0.4));
+        }
+
     }
 
 
@@ -117,7 +122,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(PowerGive, PowerOrder) / entity.Power * 100));
         stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(PowerGive, PowerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
         stringBuilder.AppendLine("└ " + Lang.Get("electricalprogressivebasics:block-termoplastini") + ": " + entity.heightTermoplastin);
-        stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.kpd*100).ToString("F1")+ " %");
+        stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.kpd * 100).ToString("F1") + " %");
     }
 
 

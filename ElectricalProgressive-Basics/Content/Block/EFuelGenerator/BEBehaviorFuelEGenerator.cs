@@ -1,7 +1,7 @@
-﻿using System;
-using System.Text;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
+using System;
+using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
@@ -9,7 +9,7 @@ using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.EFuelGenerator;
 
-public class BEBehaviorFuelEGenerator : BlockEntityBehavior, IElectricProducer
+public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBehavior(blockEntity), IElectricProducer
 {
     private float PowerOrder;           // Просят столько энергии (сохраняется)
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
@@ -17,61 +17,55 @@ public class BEBehaviorFuelEGenerator : BlockEntityBehavior, IElectricProducer
     private float PowerGive;           // Отдаем столько энергии (сохраняется)
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
+    
 
-
-    private bool IsBurned => false;
+    private static bool IsBurned => false;
 
     
 
     public new BlockPos Pos => Blockentity.Pos;
 
-
-    public BEBehaviorFuelEGenerator(BlockEntity blockEntity) : base(blockEntity)
-    {
-
-    }
-
-
-
-
-
-
     public void Update()
     {
-        if (Blockentity is BlockEntityEFuelGenerator { AllEparams: not null } entity)
+        if (Blockentity is not BlockEntityEFuelGenerator entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
         {
-            bool hasBurnout = false;
+            return;
+        }
 
-            // Проверяем наличие burnout без использования LINQ
-            foreach (var eParam in entity.AllEparams)
-            {
-                if (eParam.burnout)
-                {
-                    hasBurnout = true;
-                    break; // Ранний выход при нахождении первого burnout
-                }
-            }
+        var hasBurnout = false;
 
-            if (hasBurnout)
+        // Проверяем наличие burnout без использования LINQ
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
+        {
+            if (eParam.burnout)
             {
-                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+                hasBurnout = true;
+                break; // Ранний выход при нахождении первого burnout
             }
-            else if (entity.GenTemp > 20)
-            {
-                // Кэшируем вычисление позиции
-              //  ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin + 0.9, 0.4));
-            }
+        }
+
+        if (hasBurnout)
+        {
+            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+        }
+        else if (entity.GenTemp > 20)
+        {
+            // Кэшируем вычисление позиции
+            //  ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin + 0.9, 0.4));
         }
     }
 
 
-
+    /// <summary>
+    /// Сколько энергии может отдать генератор
+    /// </summary>
+    /// <returns></returns>
     public float Produce_give()
     {
-        BlockEntityEFuelGenerator? entity = null;
         if (Blockentity is BlockEntityEFuelGenerator temp)
         {
-            entity = temp;
             if (temp.GenTemp > 20)
             {
                 PowerGive = temp.Power;

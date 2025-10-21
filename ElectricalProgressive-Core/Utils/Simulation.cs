@@ -121,6 +121,7 @@ namespace ElectricalProgressive.Utils
             }
         }
 
+        /*
         /// <summary>
         /// Сбрасывает состояние симуляции, очищая списки клиентов и магазинов.
         /// </summary>
@@ -128,5 +129,6 @@ namespace ElectricalProgressive.Utils
         {
    
         }
+        */
     }
 }

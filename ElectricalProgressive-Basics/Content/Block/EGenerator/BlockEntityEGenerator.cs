@@ -12,9 +12,7 @@ public class BlockEntityEGenerator : BlockEntityEFacingBase
     {
         return FacingHelper.FullFace(value);
     }
-
-
-
+    
 
 
     public override void ToTreeAttributes(ITreeAttribute tree)

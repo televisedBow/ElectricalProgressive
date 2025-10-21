@@ -141,7 +141,7 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         /// <param name="i"></param>
         /// <param name="part"></param>
-        void Burnout(int i, ref NetworkPart part)
+        static void Burnout(int i, ref NetworkPart part)
         {
             part.eparams[i].prepareForBurnout(3);
         }
@@ -158,7 +158,7 @@ namespace ElectricalProgressive.Utils
         /// <param name="facing"></param>
         /// <param name="AllEparams"></param>
         /// <param name="block"></param>
-        public void DamageEntity(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, EParams[] AllEparams, Block block, float specifiedDamage=0.0f)
+        public static void DamageEntity(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, EParams[] AllEparams, Block block, float specifiedDamage=0.0f)
         {
             if (System == null) // Если система ElectricalProgressive не инициализирована, ничего не делаем
                 return;

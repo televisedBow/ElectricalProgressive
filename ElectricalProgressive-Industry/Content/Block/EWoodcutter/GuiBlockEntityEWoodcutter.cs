@@ -56,8 +56,8 @@ public class GuiBlockEntityEWoodcutter : GuiDialogBlockEntity
             .AddDialogTitleBar(DialogTitle, OnTitleBarClose)
             .BeginChildElements(dialog)
 
-            .AddItemSlotGrid(Inventory, SendInvPacket, 1, new[] { 0 }, inputGrid, "inputSlot")
-            .AddItemSlotGrid(Inventory, SendInvPacket, 5, new[] { 1, 2, 3, 4, 5 }, outputGrid, "outputSlots")
+            .AddItemSlotGrid(Inventory, SendInvPacket, 1, [0], inputGrid, "inputSlot")
+            .AddItemSlotGrid(Inventory, SendInvPacket, 5, [1, 2, 3, 4, 5], outputGrid, "outputSlots")
 
             .EndChildElements()
             .Compose();
