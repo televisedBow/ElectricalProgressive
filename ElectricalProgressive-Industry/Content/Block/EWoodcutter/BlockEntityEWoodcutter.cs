@@ -45,31 +45,8 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
 
     #region ElectricalProgressive
 
-    protected BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
-
-    public (EParams, int) Eparams
-    {
-        get => ElectricalProgressive?.Eparams ?? (new(), 0);
-        set => ElectricalProgressive!.Eparams = value;
-    }
-
-    public EParams[] AllEparams
-    {
-        get => ElectricalProgressive?.AllEparams ?? new EParams[]
-        {
-            new(),
-            new(),
-            new(),
-            new(),
-            new(),
-            new()
-        };
-        set
-        {
-            if (ElectricalProgressive != null)
-                ElectricalProgressive.AllEparams = value;
-        }
-    }
+    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    
 
     public const string AllEparamsKey = "electricalprogressive:allEparams";
 

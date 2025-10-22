@@ -28,7 +28,7 @@ class BlockEntityEFreezer2 : ContainerEFreezer2, ITexPositionSource
 
     private readonly int _maxConsumption;
 
-    private long listenerId;
+    private long _listenerId;
 
 
     public BlockEntityEFreezer2()
@@ -75,7 +75,7 @@ class BlockEntityEFreezer2 : ContainerEFreezer2, ITexPositionSource
         animUtil?.Dispose();
 
         // Удаляем слушатель тиков
-        UnregisterGameTickListener(listenerId);
+        UnregisterGameTickListener(_listenerId);
     }
 
 
@@ -179,7 +179,7 @@ class BlockEntityEFreezer2 : ContainerEFreezer2, ITexPositionSource
         MarkDirty(true);
 
         // Слушатель для обновления содержимого 
-        listenerId=RegisterGameTickListener(FreezerTick, 500);
+        _listenerId=RegisterGameTickListener(FreezerTick, 500);
     }
 
 

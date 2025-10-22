@@ -3,9 +3,6 @@ using ElectricalProgressive.RecipeSystem;
 using ElectricalProgressive.RecipeSystem.Recipe;
 using ElectricalProgressive.Utils;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -13,14 +10,14 @@ using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
-using Vintagestory.GameContent.Mechanics;
+
 
 namespace ElectricalProgressive.Content.Block.EHammer;
 
 public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPositionSource
 {
     internal InventoryHammer inventory;
-    private GuiDialogHammer clientDialog;
+    private GuiDialogHammer _clientDialog;
     public override string InventoryClassName => "ehammer";
     public HammerRecipe CurrentRecipe;
     private readonly int _maxConsumption;
@@ -33,7 +30,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     public string CurrentRecipeName;
     public float RecipeProgress;
 
-    private static float maxTargetTemp = 1350f; //максимальная температура для нагрева
+    private static float _maxTargetTemp = 1350f; //максимальная температура для нагрева
 
     public virtual string DialogTitle => Lang.Get("ehammer-title-gui");
 
@@ -41,7 +38,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
     private int _lastSoundFrame = -1;
     private long _lastAnimationCheckTime;
-    private BlockEntityAnimationUtil animUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+    private BlockEntityAnimationUtil AnimUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
     // Новые поля для системы мешей (как в холодильнике)
     private MeshData?[] _meshes;
@@ -50,53 +47,26 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
     //--------------------------------------------------------------------------------
 
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public (EParams, int) Eparams
-    {
-        get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-        set => this.ElectricalProgressive!.Eparams = value;
-    }
-
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public EParams[] AllEparams
-    {
-        get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-                    {
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams()
-                    };
-        set
-        {
-            if (this.ElectricalProgressive != null)
-            {
-                this.ElectricalProgressive.AllEparams = value;
-            }
-        }
-    }
 
     public Facing Facing
     {
-        get => this.facing;
+        get => this._facing;
         set
         {
-            if (value != this.facing)
+            if (value != this._facing)
             {
                 this.ElectricalProgressive!.Connection =
-                    FacingHelper.FullFace(this.facing = value);
+                    FacingHelper.FullFace(this._facing = value);
             }
         }
     }
 
     //--------------------------------------------------------------------------------
 
-    private AssetLocation soundHammer;
-    private Facing facing = Facing.None;
+    private AssetLocation _soundHammer;
+    private Facing _facing = Facing.None;
 
     public BlockEntityEHammer()
     {
@@ -110,7 +80,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         base.Initialize(api);
         this.inventory.LateInitialize(InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
 
-        this.RegisterGameTickListener(new Action<float>(this.Every1000ms), 1000);
+        this.RegisterGameTickListener(new Action<float>(this.Every1000Ms), 1000);
 
         if (api.Side == EnumAppSide.Client)
         {
@@ -128,12 +98,12 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             // Первоначальное создание мешей
             UpdateMeshes();
 
-            if (animUtil != null)
+            if (AnimUtil != null)
             {
-                animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
+                AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
             }
 
-            soundHammer = new AssetLocation("electricalprogressiveindustry:sounds/ehammer/hammer.ogg");
+            _soundHammer = new AssetLocation("electricalprogressiveindustry:sounds/ehammer/hammer.ogg");
 
             // Регистрируем частый тикер для проверки анимации на клиенте
             this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
@@ -153,19 +123,19 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// <param name="dt"></param>
     private void CheckAnimationFrame(float dt)
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null)
+        if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
             return;
 
         const int startFrame = 27; // Кадр, на котором нужно воспроизвести звук
         // Проверяем, активна ли анимация
-        if (animUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
+        if (AnimUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
         {
             // Получаем текущее время в миллисекундах
             long currentTime = Api.World.ElapsedMilliseconds;
 
             _lastAnimationCheckTime = currentTime;
 
-            var currentFrame = animUtil.animator.Animations[0].CurrentFrame;
+            var currentFrame = AnimUtil.animator.Animations[0].CurrentFrame;
             // Воспроизводим звук на определенном кадре
             if (currentFrame >= startFrame && _lastSoundFrame != startFrame)
             {
@@ -194,7 +164,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
         ICoreClientAPI capi = Api as ICoreClientAPI;
         capi.World.PlaySoundAt(
-            soundHammer,
+            _soundHammer,
             Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
             null,
             false,
@@ -252,11 +222,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
                 Api.World.Logger.Warning("Текстура {0} не найдена в текстурах предмета или формы, используется путь: {1}", textureCode, assetLocation);
             }
 
-            return getOrCreateTexPos(assetLocation);
+            return GetOrCreateTexPos(assetLocation);
         }
     }
 
-    private TextureAtlasPosition? getOrCreateTexPos(AssetLocation texturePath)
+    private TextureAtlasPosition? GetOrCreateTexPos(AssetLocation texturePath)
     {
         var textureAtlasPosition = _capi.BlockTextureAtlas[texturePath];
         if (textureAtlasPosition != null)
@@ -415,8 +385,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// <param name="slotid"></param>
     private void OnSlotModifid(int slotid)
     {
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
-            this.clientDialog.Update(RecipeProgress);
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
+            this._clientDialog.Update(RecipeProgress);
 
         if (slotid != 0)
             return;
@@ -442,10 +412,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
 
         this.MarkDirty();
-        if (this.clientDialog == null || !this.clientDialog.IsOpened())
+        if (this._clientDialog == null || !this._clientDialog.IsOpened())
             return;
 
-        this.clientDialog.SingleComposer.ReCompose();
+        this._clientDialog.SingleComposer.ReCompose();
         if (Api?.Side == EnumAppSide.Server)
         {
             FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]);
@@ -479,7 +449,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// Тикер
     /// </summary>
     /// <param name="dt"></param>
-    private void Every1000ms(float dt)
+    private void Every1000Ms(float dt)
     {
         var beh = GetBehavior<BEBehaviorEHammer>();
         // мало ли поведение не загрузилось еще
@@ -515,11 +485,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
             if (RecipeProgress < 0.5f)
             {
-                stack.Collectible.SetTemperature(this.Api.World, stack, RecipeProgress * 2 * maxTargetTemp);
+                stack.Collectible.SetTemperature(this.Api.World, stack, RecipeProgress * 2 * _maxTargetTemp);
             }
             else
             {
-                stack.Collectible.SetTemperature(this.Api.World, stack, maxTargetTemp);
+                stack.Collectible.SetTemperature(this.Api.World, stack, _maxTargetTemp);
             }
 
             if (RecipeProgress >= 1f)
@@ -564,7 +534,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             // Обработка основного выхода
             ItemStack outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
 
-            outputItem.Collectible.SetTemperature(this.Api.World, outputItem, maxTargetTemp);
+            outputItem.Collectible.SetTemperature(this.Api.World, outputItem, _maxTargetTemp);
 
             TryMergeOrSpawn(outputItem, OutputSlot);
 
@@ -575,7 +545,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             {
                 ItemStack secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
 
-                secondaryOutput.Collectible.SetTemperature(this.Api.World, secondaryOutput, maxTargetTemp);
+                secondaryOutput.Collectible.SetTemperature(this.Api.World, secondaryOutput, _maxTargetTemp);
 
                 TryMergeOrSpawn(secondaryOutput, SecondaryOutputSlot);
             }
@@ -637,12 +607,12 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// </summary>
     private void StartAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null)
+        if (Api?.Side != EnumAppSide.Client || AnimUtil == null || CurrentRecipe == null)
             return;
 
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
         {
-            animUtil.StartAnimation(new AnimationMetaData()
+            AnimUtil.StartAnimation(new AnimationMetaData()
             {
                 Animation = "Animation1",
                 Code = "craft",
@@ -658,24 +628,24 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// </summary>
     private void StopAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null)
+        if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
             return;
 
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
         {
-            animUtil.StopAnimation("craft");
+            AnimUtil.StopAnimation("craft");
         }
     }
 
     /// <summary>
     /// Обновление состояния
     /// </summary>
-    /// <param name="RecipeProgress"></param>
-    protected virtual void UpdateState(float RecipeProgress)
+    /// <param name="recipeProgress"></param>
+    protected virtual void UpdateState(float recipeProgress)
     {
-        if (Api != null && Api.Side == EnumAppSide.Client && clientDialog != null && clientDialog.IsOpened())
+        if (Api != null && Api.Side == EnumAppSide.Client && _clientDialog != null && _clientDialog.IsOpened())
         {
-            clientDialog.Update(RecipeProgress);
+            _clientDialog.Update(recipeProgress);
         }
         MarkDirty(true);
     }
@@ -691,10 +661,10 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         if (this.Api.Side == EnumAppSide.Client)
             this.toggleInventoryDialogClient(byPlayer, (CreateDialogDelegate)(() =>
             {
-                this.clientDialog =
+                this._clientDialog =
                   new GuiDialogHammer(this.DialogTitle, this.Inventory, this.Pos, this.Api as ICoreClientAPI);
-                this.clientDialog.Update(RecipeProgress);
-                return (GuiDialogBlockEntity)this.clientDialog;
+                this._clientDialog.Update(RecipeProgress);
+                return (GuiDialogBlockEntity)this._clientDialog;
             }));
         return true;
     }
@@ -752,7 +722,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
 
         // если анимации нет, то рисуем блок базовый
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
         {
             return false;
         }
@@ -775,9 +745,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
 
         ICoreAPI api = this.Api;
-        if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0 || this.clientDialog == null)
+        if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0 || this._clientDialog == null)
             return;
-        this.clientDialog.Update(RecipeProgress);
+        this._clientDialog.Update(RecipeProgress);
     }
 
     public override void ToTreeAttributes(ITreeAttribute tree)
@@ -816,17 +786,17 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             ElectricalProgressive.Connection = Facing.None;
         }
 
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            this.clientDialog.TryClose();
-            this.clientDialog = null;
+            this._clientDialog.TryClose();
+            this._clientDialog = null;
         }
 
         StopAnimation();
 
-        if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
         {
-            this.animUtil.Dispose();
+            this.AnimUtil.Dispose();
         }
 
         // Очистка как в холодильнике
@@ -861,7 +831,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     public override void OnBlockUnloaded()
     {
         base.OnBlockUnloaded();
-        this.clientDialog?.TryClose();
+        this._clientDialog?.TryClose();
 
         // Очищаем ссылки как в холодильнике
         _meshes = null;

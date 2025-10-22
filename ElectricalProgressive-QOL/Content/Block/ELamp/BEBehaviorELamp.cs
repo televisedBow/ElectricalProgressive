@@ -1,7 +1,7 @@
-﻿using ElectricalProgressive.Utils;
+﻿using ElectricalProgressive.Interface;
+using ElectricalProgressive.Utils;
 using System;
 using System.Text;
-using ElectricalProgressive.Interface;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
@@ -119,14 +119,18 @@ namespace ElectricalProgressive.Content.Block.ELamp
 
         public void Update()
         {
-            if (Blockentity is not BlockEntityELamp entity || entity.AllEparams == null)
+            if (Blockentity is not BlockEntityELamp entity ||
+                entity.ElectricalProgressive == null ||
+                entity.ElectricalProgressive.AllEparams is null)
+            {
                 return;
+            }
 
             bool hasBurnout = false;
             bool prepareBurnout = false;
 
             // Однопроходная проверка всех условий
-            foreach (var eParam in entity.AllEparams)
+            foreach (var eParam in entity.ElectricalProgressive.AllEparams)
             {
                 hasBurnout |= eParam.burnout;
                 prepareBurnout |= eParam.ticksBeforeBurnout > 0;

@@ -12,9 +12,9 @@ namespace ElectricalProgressive.Content.Block.ELamp
 {
     internal class BlockESmallLamp : BlockEBase
     {
-        private readonly static Dictionary<CacheDataKey, MeshData> MeshDataCache = new();
-        private readonly static Dictionary<CacheDataKey, Cuboidf[]> SelectionBoxesCache = new();
-        private readonly static Dictionary<CacheDataKey, Cuboidf[]> CollisionBoxesCache = new();
+        private static readonly Dictionary<CacheDataKey, MeshData> MeshDataCache = new();
+        private static readonly Dictionary<CacheDataKey, Cuboidf[]> SelectionBoxesCache = new();
+        private static readonly Dictionary<CacheDataKey, Cuboidf[]> CollisionBoxesCache = new();
 
 
 

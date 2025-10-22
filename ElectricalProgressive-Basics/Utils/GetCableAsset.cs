@@ -30,10 +30,10 @@ namespace ElectricalProgressive.Utils
             t[2] = "quantity";
             t[3] = "type";
 
-            v[0] = BlockECable.voltages[indexVoltage];
+            v[0] = BlockECable.Voltages[indexVoltage];
             v[1] = material;
-            v[2] = BlockECable.quantitys[indexQuantity];
-            v[3] = BlockECable.types[indexType];
+            v[2] = BlockECable.Quantitys[indexQuantity];
+            v[3] = BlockECable.Types[indexType];
 
 
             var assetLocation = baseBlock.CodeWithVariants(t, v);

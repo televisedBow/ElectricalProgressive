@@ -158,7 +158,7 @@ namespace ElectricalProgressive.Utils
         /// <param name="facing"></param>
         /// <param name="AllEparams"></param>
         /// <param name="block"></param>
-        public static void DamageEntity(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, EParams[] AllEparams, Block block, float specifiedDamage=0.0f)
+        public void DamageEntity(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, EParams[] AllEparams, Block block, float specifiedDamage=0.0f)
         {
             if (System == null) // Если система ElectricalProgressive не инициализирована, ничего не делаем
                 return;

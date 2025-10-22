@@ -17,7 +17,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
     {
         // Конфигурация
         internal InventoryDrawing inventory;
-        private GuiDialogDrawing clientDialog;
+        private GuiDialogDrawing _clientDialog;
         public override string InventoryClassName => "edrawing";
         private readonly int _maxConsumption;
         private ICoreClientAPI _capi;
@@ -35,58 +35,31 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         public virtual string DialogTitle => Lang.Get("edrawing-title-gui");
         public override InventoryBase Inventory => inventory;
 
-        private BlockEntityAnimationUtil animUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+        private BlockEntityAnimationUtil AnimUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
         private int _lastSoundFrame = -1;
         private long _lastAnimationCheckTime;
 
-        //------------------------------------------------------------------------------------------------------------------
+
         // Электрические параметры
-        private Facing facing = Facing.None;
-        private BEBehaviorElectricalProgressive ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+        private Facing _facing = Facing.None;
+        public BEBehaviorElectricalProgressive ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
         public Facing Facing
         {
-            get => this.facing;
+            get => this._facing;
             set
             {
-                if (value != this.facing)
+                if (value != this._facing)
                 {
                     this.ElectricalProgressive!.Connection =
-                        FacingHelper.FullFace(this.facing = value);
+                        FacingHelper.FullFace(this._facing = value);
                 }
             }
         }
 
-        public (EParams, int) Eparams
-        {
-            get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-            set => this.ElectricalProgressive!.Eparams = value;
-        }
 
-        public EParams[] AllEparams
-        {
-            get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-            {
-                new EParams(),
-                new EParams(),
-                new EParams(),
-                new EParams(),
-                new EParams(),
-                new EParams()
-            };
-            set
-            {
-                if (this.ElectricalProgressive != null)
-                {
-                    this.ElectricalProgressive.AllEparams = value;
-                }
-            }
-        }
-
-        //----------------------------------------------------------------------------------------------------------------------------
-
-        private ILoadedSound ambientSound;
-        private AssetLocation centrifugeSound;
+        private ILoadedSound _ambientSound;
+        private AssetLocation _centrifugeSound;
 
         public BlockEntityEDrawing()
         {
@@ -101,17 +74,17 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         {
             base.Initialize(api);
             this.inventory.LateInitialize(InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
-            this.RegisterGameTickListener(new Action<float>(this.Every1000ms), 1000);
+            this.RegisterGameTickListener(new Action<float>(this.Every1000Ms), 1000);
 
             if (api.Side == EnumAppSide.Client)
             {
                 _capi = api as ICoreClientAPI;
-                if (animUtil != null)
+                if (AnimUtil != null)
                 {
-                    animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
+                    AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
                 }
 
-                centrifugeSound = new AssetLocation("electricalprogressiveindustry:sounds/ecentrifuge/centrifuge.ogg");
+                _centrifugeSound = new AssetLocation("electricalprogressiveindustry:sounds/ecentrifuge/centrifuge.ogg");
 
                 this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
             }
@@ -127,7 +100,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         private void OnSlotModified(int slotid)
         {
             if (Api is ICoreClientAPI)
-                clientDialog?.Update(RecipeProgress);
+                _clientDialog?.Update(RecipeProgress);
 
             if (slotid < 2)
             {
@@ -302,7 +275,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         #endregion
 
         #region Основной цикл работы
-        private void Every1000ms(float dt)
+        private void Every1000Ms(float dt)
         {
             var beh = GetBehavior<BEBehaviorEDrawing>();
             if (beh == null)
@@ -320,7 +293,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             {
                 if (!_wasCraftingLastTick)
                 {
-                    startSound();
+                    StartSound();
                 }
 
                 StartAnimation();
@@ -336,7 +309,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
                     if (!HasRequiredItems())
                     {
                         StopAnimation();
-                        stopSound();
+                        StopSound();
                     }
 
                     // в любом случае сбрасываем прогресс
@@ -347,7 +320,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             else if (_wasCraftingLastTick)
             {
                 StopAnimation();
-                stopSound();
+                StopSound();
                 MarkDirty(true);
             }
 
@@ -358,8 +331,8 @@ namespace ElectricalProgressive.Content.Block.EDrawing
 
         protected virtual void UpdateState(float progress)
         {
-            if (Api?.Side == EnumAppSide.Client && clientDialog?.IsOpened() == true)
-                clientDialog.Update(progress);
+            if (Api?.Side == EnumAppSide.Client && _clientDialog?.IsOpened() == true)
+                _clientDialog.Update(progress);
 
             MarkDirty(true);
         }
@@ -370,22 +343,22 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         /// <summary>
         /// Запуск звука
         /// </summary>
-        public void startSound()
+        public void StartSound()
         {
-            if (this.ambientSound != null)
+            if (this._ambientSound != null)
                 return;
             if ((Api != null ? (Api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0)
                 return;
-            this.ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
+            this._ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
             {
-                Location = centrifugeSound,
+                Location = _centrifugeSound,
                 ShouldLoop = true,
                 Position = this.Pos.ToVec3f().Add(0.5f, 0.25f, 0.5f),
                 DisposeOnFinish = false,
                 Volume = 1f,
             });
 
-            this.ambientSound.Start();
+            this._ambientSound.Start();
         }
 
 
@@ -393,13 +366,13 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         /// <summary>
         /// Остановка звука
         /// </summary>
-        public void stopSound()
+        public void StopSound()
         {
-            if (this.ambientSound == null)
+            if (this._ambientSound == null)
                 return;
-            this.ambientSound.Stop();
-            this.ambientSound.Dispose();
-            this.ambientSound = (ILoadedSound)null;
+            this._ambientSound.Stop();
+            this._ambientSound.Dispose();
+            this._ambientSound = (ILoadedSound)null;
         }
 
 
@@ -408,12 +381,12 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         #region Визуальные эффекты
         private void StartAnimation()
         {
-            if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null)
+            if (Api?.Side != EnumAppSide.Client || AnimUtil == null || CurrentRecipe == null)
                 return;
 
-            if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
+            if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
             {
-                animUtil.StartAnimation(new AnimationMetaData()
+                AnimUtil.StartAnimation(new AnimationMetaData()
                 {
                     Animation = "Animation1",
                     Code = "craft",
@@ -426,27 +399,27 @@ namespace ElectricalProgressive.Content.Block.EDrawing
 
         private void StopAnimation()
         {
-            if (Api?.Side != EnumAppSide.Client || animUtil == null)
+            if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
                 return;
 
-            if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
+            if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
             {
-                animUtil.StopAnimation("craft");
+                AnimUtil.StopAnimation("craft");
             }
         }
 
         private void CheckAnimationFrame(float dt)
         {
-            if (Api?.Side != EnumAppSide.Client || animUtil == null)
+            if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
                 return;
 
             const int startFrame = 20;
-            if (animUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
+            if (AnimUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
             {
                 long currentTime = Api.World.ElapsedMilliseconds;
                 _lastAnimationCheckTime = currentTime;
 
-                var currentFrame = animUtil.animator.Animations[0].CurrentFrame;
+                var currentFrame = AnimUtil.animator.Animations[0].CurrentFrame;
                 if (currentFrame >= startFrame && _lastSoundFrame != startFrame)
                 {
                     PlayPressSound();
@@ -470,7 +443,7 @@ namespace ElectricalProgressive.Content.Block.EDrawing
 
             ICoreClientAPI capi = Api as ICoreClientAPI;
             capi.World.PlaySoundAt(
-                centrifugeSound,
+                _centrifugeSound,
                 Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
                 null,
                 false,
@@ -487,9 +460,9 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             {
                 toggleInventoryDialogClient(byPlayer, () =>
                 {
-                    clientDialog = new GuiDialogDrawing(DialogTitle, Inventory, Pos, _capi);
-                    clientDialog.Update(RecipeProgress);
-                    return clientDialog;
+                    _clientDialog = new GuiDialogDrawing(DialogTitle, Inventory, Pos, _capi);
+                    _clientDialog.Update(RecipeProgress);
+                    return _clientDialog;
                 });
             }
             return true;
@@ -525,8 +498,8 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             if (Api != null)
                 Inventory.AfterBlocksLoaded(Api.World);
 
-            if (Api?.Side == EnumAppSide.Client && clientDialog != null)
-                clientDialog.Update(RecipeProgress);
+            if (Api?.Side == EnumAppSide.Client && _clientDialog != null)
+                _clientDialog.Update(RecipeProgress);
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -560,35 +533,35 @@ namespace ElectricalProgressive.Content.Block.EDrawing
                 ElectricalProgressive.Connection = Facing.None;
             }
 
-            if (this.Api is ICoreClientAPI && this.clientDialog != null)
+            if (this.Api is ICoreClientAPI && this._clientDialog != null)
             {
-                this.clientDialog.TryClose();
-                this.clientDialog = null;
+                this._clientDialog.TryClose();
+                this._clientDialog = null;
             }
 
             StopAnimation();
 
-            if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+            if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
             {
-                this.animUtil.Dispose();
+                this.AnimUtil.Dispose();
             }
 
-            if (this.ambientSound != null)
+            if (this._ambientSound != null)
             {
-                this.ambientSound.Stop();
-                this.ambientSound.Dispose();
+                this._ambientSound.Stop();
+                this._ambientSound.Dispose();
             }
         }
 
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
-            this.clientDialog?.TryClose();
-            if (this.ambientSound == null)
+            this._clientDialog?.TryClose();
+            if (this._ambientSound == null)
                 return;
-            this.ambientSound.Stop();
-            this.ambientSound.Dispose();
-            this.ambientSound = (ILoadedSound)null;
+            this._ambientSound.Stop();
+            this._ambientSound.Dispose();
+            this._ambientSound = (ILoadedSound)null;
         }
         #endregion
     }

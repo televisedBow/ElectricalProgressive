@@ -54,6 +54,6 @@ public abstract class BlockEBase : Vintagestory.API.Common.Block
             return;
 
         // передаем работу в наш обработчик урона
-        ElectricalProgressive.damageManager?.DamageEntity(world, entity, pos, facing, blockEntityEBase.AllEparams!, this);
+        ElectricalProgressive.damageManager?.DamageEntity(world, entity, pos, facing, blockEntityEBase.ElectricalProgressive!.AllEparams!, this);
     }
 }

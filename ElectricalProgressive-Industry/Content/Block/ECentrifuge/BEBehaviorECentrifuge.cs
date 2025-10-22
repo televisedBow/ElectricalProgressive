@@ -41,7 +41,9 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
         {
             if (Blockentity is BlockEntityECentrifuge entity)
             {
-                if (entity.AllEparams.Any(e => e.burnout))
+                if (entity.ElectricalProgressive == null &&
+                    entity.ElectricalProgressive.AllEparams == null &&
+                    entity.ElectricalProgressive.AllEparams.Any(e => e.burnout))
                     return false;
 
 
@@ -107,17 +109,18 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
     public void Update()
     {
         //смотрим надо ли обновить модельку когда сгорает прибор
-        if (this.Blockentity is not BlockEntityECentrifuge entity ||
-            entity.AllEparams == null)
+        if (Blockentity is not BlockEntityECentrifuge entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
         {
             return;
         }
 
-        var hasBurnout = entity.AllEparams.Any(e => e.burnout);
+        var hasBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.burnout);
         if (hasBurnout)
             ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
 
-        bool prepareBurnout = entity.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
+        bool prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
         if (prepareBurnout)
         {
             ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));

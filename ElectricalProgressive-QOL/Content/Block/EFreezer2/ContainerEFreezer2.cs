@@ -17,8 +17,8 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
     IInventory IBlockEntityContainer.Inventory { get { return Inventory; } }
 
-    RoomRegistry? roomReg;
-    protected Room? room;
+    RoomRegistry? _roomReg;
+    protected Room? Room;
 
 
 
@@ -33,7 +33,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
     /// <summary>
     /// On the server, we calculate the temperature only once each tick, to save repeating the same costly calculation.  A value -999 or less signifies not fresh and requires re-calculation
     /// </summary>
-    protected float temperatureCached = -1000f;
+    protected float TemperatureCached = -1000f;
 
     public override void Initialize(ICoreAPI api)
     {
@@ -54,7 +54,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
         RegisterGameTickListener(OnTick, 10000);
 
-        roomReg = Api.ModLoader.GetModSystem<RoomRegistry>();
+        _roomReg = Api.ModLoader.GetModSystem<RoomRegistry>();
     }
 
     private void Inventory_OnInventoryOpenedClient(IPlayer player)
@@ -73,15 +73,15 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
             return;
         }
 
-        if (roomReg == null)
+        if (_roomReg == null)
             return;
 
-        temperatureCached = -1000f;     // reset the cached temperature; it will be updated by the first perishable in the loop below, if there is one
+        TemperatureCached = -1000f;     // reset the cached temperature; it will be updated by the first perishable in the loop below, if there is one
         if (!HasTransitionables())
             return;   // Skip the room check if this container currently has no transitionables
 
-        room = roomReg.GetRoomForPosition(Pos);
-        if (room.AnyChunkUnloaded != 0)
+        Room = _roomReg.GetRoomForPosition(Pos);
+        if (Room.AnyChunkUnloaded != 0)
             return;
 
         foreach (ItemSlot slot in Inventory)
@@ -96,7 +96,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
                 MarkDirty(true);
             }
         }
-        temperatureCached = -1000f;      // reset the cached temperature in case any code needs to call GetPerishRate() between ticks of this entity
+        TemperatureCached = -1000f;      // reset the cached temperature in case any code needs to call GetPerishRate() between ticks of this entity
     }
 
     protected virtual bool HasTransitionables()
@@ -125,28 +125,28 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
         BlockPos sealevelpos = Pos.Copy();
         sealevelpos.Y = Api.World.SeaLevel;
 
-        float temperature = temperatureCached;
+        float temperature = TemperatureCached;
         if (temperature < -999f)
         {
             temperature = Api.World.BlockAccessor.GetClimateAt(sealevelpos, EnumGetClimateMode.ForSuppliedDate_TemperatureOnly, Api.World.Calendar.TotalDays).Temperature;
-            if (Api.Side == EnumAppSide.Server) temperatureCached = temperature;   // Cache the temperature for the remainder of this tick
+            if (Api.Side == EnumAppSide.Server) TemperatureCached = temperature;   // Cache the temperature for the remainder of this tick
         }
 
-        if (room == null)
+        if (Room == null)
         {
-            room = roomReg!.GetRoomForPosition(Pos);
+            Room = _roomReg!.GetRoomForPosition(Pos);
         }
 
         float soilTempWeight = 0f;
-        float skyLightProportion = (float)room.SkylightCount / Math.Max(1, room.SkylightCount + room.NonSkylightCount);   // avoid any risk of divide by zero
+        float skyLightProportion = (float)Room.SkylightCount / Math.Max(1, Room.SkylightCount + Room.NonSkylightCount);   // avoid any risk of divide by zero
 
-        if (room.IsSmallRoom)
+        if (Room.IsSmallRoom)
         {
             soilTempWeight = 1f;
             // If there's too much skylight, it's less cellar-like
             soilTempWeight -= 0.4f * skyLightProportion;
             // If non-cooling blocks exceed cooling blocks, it's less cellar-like
-            soilTempWeight -= 0.5f * GameMath.Clamp((float)room.NonCoolingWallCount / Math.Max(1, room.CoolingWallCount), 0f, 1f);
+            soilTempWeight -= 0.5f * GameMath.Clamp((float)Room.NonCoolingWallCount / Math.Max(1, Room.CoolingWallCount), 0f, 1f);
         }
 
         int lightlevel = Api.World.BlockAccessor.GetLightLevel(Pos, EnumLightLevelType.OnlySunLight);
@@ -154,9 +154,9 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
         // light level above 12 makes it additionally warmer, especially when part of a cellar or a greenhouse
         float lightImportance = 0.1f;
         // light in small fully enclosed rooms has a big impact
-        if (room.IsSmallRoom) lightImportance += 0.3f * soilTempWeight + 1.75f * skyLightProportion;
+        if (Room.IsSmallRoom) lightImportance += 0.3f * soilTempWeight + 1.75f * skyLightProportion;
         // light in large most enclosed rooms (e.g. houses, greenhouses) has medium impact
-        else if (room.ExitCount <= 0.1f * (room.CoolingWallCount + room.NonCoolingWallCount)) lightImportance += 1.25f * skyLightProportion;
+        else if (Room.ExitCount <= 0.1f * (Room.CoolingWallCount + Room.NonCoolingWallCount)) lightImportance += 1.25f * skyLightProportion;
         // light outside rooms (e.g. chests on world surface) has low impact but still warms them above base air temperature
         else lightImportance += 0.5f * skyLightProportion;
         lightImportance = GameMath.Clamp(lightImportance, 0f, 1.5f);
@@ -217,7 +217,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
     public ItemStack[] GetContentStacks(bool cloned = true)
     {
-        List<ItemStack> stacklist = new List<ItemStack>();
+        var stacklist = new List<ItemStack>();
         foreach (var slot in Inventory)
         {
             stacklist.Add(cloned ? slot.Itemstack?.Clone()! : slot.Itemstack!);

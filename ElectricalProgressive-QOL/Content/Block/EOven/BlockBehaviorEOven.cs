@@ -42,15 +42,15 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
             if (Blockentity is not BlockEntityEOven entity)
                 return working;
 
-            _ovenTemperature = (int)entity.ovenTemperature;
+            _ovenTemperature = (int)entity.OvenTemperature;
 
             //проверяем количество занятых слотов и готовой еды
             var stack_count = 0;
             var stack_count_perfect = 0;
 
-            for (var index = 0; index < entity.bakeableCapacity; ++index)
+            for (var index = 0; index < entity.BakeableCapacity; ++index)
             {
-                var itemstack = entity.ovenInv[index].Itemstack;
+                var itemstack = entity.OvenInv[index].Itemstack;
                 if (itemstack == null)
                     continue;
 
@@ -151,14 +151,18 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
 
     public void Update()
     {
-        if (Blockentity is not BlockEntityEOven entity || entity.AllEparams == null)
+        if (Blockentity is not BlockEntityEOven entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
+        {
             return;
+        }
 
         bool hasBurnout = false;
         bool prepareBurnout = false;
 
         // Однопроходная проверка всех условий
-        foreach (var eParam in entity.AllEparams)
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
             hasBurnout |= eParam.burnout;
             prepareBurnout |= eParam.ticksBeforeBurnout > 0;

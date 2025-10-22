@@ -67,14 +67,18 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
 
     public void Update()
     {
-        if (Blockentity is not BlockEntityEFreezer2 entity || entity.AllEparams == null)
+        if (Blockentity is not BlockEntityEFreezer2 entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
+        {
             return;
+        }
 
         bool hasBurnout = false;
         bool prepareBurnout = false;
 
         // Однопроходная проверка всех условий
-        foreach (var eParam in entity.AllEparams)
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
             hasBurnout |= eParam.burnout;
             prepareBurnout |= eParam.ticksBeforeBurnout > 0;

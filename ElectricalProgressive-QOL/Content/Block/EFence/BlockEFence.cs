@@ -69,7 +69,7 @@ public class BlockEFence : BlockEBase
 
 
         // передаем работу в наш обработчик урона
-        ElectricalProgressive.damageManager?.DamageEntity(world, entity, pos, facing, blockEntityEBase.AllEparams!, this, MyMiniLib.GetAttributeInt(this, "specifiedDamage", 0));
+        ElectricalProgressive.damageManager?.DamageEntity(world, entity, pos, facing, blockEntityEBase.ElectricalProgressive.AllEparams!, this, MyMiniLib.GetAttributeInt(this, "specifiedDamage", 0));
     }
 
 

@@ -17,8 +17,8 @@ namespace ElectricalProgressive.Content.Block.ECharger;
 
 public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 {
-    private InventoryECharger inventory;
-    public override InventoryBase Inventory => inventory;
+    private InventoryECharger _inventory;
+    public override InventoryBase Inventory => _inventory;
     public override string InventoryClassName => "charger";
 
     // Новые поля для системы мешей (как в холодильнике)
@@ -29,25 +29,8 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 
     private long listenerId;
 
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
-    public (EParams, int) Eparams
-    {
-        get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-        set => this.ElectricalProgressive!.Eparams = value;
-    }
-
-    public EParams[] AllEparams
-    {
-        get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-        {
-            new EParams(), new EParams(), new EParams(), new EParams(), new EParams(), new EParams()
-        };
-        set
-        {
-            if (this.ElectricalProgressive != null) this.ElectricalProgressive.AllEparams = value;
-        }
-    }
 
     public Size2i AtlasSize => _capi?.BlockTextureAtlas.Size ?? ((ICoreClientAPI)Api)?.BlockTextureAtlas.Size;
 
@@ -131,7 +114,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     /// </summary>
     public BlockEntityECharger()
     {
-        inventory = new(1, "charger-" + Pos, null, null, null);
+        _inventory = new(1, "charger-" + Pos, null, null, null);
     }
 
     /// <summary>
@@ -150,10 +133,10 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
             _capi = api as ICoreClientAPI;
 
             // Инициализируем массив мешей как в холодильнике
-            _meshes = new MeshData[this.inventory.Count];
+            _meshes = new MeshData[this._inventory.Count];
 
             // Подписываемся на изменения инвентаря
-            this.inventory.SlotModified += slotId =>
+            this._inventory.SlotModified += slotId =>
             {
                 UpdateMeshes();
             };
@@ -266,7 +249,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         if (Api == null || Api.Side == EnumAppSide.Server || _capi == null)
             return;
 
-        if (slotid >= this.inventory.Count)
+        if (slotid >= this._inventory.Count)
             return;
 
         // В заряднике отображаем только слот 0
@@ -276,13 +259,13 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
             return;
         }
 
-        if (this.inventory[slotid].Empty)
+        if (this._inventory[slotid].Empty)
         {
             _meshes[slotid] = null;
             return;
         }
 
-        var meshData = GenMesh(this.inventory[slotid].Itemstack);
+        var meshData = GenMesh(this._inventory[slotid].Itemstack);
         if (meshData != null)
         {
             TranslateMesh(meshData, slotid);
@@ -302,7 +285,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         if (meshData == null || slotId != 0)
             return;
 
-        var stack = this.inventory[slotId].Itemstack;
+        var stack = this._inventory[slotId].Itemstack;
         Vec3f origin = new Vec3f(0.5f, 0.5f, 0.5f);
 
         if (stack.Class == EnumItemClass.Item)
@@ -380,7 +363,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     /// </summary>
     public void UpdateMeshes()
     {
-        for (var i = 0; i < this.inventory.Count; i++)
+        for (var i = 0; i < this._inventory.Count; i++)
             UpdateMesh(i);
 
         MarkDirty(true);

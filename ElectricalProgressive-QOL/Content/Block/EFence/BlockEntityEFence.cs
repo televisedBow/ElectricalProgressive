@@ -11,9 +11,11 @@ namespace ElectricalProgressive.Content.Block.EFence
         {
             base.OnBlockPlaced(byItemStack);
 
-            var electricity = this.ElectricalProgressive;
-            if (electricity == null)
+            
+            if (this.ElectricalProgressive == null)
                 return;
+
+
 
             //задаем электрические параметры блока/проводника
             LoadEProperties.Load(this.Block, this);

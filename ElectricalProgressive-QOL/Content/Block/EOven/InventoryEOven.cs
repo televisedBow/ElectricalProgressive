@@ -31,7 +31,7 @@ namespace ElectricalProgressive.Content.Block.EOven;
                 entity != null &&
                 BakingProperties.ReadFrom(slot.Itemstack)!=null)
             {
-                entity.bakingData[num]= new OvenItemData(slot.Itemstack);
+                entity.BakingData[num]= new OvenItemData(slot.Itemstack);
             }
         }
     }

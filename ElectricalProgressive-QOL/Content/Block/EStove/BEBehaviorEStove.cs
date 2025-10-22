@@ -35,8 +35,8 @@ public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
             var working = false;
             if (Blockentity is BlockEntityEStove entity)
             {
-                working = entity.canHeatInput();
-                _stoveTemperature = (int)entity.stoveTemperature;
+                working = entity.CanHeatInput();
+                _stoveTemperature = (int)entity.StoveTemperature;
             }
 
             return working;
@@ -85,14 +85,18 @@ public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
 
     public void Update()
     {
-        if (Blockentity is not BlockEntityEStove entity || entity.AllEparams == null)
+        if (Blockentity is not BlockEntityEStove entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
+        {
             return;
+        }
 
         bool hasBurnout = false;
         bool prepareBurnout = false;
 
         // Однопроходная проверка всех условий
-        foreach (var eParam in entity.AllEparams)
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
             hasBurnout |= eParam.burnout;
             prepareBurnout |= eParam.ticksBeforeBurnout > 0;

@@ -404,9 +404,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         if (Api is not ICoreClientAPI)
             return;
 
-
         
-
 
         //храним направления проводов в этом блоке
         var selectedFacing = Facing.None;
@@ -415,7 +413,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         string methodForInformation = ""; //метод получения информации о сети, в зависимости от типа блока-энитити
 
         //если это кабель, то мы можем вывести только информацию о сети на одной грани
-        if (entity is BlockEntityECable blockEntityECable && entity is not BlockEntityEConnector && blockEntityECable.AllEparams != null)
+        if (entity is BlockEntityECable blockEntityECable && entity is not BlockEntityEConnector && blockEntityECable.ElectricalProgressive.AllEparams != null)
         {
             if (forPlayer is { CurrentBlockSelection: { } blockSelection })
             {
@@ -435,7 +433,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
             }
         }
-        else if (entity is BlockEntityEConnector blockEntityEConnector && blockEntityEConnector.AllEparams != null) //если это мет блок
+        else if (entity is BlockEntityEConnector blockEntityEConnector && blockEntityEConnector.ElectricalProgressive.AllEparams != null) //если это мет блок
         {
             selectedFacing = Facing.AllAll;
             methodForInformation = "currentFace"; // берем информацию о любой грани, где ток больше 0

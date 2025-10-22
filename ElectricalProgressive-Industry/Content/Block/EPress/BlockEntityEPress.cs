@@ -18,7 +18,7 @@ namespace ElectricalProgressive.Content.Block.EPress
     {
         // Конфигурация
         internal InventoryPress inventory;
-        private GuiDialogPress clientDialog;
+        private GuiDialogPress _clientDialog;
         public override string InventoryClassName => "epress";
         private readonly int _maxConsumption;
         private ICoreClientAPI _capi;
@@ -37,7 +37,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         public virtual string DialogTitle => Lang.Get("epress-title-gui");
         public override InventoryBase Inventory => inventory;
 
-        private BlockEntityAnimationUtil animUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+        private BlockEntityAnimationUtil AnimUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
         private int _lastSoundFrame = -1;
         private long _lastAnimationCheckTime;
 
@@ -48,51 +48,25 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         //------------------------------------------------------------------------------------------------------------------
         // Электрические параметры
-        private Facing facing = Facing.None;
-        private BEBehaviorElectricalProgressive ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+        private Facing _facing = Facing.None;
+        public BEBehaviorElectricalProgressive ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
         public Facing Facing
         {
-            get => this.facing;
+            get => this._facing;
             set
             {
-                if (value != this.facing)
+                if (value != this._facing)
                 {
                     this.ElectricalProgressive!.Connection =
-                        FacingHelper.FullFace(this.facing = value);
-                }
-            }
-        }
-
-        public (EParams, int) Eparams
-        {
-            get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-            set => this.ElectricalProgressive!.Eparams = value;
-        }
-
-        public EParams[] AllEparams
-        {
-            get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-            {
-                new EParams(),
-                new EParams(),
-                new EParams(),
-                new EParams(),
-                new EParams(),
-                new EParams()
-            };
-            set
-            {
-                if (this.ElectricalProgressive != null)
-                {
-                    this.ElectricalProgressive.AllEparams = value;
+                        FacingHelper.FullFace(this._facing = value);
                 }
             }
         }
 
         //----------------------------------------------------------------------------------------------------------------------------
 
-        private AssetLocation soundPress;
+        private AssetLocation _soundPress;
 
         public BlockEntityEPress()
         {
@@ -105,7 +79,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         {
             base.Initialize(api);
             this.inventory.LateInitialize(InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
-            this.RegisterGameTickListener(new Action<float>(this.Every1000ms), 1000);
+            this.RegisterGameTickListener(new Action<float>(this.Every1000Ms), 1000);
 
             if (api.Side == EnumAppSide.Client)
             {
@@ -123,12 +97,12 @@ namespace ElectricalProgressive.Content.Block.EPress
                 // Первоначальное создание мешей
                 UpdateMeshes();
 
-                if (animUtil != null)
+                if (AnimUtil != null)
                 {
-                    animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
+                    AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
                 }
 
-                soundPress = new AssetLocation("electricalprogressiveindustry:sounds/epress/press.ogg");
+                _soundPress = new AssetLocation("electricalprogressiveindustry:sounds/epress/press.ogg");
 
                 this.RegisterGameTickListener(new Action<float>(this.CheckAnimationFrame), 50);
             }
@@ -144,7 +118,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         private void OnSlotModified(int slotid)
         {
             if (Api is ICoreClientAPI)
-                clientDialog?.Update(RecipeProgress);
+                _clientDialog?.Update(RecipeProgress);
 
             if (slotid < 2)
             {
@@ -208,11 +182,11 @@ namespace ElectricalProgressive.Content.Block.EPress
                     Api.World.Logger.Warning("Текстура {0} не найдена в текстурах предмета или формы, используется путь: {1}", textureCode, assetLocation);
                 }
 
-                return getOrCreateTexPos(assetLocation);
+                return GetOrCreateTexPos(assetLocation);
             }
         }
 
-        private TextureAtlasPosition? getOrCreateTexPos(AssetLocation texturePath)
+        private TextureAtlasPosition? GetOrCreateTexPos(AssetLocation texturePath)
         {
             var textureAtlasPosition = _capi.BlockTextureAtlas[texturePath];
             if (textureAtlasPosition != null)
@@ -545,7 +519,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         #endregion
 
         #region Основной цикл работы
-        private void Every1000ms(float dt)
+        private void Every1000Ms(float dt)
         {
             var beh = GetBehavior<BEBehaviorEPress>();
             if (beh == null)
@@ -592,8 +566,8 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         protected virtual void UpdateState(float progress)
         {
-            if (Api?.Side == EnumAppSide.Client && clientDialog?.IsOpened() == true)
-                clientDialog.Update(progress);
+            if (Api?.Side == EnumAppSide.Client && _clientDialog?.IsOpened() == true)
+                _clientDialog.Update(progress);
 
             MarkDirty(true);
         }
@@ -602,12 +576,12 @@ namespace ElectricalProgressive.Content.Block.EPress
         #region Визуальные эффекты
         private void StartAnimation()
         {
-            if (Api?.Side != EnumAppSide.Client || animUtil == null || CurrentRecipe == null)
+            if (Api?.Side != EnumAppSide.Client || AnimUtil == null || CurrentRecipe == null)
                 return;
 
-            if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
+            if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
             {
-                animUtil.StartAnimation(new AnimationMetaData()
+                AnimUtil.StartAnimation(new AnimationMetaData()
                 {
                     Animation = "Animation1",
                     Code = "craft",
@@ -620,27 +594,27 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         private void StopAnimation()
         {
-            if (Api?.Side != EnumAppSide.Client || animUtil == null)
+            if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
                 return;
 
-            if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
+            if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
             {
-                animUtil.StopAnimation("craft");
+                AnimUtil.StopAnimation("craft");
             }
         }
 
         private void CheckAnimationFrame(float dt)
         {
-            if (Api?.Side != EnumAppSide.Client || animUtil == null!)
+            if (Api?.Side != EnumAppSide.Client || AnimUtil == null!)
                 return;
 
             const int startFrame = 20;
-            if (animUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
+            if (AnimUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
             {
                 long currentTime = Api.World.ElapsedMilliseconds;
                 _lastAnimationCheckTime = currentTime;
 
-                var currentFrame = animUtil.animator.Animations[0].CurrentFrame;
+                var currentFrame = AnimUtil.animator.Animations[0].CurrentFrame;
                 if (currentFrame >= startFrame && _lastSoundFrame != startFrame)
                 {
                     PlayPressSound();
@@ -664,7 +638,7 @@ namespace ElectricalProgressive.Content.Block.EPress
 
             ICoreClientAPI capi = Api as ICoreClientAPI;
             capi.World.PlaySoundAt(
-                soundPress,
+                _soundPress,
                 Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
                 null,
                 false,
@@ -681,9 +655,9 @@ namespace ElectricalProgressive.Content.Block.EPress
             {
                 toggleInventoryDialogClient(byPlayer, () =>
                 {
-                    clientDialog = new GuiDialogPress(DialogTitle, Inventory, Pos, _capi);
-                    clientDialog.Update(RecipeProgress);
-                    return clientDialog;
+                    _clientDialog = new GuiDialogPress(DialogTitle, Inventory, Pos, _capi);
+                    _clientDialog.Update(RecipeProgress);
+                    return _clientDialog;
                 });
             }
             return true;
@@ -724,8 +698,8 @@ namespace ElectricalProgressive.Content.Block.EPress
                 UpdateMeshes(); // обновляем меши при загрузке
             }
 
-            if (Api?.Side == EnumAppSide.Client && clientDialog != null)
-                clientDialog.Update(RecipeProgress);
+            if (Api?.Side == EnumAppSide.Client && _clientDialog != null)
+                _clientDialog.Update(RecipeProgress);
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)
@@ -769,7 +743,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             }
 
             // если анимации нет, то рисуем блок базовый
-            if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
+            if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
             {
                 return false;
             }
@@ -786,17 +760,17 @@ namespace ElectricalProgressive.Content.Block.EPress
                 ElectricalProgressive.Connection = Facing.None;
             }
 
-            if (this.Api is ICoreClientAPI && this.clientDialog != null!)
+            if (this.Api is ICoreClientAPI && this._clientDialog != null!)
             {
-                this.clientDialog.TryClose();
-                this.clientDialog = null;
+                this._clientDialog.TryClose();
+                this._clientDialog = null;
             }
 
             StopAnimation();
 
-            if (this.Api.Side == EnumAppSide.Client && this.animUtil != null!)
+            if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null!)
             {
-                this.animUtil.Dispose();
+                this.AnimUtil.Dispose();
             }
 
             // Очистка как в холодильнике
@@ -808,7 +782,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();
-            this.clientDialog?.TryClose();
+            this._clientDialog?.TryClose();
 
             // Очищаем ссылки как в холодильнике
             _meshes = null!;

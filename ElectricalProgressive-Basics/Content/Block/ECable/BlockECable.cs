@@ -30,19 +30,19 @@ namespace ElectricalProgressive.Content.Block.ECable
         public float crosssectional;            //площадь сечения из ассета
         public string material = "";              //материал из ассета
 
-        public static readonly Dictionary<int, string> voltages = new()
+        public static readonly Dictionary<int, string> Voltages = new()
         {
             { 32, "32v" },
             { 128, "128v" }
         };
 
-        public static readonly Dictionary<string, int> voltagesInvert = new()
+        public static readonly Dictionary<string, int> VoltagesInvert = new()
         {
             { "32v", 32 },
             { "128v", 128 }
         };
 
-        public static Dictionary<int, string> quantitys = new()
+        public static readonly Dictionary<int, string> Quantitys = new()
         {
             { 1, "single" },
             { 2, "double" },
@@ -50,7 +50,7 @@ namespace ElectricalProgressive.Content.Block.ECable
             { 4, "quadruple"}
         };
 
-        public static Dictionary<int, string> types = new()
+        public static readonly Dictionary<int, string> Types = new()
         {
             { 0, "dot" },
             { 1, "part" },
@@ -117,9 +117,12 @@ namespace ElectricalProgressive.Content.Block.ECable
                 if (world.BlockAccessor.GetBlockEntity(blockSelection.Position) is not BlockEntityECable placedCable)
                     return false;
 
+                if (placedCable.ElectricalProgressive==null)
+                    return false;
+
                 // обновляем текущий блок с кабелем 
                 var material = MyMiniLib.GetAttributeString(byItemStack.Block, "material", "");  // определяем материал
-                var indexV = voltagesInvert[byItemStack.Block.Variant["voltage"]];    // определяем индекс напряжения
+                var indexV = VoltagesInvert[byItemStack.Block.Variant["voltage"]];    // определяем индекс напряжения
                 var isolated = byItemStack.Block.Code.ToString().Contains("isolated");     // определяем изоляцию
                 var isolatedEnvironment = isolated; // гидроизоляция
 
@@ -131,16 +134,19 @@ namespace ElectricalProgressive.Content.Block.ECable
                 var newEparams = new EParams(indexV, maxCurrent, material, res, 1, crosssectional, false, isolated, isolatedEnvironment);
 
                 placedCable.Connection = facing;       //сообщаем направление
-                placedCable.Eparams = (newEparams, faceIndex);
+                placedCable.ElectricalProgressive.Eparams = (newEparams, faceIndex);
 
-                placedCable.AllEparams![faceIndex] = newEparams;
+                placedCable.ElectricalProgressive.AllEparams![faceIndex] = newEparams;
                 //markdirty тут строго не нужен!
 
                 return true;
             }
 
+            if (entity.ElectricalProgressive == null)
+                return false;
+
             // обновляем текущий блок с кабелем 
-            var lines = entity.AllEparams![faceIndex].lines; //сколько линий на грани уже?
+            var lines = entity.ElectricalProgressive.AllEparams![faceIndex].lines; //сколько линий на грани уже?
 
             if ((entity.Connection & facing) != 0)  //мы навелись уже на существующий кабель?
             {
@@ -148,10 +154,10 @@ namespace ElectricalProgressive.Content.Block.ECable
                 var entityConnection = entity.Connection & FacingHelper.FromFace(FacingHelper.Faces(facing).First());
 
                 //какой блок сейчас здесь находится
-                var indexV = entity.AllEparams[faceIndex].voltage;          //индекс напряжения этой грани
-                var material = entity.AllEparams[faceIndex].material;          //индекс материала этой грани
-                var burnout = entity.AllEparams[faceIndex].burnout;            //сгорело?
-                var isolated = entity.AllEparams[faceIndex].isolated;            //изолировано ?
+                var indexV = entity.ElectricalProgressive.AllEparams[faceIndex].voltage;          //индекс напряжения этой грани
+                var material = entity.ElectricalProgressive.AllEparams[faceIndex].material;          //индекс материала этой грани
+                var burnout = entity.ElectricalProgressive.AllEparams[faceIndex].burnout;            //сгорело?
+                var isolated = entity.ElectricalProgressive.AllEparams[faceIndex].isolated;            //изолировано ?
 
                 // берем ассет блока кабеля
                 var block = new GetCableAsset().CableAsset(api, entity.Block, indexV, material, 1, isolated ? 6 : 1);
@@ -176,7 +182,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                     byItemStack.StackSize -= FacingHelper.Count(entityConnection) - 1;
                 }
 
-                entity.AllEparams[faceIndex].lines = lines; // применяем линии
+                entity.ElectricalProgressive.AllEparams[faceIndex].lines = lines; // применяем линии
                 entity.MarkDirty(true);
                 return true;
             }
@@ -186,7 +192,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 if (lines == 0 && !HasSolidNeighbor(world, blockSelection.Position, faceIndex))
                     return false;
 
-                var indexV = voltagesInvert[byItemStack.Block.Variant["voltage"]];    //определяем индекс напряжения
+                var indexV = VoltagesInvert[byItemStack.Block.Variant["voltage"]];    //определяем индекс напряжения
                 var isolated = byItemStack.Block.Code.ToString().Contains("isolated");     //определяем изоляцию
                 var isolatedEnvironment = isolated; //гидроизоляция
 
@@ -200,17 +206,17 @@ namespace ElectricalProgressive.Content.Block.ECable
                 if (lines == 0)
                 {
                     var newEparams = new EParams(indexV, maxCurrent, material, res, 1, crosssectional, false, isolated, isolatedEnvironment);
-                    entity.Eparams = (newEparams, faceIndex);
+                    entity.ElectricalProgressive.Eparams = (newEparams, faceIndex);
 
-                    entity.AllEparams[faceIndex] = newEparams;
+                    entity.ElectricalProgressive.AllEparams[faceIndex] = newEparams;
                 }
                 else   //линий не 0, значит уже что-то там есть на грани
                 {
                     //какой блок сейчас здесь находится
-                    var indexV2 = entity.AllEparams[faceIndex].voltage;          //индекс напряжения этой грани
-                    var indexM2 = entity.AllEparams[faceIndex].material;          //индекс материала этой грани
-                    var burnout = entity.AllEparams[faceIndex].burnout;            //сгорело?
-                    var iso2 = entity.AllEparams[faceIndex].isolated;            //изолировано ?
+                    var indexV2 = entity.ElectricalProgressive.AllEparams[faceIndex].voltage;          //индекс напряжения этой грани
+                    var indexM2 = entity.ElectricalProgressive.AllEparams[faceIndex].material;          //индекс материала этой грани
+                    var burnout = entity.ElectricalProgressive.AllEparams[faceIndex].burnout;            //сгорело?
+                    var iso2 = entity.ElectricalProgressive.AllEparams[faceIndex].isolated;            //изолировано ?
 
                     var block = new GetCableAsset().CableAsset(api, entity.Block, indexV2, indexM2, 1, iso2 ? 6 : 1); // берем ассет блока кабеля
 
@@ -222,9 +228,9 @@ namespace ElectricalProgressive.Content.Block.ECable
                         byItemStack.StackSize -= lines - 1;          // отнимаем у игрока столько же, сколько установили
 
                     var newEparams = new EParams(indexV, maxCurrent, material, res, lines, crosssectional, false, isolated, isolatedEnvironment);
-                    entity.Eparams = (newEparams, faceIndex);
+                    entity.ElectricalProgressive.Eparams = (newEparams, faceIndex);
 
-                    entity.AllEparams[faceIndex] = newEparams;
+                    entity.ElectricalProgressive.AllEparams[faceIndex] = newEparams;
                 }
 
                 entity.Connection |= facing;
@@ -234,6 +240,13 @@ namespace ElectricalProgressive.Content.Block.ECable
             return true;
         }
 
+        /// <summary>
+        /// Проверяем соседний блок на сплошную грань
+        /// </summary>
+        /// <param name="world"></param>
+        /// <param name="pos"></param>
+        /// <param name="faceIndex"></param>
+        /// <returns></returns>
         private static bool HasSolidNeighbor(IWorldAccessor world, BlockPos pos, int faceIndex)
         {
             var neighborPos = pos.Copy();
@@ -253,6 +266,8 @@ namespace ElectricalProgressive.Content.Block.ECable
             var neighborBlock = world.BlockAccessor.GetBlock(neighborPos);
             return neighborBlock != null && neighborBlock.SideIsSolid(neighborPos, checkFace);
         }
+
+
 
         private bool CanAddCableToFace(bool burnout, AssetLocation requiredCable, EnumGameMode gameMode, ItemStack itemStack, int requiredCount)
         {
@@ -280,6 +295,9 @@ namespace ElectricalProgressive.Content.Block.ECable
             return true;
         }
 
+
+
+
         public override void OnBlockBroken(IWorldAccessor world, BlockPos position, IPlayer byPlayer, float dropQuantityMultiplier = 1)
         {
             if (this.api is ICoreClientAPI)
@@ -290,6 +308,9 @@ namespace ElectricalProgressive.Content.Block.ECable
                 base.OnBlockBroken(world, position, byPlayer, dropQuantityMultiplier);
                 return;
             }
+
+            if (entity.ElectricalProgressive == null)
+                return;
 
             if (byPlayer is not { CurrentBlockSelection: { } blockSelection })
             {
@@ -336,6 +357,7 @@ namespace ElectricalProgressive.Content.Block.ECable
 
             // здесь уже ломаем кабеля
             var connection = entity.Connection & ~selectedFacing; // отнимает выбранные соединения
+            selectedFacing = entity.Connection & ~connection;
             if (connection == Facing.None)
             {
                 base.OnBlockBroken(world, position, byPlayer, dropQuantityMultiplier);
@@ -355,18 +377,18 @@ namespace ElectricalProgressive.Content.Block.ECable
             //перебираем все грани выделенных кабелей
             foreach (var face in FacingHelper.Faces(selectedFacing))
             {
-                var indexV = entity.AllEparams![face.Index].voltage; //индекс напряжения этой грани
-                var material = entity.AllEparams[face.Index].material; //индекс материала этой грани
-                var indexQ = entity.AllEparams[face.Index].lines; //индекс линий этой грани
-                var isol = entity.AllEparams[face.Index].isolated; //изолировано ли?
-                var burn = entity.AllEparams[face.Index].burnout; //сгорело ли?
+                var indexV = entity.ElectricalProgressive.AllEparams![face.Index].voltage; //индекс напряжения этой грани
+                var material = entity.ElectricalProgressive.AllEparams[face.Index].material; //индекс материала этой грани
+                var indexQ = entity.ElectricalProgressive.AllEparams[face.Index].lines; //индекс линий этой грани
+                var isol = entity.ElectricalProgressive.AllEparams[face.Index].isolated; //изолировано ли?
+                var burn = entity.ElectricalProgressive.AllEparams[face.Index].burnout; //сгорело ли?
 
                 // берем направления только в этой грани
                 connection = selectedFacing & FacingHelper.FromFace(face);
 
                 //если грань осталась пустая
                 if ((entity.Connection & FacingHelper.FromFace(face)) == 0)
-                    entity.AllEparams[face.Index] = new();
+                    entity.ElectricalProgressive.AllEparams[face.Index] = new();
 
                 //сколько на этой грани проводов выронить
                 stackSize = FacingHelper.Count(connection) * indexQ;
@@ -403,22 +425,26 @@ namespace ElectricalProgressive.Content.Block.ECable
             if (world.BlockAccessor.GetBlockEntity(position) is not BlockEntityECable entity)
                 return base.GetDrops(world, position, byPlayer, dropQuantityMultiplier);
 
+            if (entity.ElectricalProgressive == null)
+                return base.GetDrops(world, position, byPlayer, dropQuantityMultiplier);
+
+
             var itemStacks = new ItemStack[] { };
 
             var connection = entity.Connection;
 
             foreach (var face in FacingHelper.Faces(entity.Connection))         //перебираем все грани выделенных кабелей
             {
-                var indexV = entity.AllEparams![face.Index].voltage;          //индекс напряжения этой грани
-                var material = entity.AllEparams[face.Index].material;          //индекс материала этой грани
-                var indexQ = entity.AllEparams[face.Index].lines;          //индекс линий этой грани
-                var isolated = entity.AllEparams[face.Index].isolated;          //изолировано ли?
-                var burnout = entity.AllEparams[face.Index].burnout;          //сгорело ли?
+                var indexV = entity.ElectricalProgressive.AllEparams![face.Index].voltage;          //индекс напряжения этой грани
+                var material = entity.ElectricalProgressive.AllEparams[face.Index].material;          //индекс материала этой грани
+                var indexQ = entity.ElectricalProgressive.AllEparams[face.Index].lines;          //индекс линий этой грани
+                var isolated = entity.ElectricalProgressive.AllEparams[face.Index].isolated;          //изолировано ли?
+                var burnout = entity.ElectricalProgressive.AllEparams[face.Index].burnout;          //сгорело ли?
 
                 connection = entity.Connection & FacingHelper.FromFace(face);                   //берем направления только в этой грани
 
                 if ((entity.Connection & FacingHelper.FromFace(face)) == 0) //если грань осталась пустая
-                    entity.AllEparams[face.Index] = new();
+                    entity.ElectricalProgressive.AllEparams[face.Index] = new();
 
                 var stackSize = FacingHelper.Count(connection) * indexQ;          //сколько на этой грани проводов выронить
 
@@ -505,16 +531,16 @@ namespace ElectricalProgressive.Content.Block.ECable
 
             foreach (var face in FacingHelper.Faces(selectedConnection))         //перебираем все грани выделенных кабелей
             {
-                var indexV = entity.AllEparams![face.Index].voltage;          //индекс напряжения этой грани
-                var material = entity.AllEparams![face.Index].material;          //индекс материала этой грани
-                var indexQ = entity.AllEparams![face.Index].lines;          //индекс линий этой грани
-                var isolated = entity.AllEparams![face.Index].isolated;          //изолировано ли?
-                var burnout = entity.AllEparams![face.Index].burnout;          //сгорело ли?
+                var indexV = entity.ElectricalProgressive.AllEparams![face.Index].voltage;          //индекс напряжения этой грани
+                var material = entity.ElectricalProgressive.AllEparams![face.Index].material;          //индекс материала этой грани
+                var indexQ = entity.ElectricalProgressive.AllEparams![face.Index].lines;          //индекс линий этой грани
+                var isolated = entity.ElectricalProgressive.AllEparams![face.Index].isolated;          //изолировано ли?
+                var burnout = entity.ElectricalProgressive.AllEparams![face.Index].burnout;          //сгорело ли?
 
                 var connection = selectedConnection & FacingHelper.FromFace(face);                   //берем направления только в этой грани
 
                 if ((entity.Connection & FacingHelper.FromFace(face)) == 0) //если грань осталась пустая
-                    entity.AllEparams[face.Index] = new();
+                    entity.ElectricalProgressive.AllEparams[face.Index] = new();
 
                 connectionStackSize = FacingHelper.Count(connection) * indexQ;          //сколько на этой грани проводов выронить
 
@@ -536,7 +562,7 @@ namespace ElectricalProgressive.Content.Block.ECable
         }
 
         /// <summary>
-        /// взаимодействие с кабелем/переключателем
+        /// Взаимодействие с кабелем/переключателем
         /// </summary>
         /// <param name="world"></param>
         /// <param name="byPlayer"></param>
@@ -576,7 +602,9 @@ namespace ElectricalProgressive.Content.Block.ECable
         /// <returns></returns>
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos position)
         {
-            if (blockAccessor.GetBlockEntity(position) is BlockEntityECable { AllEparams: not null } entity)
+            if (blockAccessor.GetBlockEntity(position) is BlockEntityECable entity &&
+                entity.ElectricalProgressive!=null &&
+                entity.ElectricalProgressive.AllEparams != null)
             {
                 var key = CacheDataKey.FromEntity(entity);
 
@@ -600,7 +628,9 @@ namespace ElectricalProgressive.Content.Block.ECable
         /// <returns></returns>
         public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos position)
         {
-            if (blockAccessor.GetBlockEntity(position) is BlockEntityECable { AllEparams: not null } entity)
+            if (blockAccessor.GetBlockEntity(position) is BlockEntityECable entity &&
+                entity.ElectricalProgressive != null &&
+                entity.ElectricalProgressive.AllEparams != null)
             {
                 var key = CacheDataKey.FromEntity(entity);
 
@@ -637,12 +667,12 @@ namespace ElectricalProgressive.Content.Block.ECable
         /// <param name="position"></param>
         /// <param name="chunkExtBlocks"></param>
         /// <param name="extIndex3d"></param>
-        // ---- Оптимизированный OnJsonTesselation ----
         public override void OnJsonTesselation(ref MeshData sourceMesh, ref int[] lightRgbsByCorner, BlockPos position, Vintagestory.API.Common.Block[] chunkExtBlocks, int extIndex3d)
         {
             if (this.api.World.BlockAccessor.GetBlockEntity(position) is not BlockEntityECable entity
                 || entity.Connection == Facing.None
-                || entity.AllEparams == null
+                || entity.ElectricalProgressive == null
+                || entity.ElectricalProgressive.AllEparams == null
                 || !entity.Block.Code.ToString().Contains("ecable"))
             {
                 base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, position, chunkExtBlocks, extIndex3d);
@@ -683,7 +713,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                     if ((key.Connection & faceAll) == 0) return;
 
                     int bufIndex = FacingHelper.Faces(faceAll).First().Index;
-                    var eparam = entity.AllEparams[bufIndex];
+                    var eparam = entity.ElectricalProgressive.AllEparams[bufIndex];
                     var indexV = eparam.voltage;
                     var indexM = eparam.material;
                     var indexQ = eparam.lines;
@@ -714,50 +744,50 @@ namespace ElectricalProgressive.Content.Block.ECable
                 // Define subfaces for each face (rotations in degrees, translations)
                 ProcessFace(Facing.NorthAll, new (Facing, float, float, float, Vec3f)[]
                 {
-            (Facing.NorthEast, 90f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
-            (Facing.NorthWest, 90f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f)),
-            (Facing.NorthUp, 90f, 0f, 0f, new Vec3f(0f, 0.5f, 0f)),
-            (Facing.NorthDown, 90f, 180f, 0f, new Vec3f(0f, -0.5f, 0f))
+                    (Facing.NorthEast, 90f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
+                    (Facing.NorthWest, 90f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f)),
+                    (Facing.NorthUp, 90f, 0f, 0f, new Vec3f(0f, 0.5f, 0f)),
+                    (Facing.NorthDown, 90f, 180f, 0f, new Vec3f(0f, -0.5f, 0f))
                 }, 90f, 0f, 0f);
 
                 ProcessFace(Facing.EastAll, new (Facing, float, float, float, Vec3f)[]
                 {
-            (Facing.EastNorth, 0f, 0f, 90f, new Vec3f(0f, 0f, -0.5f)),
-            (Facing.EastSouth, 180f, 0f, 90f, new Vec3f(0f, 0f, 0.5f)),
-            (Facing.EastUp, 90f, 0f, 90f, new Vec3f(0f, 0.5f, 0f)),
-            (Facing.EastDown, 270f, 0f, 90f, new Vec3f(0f, -0.5f, 0f))
+                    (Facing.EastNorth, 0f, 0f, 90f, new Vec3f(0f, 0f, -0.5f)),
+                    (Facing.EastSouth, 180f, 0f, 90f, new Vec3f(0f, 0f, 0.5f)),
+                    (Facing.EastUp, 90f, 0f, 90f, new Vec3f(0f, 0.5f, 0f)),
+                    (Facing.EastDown, 270f, 0f, 90f, new Vec3f(0f, -0.5f, 0f))
                 }, 0f, 0f, 90f);
 
                 ProcessFace(Facing.SouthAll, new (Facing, float, float, float, Vec3f)[]
                 {
-            (Facing.SouthEast, 270f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
-            (Facing.SouthWest, 270f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f)),
-            (Facing.SouthUp, 270f, 180f, 0f, new Vec3f(0f, 0.5f, 0f)),
-            (Facing.SouthDown, 270f, 0f, 0f, new Vec3f(0f, -0.5f, 0f))
+                    (Facing.SouthEast, 270f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
+                    (Facing.SouthWest, 270f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f)),
+                    (Facing.SouthUp, 270f, 180f, 0f, new Vec3f(0f, 0.5f, 0f)),
+                    (Facing.SouthDown, 270f, 0f, 0f, new Vec3f(0f, -0.5f, 0f))
                 }, 270f, 0f, 0f);
 
                 ProcessFace(Facing.WestAll, new (Facing, float, float, float, Vec3f)[]
                 {
-            (Facing.WestNorth, 0f, 0f, 270f, new Vec3f(0f, 0f, -0.5f)),
-            (Facing.WestSouth, 180f, 0f, 270f, new Vec3f(0f, 0f, 0.5f)),
-            (Facing.WestUp, 90f, 0f, 270f, new Vec3f(0f, 0.5f, 0f)),
-            (Facing.WestDown, 270f, 0f, 270f, new Vec3f(0f, -0.5f, 0f))
+                    (Facing.WestNorth, 0f, 0f, 270f, new Vec3f(0f, 0f, -0.5f)),
+                    (Facing.WestSouth, 180f, 0f, 270f, new Vec3f(0f, 0f, 0.5f)),
+                    (Facing.WestUp, 90f, 0f, 270f, new Vec3f(0f, 0.5f, 0f)),
+                    (Facing.WestDown, 270f, 0f, 270f, new Vec3f(0f, -0.5f, 0f))
                 }, 0f, 0f, 270f);
 
                 ProcessFace(Facing.UpAll, new (Facing, float, float, float, Vec3f)[]
                 {
-            (Facing.UpNorth, 0f, 0f, 180f, new Vec3f(0f, 0f, -0.5f)),
-            (Facing.UpEast, 0f, 270f, 180f, new Vec3f(0.5f, 0f, 0f)),
-            (Facing.UpSouth, 0f, 180f, 180f, new Vec3f(0f, 0f, 0.5f)),
-            (Facing.UpWest, 0f, 90f, 180f, new Vec3f(-0.5f, 0f, 0f))
+                    (Facing.UpNorth, 0f, 0f, 180f, new Vec3f(0f, 0f, -0.5f)),
+                    (Facing.UpEast, 0f, 270f, 180f, new Vec3f(0.5f, 0f, 0f)),
+                    (Facing.UpSouth, 0f, 180f, 180f, new Vec3f(0f, 0f, 0.5f)),
+                    (Facing.UpWest, 0f, 90f, 180f, new Vec3f(-0.5f, 0f, 0f))
                 }, 0f, 0f, 180f);
 
                 ProcessFace(Facing.DownAll, new (Facing, float, float, float, Vec3f)[]
                 {
-            (Facing.DownNorth, 0f, 0f, 0f, new Vec3f(0f, 0f, -0.5f)),
-            (Facing.DownSouth, 0f, 180f, 0f, new Vec3f(0f, 0f, 0.5f)),
-            (Facing.DownEast, 0f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
-            (Facing.DownWest, 0f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f))
+                    (Facing.DownNorth, 0f, 0f, 0f, new Vec3f(0f, 0f, -0.5f)),
+                    (Facing.DownSouth, 0f, 180f, 0f, new Vec3f(0f, 0f, 0.5f)),
+                    (Facing.DownEast, 0f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
+                    (Facing.DownWest, 0f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f))
                 }, 0f, 0f, 0f);
 
                 // Switches (orientation): reuse enabled/disabled variants with precomputed rotations
@@ -811,7 +841,13 @@ namespace ElectricalProgressive.Content.Block.ECable
         }
 
 
-        // ---- Оптимизированный CalculateBoxes ----
+        /// <summary>
+        /// Отрисовка коллайдеров/селектбоксов
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="boxesCache"></param>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         public static Dictionary<Facing, Cuboidf[]> CalculateBoxes(CacheDataKey key, IDictionary<CacheDataKey, Dictionary<Facing, Cuboidf[]>> boxesCache, BlockEntityECable entity)
         {
             // Если уже в кэше — сразу вернуть
@@ -844,7 +880,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 if ((key.Connection & faceAll) == 0) return;
 
                 int bufIndex = FacingHelper.Faces(faceAll).First().Index;
-                var eparam = entity.AllEparams![bufIndex];
+                var eparam = entity.ElectricalProgressive.AllEparams![bufIndex];
                 var indexV = eparam.voltage;
                 var indexM = eparam.material;
                 var indexQ = eparam.lines;
@@ -873,50 +909,50 @@ namespace ElectricalProgressive.Content.Block.ECable
 
             ProcessFaceBoxes(Facing.NorthAll, new (Facing, double, double, double)[]
             {
-        (Facing.NorthEast, 90, 270, 0),
-        (Facing.NorthWest, 90, 90, 0),
-        (Facing.NorthUp, 90, 0, 0),
-        (Facing.NorthDown, 90, 180, 0)
+                (Facing.NorthEast, 90, 270, 0),
+                (Facing.NorthWest, 90, 90, 0),
+                (Facing.NorthUp, 90, 0, 0),
+                (Facing.NorthDown, 90, 180, 0)
             }, 90, 0, 0);
 
             ProcessFaceBoxes(Facing.EastAll, new (Facing, double, double, double)[]
             {
-        (Facing.EastNorth, 0, 0, 90),
-        (Facing.EastSouth, 180, 0, 90),
-        (Facing.EastUp, 90, 0, 90),
-        (Facing.EastDown, 270, 0, 90)
+                (Facing.EastNorth, 0, 0, 90),
+                (Facing.EastSouth, 180, 0, 90),
+                (Facing.EastUp, 90, 0, 90),
+                (Facing.EastDown, 270, 0, 90)
             }, 0, 0, 90);
 
             ProcessFaceBoxes(Facing.SouthAll, new (Facing, double, double, double)[]
             {
-        (Facing.SouthEast, 270, 270, 0),
-        (Facing.SouthWest, 270, 90, 0),
-        (Facing.SouthUp, 270, 180, 0),
-        (Facing.SouthDown, 270, 0, 0)
+                (Facing.SouthEast, 270, 270, 0),
+                (Facing.SouthWest, 270, 90, 0),
+                (Facing.SouthUp, 270, 180, 0),
+                (Facing.SouthDown, 270, 0, 0)
             }, 270, 0, 0);
 
             ProcessFaceBoxes(Facing.WestAll, new (Facing, double, double, double)[]
             {
-        (Facing.WestNorth, 0, 0, 270),
-        (Facing.WestSouth, 180, 0, 270),
-        (Facing.WestUp, 90, 0, 270),
-        (Facing.WestDown, 270, 0, 270)
+                (Facing.WestNorth, 0, 0, 270),
+                (Facing.WestSouth, 180, 0, 270),
+                (Facing.WestUp, 90, 0, 270),
+                (Facing.WestDown, 270, 0, 270)
             }, 0, 0, 270);
 
             ProcessFaceBoxes(Facing.UpAll, new (Facing, double, double, double)[]
             {
-        (Facing.UpNorth, 0, 0, 180),
-        (Facing.UpEast, 0, 270, 180),
-        (Facing.UpSouth, 0, 180, 180),
-        (Facing.UpWest, 0, 90, 180)
+                (Facing.UpNorth, 0, 0, 180),
+                (Facing.UpEast, 0, 270, 180),
+                (Facing.UpSouth, 0, 180, 180),
+                (Facing.UpWest, 0, 90, 180)
             }, 0, 0, 180);
 
             ProcessFaceBoxes(Facing.DownAll, new (Facing, double, double, double)[]
             {
-        (Facing.DownNorth, 0, 0, 0),
-        (Facing.DownSouth, 0, 180, 0),
-        (Facing.DownEast, 0, 270, 0),
-        (Facing.DownWest, 0, 90, 0)
+                (Facing.DownNorth, 0, 0, 0),
+                (Facing.DownSouth, 0, 180, 0),
+                (Facing.DownEast, 0, 270, 0),
+                (Facing.DownWest, 0, 90, 0)
             }, 0, 0, 0);
 
             // Switch colliders (use block variants for switches if present)
@@ -1058,7 +1094,7 @@ namespace ElectricalProgressive.Content.Block.ECable
 
             public static CacheDataKey FromEntity(BlockEntityECable entityE)
             {
-                EParams[] bufAllEparams = entityE.AllEparams!.ToArray();
+                EParams[] bufAllEparams = entityE.ElectricalProgressive.AllEparams!.ToArray();
                 return new(
                     entityE.Connection,
                     entityE.Orientation,

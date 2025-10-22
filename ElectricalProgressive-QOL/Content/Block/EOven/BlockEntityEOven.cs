@@ -11,66 +11,39 @@ using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.EOven;
-public class    BlockEntityEOven : BlockEntityDisplay, IHeatSource
+public class BlockEntityEOven : BlockEntityDisplay, IHeatSource
 {
     public static readonly int BakingStageThreshold = 100;
-    public static readonly int maxBakingTemperatureAccepted = 260;
+    public static readonly int MaxBakingTemperatureAccepted = 260;
 
 
-    private bool burning;
-    private bool clientSidePrevBurning;
-    public float prevOvenTemperature = 20f;
-    public float ovenTemperature = 20f;
-    public readonly OvenItemData[] bakingData;
-    private ItemStack lastRemoved;
-    private int rotationDeg;
+    private bool _burning;
+    private bool _clientSidePrevBurning;
+    public float PrevOvenTemperature = 20f;
+    public float OvenTemperature = 20f;
+    public readonly OvenItemData[] BakingData;
+    private ItemStack _lastRemoved;
+    private int _rotationDeg;
 
 
-    internal InventoryEOven ovenInv;
+    internal InventoryEOven OvenInv;
 
     private int _maxConsumption;
 
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public (EParams, int) Eparams
-    {
-        get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-        set => this.ElectricalProgressive!.Eparams = value;
-    }
-
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public EParams[] AllEparams
-    {
-        get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-                    {
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams()
-                    };
-        set
-        {
-            if (this.ElectricalProgressive != null)
-            {
-                this.ElectricalProgressive.AllEparams = value;
-            }
-        }
-    }
 
 
-    public virtual float maxTemperature => 300f;
+    public virtual float MaxTemperature => 300f;
 
-    public virtual int bakeableCapacity => 4;
+    public virtual int BakeableCapacity => 4;
 
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
 
     public EnumOvenContentMode OvenContentMode  //как отображать содержимое
     {
         get
         {
-            ItemSlot firstNonEmptySlot = this.ovenInv.FirstNonEmptySlot;
+            ItemSlot firstNonEmptySlot = this.OvenInv.FirstNonEmptySlot;
             if (firstNonEmptySlot == null)
                 return EnumOvenContentMode.Quadrants;
 
@@ -86,21 +59,21 @@ public class    BlockEntityEOven : BlockEntityDisplay, IHeatSource
 
     public BlockEntityEOven()
     {
-        this.bakingData = new OvenItemData[this.bakeableCapacity];
-        for (int index = 0; index < this.bakeableCapacity; ++index)
-            this.bakingData[index] = new OvenItemData();
-        this.ovenInv = new InventoryEOven("eoven-0", this.bakeableCapacity);
-        
+        this.BakingData = new OvenItemData[this.BakeableCapacity];
+        for (int index = 0; index < this.BakeableCapacity; ++index)
+            this.BakingData[index] = new OvenItemData();
+        this.OvenInv = new InventoryEOven("eoven-0", this.BakeableCapacity);
+
     }
 
-    public override InventoryBase Inventory => (InventoryBase)this.ovenInv;
+    public override InventoryBase Inventory => (InventoryBase)this.OvenInv;
 
     public override string InventoryClassName => "eoven";
 
 
     public bool IsBurning;
 
-    private long listenerId;
+    private long _listenerId;
 
     /// <summary>
     /// Инициализация блока
@@ -110,11 +83,11 @@ public class    BlockEntityEOven : BlockEntityDisplay, IHeatSource
     {
         this.capi = api as ICoreClientAPI;
         base.Initialize(api);
-        this.ovenInv.LateInitialize(this.InventoryClassName + "-" + this.Pos?.ToString(), api);
-        listenerId=this.RegisterGameTickListener(new Action<float>(this.OnBurnTick), 100);
+        this.OvenInv.LateInitialize(this.InventoryClassName + "-" + this.Pos?.ToString(), api);
+        _listenerId = this.RegisterGameTickListener(new Action<float>(this.OnBurnTick), 100);
 
         this.SetRotation();
-        
+
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
     }
 
@@ -124,7 +97,7 @@ public class    BlockEntityEOven : BlockEntityDisplay, IHeatSource
     /// </summary>
     private void SetRotation()
     {
-        this.rotationDeg = this.Block.Variant["side"] switch
+        this._rotationDeg = this.Block.Variant["side"] switch
         {
             "south" => 270,
             "west" => 180,
@@ -138,76 +111,76 @@ public class    BlockEntityEOven : BlockEntityDisplay, IHeatSource
 
 
 
-// ...
+    // ...
 
-/// <summary>
-/// Возвращает экземпляр поведения указанного типа, безопасно (через MakeGenericMethod или обход списка behaviors).
-/// Возвращает null, если поведение не найдено.
-/// </summary>
-private object GetBehaviorByType(Type behaviorType)
-{
-    if (behaviorType == null) return null;
-
-    try
+    /// <summary>
+    /// Возвращает экземпляр поведения указанного типа, безопасно (через MakeGenericMethod или обход списка behaviors).
+    /// Возвращает null, если поведение не найдено.
+    /// </summary>
+    private object GetBehaviorByType(Type behaviorType)
     {
-        // 1) Попытка вызвать обобщённый GetBehavior<T>() через рефлексию
-        MethodInfo genericGetBehavior = null;
-        var methods = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        foreach (var m in methods)
+        if (behaviorType == null) return null;
+
+        try
         {
-            if (m.Name == "GetBehavior" && m.IsGenericMethodDefinition && m.GetGenericArguments().Length == 1)
+            // 1) Попытка вызвать обобщённый GetBehavior<T>() через рефлексию
+            MethodInfo genericGetBehavior = null;
+            var methods = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            foreach (var m in methods)
             {
-                genericGetBehavior = m;
-                break;
-            }
-        }
-
-        if (genericGetBehavior != null)
-        {
-            var gen = genericGetBehavior.MakeGenericMethod(behaviorType);
-            return gen.Invoke(this, null);
-        }
-
-        // 2) Fallback: пытаемся найти приватное поле/свойство, которое содержит массив/коллекцию behaviors
-        // Возможные имена полей/свойств (разные версии API)
-        string[] candidateFieldNames = new[] { "blockEntityBehaviors", "behaviors", "BlockEntityBehaviors", "Behaviors" };
-
-        foreach (var name in candidateFieldNames)
-        {
-            var fld = this.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (fld != null)
-            {
-                var col = fld.GetValue(this) as System.Collections.IEnumerable;
-                if (col != null)
+                if (m.Name == "GetBehavior" && m.IsGenericMethodDefinition && m.GetGenericArguments().Length == 1)
                 {
-                    foreach (var b in col)
-                    {
-                        if (b != null && behaviorType.IsAssignableFrom(b.GetType())) return b;
-                    }
+                    genericGetBehavior = m;
+                    break;
                 }
             }
 
-            var prop = this.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-            if (prop != null)
+            if (genericGetBehavior != null)
             {
-                var col = prop.GetValue(this) as System.Collections.IEnumerable;
-                if (col != null)
+                var gen = genericGetBehavior.MakeGenericMethod(behaviorType);
+                return gen.Invoke(this, null);
+            }
+
+            // 2) Fallback: пытаемся найти приватное поле/свойство, которое содержит массив/коллекцию behaviors
+            // Возможные имена полей/свойств (разные версии API)
+            string[] candidateFieldNames = new[] { "blockEntityBehaviors", "behaviors", "BlockEntityBehaviors", "Behaviors" };
+
+            foreach (var name in candidateFieldNames)
+            {
+                var fld = this.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (fld != null)
                 {
-                    foreach (var b in col)
+                    var col = fld.GetValue(this) as System.Collections.IEnumerable;
+                    if (col != null)
                     {
-                        if (b != null && behaviorType.IsAssignableFrom(b.GetType())) return b;
+                        foreach (var b in col)
+                        {
+                            if (b != null && behaviorType.IsAssignableFrom(b.GetType())) return b;
+                        }
+                    }
+                }
+
+                var prop = this.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (prop != null)
+                {
+                    var col = prop.GetValue(this) as System.Collections.IEnumerable;
+                    if (col != null)
+                    {
+                        foreach (var b in col)
+                        {
+                            if (b != null && behaviorType.IsAssignableFrom(b.GetType())) return b;
+                        }
                     }
                 }
             }
         }
-    }
-    catch
-    {
-        // ничего не делаем — вернём null внизу
-    }
+        catch
+        {
+            // ничего не делаем — вернём null внизу
+        }
 
-    return null;
-}
+        return null!;
+    }
 
 
 
@@ -238,9 +211,9 @@ private object GetBehaviorByType(Type behaviorType)
             return true;
         }
 
-        CollectibleObject collectible = activeHotbarSlot.Itemstack.Collectible;
+        var collectible = activeHotbarSlot.Itemstack.Collectible;
 
-        if (activeHotbarSlot.Itemstack.Equals(this.Api.World, this.lastRemoved, GlobalConstants.IgnoredStackAttributes) && !this.ovenInv[0].Empty)
+        if (activeHotbarSlot.Itemstack.Equals(this.Api.World, this._lastRemoved, GlobalConstants.IgnoredStackAttributes) && !this.OvenInv[0].Empty)
         {
             if (this.TryTake(byPlayer))
             {
@@ -283,7 +256,7 @@ private object GetBehaviorByType(Type behaviorType)
                 }
                 else
                 {
-                    BakingProperties bakingProperties1 = BakingProperties.ReadFrom(activeHotbarSlot.Itemstack);
+                    var bakingProperties1 = BakingProperties.ReadFrom(activeHotbarSlot.Itemstack);
                     if (bakingProperties1 == null) // если свойства выпекания не найдены
                     {
                         api.TriggerIngameError((object)this, "notbakeable", Lang.Get("This item is not bakeable."));
@@ -319,14 +292,14 @@ private object GetBehaviorByType(Type behaviorType)
     /// <returns></returns>
     public static bool IsValidInput(ItemSlot slot, InventoryEOven inv)
     {
-        BakingProperties bakingProperties1 = BakingProperties.ReadFrom(slot.Itemstack);
+        var bakingProperties1 = BakingProperties.ReadFrom(slot.Itemstack);
         if (bakingProperties1 == null || !slot.Itemstack.Attributes.GetBool("bakeable", true)) //если свойства выпекания не найдены
             return false;
 
         if (!inv[0].Empty) //если в духовке уже что-то лежит в первом слоте
         {
-            BakingProperties bakingProperties2 = BakingProperties.ReadFrom(slot.Itemstack);
-            if (bakingProperties2!=null && bakingProperties2.LargeItem)  //если уже лежит большое - выход
+            var bakingProperties2 = BakingProperties.ReadFrom(slot.Itemstack);
+            if (bakingProperties2 != null && bakingProperties2.LargeItem)  //если уже лежит большое - выход
                 return false;
 
             if (bakingProperties1.LargeItem) //если пытаемся положить большое в духовку, где уже что-то лежит
@@ -350,26 +323,26 @@ private object GetBehaviorByType(Type behaviorType)
     protected virtual bool TryPut(ItemSlot slot)
     {
         // проверка валидности предмета
-        if (!IsValidInput(slot, ovenInv))
+        if (!IsValidInput(slot, OvenInv))
             return false;
 
-        for (int index = 0; index < this.bakeableCapacity; ++index)
+        for (int index = 0; index < this.BakeableCapacity; ++index)
         {
-            if (this.ovenInv[index].Empty)
+            if (this.OvenInv[index].Empty)
             {
-                int num = slot.TryPutInto(this.Api.World, this.ovenInv[index]);
+                int num = slot.TryPutInto(this.Api.World, this.OvenInv[index]);
                 if (num > 0)
                 {
-                    this.bakingData[index] = new OvenItemData(this.ovenInv[index].Itemstack);
+                    this.BakingData[index] = new OvenItemData(this.OvenInv[index].Itemstack);
                     this.updateMesh(index);
                     this.MarkDirty(true);
-                    this.lastRemoved = null!;
+                    this._lastRemoved = null!;
                 }
 
             }
             if (index == 0)
             {
-                BakingProperties bakingProperties2 = BakingProperties.ReadFrom(this.ovenInv[0].Itemstack);
+                BakingProperties bakingProperties2 = BakingProperties.ReadFrom(this.OvenInv[0].Itemstack);
                 if (bakingProperties2 != null && bakingProperties2.LargeItem)            //если уже лежит пирог - выход
                 {
                     break;
@@ -381,12 +354,12 @@ private object GetBehaviorByType(Type behaviorType)
 
     protected virtual bool TryTake(IPlayer byPlayer)
     {
-        for (int bakeableCapacity = this.bakeableCapacity; bakeableCapacity >= 0; --bakeableCapacity)
+        for (int bakeableCapacity = this.BakeableCapacity; bakeableCapacity >= 0; --bakeableCapacity)
         {
-            if (!this.ovenInv[bakeableCapacity].Empty)
+            if (!this.OvenInv[bakeableCapacity].Empty)
             {
-                ItemStack itemstack = this.ovenInv[bakeableCapacity].TakeOut(1);
-                this.lastRemoved = itemstack == null ? null! : itemstack.Clone();
+                ItemStack itemstack = this.OvenInv[bakeableCapacity].TakeOut(1);
+                this._lastRemoved = itemstack == null ? null! : itemstack.Clone();
                 if (byPlayer.InventoryManager.TryGiveItemstack(itemstack))
                 {
                     AssetLocation place = itemstack?.Block?.Sounds?.Place!;
@@ -395,8 +368,8 @@ private object GetBehaviorByType(Type behaviorType)
                 if (itemstack?.StackSize > 0)
                     this.Api.World.SpawnItemEntity(itemstack, this.Pos);
                 //this.Api.World.Logger.Audit("{0} Took 1x{1} from Clay oven at {2}.", (object)byPlayer.PlayerName, (object)itemstack.Collectible.Code, (object)this.Pos);
-                this.bakingData[bakeableCapacity].CurHeightMul = 1f;
-                this.bakingData[bakeableCapacity].temp = 20;
+                this.BakingData[bakeableCapacity].CurHeightMul = 1f;
+                this.BakingData[bakeableCapacity].temp = 20;
                 this.updateMesh(bakeableCapacity);
                 this.MarkDirty(true);
                 return true;
@@ -417,7 +390,7 @@ private object GetBehaviorByType(Type behaviorType)
       BlockPos heatSourcePos,
       BlockPos heatReceiverPos)
     {
-        return Math.Max((float)(((double)this.ovenTemperature - 20.0) / ((double)this.maxTemperature - 20.0) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
+        return Math.Max((float)(((double)this.OvenTemperature - 20.0) / ((double)this.MaxTemperature - 20.0) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
     }
 
     /// <summary>
@@ -459,7 +432,7 @@ private object GetBehaviorByType(Type behaviorType)
 
                 Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant("state", "disabled")).BlockId, Pos);
                 MarkDirty(true);
-                if (!ovenInv.Empty)
+                if (!OvenInv.Empty)
                     Api.World.PlaySoundAt(new AssetLocation("electricalprogressiveqol:sounds/din_din_din"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
             }
         }
@@ -467,27 +440,27 @@ private object GetBehaviorByType(Type behaviorType)
 
 
 
-        if (!ovenInv.Empty)   //если не пусто
+        if (!OvenInv.Empty)   //если не пусто
         {
 
-            int EnvTemp = this.EnvironmentTemperature();
+            int envTemp = this.EnvironmentTemperature();
 
             if (this.IsBurning)
             {
                 //чем больше энергии тем выше будет максимальная достижимая температура
                 int power = ovenBehavior.PowerSetting;
-                float toTemp = Math.Max(EnvTemp, power * maxBakingTemperatureAccepted / _maxConsumption);
-                this.ovenTemperature = this.ChangeTemperature(this.ovenTemperature, toTemp, dt * 1.5F);
+                float toTemp = Math.Max(envTemp, power * MaxBakingTemperatureAccepted / _maxConsumption);
+                this.OvenTemperature = this.ChangeTemperature(this.OvenTemperature, toTemp, dt * 1.5F);
 
             }
             else
             {
-                this.ovenTemperature = ChangeTemperature(ovenTemperature, EnvironmentTemperature(), dt); //выравниваем температуру с окружающей средой
+                this.OvenTemperature = ChangeTemperature(OvenTemperature, EnvironmentTemperature(), dt); //выравниваем температуру с окружающей средой
 
             }
 
 
-            if (this.ovenTemperature > EnvTemp)  //греем и охлаждаем еду
+            if (this.OvenTemperature > envTemp)  //греем и охлаждаем еду
             {
                 this.HeatInput(dt * 1.2f, this.IsBurning);
             }
@@ -495,7 +468,7 @@ private object GetBehaviorByType(Type behaviorType)
 
         else
         {
-            this.ovenTemperature = ChangeTemperature(ovenTemperature, EnvironmentTemperature(), dt); //выравниваем температуру с окружающей средой
+            this.OvenTemperature = ChangeTemperature(OvenTemperature, EnvironmentTemperature(), dt); //выравниваем температуру с окружающей средой
         }
 
 
@@ -503,21 +476,21 @@ private object GetBehaviorByType(Type behaviorType)
         //if (++this.syncCount % 5 != 0 || !this.IsBurning && (double) this.prevOvenTemperature == (double) this.ovenTemperature && this.Inventory[0].Empty && this.Inventory[1].Empty && this.Inventory[2].Empty && this.Inventory[3].Empty)
         // return;
         this.MarkDirty();
-        this.prevOvenTemperature = this.ovenTemperature;
+        this.PrevOvenTemperature = this.OvenTemperature;
     }
 
     /// <summary>
     /// греем содержимое всей печи
     /// </summary>
     /// <param name="dt"></param>
-    /// <param name="Up"></param>
-    protected virtual void HeatInput(float dt, bool Up)
+    /// <param name="up"></param>
+    protected virtual void HeatInput(float dt, bool up)
     {
-        for (int index = 0; index < this.bakeableCapacity; ++index)
+        for (int index = 0; index < this.BakeableCapacity; ++index)
         {
-            ItemStack itemstack = this.ovenInv[index].Itemstack;
-            if (itemstack != null && (double)this.HeatStack(itemstack, dt, index, Up) >= 100.0)
-                if (Up)                             //если еда остывает, то не выпекаем и активно снижаем температуру в HeatStack
+            ItemStack itemstack = this.OvenInv[index].Itemstack;
+            if (itemstack != null && (double)this.HeatStack(itemstack, dt, index, up) >= 100.0)
+                if (up)                             //если еда остывает, то не выпекаем и активно снижаем температуру в HeatStack
                     this.IncrementallyBake(dt, index);
         }
     }
@@ -528,43 +501,43 @@ private object GetBehaviorByType(Type behaviorType)
     /// <param name="stack"></param>
     /// <param name="dt"></param>
     /// <param name="i"></param>
-    /// <param name="Up"></param>
+    /// <param name="up"></param>
     /// <returns></returns>
-    protected virtual float HeatStack(ItemStack stack, float dt, int i, bool Up)
+    protected virtual float HeatStack(ItemStack stack, float dt, int i, bool up)
     {
-        float temp = this.bakingData[i].temp;
-        float val2_1 = temp;
-        float targetTemp = Up                   //при нагревании тянемся к печи, при остывании к окржающей среде
-            ? this.ovenTemperature
+        float temp = this.BakingData[i].temp;
+        float val21 = temp;
+        float targetTemp = up                   //при нагревании тянемся к печи, при остывании к окржающей среде
+            ? this.OvenTemperature
             : this.EnvironmentTemperature();
 
         if ((double)temp < (double)targetTemp)
         {
             float dt1 = (1f + GameMath.Clamp((float)(((double)targetTemp - (double)temp) / 28.0), 0.0f, 1.6f)) * dt;
-            val2_1 = this.ChangeTemperature(temp, targetTemp, dt1);
+            val21 = this.ChangeTemperature(temp, targetTemp, dt1);
             CombustibleProperties combustibleProps = stack.Collectible.CombustibleProps;
             int maxTemperature = combustibleProps != null ? combustibleProps.MaxTemperature : 0;
             JsonObject itemAttributes = stack.ItemAttributes;
-            int val2_2 = itemAttributes != null ? itemAttributes["maxTemperature"].AsInt() : 0;
-            int val1 = Math.Max(maxTemperature, val2_2);
+            int val22 = itemAttributes != null ? itemAttributes["maxTemperature"].AsInt() : 0;
+            int val1 = Math.Max(maxTemperature, val22);
             if (val1 > 0)
-                val2_1 = Math.Min((float)val1, val2_1);
+                val21 = Math.Min((float)val1, val21);
         }
         else if ((double)temp > (double)targetTemp)
         {
             float dt2 = (1f + GameMath.Clamp((float)(((double)temp - (double)targetTemp) / 28.0), 0.0f, 1.6f)) * dt;
-            val2_1 = this.ChangeTemperature(temp, targetTemp, dt2);
+            val21 = this.ChangeTemperature(temp, targetTemp, dt2);
         }
-        if ((double)temp != (double)val2_1)
-            this.bakingData[i].temp = val2_1;
-        return val2_1;
+        if ((double)temp != (double)val21)
+            this.BakingData[i].temp = val21;
+        return val21;
     }
 
     protected virtual void IncrementallyBake(float dt, int slotIndex)
     {
         ItemSlot itemSlot = this.Inventory[slotIndex];
-        OvenItemData ovenItemData = this.bakingData[slotIndex];
-        ItemStack prevStack = this.ovenInv[slotIndex].Itemstack?.Clone();
+        OvenItemData ovenItemData = this.BakingData[slotIndex];
+        ItemStack prevStack = this.OvenInv[slotIndex].Itemstack?.Clone();
 
         float num1 = ovenItemData.BrowningPoint == 0 ? 160f : ovenItemData.BrowningPoint;
         double val = ovenItemData.temp / num1;
@@ -599,13 +572,13 @@ private object GetBehaviorByType(Type behaviorType)
                 Vintagestory.API.Common.Item obj = this.Api.World.GetItem(new AssetLocation(resultCode));
                 if (obj != null)
                     itemStack = new ItemStack(obj, 1);
-                
+
 
                 if (itemStack != null)
                 {
-                    (this.ovenInv[slotIndex].Itemstack.Collectible as IBakeableCallback)?.OnBaked(this.ovenInv[slotIndex].Itemstack, itemStack);
-                    this.ovenInv[slotIndex].Itemstack = itemStack;
-                    this.bakingData[slotIndex] = new OvenItemData(itemStack) { temp = temp };
+                    (this.OvenInv[slotIndex].Itemstack.Collectible as IBakeableCallback)?.OnBaked(this.OvenInv[slotIndex].Itemstack, itemStack);
+                    this.OvenInv[slotIndex].Itemstack = itemStack;
+                    this.BakingData[slotIndex] = new OvenItemData(itemStack) { temp = temp };
                     flag = true;
 
                     // XSkills: через глобальные ссылки
@@ -618,13 +591,13 @@ private object GetBehaviorByType(Type behaviorType)
             else
             {
                 ItemSlot outputSlot = new DummySlot(null);
-                if (itemSlot.Itemstack.Collectible.CanSmelt(this.Api.World, this.ovenInv, itemSlot.Itemstack, null))
+                if (itemSlot.Itemstack.Collectible.CanSmelt(this.Api.World, this.OvenInv, itemSlot.Itemstack, null))
                 {
-                    itemSlot.Itemstack.Collectible.DoSmelt(this.Api.World, this.ovenInv, this.ovenInv[slotIndex], outputSlot);
+                    itemSlot.Itemstack.Collectible.DoSmelt(this.Api.World, this.OvenInv, this.OvenInv[slotIndex], outputSlot);
                     if (!outputSlot.Empty)
                     {
-                        this.ovenInv[slotIndex].Itemstack = outputSlot.Itemstack;
-                        this.bakingData[slotIndex] = new OvenItemData(outputSlot.Itemstack) { temp = temp };
+                        this.OvenInv[slotIndex].Itemstack = outputSlot.Itemstack;
+                        this.BakingData[slotIndex] = new OvenItemData(outputSlot.Itemstack) { temp = temp };
                         flag = true;
 
                         if (ElectricalProgressiveQOL.xskillsEnabled)
@@ -660,7 +633,7 @@ private object GetBehaviorByType(Type behaviorType)
                 if (ElectricalProgressiveQOL.typeCooking.IsInstanceOfType(skill))
                 {
                     var applyAbilities = ElectricalProgressiveQOL.typeCooking.GetMethod("ApplyAbilities", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    applyAbilities?.Invoke(skill, new object[] { this.ovenInv[slotIndex], ownerPlayer, 0f, 1f, new ItemStack[] { prevStack }, 1f });
+                    applyAbilities?.Invoke(skill, new object[] { this.OvenInv[slotIndex], ownerPlayer, 0f, 1f, new ItemStack[] { prevStack }, 1f });
                 }
             }
         }
@@ -702,32 +675,32 @@ private object GetBehaviorByType(Type behaviorType)
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        this.ovenInv.FromTreeAttributes(tree);
-        this.burning = tree.GetInt("burn") > 0;
-        this.rotationDeg = tree.GetInt("rota");
-        this.ovenTemperature = tree.GetFloat("temp");
-        for (int i = 0; i < this.bakeableCapacity; ++i)
-            this.bakingData[i] = OvenItemData.ReadFromTree(tree, i);
+        this.OvenInv.FromTreeAttributes(tree);
+        this._burning = tree.GetInt("burn") > 0;
+        this._rotationDeg = tree.GetInt("rota");
+        this.OvenTemperature = tree.GetFloat("temp");
+        for (int i = 0; i < this.BakeableCapacity; ++i)
+            this.BakingData[i] = OvenItemData.ReadFromTree(tree, i);
         ICoreAPI api = this.Api;
         if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0)
             return;
         this.updateMeshes();
-        if (this.clientSidePrevBurning == this.IsBurning)
+        if (this._clientSidePrevBurning == this.IsBurning)
             return;
 
-        this.clientSidePrevBurning = this.IsBurning;
+        this._clientSidePrevBurning = this.IsBurning;
         this.MarkDirty(true);
     }
 
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
-        this.ovenInv.ToTreeAttributes(tree);
-        tree.SetInt("burn", this.burning ? 1 : 0);
-        tree.SetInt("rota", this.rotationDeg);
-        tree.SetFloat("temp", this.ovenTemperature);
-        for (int i = 0; i < this.bakeableCapacity; ++i)
-            this.bakingData[i].WriteToTree(tree, i);
+        this.OvenInv.ToTreeAttributes(tree);
+        tree.SetInt("burn", this._burning ? 1 : 0);
+        tree.SetInt("rota", this._rotationDeg);
+        tree.SetFloat("temp", this.OvenTemperature);
+        for (int i = 0; i < this.BakeableCapacity; ++i)
+            this.BakingData[i].WriteToTree(tree, i);
     }
 
 
@@ -754,7 +727,7 @@ private object GetBehaviorByType(Type behaviorType)
 
                     var pssType = ElectricalProgressiveQOL.asmXLib.GetType("XLib.XLeveling.PlayerSkillSet");
                     var abilityType = ElectricalProgressiveQOL.asmXLib.GetType("XLib.XLeveling.PlayerAbility");
-                    
+
                     var playerSkillSet = forPlayer?.Entity?.GetBehavior("SkillSet");
                     var indexer = pssType?.GetProperty("Item");
                     var abilitiesForSkill = indexer?.GetValue(playerSkillSet, new object[] { id });
@@ -763,12 +736,12 @@ private object GetBehaviorByType(Type behaviorType)
 
                     if (playerAbility != null && (int)(abilityType?.GetProperty("Tier")?.GetValue(playerAbility) ?? 0) >= 1)
                     {
-                        for (int slotId = 0; slotId < this.bakeableCapacity; ++slotId)
+                        for (int slotId = 0; slotId < this.BakeableCapacity; ++slotId)
                         {
-                            if (!this.ovenInv[slotId].Empty)
+                            if (!this.OvenInv[slotId].Empty)
                             {
-                                OvenItemData ovenItemData = this.bakingData[slotId];
-                                BakingProperties bakingProperties = BakingProperties.ReadFrom(this.ovenInv[slotId].Itemstack);
+                                OvenItemData ovenItemData = this.BakingData[slotId];
+                                BakingProperties bakingProperties = BakingProperties.ReadFrom(this.OvenInv[slotId].Itemstack);
                                 if (bakingProperties != null && ovenItemData != null)
                                 {
                                     float num = Math.Min((ovenItemData.BakedLevel - bakingProperties.LevelFrom) /
@@ -787,13 +760,13 @@ private object GetBehaviorByType(Type behaviorType)
         }
 
         stringBuilder.AppendLine();
-        for (int slotId = 0; slotId < this.bakeableCapacity; ++slotId)
+        for (int slotId = 0; slotId < this.BakeableCapacity; ++slotId)
         {
-            if (!this.ovenInv[slotId].Empty)
+            if (!this.OvenInv[slotId].Empty)
             {
-                ItemStack itemstack = this.ovenInv[slotId].Itemstack;
+                ItemStack itemstack = this.OvenInv[slotId].Itemstack;
                 stringBuilder.Append(itemstack.GetName());
-                stringBuilder.AppendLine($" ({Lang.Get("{0}°C", (int)this.bakingData[slotId].temp)})");
+                stringBuilder.AppendLine($" ({Lang.Get("{0}°C", (int)this.BakingData[slotId].temp)})");
             }
         }
     }
@@ -834,24 +807,24 @@ private object GetBehaviorByType(Type behaviorType)
     protected override float[][] genTransformationMatrices()
     {
         float[][] numArray = new float[this.DisplayedItems][];
-        Vec3f[] vec3fArray = new Vec3f[this.DisplayedItems];
+        Vec3f[] vec3FArray = new Vec3f[this.DisplayedItems];
         switch (this.OvenContentMode)
         {
             case EnumOvenContentMode.SingleCenter:           //положение пирога
-                vec3fArray[0] = new Vec3f(0.0f, 0.4f, 0.0f);
+                vec3FArray[0] = new Vec3f(0.0f, 0.4f, 0.0f);
                 break;
             case EnumOvenContentMode.Quadrants:             //положение хлеба
-                vec3fArray[0] = new Vec3f(-0.125f, 0.4f, -5f / 32f);
-                vec3fArray[1] = new Vec3f(-0.125f, 0.4f, 5f / 32f);
-                vec3fArray[2] = new Vec3f(3f / 16f, 0.4f, -5f / 32f);
-                vec3fArray[3] = new Vec3f(3f / 16f, 0.4f, 5f / 32f);
+                vec3FArray[0] = new Vec3f(-0.125f, 0.4f, -5f / 32f);
+                vec3FArray[1] = new Vec3f(-0.125f, 0.4f, 5f / 32f);
+                vec3FArray[2] = new Vec3f(3f / 16f, 0.4f, -5f / 32f);
+                vec3FArray[3] = new Vec3f(3f / 16f, 0.4f, 5f / 32f);
                 break;
         }
         for (int index = 0; index < numArray.Length; ++index)
         {
-            Vec3f vec3f = vec3fArray[index];
-            float y = this.bakingData[index].CurHeightMul;
-            numArray[index] = new Matrixf().Translate(vec3f.X, vec3f.Y, vec3f.Z).Translate(0.5f, 0.0f, 0.5f).RotateYDeg((float)this.rotationDeg).Scale(0.9f, y, 0.9f).Translate(-0.5f, 0.0f, -0.5f).Values;
+            Vec3f vec3F = vec3FArray[index];
+            float y = this.BakingData[index].CurHeightMul;
+            numArray[index] = new Matrixf().Translate(vec3F.X, vec3F.Y, vec3F.Z).Translate(0.5f, 0.0f, 0.5f).RotateYDeg((float)this._rotationDeg).Scale(0.9f, y, 0.9f).Translate(-0.5f, 0.0f, -0.5f).Values;
         }
         return numArray;
     }
@@ -859,11 +832,11 @@ private object GetBehaviorByType(Type behaviorType)
     protected override string getMeshCacheKey(ItemStack stack)
     {
         string str = "";
-        for (int slotId = 0; slotId < this.bakingData.Length; ++slotId)
+        for (int slotId = 0; slotId < this.BakingData.Length; ++slotId)
         {
             if (this.Inventory[slotId].Itemstack == stack)
             {
-                str = "-" + this.bakingData[slotId].CurHeightMul.ToString();
+                str = "-" + this.BakingData[slotId].CurHeightMul.ToString();
                 break;
             }
         }
@@ -902,7 +875,7 @@ private object GetBehaviorByType(Type behaviorType)
         base.OnBlockRemoved();
 
         // Очистка мусора
-        this.lastRemoved = null!;
+        this._lastRemoved = null!;
         this.capi = null;
 
     }
@@ -916,11 +889,11 @@ private object GetBehaviorByType(Type behaviorType)
 
         this.ElectricalProgressive?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
         // Очистка мусора
-        this.lastRemoved = null!;
+        this._lastRemoved = null!;
         this.capi = null;
 
         // Удаляем слушателя тика игры
-        UnregisterGameTickListener(listenerId);
+        UnregisterGameTickListener(_listenerId);
 
     }
 

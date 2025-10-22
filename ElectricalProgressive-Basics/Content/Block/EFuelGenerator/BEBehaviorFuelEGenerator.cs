@@ -11,10 +11,10 @@ namespace ElectricalProgressive.Content.Block.EFuelGenerator;
 
 public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBehavior(blockEntity), IElectricProducer
 {
-    private float PowerOrder;           // Просят столько энергии (сохраняется)
+    private float _powerOrder;           // Просят столько энергии (сохраняется)
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
 
-    private float PowerGive;           // Отдаем столько энергии (сохраняется)
+    private float _powerGive;           // Отдаем столько энергии (сохраняется)
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
     
@@ -64,34 +64,34 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
     /// <returns></returns>
     public float Produce_give()
     {
-        if (Blockentity is BlockEntityEFuelGenerator temp)
+        // отсекаем внештатные ситуации
+        if (Blockentity is not BlockEntityEFuelGenerator temp)
         {
-            if (temp.GenTemp > 20)
-            {
-                PowerGive = temp.Power;
-            }
-            else
-                PowerGive = 0;
-
+            return 0f;
         }
 
-        return PowerGive;
-
+        // отдаём энергию только если температура генератора выше 20 градусов
+        if (temp.GenTemp > 20)
+            _powerGive = temp.Power;
+        else
+            _powerGive = 0;
+        
+        return _powerGive;
     }
 
 
 
     public void Produce_order(float amount)
     {
-        PowerOrder = amount;
+        _powerOrder = amount;
     }
 
 
 
-    public float getPowerGive() => PowerGive;
+    public float getPowerGive() => _powerGive;
 
 
-    public float getPowerOrder() => PowerOrder;
+    public float getPowerOrder() => _powerOrder;
 
 
 
@@ -108,8 +108,8 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
         if (IsBurned)
             return;
 
-        stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(PowerGive, PowerOrder) / entity.Power * 100));
-        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(PowerGive, PowerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
+        stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / entity.Power * 100));
+        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
        
     }
 
@@ -122,8 +122,8 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
-        tree.SetFloat(PowerOrderKey, PowerOrder);
-        tree.SetFloat(PowerGiveKey, PowerGive);
+        tree.SetFloat(PowerOrderKey, _powerOrder);
+        tree.SetFloat(PowerGiveKey, _powerGive);
     }
 
 
@@ -136,7 +136,7 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
     {
         base.FromTreeAttributes(tree, worldAccessForResolve);
-        PowerOrder = tree.GetFloat(PowerOrderKey);
-        PowerGive = tree.GetFloat(PowerGiveKey);
+        _powerOrder = tree.GetFloat(PowerOrderKey);
+        _powerGive = tree.GetFloat(PowerGiveKey);
     }
 }

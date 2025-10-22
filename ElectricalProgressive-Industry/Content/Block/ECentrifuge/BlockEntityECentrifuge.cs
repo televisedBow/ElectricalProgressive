@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -16,7 +17,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 {
 
     internal InventoryCentrifuge inventory;
-    private GuiDialogCentrifuge clientDialog;
+    private GuiDialogCentrifuge _clientDialog;
     public override string InventoryClassName => "ecentrifuge";
     public CentrifugeRecipe CurrentRecipe;
     private readonly int _maxConsumption;
@@ -25,66 +26,36 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
     public string CurrentRecipeName;
     public float RecipeProgress;
-    private ILoadedSound ambientSound;
+    private ILoadedSound _ambientSound;
 
     public virtual string DialogTitle => Lang.Get("ecentrifuge-title-gui");
 
     public override InventoryBase Inventory => this.inventory;
 
-    private BlockEntityAnimationUtil animUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+    private BlockEntityAnimationUtil AnimUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
 
-    //-------------------------------------------------------------------------------------------------------
-    private BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
+    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
 
     public Facing Facing
     {
-        get => this.facing;
+        get => this._facing;
         set
         {
-            if (value != this.facing)
+            if (value != this._facing)
             {
                 this.ElectricalProgressive!.Connection =
-                    FacingHelper.FullFace(this.facing = value);
-            }
-        }
-    }
-
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public (EParams, int) Eparams
-    {
-        get => this.ElectricalProgressive?.Eparams ?? (new EParams(), 0);
-        set => this.ElectricalProgressive!.Eparams = value;
-    }
-
-    //передает значения из Block в BEBehaviorElectricalProgressive
-    public EParams[] AllEparams
-    {
-        get => this.ElectricalProgressive?.AllEparams ?? new EParams[]
-                    {
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams()
-                    };
-        set
-        {
-            if (this.ElectricalProgressive != null)
-            {
-                this.ElectricalProgressive.AllEparams = value;
+                    FacingHelper.FullFace(this._facing = value);
             }
         }
     }
 
 
-    //-------------------------------------------------------------------------------------------------------
 
 
-    private Facing facing = Facing.None;
-    private AssetLocation centrifugeSound;
+    private Facing _facing = Facing.None;
+    private AssetLocation _centrifugeSound;
 
     public BlockEntityECentrifuge()
     {
@@ -102,17 +73,17 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         this.inventory.LateInitialize(
             InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
 
-        this.RegisterGameTickListener(new Action<float>(this.Every1000ms), 1000);
+        this.RegisterGameTickListener(new Action<float>(this.Every1000Ms), 1000);
 
         if (api.Side == EnumAppSide.Client)
         {
             _capi = api as ICoreClientAPI;
-            if (animUtil != null)
+            if (AnimUtil != null)
             {
-                animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
+                AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
             }
 
-            centrifugeSound = new AssetLocation("electricalprogressiveindustry:sounds/ecentrifuge/centrifuge.ogg");
+            _centrifugeSound = new AssetLocation("electricalprogressiveindustry:sounds/ecentrifuge/centrifuge.ogg");
         }
     }
 
@@ -129,8 +100,8 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     /// <param name="slotid"></param>
     private void OnSlotModifid(int slotid)
     {
-        if (this.Api is ICoreClientAPI && this.clientDialog!=null)
-            this.clientDialog.Update(RecipeProgress);
+        if (this.Api is ICoreClientAPI && this._clientDialog!=null)
+            this._clientDialog.Update(RecipeProgress);
 
         if (slotid != 0)
             return;
@@ -150,10 +121,10 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         }
         this.MarkDirty();
 
-        if (this.clientDialog == null || !this.clientDialog.IsOpened())
+        if (this._clientDialog == null || !this._clientDialog.IsOpened())
             return;
 
-        this.clientDialog.SingleComposer.ReCompose();
+        this._clientDialog.SingleComposer.ReCompose();
 
         if (Api?.Side == EnumAppSide.Server)
         {
@@ -246,7 +217,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     /// Серверный тикер
     /// </summary>
     /// <param name="dt"></param>
-    private void Every1000ms(float dt)
+    private void Every1000Ms(float dt)
     {
         var beh = GetBehavior<BEBehaviorECentrifuge>();
         if (beh == null)
@@ -256,7 +227,9 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         }
 
 
-        if (this.AllEparams.Any(e => e.burnout))
+        if (ElectricalProgressive == null &&
+            ElectricalProgressive.AllEparams == null &&
+            ElectricalProgressive.AllEparams.Any(e => e.burnout))
             return;
 
 
@@ -282,7 +255,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         {
             if (!_wasCraftingLastTick)
             {
-                startSound();
+                StartSound();
             }
 
             StartAnimation();
@@ -302,7 +275,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
                 if (!canContinueCrafting)
                 {
                     StopAnimation();
-                    stopSound();
+                    StopSound();
                 }
 
                 // в любом случае сбрасываем прогресс
@@ -313,7 +286,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         else if (_wasCraftingLastTick)
         {
             StopAnimation();
-            stopSound();
+            StopSound();
             MarkDirty(true);
         }
 
@@ -391,14 +364,14 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     private void StartAnimation()
     {
         if (Api?.Side != EnumAppSide.Client
-            || animUtil == null
+            || AnimUtil == null
             || CurrentRecipe == null)
             return;
 
 
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == false)
         {
-            animUtil.StartAnimation(new AnimationMetaData()
+            AnimUtil.StartAnimation(new AnimationMetaData()
             {
                 Animation = "craft",
                 Code = "craft",
@@ -415,12 +388,12 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     /// </summary>
     private void StopAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || animUtil == null)
+        if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
             return;
 
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("craft") == true)
         {
-            animUtil.StopAnimation("craft");
+            AnimUtil.StopAnimation("craft");
         }
         
     }
@@ -429,22 +402,22 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     /// <summary>
     /// Запуск звука
     /// </summary>
-    public void startSound()
+    public void StartSound()
     {
-        if (this.ambientSound != null)
+        if (this._ambientSound != null)
             return;
         if ((Api != null ? (Api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0)
             return;
-        this.ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
+        this._ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
         {
-            Location = centrifugeSound,
+            Location = _centrifugeSound,
             ShouldLoop = true,
             Position = this.Pos.ToVec3f().Add(0.5f, 0.25f, 0.5f),
             DisposeOnFinish = false,
             Volume = 1f,
         });
 
-        this.ambientSound.Start();
+        this._ambientSound.Start();
     }
 
 
@@ -453,22 +426,22 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     /// <summary>
     /// Остановка звука
     /// </summary>
-    public void stopSound()
+    public void StopSound()
     {
-        if (this.ambientSound == null)
+        if (this._ambientSound == null)
             return;
-        this.ambientSound.Stop();
-        this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound)null;
+        this._ambientSound.Stop();
+        this._ambientSound.Dispose();
+        this._ambientSound = (ILoadedSound)null;
     }
 
 
 
-    protected virtual void UpdateState(float RecipeProgress)
+    protected virtual void UpdateState(float recipeProgress)
     {
-        if (Api != null && Api.Side == EnumAppSide.Client && clientDialog != null && clientDialog.IsOpened())
+        if (Api != null && Api.Side == EnumAppSide.Client && _clientDialog != null && _clientDialog.IsOpened())
         {
-            clientDialog.Update(RecipeProgress);
+            _clientDialog.Update(recipeProgress);
         }
         MarkDirty(true);
     }
@@ -484,10 +457,10 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         if (this.Api.Side == EnumAppSide.Client)
             this.toggleInventoryDialogClient(byPlayer, (CreateDialogDelegate)(() =>
             {
-                this.clientDialog =
+                this._clientDialog =
                   new GuiDialogCentrifuge(this.DialogTitle, this.Inventory, this.Pos, this.Api as ICoreClientAPI);
-                this.clientDialog.Update(RecipeProgress);
-                return (GuiDialogBlockEntity)this.clientDialog;
+                this._clientDialog.Update(RecipeProgress);
+                return (GuiDialogBlockEntity)this._clientDialog;
             }));
         return true;
     }
@@ -534,9 +507,9 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         if (this.Api != null)
             this.Inventory.AfterBlocksLoaded(this.Api.World);
         ICoreAPI api = this.Api;
-        if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0 || this.clientDialog == null)
+        if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0 || this._clientDialog == null)
             return;
-        this.clientDialog.Update(RecipeProgress);
+        this._clientDialog.Update(RecipeProgress);
     }
 
     public override void ToTreeAttributes(ITreeAttribute tree)
@@ -578,23 +551,23 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             ElectricalProgressive.Connection = Facing.None;
         }
 
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            this.clientDialog.TryClose();
-            this.clientDialog = null;
+            this._clientDialog.TryClose();
+            this._clientDialog = null;
         }
 
         StopAnimation();
 
-        if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
         {
-            this.animUtil.Dispose();
+            this.AnimUtil.Dispose();
         }
 
-        if (this.ambientSound != null)
+        if (this._ambientSound != null)
         {
-            this.ambientSound.Stop();
-            this.ambientSound.Dispose();
+            this._ambientSound.Stop();
+            this._ambientSound.Dispose();
         }
     }
 
@@ -628,11 +601,11 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     public override void OnBlockUnloaded()
     {
         base.OnBlockUnloaded();
-        this.clientDialog?.TryClose();
-        if (this.ambientSound == null)
+        this._clientDialog?.TryClose();
+        if (this._ambientSound == null)
             return;
-        this.ambientSound.Stop();
-        this.ambientSound.Dispose();
-        this.ambientSound = (ILoadedSound)null;
+        this._ambientSound.Stop();
+        this._ambientSound.Dispose();
+        this._ambientSound = (ILoadedSound)null;
     }
 }

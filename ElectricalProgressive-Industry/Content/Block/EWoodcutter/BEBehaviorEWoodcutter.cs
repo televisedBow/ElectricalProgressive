@@ -101,10 +101,14 @@ public class BEBehaviorEWoodcutter : BEBehaviorBase, IElectricConsumer
     public void Update()
     {
         //смотрим надо ли обновить модельку когда сгорает прибор
-        if (Api.World.BlockAccessor.GetBlockEntity(Blockentity.Pos) is not BlockEntityEWoodcutter entity)
+        if (Blockentity is not BlockEntityEWoodcutter entity ||
+            entity.ElectricalProgressive == null ||
+            entity.ElectricalProgressive.AllEparams is null)
+        {
             return;
+        }
 
-        var hasBurnout = entity.AllEparams.Any(e => e.burnout);
+        var hasBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.burnout);
         if (hasBurnout)
             ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
 
