@@ -30,7 +30,7 @@ public class BlockConnector : BlockEBase
             }
 
             if (world.BlockAccessor.GetBlockEntity(position) is BlockEntityECable  entity) {
-                if (byPlayer is { CurrentBlockSelection: { } blockSelection }) {
+                if (byPlayer is { CurrentBlockSelection: not null }) {
                     var connection = entity.Connection & ~Facing.AllAll;
 
                     if (connection != Facing.None) {

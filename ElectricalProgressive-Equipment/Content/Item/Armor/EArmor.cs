@@ -33,7 +33,7 @@ class EArmor : ItemWearable
     /// <param name="amount"></param>
     public override void DamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int amount = 1)
     {
-        int durability = itemslot.Itemstack.Attributes.GetInt("durability");
+        var durability = itemslot.Itemstack.Attributes.GetInt("durability");
         if (durability >= amount)
         {
             durability -= amount;
@@ -61,8 +61,8 @@ class EArmor : ItemWearable
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        int energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
         dsc.AppendLine(energy + "/" + maxEnergy + " " + Lang.Get("J"));
     }
 

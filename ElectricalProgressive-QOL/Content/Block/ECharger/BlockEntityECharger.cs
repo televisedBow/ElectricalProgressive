@@ -17,7 +17,7 @@ namespace ElectricalProgressive.Content.Block.ECharger;
 
 public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 {
-    private InventoryECharger _inventory;
+    private readonly InventoryECharger _inventory;
     public override InventoryBase Inventory => _inventory;
     public override string InventoryClassName => "charger";
 
@@ -27,7 +27,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
     private CollectibleObject _nowTesselatingObj;
     private ICoreClientAPI _capi;
 
-    private long listenerId;
+    private long _listenerId;
 
     public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
@@ -81,11 +81,11 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
                 Api.World.Logger.Warning("Текстура {0} не найдена в текстурах предмета или формы, используется путь: {1}", textureCode, assetLocation);
             }
 
-            return getOrCreateTexPos(assetLocation);
+            return GetOrCreateTexPos(assetLocation);
         }
     }
 
-    private TextureAtlasPosition? getOrCreateTexPos(AssetLocation texturePath)
+    private TextureAtlasPosition? GetOrCreateTexPos(AssetLocation texturePath)
     {
         var textureAtlasPosition = _capi.BlockTextureAtlas[texturePath];
         if (textureAtlasPosition != null)
@@ -146,7 +146,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         }
         else
         {
-            listenerId = RegisterGameTickListener(OnTick, 1000);
+            _listenerId = RegisterGameTickListener(OnTick, 1000);
         }
 
         MarkDirty(true);
@@ -165,7 +165,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         _nowTesselatingObj = null;
         _capi = null;
 
-        UnregisterGameTickListener(listenerId); //отменяем слушатель тика, если он есть
+        UnregisterGameTickListener(_listenerId); //отменяем слушатель тика, если он есть
     }
 
     //проверка, нужно ли заряжать
@@ -196,9 +196,9 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
                     MarkDirty(true);
                 }
 
-                int maxReceive = GetBehavior<BEBehaviorECharger>().PowerSetting;        // мощность в заряднике
-                int consume = MyMiniLib.GetAttributeInt(stack.Item, "consume", 20);     //размер минимальной порции          
-                int received = Math.Min(maxDurability - durability, maxReceive / consume); // приращение прочности
+                var maxReceive = GetBehavior<BEBehaviorECharger>().PowerSetting;        // мощность в заряднике
+                var consume = MyMiniLib.GetAttributeInt(stack.Item, "consume", 20);     //размер минимальной порции          
+                var received = Math.Min(maxDurability - durability, maxReceive / consume); // приращение прочности
                 durability += received;                                                 // новая прочность
                 stack.Attributes.SetInt("durability", durability);                      // обновляем прочность в атрибутах
             }
@@ -286,7 +286,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
             return;
 
         var stack = this._inventory[slotId].Itemstack;
-        Vec3f origin = new Vec3f(0.5f, 0.5f, 0.5f);
+        var origin = new Vec3f(0.5f, 0.5f, 0.5f);
 
         if (stack.Class == EnumItemClass.Item)
         {
@@ -397,7 +397,7 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 
         player.InventoryManager.ActiveHotbarSlot.TryPutInto(Api.World, Inventory[slot]);
 
-        didInteract(player);
+        DidInteract(player);
 
         return true;
     }
@@ -421,12 +421,12 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         else if (this.Block.Variant["state"] == "burned")
             Api.World.BlockAccessor.ExchangeBlock(Api.World.GetBlock(Block.CodeWithVariant("state", "burned")).BlockId, Pos);
 
-        didInteract(player);
+        DidInteract(player);
 
         return true;
     }
 
-    void didInteract(IPlayer player)
+    void DidInteract(IPlayer player)
     {
         Api.World.PlaySoundAt(new AssetLocation("sounds/player/buildhigh"), Pos.X, Pos.Y, Pos.Z, player, false);
         if (Api is ICoreClientAPI)
@@ -576,9 +576,9 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
 
         if (stack?.Item != null && stack.Collectible.Attributes["chargable"].AsBool(false)) //предмет
         {
-            int consume = MyMiniLib.GetAttributeInt(stack.Item, "consume", 20); //количество энергии, которое потребляет блок порцией
-            int energy = stack.Attributes.GetInt("durability") * consume;
-            int maxEnergy = stack.Collectible.GetMaxDurability(stack) * consume;
+            var consume = MyMiniLib.GetAttributeInt(stack.Item, "consume", 20); //количество энергии, которое потребляет блок порцией
+            var energy = stack.Attributes.GetInt("durability") * consume;
+            var maxEnergy = stack.Collectible.GetMaxDurability(stack) * consume;
 
             stringBuilder.AppendLine();
             stringBuilder.AppendLine(stack.GetName());
@@ -587,9 +587,9 @@ public class BlockEntityECharger : BlockEntityContainer, ITexPositionSource
         }
         else if (stack?.Block is IEnergyStorageItem) //блок
         {
-            int consume = MyMiniLib.GetAttributeInt(stack.Block, "consume", 20); //количество энергии, которое потребляет блок порцией
-            int energy = stack.Attributes.GetInt("durability") * consume;
-            int maxEnergy = stack.Collectible.GetMaxDurability(stack) * consume;
+            var consume = MyMiniLib.GetAttributeInt(stack.Block, "consume", 20); //количество энергии, которое потребляет блок порцией
+            var energy = stack.Attributes.GetInt("durability") * consume;
+            var maxEnergy = stack.Collectible.GetMaxDurability(stack) * consume;
 
             stringBuilder.AppendLine();
             stringBuilder.AppendLine(stack.GetName());

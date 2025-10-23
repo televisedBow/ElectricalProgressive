@@ -29,7 +29,7 @@ public class FlyToggleEvent : ModSystem
 
     // Статическое поле для хранения слотов брони
     private static readonly int[] ArmorSlots = ElectricalProgressiveEquipment.combatoverhaul
-        ? new[] { 34, 35, 36, 26, 27, 28 }
+        ? [34, 35, 36, 26, 27, 28]
         : Enumerable.Repeat(13, 6).ToArray();
 
     int consume = 20; // Количество энергии, потребляемое в секунду при полете
@@ -91,11 +91,11 @@ public class FlyToggleEvent : ModSystem
     /// <param name="dt"></param>
     private void onTickItem(float dt)
     {
-        double totalHours = this.sapi!.World.Calendar.TotalHours;
-        double num = totalHours - this.lastCheckTotalHours;
+        var totalHours = this.sapi!.World.Calendar.TotalHours;
+        var num = totalHours - this.lastCheckTotalHours;
         if (num <= 0.05)
             return;
-        foreach (IPlayer player in this.sapi!.World.AllOnlinePlayers)
+        foreach (var player in this.sapi!.World.AllOnlinePlayers)
         {
             var inventory = player.InventoryManager.GetOwnInventory("character");
             if (inventory == null) continue;
@@ -122,7 +122,7 @@ public class FlyToggleEvent : ModSystem
     /// <returns></returns>
     private static (EArmor?, ItemSlot?) FindEquippedArmor(IInventory inventory)
     {
-        foreach (int slot in ArmorSlots)
+        foreach (var slot in ArmorSlots)
         {
             var itemSlot = inventory[slot];
             if (itemSlot?.Itemstack?.Collectible is EArmor armor)
@@ -143,7 +143,7 @@ public class FlyToggleEvent : ModSystem
     {
         if (itemSlot?.Itemstack == null) return;
 
-        int energy = itemSlot.Itemstack.Attributes.GetInt("durability") * consume;
+        var energy = itemSlot.Itemstack.Attributes.GetInt("durability") * consume;
         
         if (energy >= consumeFly / timeDelta)
         {
@@ -178,8 +178,8 @@ public class FlyToggleEvent : ModSystem
     /// <param name="timeDelta"></param>
     private void ApplyEnergyConsumption(ItemSlot itemSlot, double timeDelta)
     {
-        int baseConsume = MyMiniLib.GetAttributeInt(itemSlot.Itemstack.Item, "consume", 20);
-        int damage = (int)(consumeFly / timeDelta / baseConsume);
+        var baseConsume = MyMiniLib.GetAttributeInt(itemSlot.Itemstack.Item, "consume", 20);
+        var damage = (int)(consumeFly / timeDelta / baseConsume);
         
         itemSlot.Itemstack.Item.DamageItem(sapi.World, null, itemSlot, damage);
         itemSlot.MarkDirty();
@@ -210,9 +210,9 @@ public class FlyToggleEvent : ModSystem
 
     private void onTickCheckFly(float dt)
     {
-        foreach (IPlayer allOnlinePlayer in this.sapi!.World.AllOnlinePlayers)
+        foreach (var allOnlinePlayer in this.sapi!.World.AllOnlinePlayers)
         {
-            IInventory ownInventory = allOnlinePlayer.InventoryManager.GetOwnInventory("character");
+            var ownInventory = allOnlinePlayer.InventoryManager.GetOwnInventory("character");
             if (ownInventory != null)
             {
                 var itemSlot = FindEquippedArmor(ownInventory).Item2;
@@ -276,8 +276,8 @@ public class FlyToggleEvent : ModSystem
     {
         if (fromPlayer == null || bt == null)
             return;
-        bool successful = Toggle(fromPlayer, bt);
-        FlyResponse bres = new FlyResponse();
+        var successful = Toggle(fromPlayer, bt);
+        var bres = new FlyResponse();
         if (successful)
         {
             bres.response = "success";
@@ -346,11 +346,11 @@ public class FlyToggleEvent : ModSystem
         if (api!.Side != EnumAppSide.Client)
             return false;
         base.Mod.Logger.VerboseDebug("AngelBelt Fly Key Pressed");
-        bool hasBelt = PlayerHasBelt();
+        var hasBelt = PlayerHasBelt();
 
         if (hasBelt)
         {
-            FlyToggle flyToggle = new FlyToggle()
+            var flyToggle = new FlyToggle()
             {
                 toggle = capi!.World.Player.PlayerUID,
                 savedspeed = this.SavedSpeedMult,
@@ -389,7 +389,7 @@ public class FlyToggleEvent : ModSystem
                 return false;
             }
 
-            IInventory ownInventory = this.capi.World.Player.InventoryManager.GetOwnInventory("character");
+            var ownInventory = this.capi.World.Player.InventoryManager.GetOwnInventory("character");
             if (ownInventory == null)
             {
                 return false;

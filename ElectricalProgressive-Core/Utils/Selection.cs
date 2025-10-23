@@ -6,19 +6,19 @@ namespace ElectricalProgressive.Utils;
 
 public class Selection
 {
-    private readonly bool didOffset;
-    private readonly Vec3d hitPosition;
+    private readonly bool _didOffset;
+    private readonly Vec3d _hitPosition;
 
     public Selection(Vec3d hitPosition, bool didOffset)
     {
-        this.hitPosition = hitPosition;
-        this.didOffset = didOffset;
+        this._hitPosition = hitPosition;
+        this._didOffset = didOffset;
     }
 
     public Selection(BlockSelection blockSelection)
     {
-        this.hitPosition = blockSelection.HitPosition;
-        this.didOffset = blockSelection.DidOffset;
+        this._hitPosition = blockSelection.HitPosition;
+        this._didOffset = blockSelection.DidOffset;
     }
 
     public Vec2d Position2D
@@ -29,13 +29,13 @@ public class Selection
             {
                 case BlockFacing.indexNORTH:
                 case BlockFacing.indexSOUTH:
-                    return new Vec2d(this.hitPosition.X, this.hitPosition.Y);
+                    return new Vec2d(this._hitPosition.X, this._hitPosition.Y);
                 case BlockFacing.indexEAST:
                 case BlockFacing.indexWEST:
-                    return new Vec2d(this.hitPosition.Y, this.hitPosition.Z);
+                    return new Vec2d(this._hitPosition.Y, this._hitPosition.Z);
                 case BlockFacing.indexUP:
                 case BlockFacing.indexDOWN:
-                    return new Vec2d(this.hitPosition.X, this.hitPosition.Z);
+                    return new Vec2d(this._hitPosition.X, this._hitPosition.Z);
                 default:
                     throw new Exception();
             }
@@ -75,29 +75,29 @@ public class Selection
     {
         get
         {
-            var normalize = this.hitPosition.SubCopy(0.5f, 0.5f, 0.5f);
+            var normalize = this._hitPosition.SubCopy(0.5f, 0.5f, 0.5f);
 
             // Находим координату с наибольшим абсолютным значением
-            float absX = (float)Math.Abs(normalize.X);
-            float absY = (float)Math.Abs(normalize.Y);
-            float absZ = (float)Math.Abs(normalize.Z);
+            var absX = (float)Math.Abs(normalize.X);
+            var absY = (float)Math.Abs(normalize.Y);
+            var absZ = (float)Math.Abs(normalize.Z);
 
             if (absX >= absY && absX >= absZ)
             {
-                return (normalize.X > 0) ^ this.didOffset
+                return (normalize.X > 0) ^ this._didOffset
                     ? BlockFacing.EAST
                     : BlockFacing.WEST;
             }
 
             if (absZ >= absX && absZ >= absY)
             {
-                return (normalize.Z > 0) ^ this.didOffset
+                return (normalize.Z > 0) ^ this._didOffset
                     ? BlockFacing.SOUTH
                     : BlockFacing.NORTH;
             }
 
             // Оставшийся случай (Y)
-            return (normalize.Y > 0) ^ this.didOffset
+            return (normalize.Y > 0) ^ this._didOffset
                 ? BlockFacing.UP
                 : BlockFacing.DOWN;
         }
@@ -129,10 +129,10 @@ public class Selection
         // Добавляем небольшую погрешность для обработки граничных случаев
         const float epsilon = 0.0001f;
 
-        bool right = hitPosition.X >= 0.5f - epsilon;
-        bool left = hitPosition.X <= 0.5f + epsilon;
-        bool top = hitPosition.Y >= 0.5f - epsilon;
-        bool bottom = hitPosition.Y <= 0.5f + epsilon;
+        var right = hitPosition.X >= 0.5f - epsilon;
+        var left = hitPosition.X <= 0.5f + epsilon;
+        var top = hitPosition.Y >= 0.5f - epsilon;
+        var bottom = hitPosition.Y <= 0.5f + epsilon;
 
         // Обрабатываем все возможные комбинации
         if (right && top && !left && !bottom) // правый верхний угол

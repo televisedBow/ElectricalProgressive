@@ -73,7 +73,7 @@ class EAxe : ItemAxe
     /// <param name="amount"></param>
     public override void DamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int amount = 1)
     {
-        int durability = itemslot.Itemstack.Attributes.GetInt("durability");
+        var durability = itemslot.Itemstack.Attributes.GetInt("durability");
         if (durability > amount)
         {
             durability -= amount;
@@ -99,7 +99,7 @@ class EAxe : ItemAxe
     /// <param name="handling"></param>
     public override void OnHeldAttackStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, ref EnumHandHandling handling)
     {
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
         if (durability > 1)
         {
             durability -= 1;
@@ -129,7 +129,7 @@ class EAxe : ItemAxe
     /// <param name="handling"></param>
     public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
     {
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
         if (durability > 1)
         {
             durability -= 1;
@@ -162,7 +162,7 @@ class EAxe : ItemAxe
       BlockSelection blockSel,
       float dropQuantityMultiplier = 1f)
     {
-        int durability = itemslot.Itemstack.Attributes.GetInt("durability"); //текущая энергия
+        var durability = itemslot.Itemstack.Attributes.GetInt("durability"); //текущая энергия
         if (durability > 1)
         {
             IPlayer? player = null;
@@ -174,31 +174,31 @@ class EAxe : ItemAxe
 
             int resistance;
             int woodTier;
-            Stack<BlockPos> stack = FindTree(world, blockSel.Position, out resistance, out woodTier);
+            var stack = FindTree(world, blockSel.Position, out resistance, out woodTier);
             if (stack.Count == 0)
             {
                 return base.OnBlockBrokenWith(world, byEntity, itemslot, blockSel, dropQuantityMultiplier);
             }
 
-            bool flag = DamagedBy != null && DamagedBy.Contains(EnumItemDamageSource.BlockBreaking);
-            float num2 = 1f;
-            float num3 = 0.8f;
-            int num4 = 0;
-            bool flag2 = true;
-            double num = api.ModLoader.GetModSystem<WeatherSystemBase>()?.WeatherDataSlowAccess.GetWindSpeed(byEntity.SidedPos.XYZ) ?? 0.0;
+            var flag = DamagedBy != null && DamagedBy.Contains(EnumItemDamageSource.BlockBreaking);
+            var num2 = 1f;
+            var num3 = 0.8f;
+            var num4 = 0;
+            var flag2 = true;
+            var num = api.ModLoader.GetModSystem<WeatherSystemBase>()?.WeatherDataSlowAccess.GetWindSpeed(byEntity.SidedPos.XYZ) ?? 0.0;
             while (stack.Count > 0)
             {
-                BlockPos blockPos = stack.Pop();
+                var blockPos = stack.Pop();
                 var block = world.BlockAccessor.GetBlock(blockPos);
-                bool flag3 = block.BlockMaterial == EnumBlockMaterial.Wood;
+                var flag3 = block.BlockMaterial == EnumBlockMaterial.Wood;
                 if (flag3 && !flag2)
                 {
                     continue;
                 }
 
                 num4++;
-                bool flag4 = block.Code.Path.Contains("branchy");
-                bool flag5 = block.BlockMaterial == EnumBlockMaterial.Leaves;
+                var flag4 = block.Code.Path.Contains("branchy");
+                var flag5 = block.BlockMaterial == EnumBlockMaterial.Leaves;
                 world.BlockAccessor.BreakBlock(blockPos, player, flag5 ? num2 : (flag4 ? num3 : 1f));
                 if (world.Side == EnumAppSide.Client)
                 {
@@ -266,8 +266,8 @@ class EAxe : ItemAxe
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        int energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
 
         dsc.AppendLine(energy + "/" + maxEnergy + " " + Lang.Get("J"));
     }

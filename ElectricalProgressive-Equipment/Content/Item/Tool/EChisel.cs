@@ -31,7 +31,7 @@ class EChisel : ItemChisel
     /// <param name="amount"></param>
     public override void DamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int amount = 1)
     {
-        int durability = itemslot.Itemstack.Attributes.GetInt("durability");
+        var durability = itemslot.Itemstack.Attributes.GetInt("durability");
         if (durability > amount)
         {
             durability -= amount;
@@ -58,7 +58,7 @@ class EChisel : ItemChisel
     public override void OnHeldAttackStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, ref EnumHandHandling handling)
     {
 
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
         if (durability > 1)
         {
             durability -= 1;
@@ -68,10 +68,10 @@ class EChisel : ItemChisel
 
             if (!(blockSel?.Position == null))
             {
-                IPlayer player = (byEntity as EntityPlayer)!.Player;
-                BlockPos position = blockSel.Position;
+                var player = (byEntity as EntityPlayer)!.Player;
+                var position = blockSel.Position;
                 var block = byEntity.World.BlockAccessor.GetBlock(position);
-                ModSystemBlockReinforcement modSystem = api.ModLoader.GetModSystem<ModSystemBlockReinforcement>();
+                var modSystem = api.ModLoader.GetModSystem<ModSystemBlockReinforcement>();
                 if (modSystem != null && modSystem.IsReinforced(position))
                 {
                     player.InventoryManager.ActiveHotbarSlot.MarkDirty();
@@ -118,7 +118,7 @@ class EChisel : ItemChisel
     /// <param name="handling"></param>
     public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling)
     {
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
         if (durability > 1)
         {
             durability -= 1;
@@ -138,11 +138,11 @@ class EChisel : ItemChisel
                 return;
             }
 
-            BlockPos position = blockSel.Position;
+            var position = blockSel.Position;
             var block = byEntity.World.BlockAccessor.GetBlock(position);
-            IPlayer player = (byEntity as EntityPlayer)!.Player;
+            var player = (byEntity as EntityPlayer)!.Player;
 
-            ModSystemBlockReinforcement modSystem = api.ModLoader.GetModSystem<ModSystemBlockReinforcement>();
+            var modSystem = api.ModLoader.GetModSystem<ModSystemBlockReinforcement>();
             if (modSystem != null && modSystem.IsReinforced(position))
             {
                 player.InventoryManager.ActiveHotbarSlot.MarkDirty();
@@ -157,7 +157,7 @@ class EChisel : ItemChisel
 
             if (block is BlockGroundStorage)
             {
-                ItemSlot firstNonEmptySlot = (api.World.BlockAccessor.GetBlockEntity(position) as BlockEntityGroundStorage)!.Inventory.FirstNonEmptySlot;
+                var firstNonEmptySlot = (api.World.BlockAccessor.GetBlockEntity(position) as BlockEntityGroundStorage)!.Inventory.FirstNonEmptySlot;
                 if (firstNonEmptySlot != null && firstNonEmptySlot.Itemstack.Block != null && IsChiselingAllowedFor(api, position, firstNonEmptySlot.Itemstack.Block, player))
                 {
                     block = firstNonEmptySlot.Itemstack.Block;
@@ -235,8 +235,8 @@ class EChisel : ItemChisel
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        int energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
         dsc.AppendLine(energy + "/" + maxEnergy + " " + Lang.Get("J"));
     }
 

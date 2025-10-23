@@ -63,8 +63,8 @@ public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransforma
             return;
         }
 
-        bool hasBurnout = false;
-        bool prepareBurnout = false;
+        var hasBurnout = false;
+        var prepareBurnout = false;
 
         // Однопроходная проверка всех условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)

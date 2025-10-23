@@ -247,9 +247,9 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
         var radius = _treeChopRadius;
         var closestDist = double.MaxValue;
 
-        for (int dx = -radius; dx <= radius; dx++)
+        for (var dx = -radius; dx <= radius; dx++)
         {
-            for (int dz = -radius; dz <= radius; dz++)
+            for (var dz = -radius; dz <= radius; dz++)
             {
                 var candidate = centerPos.AddCopy(dx, 0, dz);
                 if (candidate == centerPos)
@@ -319,7 +319,7 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
 
         if (_currentTreePos != null && _allTreePos.Count == 0)
         {
-            _allTreePos = FindTree(Api.World, _currentTreePos, out int resistance, out int woodTier);
+            _allTreePos = FindTree(Api.World, _currentTreePos, out var resistance, out var woodTier);
 
             TreeResistance = resistance;
             WoodTier = woodTier;
@@ -561,7 +561,7 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
 
         var inventoryTree = new TreeAttribute();
         _inventory.ToTreeAttributes(inventoryTree);
-        tree["inventory"] = inventoryTree;
+        tree["_inventory"] = inventoryTree;
 
         tree.SetInt("stage", (int)Stage);
         tree.SetInt("woodTier", WoodTier);
@@ -582,7 +582,7 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
     {
         base.FromTreeAttributes(tree, worldForResolving);
 
-        _inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+        _inventory.FromTreeAttributes(tree.GetTreeAttribute("_inventory"));
         if (Api != null)
             _inventory.AfterBlocksLoaded(worldForResolving);
 
@@ -680,9 +680,9 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
         }
 
         // Find which is the most prevalent of the 7 possible adjacentLeafGroups
-        int maxCount = 0;
-        int maxI = -1;
-        for (int i = 0; i < adjacentLeafGroupsCounts.Length; i++)
+        var maxCount = 0;
+        var maxI = -1;
+        for (var i = 0; i < adjacentLeafGroupsCounts.Length; i++)
         {
             if (adjacentLeafGroupsCounts[i] > maxCount)
             {
@@ -756,7 +756,7 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
                 if (block.BlockMaterial == EnumBlockMaterial.Leaves && ngcode.Length == treeFellingGroupCode.Length + 1 && ngcode.EndsWithOrdinal(treeFellingGroupCode))
                 {
                     outqueue = leafqueue;
-                    int leafGroup = GameMath.Clamp(ngcode[0] - '0', 1, 7);
+                    var leafGroup = GameMath.Clamp(ngcode[0] - '0', 1, 7);
                     adjacentLeaves[leafGroup - 1]++;
                 }
                 else
@@ -766,7 +766,7 @@ public class BlockEntityEWoodcutter : BlockEntityOpenableContainer
                 outqueue = queue;
 
             // Only spread from "high to low". i.e. spread from log to leaves, but not from leaves to logs
-            int nspreadIndex = block.Attributes?["treeFellingGroupSpreadIndex"].AsInt(0) ?? 0;
+            var nspreadIndex = block.Attributes?["treeFellingGroupSpreadIndex"].AsInt(0) ?? 0;
             if (pos.W < nspreadIndex)
                 continue;
 

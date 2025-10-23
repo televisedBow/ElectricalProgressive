@@ -12,7 +12,7 @@ public class BlockGauge : Vintagestory.API.Common.Block
     {
         return new WorldInteraction[]
         {
-            new WorldInteraction
+            new()
             {
                 ActionLangCode = "electricalprogressiveindustry:blockhelp-pickup",
                 MouseButton = EnumMouseButton.Right
@@ -35,7 +35,7 @@ public class BlockGauge : Vintagestory.API.Common.Block
 
 
         // Создаём предмет из блока
-        ItemStack stack = new ItemStack(this);
+        var stack = new ItemStack(this);
         if (byPlayer.InventoryManager.TryGiveItemstack(stack, true))
         {
             world.BlockAccessor.SetBlock(0, blockSel.Position); // Удаляем блок

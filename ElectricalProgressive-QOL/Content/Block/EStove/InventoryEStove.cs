@@ -35,7 +35,7 @@ public class InventoryEStove : InventorySmelting
         if (HaveCookingContainer)
         {
             // если в слоты для готовки есть свободные, то выдаем первый из них
-            for (int i = 0; i < CookingSlots.Length; i++)
+            for (var i = 0; i < CookingSlots.Length; i++)
             {
                 if (CookingSlots[i]==null ||
                     CookingSlots[i].Empty) // слот свободен?

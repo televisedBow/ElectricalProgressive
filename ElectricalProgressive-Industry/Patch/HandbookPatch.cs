@@ -50,7 +50,7 @@ public class HandbookPatch
                     return;
 
                 var components = new List<RichTextComponentBase>(__result);
-                bool haveText = components.Count > 0;
+                var haveText = components.Count > 0;
 
                 CheckAndAddRecipes(components, capi, stack, openDetailPageFor, ref haveText);
 
@@ -192,7 +192,7 @@ public class HandbookPatch
                     continue;
                 }
 
-                string groupKey = group.Key; // уникальный код рецепта
+                var groupKey = group.Key; // уникальный код рецепта
 
                 // Для групп с несколькими рецептами создаем слайд-шоу
                 // Собираем все ингредиенты и выходы для слайд-шоу
@@ -204,7 +204,7 @@ public class HandbookPatch
                 foreach (var recipe in recipeList)
                 {
                     // Обрабатываем ингредиенты
-                    int ingIndex = 0;
+                    var ingIndex = 0;
                     foreach (var ing in recipe.Ingredients)
                     {
                         var resolved = GetOrCreateStack((AssetLocation)ing.Code, (int)ing.Quantity, capi.World);
@@ -213,7 +213,7 @@ public class HandbookPatch
                             // Добавляем в соответствующий слот
                             if (ingIndex >= allIngredients.Count)
                             {
-                                allIngredients.Add(new List<ItemStack>());
+                                allIngredients.Add([]);
                             }
                             allIngredients[ingIndex].Add(resolved);
                             ingIndex++;
@@ -240,7 +240,7 @@ public class HandbookPatch
                 }
 
                 // Отображаем ингредиенты с слайд-шоу
-                bool firstIngredient = true;
+                var firstIngredient = true;
                 foreach (var ingredientOptions in allIngredients)
                 {
                     if (!firstIngredient)
@@ -350,7 +350,7 @@ public class HandbookPatch
         {
             components.Add(new ClearFloatTextComponent(capi, RecipeSpacing));
 
-            bool firstIngredient = true;
+            var firstIngredient = true;
             foreach (var ing in recipe.Ingredients)
             {
                 if (!firstIngredient)
@@ -442,7 +442,7 @@ public class HandbookPatch
             if (code == null)
                 return null;
 
-            string cacheKey = $"{code}-{quantity}";
+            var cacheKey = $"{code}-{quantity}";
             if (_stackCache.TryGetValue(cacheKey, out var cachedStack))
             {
                 return cachedStack;
@@ -535,12 +535,12 @@ public class HandbookPatch
         public override void RenderInteractiveElements(float deltaTime, double renderX, double renderY, double renderZ)
         {
             var state = groups[groupKey];
-            LineRectangled rect = this.BoundsPerLine[0];
+            var rect = this.BoundsPerLine[0];
 
             // Проверяем наведение для текущего элемента
-            int x = (int)(this.api.Input.MouseX - renderX + this.renderOffset.X);
-            int y = (int)(this.api.Input.MouseY - renderY + this.renderOffset.Y);
-            bool nowHovered = rect.PointInside(x, y);
+            var x = (int)(this.api.Input.MouseX - renderX + this.renderOffset.X);
+            var y = (int)(this.api.Input.MouseY - renderY + this.renderOffset.Y);
+            var nowHovered = rect.PointInside(x, y);
 
             // Обновляем счётчик наведения
             if (nowHovered && !isHovered)
@@ -564,13 +564,13 @@ public class HandbookPatch
             CurItemIndex = state.Index % this.Itemstacks.Length;
 
             // Остальной код рендера...
-            ItemStack itemStack = this.Itemstacks[CurItemIndex];
+            var itemStack = this.Itemstacks[CurItemIndex];
             if (this.overrideCurrentItemStack != null)
                 itemStack = this.overrideCurrentItemStack();
 
             this.slot.Itemstack = itemStack;
 
-            ElementBounds bounds = ElementBounds.FixedSize(
+            var bounds = ElementBounds.FixedSize(
                 (int)(rect.Width / (double)RuntimeEnv.GUIScale),
                 (int)(rect.Height / (double)RuntimeEnv.GUIScale)
             );

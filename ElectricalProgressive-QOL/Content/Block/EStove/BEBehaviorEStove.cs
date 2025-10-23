@@ -92,8 +92,8 @@ public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
             return;
         }
 
-        bool hasBurnout = false;
-        bool prepareBurnout = false;
+        var hasBurnout = false;
+        var prepareBurnout = false;
 
         // Однопроходная проверка всех условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
@@ -128,8 +128,8 @@ public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
 
         // Получаем блок только один раз
         var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
-            new[] { stateType, sideType },
-            new[] { burnedVariant, side }
+            [stateType, sideType],
+            [burnedVariant, side]
         ));
 
         Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);

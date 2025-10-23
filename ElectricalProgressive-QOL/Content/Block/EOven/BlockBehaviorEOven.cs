@@ -54,7 +54,7 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
                 if (itemstack == null)
                     continue;
 
-                BakingProperties bakingProperties = BakingProperties.ReadFrom(itemstack);
+                var bakingProperties = BakingProperties.ReadFrom(itemstack);
                 if (bakingProperties == null ||
                     
                     !itemstack.Attributes.GetBool("bakeable", true)) //если свойства выпекания не найдены
@@ -69,12 +69,12 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
                     var blockCode = itemstack.Block.Code.ToString();
                     if (blockCode.Contains("perfect") ||
                         blockCode.Contains("charred") ||
-                        blockCode.Contains("rot") ||
-                        blockCode.Contains("-cooked") ||
+                        (blockCode.Contains("rot") && !blockCode.Contains("carrot")) ||
+                        (blockCode.Contains("-cooked") && !blockCode.Contains("-cookedpartbaked"))  ||
                         blockCode.Contains("bake1") ||
                         blockCode.Contains("bake2") ||
-                        blockCode.Contains("tender") ||
-                        blockCode.Contains("dry"))
+                        (blockCode.Contains("tender") && !blockCode.Contains("tenderpartbaked")) ||
+                        (blockCode.Contains("dry") && !blockCode.Contains("dryad")))
                     {
                         stack_count_perfect++;
                     }
@@ -84,12 +84,12 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
                     var itemCode = itemstack.Item.Code.ToString();
                     if (itemCode.Contains("perfect") ||
                         itemCode.Contains("charred") ||
-                        itemCode.Contains("rot") ||
-                        itemCode.Contains("-cooked") ||
+                        (itemCode.Contains("rot") && !itemCode.Contains("carrot")) ||
+                        (itemCode.Contains("-cooked") && !itemCode.Contains("-cookedpartbaked")) ||
                         itemCode.Contains("bake1") ||
                         itemCode.Contains("bake2") ||
-                        itemCode.Contains("tender") ||
-                        itemCode.Contains("dry"))
+                        (itemCode.Contains("tender") && !itemCode.Contains("tenderpartbaked")) ||
+                        (itemCode.Contains("dry") && !itemCode.Contains("dryad")))
                     {
                         stack_count_perfect++;
                     }
@@ -115,7 +115,7 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (Blockentity is not BlockEntityEOven entity)
+        if (Blockentity is not BlockEntityEOven)
             return;
 
         if (IsBurned)
@@ -158,8 +158,8 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
             return;
         }
 
-        bool hasBurnout = false;
-        bool prepareBurnout = false;
+        var hasBurnout = false;
+        var prepareBurnout = false;
 
         // Однопроходная проверка всех условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
@@ -194,8 +194,8 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
 
         // Получаем блок только один раз
         var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
-            new[] { stateType, sideType },
-            new[] { burnedVariant, side }
+            [stateType, sideType],
+            [burnedVariant, side]
         ));
 
         Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);

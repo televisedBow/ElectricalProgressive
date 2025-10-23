@@ -47,7 +47,7 @@ public class BlockEHammer : Vintagestory.API.Common.Block
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
-        return new[] { OnPickBlock(world, pos) };
+        return [OnPickBlock(world, pos)];
     }
 
 

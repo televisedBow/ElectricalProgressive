@@ -12,7 +12,7 @@ namespace ElectricalProgressive.Content.Block.EMotor;
 public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
 {
     private readonly static Dictionary<(Facing, string), MeshData> MeshData = new();
-    private static float[] def_Params = { 10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F };   //заглушка
+    private static float[] def_Params = [10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F];   //заглушка
 
 
 
@@ -63,7 +63,7 @@ public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
     {
         var selection = new Selection(blockSel);
 
-        Facing facing = Facing.None;
+        var facing = Facing.None;
 
 
 
@@ -330,7 +330,7 @@ public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
         dsc.AppendLine(Lang.Get("Voltage") + ": " + MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "voltage", 0) + " " + Lang.Get("V"));
 
-        float[] Params = MyMiniLib.GetAttributeArrayFloat(inSlot.Itemstack.Block, "params", def_Params);
+        var Params = MyMiniLib.GetAttributeArrayFloat(inSlot.Itemstack.Block, "params", def_Params);
 
         dsc.AppendLine(Lang.Get("Consumption") + ": " + Params[1] + " " + Lang.Get("W"));
         dsc.AppendLine(Lang.Get("max_speed") + ": " + Params[4] + " " + Lang.Get("rps"));

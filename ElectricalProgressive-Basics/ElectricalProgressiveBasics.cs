@@ -25,10 +25,11 @@ using System.Collections.Generic;
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Basic electrical devices.",
     Version = "2.4.0",
-    Authors = new[] {
+    Authors =
+    [
         "Tehtelev",
         "Kotl"
-    }
+    ]
 )]
 
 namespace ElectricalProgressive;
@@ -43,7 +44,7 @@ public class ElectricalProgressiveBasics : ModSystem
     /// <summary>
     /// Причины сгорания электрических блоков
     /// </summary>
-    public static Dictionary<int, string> causeBurn = new Dictionary<int, string>
+    public static Dictionary<int, string> causeBurn = new()
     {
         { 1, Lang.Get("causeCurrent") },
         { 2, Lang.Get("causeVoltage") },

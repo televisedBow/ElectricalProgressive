@@ -12,7 +12,7 @@ namespace ElectricalProgressive.Content.Block.EOven;
       : base(inventoryID, bakeableSlots)
     {
 
-        for (int index = 0; index < bakeableSlots; ++index)
+        for (var index = 0; index < bakeableSlots; ++index)
             this.CookingSlots[index].MaxSlotStackSize = 1;
     }
 
@@ -24,7 +24,7 @@ namespace ElectricalProgressive.Content.Block.EOven;
     /// <param name="slot"></param>
     public override void OnItemSlotModified(ItemSlot slot)
     {
-        int num = Array.IndexOf(Slots, slot);
+        var num = Array.IndexOf(Slots, slot);
         if (num >= 0 && slot != null && slot.Itemstack!=null) 
         {
             if (Api?.World.BlockAccessor.GetBlockEntity(Pos) is BlockEntityEOven entity &&
@@ -54,7 +54,7 @@ namespace ElectricalProgressive.Content.Block.EOven;
 
 
         // если в слоты для готовки есть свободные, то выдаем первый из них
-        for (int i = 0; i < this.CookingSlots.Length; i++)
+        for (var i = 0; i < this.CookingSlots.Length; i++)
         {
             if (this[i] == null || this[i].Empty)
             {
@@ -84,15 +84,15 @@ namespace ElectricalProgressive.Content.Block.EOven;
     /// <returns></returns>
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
-        for (int i = 0; i < this.CookingSlots.Length; i++)
+        for (var i = 0; i < this.CookingSlots.Length; i++)
         {
             if (this[i] != null && !this[i].Empty)
             {
-                BakingProperties bakingProperties = BakingProperties.ReadFrom(this[i].Itemstack);
+                var bakingProperties = BakingProperties.ReadFrom(this[i].Itemstack);
                 if (bakingProperties == null || !this[i].Itemstack.Attributes.GetBool("bakeable", true)) //если свойства выпекания не найдены
                     return this[i];
                 
-                string blockCode="";
+                var blockCode="";
                 if (this[i].Itemstack.Item!=null)
                 {
                     blockCode = this[i].Itemstack.Item.Code.ToString();
@@ -104,12 +104,12 @@ namespace ElectricalProgressive.Content.Block.EOven;
 
                 if (blockCode.Contains("perfect") ||
                     blockCode.Contains("charred") ||
-                    blockCode.Contains("rot") ||
-                    blockCode.Contains("-cooked") ||
+                    (blockCode.Contains("rot") && !blockCode.Contains("carrot")) ||
+                    (blockCode.Contains("-cooked") && !blockCode.Contains("-cookedpartbaked")) ||
                     blockCode.Contains("bake1") ||
                     blockCode.Contains("bake2") ||
-                    blockCode.Contains("tender") ||
-                    blockCode.Contains("dry"))
+                    (blockCode.Contains("tender") && !blockCode.Contains("tenderpartbaked")) ||
+                    (blockCode.Contains("dry") && !blockCode.Contains("dryad")))
                 {
                     return this[i];
                 }

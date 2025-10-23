@@ -58,8 +58,8 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
 
 
 
-                bool hasRecipe = BlockEntityECentrifuge.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.Inventory[0])
-                                 || BlockEntityECentrifuge.FindPerishProperties(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.Inventory[0]);
+                var hasRecipe = BlockEntityECentrifuge.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.Inventory[0])
+                                || BlockEntityECentrifuge.FindPerishProperties(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.Inventory[0]);
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;
                     
@@ -73,7 +73,7 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (this.Blockentity is not BlockEntityECentrifuge entity)
+        if (this.Blockentity is not BlockEntityECentrifuge)
             return;
 
         if (IsBurned)
@@ -120,7 +120,7 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
         if (hasBurnout)
             ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
 
-        bool prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
+        var prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
         if (prepareBurnout)
         {
             ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));

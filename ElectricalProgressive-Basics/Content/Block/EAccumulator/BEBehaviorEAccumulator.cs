@@ -118,8 +118,8 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
             return;
         }
 
-        bool hasBurnout = false;
-        bool prepareBurnout = false;
+        var hasBurnout = false;
+        var prepareBurnout = false;
 
         // Однопроходная проверка условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
@@ -187,7 +187,7 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (Blockentity is not BlockEntityEAccumulator entity)
+        if (Blockentity is not BlockEntityEAccumulator)
             return;
 
 

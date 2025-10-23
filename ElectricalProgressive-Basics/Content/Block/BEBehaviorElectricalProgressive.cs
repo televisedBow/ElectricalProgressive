@@ -142,7 +142,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     {
         base.Initialize(api, properties);
 
-        intervalMSeconds = this.System!.tickTimeMs;
+        intervalMSeconds = this.System!.TickTimeMs;
 
         InitMultiblock();
 
@@ -167,13 +167,13 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             var properti = multiblockBehavior.propertiesAtString;
 
             int sizeX = 1, sizeY = 1, sizeZ = 1;
-            int[] cposition = new int[3];
+            var cposition = new int[3];
 
             if (!string.IsNullOrEmpty(properti))
             {
                 try
                 {
-                    JObject jo = JObject.Parse(properti);
+                    var jo = JObject.Parse(properti);
                     sizeX = (int)jo["sizex"]!;
                     sizeY = (int)jo["sizey"]!;
                     sizeZ = (int)jo["sizez"]!;
@@ -195,9 +195,9 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
             // Собираем все позиции частей мультиблока
             var parts = new List<BlockPos>();
-            for (int dx = 0; dx < sizeX; dx++)
-            for (int dy = 0; dy < sizeY; dy++)
-            for (int dz = 0; dz < sizeZ; dz++)
+            for (var dx = 0; dx < sizeX; dx++)
+            for (var dy = 0; dy < sizeY; dy++)
+            for (var dz = 0; dz < sizeZ; dz++)
             {
                 var partPos = zeroPartPos.AddCopy(dx, dy, dz);
                 // Для "all_down" добавляем только нижние блоки (dy == 0), для "all" — все
@@ -211,7 +211,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         else
         {
             mainPartPos = this.Blockentity.Pos;
-            multiblockParts = new[] { this.Blockentity.Pos };
+            multiblockParts = [this.Blockentity.Pos];
         }
     }
 
@@ -284,8 +284,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
                 var virtualConductor = new VirtualConductor(partPos);
                 system.SetConductor(partPos, virtualConductor);
                 // Для Update: используем те же параметры, что и у главной части
-                EParams[]? partEparams = allEparams;
-                (EParams, int) Epar = this.paramsSet ?
+                var partEparams = allEparams;
+                var Epar = this.paramsSet ?
                     Eparams :
                     (new(), 0);
                 system.Update(partPos, this.connection & ~this.interruption, Epar, ref partEparams!, isLoaded);
@@ -293,7 +293,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         }
 
         // Главная часть — обычный Update
-        (EParams, int) mainEpar = this.paramsSet ? Eparams : (new(), 0);
+        var mainEpar = this.paramsSet ? Eparams : (new(), 0);
         if (system.Update(this.Blockentity.Pos, this.connection & ~this.interruption, mainEpar, ref allEparams!, isLoaded))
         {
             try
@@ -340,8 +340,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         {
             foreach (var partPos in multiblockParts)
             {
-                EParams[]? partEparams = allEparams;
-                (EParams, int) Epar = this.paramsSet ? Eparams : (new(), 0);
+                var partEparams = allEparams;
+                var Epar = this.paramsSet ? Eparams : (new(), 0);
                 this.System?.Update(partPos, this.connection & ~this.interruption, Epar, ref partEparams!, false);
             }
         }
@@ -367,7 +367,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             var dataTuple = SerializerUtil.Deserialize<(BlockPos, Facing, string)>(data);
             networkInformation = this.System?.GetNetworks(dataTuple.Item1, dataTuple.Item2, dataTuple.Item3);
             var sapi= (ICoreServerAPI)Api;
-            IServerPlayer? fromServerPlayer = fromPlayer as IServerPlayer;
+            var fromServerPlayer = fromPlayer as IServerPlayer;
             sapi.Network.SendBlockEntityPacket(fromServerPlayer,this.Blockentity.Pos, MyPacketIdForClient, NetworkInformationSerializer.Serialize(networkInformation!));
             this.Blockentity.MarkDirty();
         }
@@ -410,7 +410,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         var selectedFacing = Facing.None;
 
         var entity = this.Api.World.BlockAccessor.GetBlockEntity(this.Blockentity.Pos); // получаем блок-энитити, чтобы получить информацию о нем
-        string methodForInformation = ""; //метод получения информации о сети, в зависимости от типа блока-энитити
+        var methodForInformation = ""; //метод получения информации о сети, в зависимости от типа блока-энитити
 
         //если это кабель, то мы можем вывести только информацию о сети на одной грани
         if (entity is BlockEntityECable blockEntityECable && entity is not BlockEntityEConnector && blockEntityECable.ElectricalProgressive.AllEparams != null)
@@ -447,7 +447,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
 
         // работаем с выводом информации о причинах сгорания
-        if (this.System?.parts.TryGetValue(this.Blockentity.Pos, out var part) ?? false)
+        if (this.System?.Parts.TryGetValue(this.Blockentity.Pos, out var part) ?? false)
         {
             foreach (var face in FacingHelper.Faces(selectedFacing))
             {
@@ -455,7 +455,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
                 if (part.eparams[faceIndex].burnout || part.eparams[faceIndex].ticksBeforeBurnout > 0) // показываем причину сгорания, когда горит и когда уже сгорело
                 {
-                    string cause = part.eparams[faceIndex].causeBurnout switch
+                    var cause = part.eparams[faceIndex].causeBurnout switch
                     {
                         1 => ElectricalProgressiveBasics.causeBurn[1],
                         2 => ElectricalProgressiveBasics.causeBurn[2],
@@ -498,8 +498,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         //отслеживаем состояние кнопки для подробностей
         var capi = (ICoreClientAPI)Api;
-        bool altPressed = capi.Input.IsHotKeyPressed("AltPressForNetwork");
-        string nameAltPressed = capi.Input.GetHotKeyByCode("AltPressForNetwork").CurrentMapping.ToString();
+        var altPressed = capi.Input.IsHotKeyPressed("AltPressForNetwork");
+        var nameAltPressed = capi.Input.GetHotKeyByCode("AltPressForNetwork").CurrentMapping.ToString();
 
         if (!altPressed)
         {
@@ -518,7 +518,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         stringBuilder.AppendLine("├ " + Lang.Get("Consumption") + ": " + networkInformation.Consumption + " " + Lang.Get("W"));
         stringBuilder.AppendLine("└ " + Lang.Get("Request") + ": " + networkInformation.Request + " " + Lang.Get("W"));
 
-        float capacity = (float)((networkInformation.MaxCapacity == 0f) ? 0f : (networkInformation.Capacity * 100.0F / networkInformation.MaxCapacity));
+        var capacity = (float)((networkInformation.MaxCapacity == 0f) ? 0f : (networkInformation.Capacity * 100.0F / networkInformation.MaxCapacity));
 
         stringBuilder.AppendLine("└ " + Lang.Get("Capacity") + ": " + (int)networkInformation.Capacity + "/" + (int)networkInformation.MaxCapacity+ " " + Lang.Get("J")+ "(" +capacity.ToString("F3") + " %)");
 
@@ -577,13 +577,13 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     {
         base.FromTreeAttributes(tree, worldAccessForResolve);
 
-        Facing connection = SerializerUtil.Deserialize<Facing>(tree.GetBytes(ConnectionKey));
-        Facing interruption = SerializerUtil.Deserialize<Facing>(tree.GetBytes(InterruptionKey));
+        var connection = SerializerUtil.Deserialize<Facing>(tree.GetBytes(ConnectionKey));
+        var interruption = SerializerUtil.Deserialize<Facing>(tree.GetBytes(InterruptionKey));
 
-        bool isLoaded = tree.GetBool(IsLoadedKey, false);
+        var isLoaded = tree.GetBool(IsLoadedKey, false);
 
         // Проверяем флаг формата
-        string format = tree.GetString("SerializationFormat", "json"); // По умолчанию "json", если флаг отсутствует
+        var format = tree.GetString("SerializationFormat", "json"); // По умолчанию "json", если флаг отсутствует
 
         EParams[]? AllEparamss;
         if (format == "binary")

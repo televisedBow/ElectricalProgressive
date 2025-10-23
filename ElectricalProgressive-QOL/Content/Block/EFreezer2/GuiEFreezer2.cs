@@ -31,7 +31,7 @@ class GuiEFreezer2 : GuiDialogBlockEntity
 
     void SetupDialog()
     {
-        ItemSlot hoveredSlot = capi.World.Player.InventoryManager.CurrentHoveredSlot;
+        var hoveredSlot = capi.World.Player.InventoryManager.CurrentHoveredSlot;
         if (hoveredSlot != null && hoveredSlot.Inventory == Inventory)
         {
             capi.Input.TriggerOnMouseLeaveSlot(hoveredSlot);
@@ -41,16 +41,16 @@ class GuiEFreezer2 : GuiDialogBlockEntity
             hoveredSlot = null!;
         }
 
-        ElementBounds mainBounds = ElementBounds.Fixed(0, 0, 200, 100);
-        ElementBounds slotsBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 10, 30, 2, 3);
+        var mainBounds = ElementBounds.Fixed(0, 0, 200, 100);
+        var slotsBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 10, 30, 2, 3);
 
         // 2. Around all that is 10 pixel padding
-        ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
+        var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
         bgBounds.BothSizing = ElementSizing.FitToChildren;
         bgBounds.WithChildren(mainBounds);
 
         // 3. Finally Dialog
-        ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
+        var dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
             .WithFixedAlignmentOffset(-GuiStyle.DialogToScreenPadding, 0);
 
 

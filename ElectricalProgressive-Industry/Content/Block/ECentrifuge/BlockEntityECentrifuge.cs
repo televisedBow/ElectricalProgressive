@@ -16,7 +16,7 @@ namespace ElectricalProgressive.Content.Block.ECentrifuge;
 public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 {
 
-    internal InventoryCentrifuge inventory;
+    internal InventoryCentrifuge _inventory;
     private GuiDialogCentrifuge _clientDialog;
     public override string InventoryClassName => "ecentrifuge";
     public CentrifugeRecipe CurrentRecipe;
@@ -28,11 +28,11 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     public float RecipeProgress;
     private ILoadedSound _ambientSound;
 
-    public virtual string DialogTitle => Lang.Get("ecentrifuge-title-gui");
+    public override string DialogTitle => Lang.Get("ecentrifuge-title-gui");
 
-    public override InventoryBase Inventory => this.inventory;
+    public override InventoryBase Inventory => this._inventory;
 
-    private BlockEntityAnimationUtil AnimUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
+    private BlockEntityAnimationUtil? AnimUtil => this.GetBehavior<BEBehaviorAnimatable>().animUtil;
 
 
     public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
@@ -60,8 +60,8 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     public BlockEntityECentrifuge()
     {
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
-        this.inventory = new InventoryCentrifuge(2, InventoryClassName, (string)null, (ICoreAPI)null, null, this);
-        this.inventory.SlotModified += new Action<int>(this.OnSlotModifid);
+        this._inventory = new InventoryCentrifuge(2, InventoryClassName, (string)null, (ICoreAPI)null, null, this);
+        this._inventory.SlotModified += new Action<int>(this.OnSlotModifid);
     }
 
 
@@ -70,7 +70,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     {
         base.Initialize(api);
 
-        this.inventory.LateInitialize(
+        this._inventory.LateInitialize(
             InventoryClassName + "-" + this.Pos.X.ToString() + "/" + this.Pos.Y.ToString() + "/" + this.Pos.Z.ToString(), api);
 
         this.RegisterGameTickListener(new Action<float>(this.Every1000Ms), 1000);
@@ -89,8 +89,8 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
     public int GetRotation()
     {
-        string side = Block.Variant["side"];
-        int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
+        var side = Block.Variant["side"];
+        var adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
 
@@ -139,11 +139,11 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     /// <returns></returns>
     public static bool FindMatchingRecipe(ref CentrifugeRecipe currentRecipe, ref string currentRecipeName, ItemSlot inputSlot)
     {
-        ItemSlot[] inputSlots = new ItemSlot[] { inputSlot };
+        ItemSlot[] inputSlots = [inputSlot];
         currentRecipe = null;
         currentRecipeName = string.Empty;
 
-        foreach (CentrifugeRecipe recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
+        foreach (var recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
         {
             if (recipe.Matches(inputSlots, out _))
             {
@@ -170,8 +170,8 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             {
                 if (prop.Type == EnumTransitionType.Perish) // может гнить?
                 {
-                    int inputSize = 1;
-                    int outputSize = 1;
+                    var inputSize = 1;
+                    var outputSize = 1;
                     double coeff = 0;
 
                     if (prop.TransitionedStack.Code.Path == "rot") // гниль?
@@ -191,7 +191,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
 
 
-                    foreach (CentrifugeRecipe recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
+                    foreach (var recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
                     {
                         if (recipe.Code == "default_perish" && inputSlot.StackSize >= inputSize) // нашли универсальный шаблон для гниения
                         {
@@ -246,10 +246,10 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
 
 
-        bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
-        bool hasRecipe = !InputSlot.Empty
-                         && (BlockEntityECentrifuge.FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, Inventory[0]) || FindPerishProperties(ref CurrentRecipe, ref CurrentRecipeName, Inventory[0]));
-        bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
+        var hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
+        var hasRecipe = !InputSlot.Empty
+                        && (BlockEntityECentrifuge.FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, Inventory[0]) || FindPerishProperties(ref CurrentRecipe, ref CurrentRecipeName, Inventory[0]));
+        var isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
         if (isCraftingNow)
         {
@@ -269,8 +269,8 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
                 ProcessCompletedCraft();
 
                 // Проверяем возможность следующего цикла без лишних вызовов
-                bool canContinueCrafting = hasPower && !InputSlot.Empty && CurrentRecipe != null &&
-                                           InputSlot.Itemstack.StackSize >= CurrentRecipe.Ingredients[0].Quantity;
+                var canContinueCrafting = hasPower && !InputSlot.Empty && CurrentRecipe != null &&
+                                          InputSlot.Itemstack.StackSize >= CurrentRecipe.Ingredients[0].Quantity;
 
                 if (!canContinueCrafting)
                 {
@@ -307,7 +307,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         try
         {
             // Создаем копию выходного предмета
-            ItemStack outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
+            var outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
 
             // Проверяем ингредиенты и слоты
             if (CurrentRecipe.Ingredients == null || CurrentRecipe.Ingredients.Length == 0 || InputSlot == null)
@@ -332,8 +332,8 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
                     OutputSlot.Itemstack.Collectible == outputItem.Collectible &&
                     OutputSlot.Itemstack.StackSize < OutputSlot.Itemstack.Collectible.MaxStackSize)
             {
-                int freeSpace = OutputSlot.Itemstack.Collectible.MaxStackSize - OutputSlot.Itemstack.StackSize;
-                int toAdd = Math.Min(freeSpace, outputItem.StackSize);
+                var freeSpace = OutputSlot.Itemstack.Collectible.MaxStackSize - OutputSlot.Itemstack.StackSize;
+                var toAdd = Math.Min(freeSpace, outputItem.StackSize);
 
                 OutputSlot.Itemstack.StackSize += toAdd;
                 outputItem.StackSize -= toAdd;
@@ -502,11 +502,11 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        this.Inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+        this.Inventory.FromTreeAttributes(tree.GetTreeAttribute("_inventory"));
         this.RecipeProgress = tree.GetFloat("PowerCurrent");
         if (this.Api != null)
             this.Inventory.AfterBlocksLoaded(this.Api.World);
-        ICoreAPI api = this.Api;
+        var api = this.Api;
         if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0 || this._clientDialog == null)
             return;
         this._clientDialog.Update(RecipeProgress);
@@ -515,9 +515,9 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
-        ITreeAttribute tree1 = (ITreeAttribute)new TreeAttribute();
+        var tree1 = (ITreeAttribute)new TreeAttribute();
         this.Inventory.ToTreeAttributes(tree1);
-        tree["inventory"] = (IAttribute)tree1;
+        tree["_inventory"] = (IAttribute)tree1;
         tree.SetFloat("PowerCurrent", this.RecipeProgress);
     }
 
@@ -571,26 +571,26 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         }
     }
 
-    public ItemSlot InputSlot => this.inventory[0];
-    public ItemSlot OutputSlot => this.inventory[1];
+    public ItemSlot InputSlot => this._inventory[0];
+    public ItemSlot OutputSlot => this._inventory[1];
 
     public ItemStack InputStack
     {
-        get => this.inventory[0].Itemstack;
+        get => this._inventory[0].Itemstack;
         set
         {
-            this.inventory[0].Itemstack = value;
-            this.inventory[0].MarkDirty();
+            this._inventory[0].Itemstack = value;
+            this._inventory[0].MarkDirty();
         }
     }
 
     public ItemStack OutputStack
     {
-        get => this.inventory[1].Itemstack;
+        get => this._inventory[1].Itemstack;
         set
         {
-            this.inventory[1].Itemstack = value;
-            this.inventory[1].MarkDirty();
+            this._inventory[1].Itemstack = value;
+            this._inventory[1].MarkDirty();
         }
     }
 

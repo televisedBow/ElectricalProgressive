@@ -38,22 +38,21 @@ public class GuiBlockEntityETermoGenerator : GuiDialogBlockEntity
     /// </summary>
     public void SetupDialog()
     {
-        ElementBounds dialogBounds = ElementBounds.Fixed(250, 60);
-        ElementBounds dialog = ElementBounds.Fill.WithFixedPadding(0);
-        ElementBounds fuelGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 17, 50, 1, 1);
-        ElementBounds stoveBounds = ElementBounds.Fixed(17, 50, 210, 150);
-        ElementBounds textBounds = ElementBounds.Fixed(115, 60, 121, 100);
+        var dialogBounds = ElementBounds.Fixed(250, 60);
+        var dialog = ElementBounds.Fill.WithFixedPadding(0);
+        var fuelGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 17, 50, 1, 1);
+        var stoveBounds = ElementBounds.Fixed(17, 50, 210, 150);
+        var textBounds = ElementBounds.Fixed(115, 60, 121, 100);
         dialog.BothSizing = ElementSizing.FitToChildren;
         dialog.WithChildren(stoveBounds);
 
         dialog.BothSizing = ElementSizing.FitToChildren;
-        dialog.WithChildren(new ElementBounds[]
-        {
+        dialog.WithChildren([
             dialogBounds,
             fuelGrid,
             textBounds
-        });
-        ElementBounds window = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
+        ]);
+        var window = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
             .WithFixedAlignmentOffset(-GuiStyle.DialogToScreenPadding, 0);
         if (capi.Settings.Bool["immersiveMouseMode"])
         {
@@ -64,9 +63,9 @@ public class GuiBlockEntityETermoGenerator : GuiDialogBlockEntity
             window.WithAlignment(EnumDialogArea.CenterMiddle).WithFixedAlignmentOffset(20, 0);
         }
 
-        BlockPos blockPos = base.BlockEntityPosition;
+        var blockPos = base.BlockEntityPosition;
 
-        CairoFont outputText = CairoFont.WhiteDetailText().WithWeight(FontWeight.Normal);
+        var outputText = CairoFont.WhiteDetailText().WithWeight(FontWeight.Normal);
 
         this.SingleComposer = capi.Gui.CreateCompo("termogen" + (blockPos?.ToString()), window)
             .AddShadedDialogBG(dialog, true, 5)
@@ -102,7 +101,7 @@ public class GuiBlockEntityETermoGenerator : GuiDialogBlockEntity
     private void OnBgDraw(Context ctx, ImageSurface surface, ElementBounds currentBounds)
     {
         ctx.Save();
-        Matrix m = ctx.Matrix;
+        var m = ctx.Matrix;
         m.Translate(GuiElement.scaled(5), GuiElement.scaled(53));
         m.Scale(GuiElement.scaled(0.25), GuiElement.scaled(0.25));
         ctx.Matrix = m;
@@ -111,7 +110,7 @@ public class GuiBlockEntityETermoGenerator : GuiDialogBlockEntity
         double dy = 210 - 210 * ( _gentemp/ 1300);
         ctx.Rectangle(0, dy, 200, 210 - dy);
         ctx.Clip();
-        LinearGradient gradient = new LinearGradient(0, GuiElement.scaled(250), 0, 0);
+        var gradient = new LinearGradient(0, GuiElement.scaled(250), 0, 0);
         gradient.AddColorStop(0, new Color(1, 1, 0, 1));
         gradient.AddColorStop(1, new Color(1, 0, 0, 1));
         ctx.SetSource(gradient);
@@ -132,7 +131,7 @@ public class GuiBlockEntityETermoGenerator : GuiDialogBlockEntity
             return;
 
         _gentemp = gentemp;
-        string newText = (int)gentemp+" °C"+System.Environment.NewLine+(int)burntime+" "+Lang.Get("gui-word-seconds")+System.Environment.NewLine;
+        var newText = (int)gentemp+" °C"+System.Environment.NewLine+(int)burntime+" "+Lang.Get("gui-word-seconds")+System.Environment.NewLine;
         if (this.SingleComposer != null)
         {
             base.SingleComposer.GetDynamicText("outputText").SetNewText(newText);

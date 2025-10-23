@@ -46,7 +46,7 @@ public class InventoryCentrifuge : InventoryGeneric
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
         // Проверяем входной слот
-        int currentCount = this[0].Itemstack?.StackSize ?? 0;
+        var currentCount = this[0].Itemstack?.StackSize ?? 0;
 
         // Если количество изменилось (например, загрузился новый предмет)
         if (currentCount != lastSlot0Count)
@@ -56,9 +56,9 @@ public class InventoryCentrifuge : InventoryGeneric
         }
 
         // есть рецепт?
-        bool hasRecipe = !this[0].Empty
-                         && (BlockEntityECentrifuge.FindMatchingRecipe(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this[0])
-                             || BlockEntityECentrifuge.FindPerishProperties(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this[0]));
+        var hasRecipe = !this[0].Empty
+                        && (BlockEntityECentrifuge.FindMatchingRecipe(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this[0])
+                            || BlockEntityECentrifuge.FindPerishProperties(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this[0]));
 
         if (!hasRecipe || _entity.CurrentRecipe == null)
         {

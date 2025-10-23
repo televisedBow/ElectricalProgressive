@@ -89,10 +89,10 @@ namespace ElectricalProgressive.Content.Item.Weapon
                 canStrike = false; // больше не можем бить молнией
 
                 //ломаем сильно копье от молнии
-                int lightstrike = MyMiniLib.GetAttributeInt(ProjectileStack.Block, "lightstrike", 2000);
-                int consume = MyMiniLib.GetAttributeInt(ProjectileStack.Block, "consume", 20);
+                var lightstrike = MyMiniLib.GetAttributeInt(ProjectileStack.Block, "lightstrike", 2000);
+                var consume = MyMiniLib.GetAttributeInt(ProjectileStack.Block, "consume", 20);
 
-                int energy = ProjectileStack.Attributes.GetInt("durability") * consume;
+                var energy = ProjectileStack.Attributes.GetInt("durability") * consume;
 
                 if (energy > lightstrike)
                 {

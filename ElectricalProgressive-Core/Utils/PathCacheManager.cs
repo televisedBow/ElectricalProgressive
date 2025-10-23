@@ -24,7 +24,7 @@ namespace ElectricalProgressive.Utils
         private static readonly TimeSpan EntryTtl = TimeSpan.FromMinutes(ElectricalProgressive.cacheTimeoutCleanupMinutes);
 
         // Заменили (BlockPos, BlockPos) на ulong
-        private static readonly ConcurrentDictionary<ulong, Entry> cache = new();
+        private static readonly ConcurrentDictionary<ulong, Entry> Cache = new();
 
         /// <summary>
         /// Быстрый хэш для пары позиций.
@@ -34,8 +34,8 @@ namespace ElectricalProgressive.Utils
         {
             unchecked
             {
-                ulong ha = HashBlockPos(a);
-                ulong hb = HashBlockPos(b);
+                var ha = HashBlockPos(a);
+                var hb = HashBlockPos(b);
                 return ha ^ (hb * 0x9E3779B97F4A7C15UL); // перемешивание золотым сечением
             }
         }
@@ -45,10 +45,10 @@ namespace ElectricalProgressive.Utils
             unchecked
             {
                 // Сдвиги для устранения отрицательных значений
-                ulong dim = (ulong)(uint)pos.dimension & 0xFUL;          // 4 бита
-                ulong x = (ulong)(uint)(pos.X + 8388608) & 0xFFFFFFUL;   // 24 бита
-                ulong y = (ulong)(uint)(pos.Y + 2048) & 0xFFFUL;         // 12 бит
-                ulong z = (ulong)(uint)(pos.Z + 8388608) & 0xFFFFFFUL;   // 24 бита
+                var dim = (ulong)(uint)pos.dimension & 0xFUL;          // 4 бита
+                var x = (ulong)(uint)(pos.X + 8388608) & 0xFFFFFFUL;   // 24 бита
+                var y = (ulong)(uint)(pos.Y + 2048) & 0xFFFUL;         // 12 бит
+                var z = (ulong)(uint)(pos.Z + 8388608) & 0xFFFFFFUL;   // 24 бита
 
                 // Формируем 64-битный ключ: [DIM(4)][X(24)][Y(12)][Z(24)]
                 return (dim << 60) ^ (x << 36) ^ (y << 24) ^ z;
@@ -71,8 +71,8 @@ namespace ElectricalProgressive.Utils
             out int version,
             out int voltage)
         {
-            ulong key = HashPair(start, end);
-            if (cache.TryGetValue(key, out var entry))
+            var key = HashPair(start, end);
+            if (Cache.TryGetValue(key, out var entry))
             {
                 entry.LastAccessed = DateTime.UtcNow;
                 path = entry.Path!;
@@ -106,9 +106,9 @@ namespace ElectricalProgressive.Utils
             Facing[] usedConnections,
             int voltage)
         {
-            ulong key = HashPair(start, end);
+            var key = HashPair(start, end);
 
-            cache.AddOrUpdate(key,
+            Cache.AddOrUpdate(key,
                 _ => new Entry
                 {
                     Path = path,
@@ -137,11 +137,11 @@ namespace ElectricalProgressive.Utils
         public static void Cleanup()
         {
             var cutoff = DateTime.UtcNow - EntryTtl;
-            foreach (var pair in cache)
+            foreach (var pair in Cache)
             {
                 if (pair.Value.LastAccessed < cutoff)
                 {
-                    cache.TryRemove(pair.Key, out _);
+                    Cache.TryRemove(pair.Key, out _);
                 }
             }
         }
@@ -151,8 +151,8 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         public static void RemoveAll(BlockPos start, BlockPos end)
         {
-            ulong key = HashPair(start, end);
-            cache.TryRemove(key, out _);
+            var key = HashPair(start, end);
+            Cache.TryRemove(key, out _);
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         public static void Dispose()
         {
-            cache.Clear();
+            Cache.Clear();
         }
 
     }

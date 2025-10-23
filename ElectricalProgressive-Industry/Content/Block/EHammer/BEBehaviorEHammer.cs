@@ -60,7 +60,7 @@ public class BEBehaviorEHammer : BEBehaviorBase, IElectricConsumer
                     return false;
 
 
-                bool hasRecipe = BlockEntityEHammer.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory[0]); ;
+                var hasRecipe = BlockEntityEHammer.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory[0]); ;
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;
                     
@@ -74,7 +74,7 @@ public class BEBehaviorEHammer : BEBehaviorBase, IElectricConsumer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (this.Blockentity is not BlockEntityEHammer entity)
+        if (this.Blockentity is not BlockEntityEHammer)
             return;
 
         if (IsBurned)
@@ -121,7 +121,7 @@ public class BEBehaviorEHammer : BEBehaviorBase, IElectricConsumer
         if (hasBurnout)
             ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
 
-        bool prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
+        var prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
         if (prepareBurnout)
         {
             ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));

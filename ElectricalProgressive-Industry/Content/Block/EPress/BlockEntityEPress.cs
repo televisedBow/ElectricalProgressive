@@ -110,8 +110,8 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         public int GetRotation()
         {
-            string side = Block.Variant["side"];
-            int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
+            var side = Block.Variant["side"];
+            var adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
             return adjustedIndex * 90;
         }
 
@@ -266,7 +266,7 @@ namespace ElectricalProgressive.Content.Block.EPress
                 return;
 
             var stack = this.inventory[slotId].Itemstack;
-            Vec3f origin = new Vec3f(0.5f, 0, 0.5f);
+            var origin = new Vec3f(0.5f, 0, 0.5f);
 
             if (stack.Class == EnumItemClass.Item)
             {
@@ -355,7 +355,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             currentRecipe = null;
             currentRecipeName = string.Empty;
 
-            foreach (PressRecipe recipe in ElectricalProgressiveRecipeManager.PressRecipes)
+            foreach (var recipe in ElectricalProgressiveRecipeManager.PressRecipes)
             {
                 if (MatchesRecipe(recipe, inventory))
                 {
@@ -370,14 +370,14 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         private static bool MatchesRecipe(PressRecipe recipe, InventoryPress inventory)
         {
-            List<int> usedSlots = new List<int>();
+            var usedSlots = new List<int>();
 
-            for (int ingredIndex = 0; ingredIndex < recipe.Ingredients.Length && ingredIndex < 2; ingredIndex++)
+            for (var ingredIndex = 0; ingredIndex < recipe.Ingredients.Length && ingredIndex < 2; ingredIndex++)
             {
                 var ingred = recipe.Ingredients[ingredIndex];
-                bool foundSlot = false;
+                var foundSlot = false;
 
-                for (int slotIndex = 0; slotIndex < 2; slotIndex++)
+                for (var slotIndex = 0; slotIndex < 2; slotIndex++)
                 {
                     if (usedSlots.Contains(slotIndex)) continue;
 
@@ -414,7 +414,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         {
             if (CurrentRecipe == null) return false;
 
-            for (int i = 0; i < CurrentRecipe.Ingredients.Length && i < 2; i++)
+            for (var i = 0; i < CurrentRecipe.Ingredients.Length && i < 2; i++)
             {
                 var ingred = CurrentRecipe.Ingredients[i];
                 var slot = GetInputSlot(i);
@@ -442,10 +442,10 @@ namespace ElectricalProgressive.Content.Block.EPress
 
             try
             {
-                List<int> usedSlots = new List<int>();
+                var usedSlots = new List<int>();
 
                 // Обработка основного выхода
-                ItemStack outputStack1 = CurrentRecipe.Output.ResolvedItemstack.Clone();
+                var outputStack1 = CurrentRecipe.Output.ResolvedItemstack.Clone();
                 TryMergeOrSpawn(outputStack1, OutputSlot1);
 
                 // Обработка дополнительного выхода с шансом
@@ -453,7 +453,7 @@ namespace ElectricalProgressive.Content.Block.EPress
                     CurrentRecipe.SecondaryOutput.ResolvedItemstack != null &&
                     Api.World.Rand.NextDouble() < CurrentRecipe.SecondaryOutputChance)
                 {
-                    ItemStack secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
+                    var secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
                     TryMergeOrSpawn(secondaryOutput, OutputSlot2);
                 }
 
@@ -462,7 +462,7 @@ namespace ElectricalProgressive.Content.Block.EPress
                 {
                     if (ingred.Quantity <= 0) continue;
 
-                    for (int slotIndex = 0; slotIndex < 2; slotIndex++)
+                    for (var slotIndex = 0; slotIndex < 2; slotIndex++)
                     {
                         if (usedSlots.Contains(slotIndex)) continue;
 
@@ -492,8 +492,8 @@ namespace ElectricalProgressive.Content.Block.EPress
             else if (targetSlot.Itemstack.Collectible == stack.Collectible &&
                     targetSlot.Itemstack.StackSize < targetSlot.Itemstack.Collectible.MaxStackSize)
             {
-                int freeSpace = targetSlot.Itemstack.Collectible.MaxStackSize - targetSlot.Itemstack.StackSize;
-                int toAdd = Math.Min(freeSpace, stack.StackSize);
+                var freeSpace = targetSlot.Itemstack.Collectible.MaxStackSize - targetSlot.Itemstack.StackSize;
+                var toAdd = Math.Min(freeSpace, stack.StackSize);
 
                 targetSlot.Itemstack.StackSize += toAdd;
                 stack.StackSize -= toAdd;
@@ -528,9 +528,9 @@ namespace ElectricalProgressive.Content.Block.EPress
                 return;
             }
 
-            bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1f;
-            bool hasRecipe = !InputSlot1.Empty && !InputSlot2.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory);
-            bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
+            var hasPower = beh.PowerSetting >= _maxConsumption * 0.1f;
+            var hasRecipe = !InputSlot1.Empty && !InputSlot2.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory);
+            var isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
 
             if (isCraftingNow)
@@ -611,7 +611,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             const int startFrame = 20;
             if (AnimUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
             {
-                long currentTime = Api.World.ElapsedMilliseconds;
+                var currentTime = Api.World.ElapsedMilliseconds;
                 _lastAnimationCheckTime = currentTime;
 
                 var currentFrame = AnimUtil.animator.Animations[0].CurrentFrame;
@@ -636,7 +636,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             if (Api?.Side != EnumAppSide.Client)
                 return;
 
-            ICoreClientAPI capi = Api as ICoreClientAPI;
+            var capi = Api as ICoreClientAPI;
             capi.World.PlaySoundAt(
                 _soundPress,
                 Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
@@ -687,7 +687,7 @@ namespace ElectricalProgressive.Content.Block.EPress
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
         {
             base.FromTreeAttributes(tree, worldForResolving);
-            Inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+            Inventory.FromTreeAttributes(tree.GetTreeAttribute("_inventory"));
             RecipeProgress = tree.GetFloat("PowerCurrent");
 
             if (Api != null)
@@ -707,7 +707,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             base.ToTreeAttributes(tree);
             ITreeAttribute invTree = new TreeAttribute();
             Inventory.ToTreeAttributes(invTree);
-            tree["inventory"] = invTree;
+            tree["_inventory"] = invTree;
             tree.SetFloat("PowerCurrent", RecipeProgress);
         }
         #endregion

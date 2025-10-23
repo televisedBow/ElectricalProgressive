@@ -10,7 +10,7 @@ namespace ElectricalProgressive.Utils
     public class NetworkPart
     {
         public readonly Network[] Networks = new Network[6];
-        public EParams[] eparams = new EParams[] { };
+        public EParams[] eparams = [];
         public readonly BlockPos Position;
         public Facing Connection = Facing.None;
         public IElectricAccumulator? Accumulator;
@@ -19,7 +19,7 @@ namespace ElectricalProgressive.Utils
         public IElectricProducer? Producer;
         public IElectricTransformator? Transformator;
         public bool IsLoaded = false;
-        public List<EnergyPacket> packets= new();
+        public List<EnergyPacket> packets= [];
 
         public NetworkPart(BlockPos position)
         {

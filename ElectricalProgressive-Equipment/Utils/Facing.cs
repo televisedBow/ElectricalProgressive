@@ -58,14 +58,15 @@ public enum Facing {
 
 public static class FacingHelper
 {
-    private static readonly BlockFacing[] blockfaces = {
+    private static readonly BlockFacing[] blockfaces =
+    [
         BlockFacing.NORTH,
         BlockFacing.EAST,
         BlockFacing.SOUTH,
         BlockFacing.WEST,
         BlockFacing.UP,
         BlockFacing.DOWN
-    };
+    ];
 
 
 

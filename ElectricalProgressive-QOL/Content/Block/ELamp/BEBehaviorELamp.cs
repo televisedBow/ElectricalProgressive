@@ -55,7 +55,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             //проверяем не сгорел ли прибор
-            if (Blockentity is not BlockEntityELamp entity)
+            if (Blockentity is not BlockEntityELamp)
                 return;
 
             if (IsBurned)
@@ -81,7 +81,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
             if (Api is null)
                 return;
 
-            int roundAmount = (int)Math.Round(Math.Min(amount, _maxConsumption), MidpointRounding.AwayFromZero);
+            var roundAmount = (int)Math.Round(Math.Min(amount, _maxConsumption), MidpointRounding.AwayFromZero);
             if (roundAmount == LightLevel || Block.Variant["state"] == "burned")
                 return;
 
@@ -126,8 +126,8 @@ namespace ElectricalProgressive.Content.Block.ELamp
                 return;
             }
 
-            bool hasBurnout = false;
-            bool prepareBurnout = false;
+            var hasBurnout = false;
+            var prepareBurnout = false;
 
             // Однопроходная проверка всех условий
             foreach (var eParam in entity.ElectricalProgressive.AllEparams)
@@ -162,8 +162,8 @@ namespace ElectricalProgressive.Content.Block.ELamp
 
             // Получаем блок только один раз
             var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
-                new[] { tempKType, stateType },
-                new[] { tempK, burnedVariant }
+                [tempKType, stateType],
+                [tempK, burnedVariant]
             ));
 
             Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);

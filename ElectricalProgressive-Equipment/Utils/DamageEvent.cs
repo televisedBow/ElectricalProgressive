@@ -31,7 +31,7 @@ public class DamageEvent : ModSystem
 
   private void Event_LevelFinalize()
   {
-    EntityBehaviorHealth behavior = this.capi.World.Player.Entity.GetBehavior<EntityBehaviorHealth>();
+    var behavior = this.capi.World.Player.Entity.GetBehavior<EntityBehaviorHealth>();
     if (behavior != null)
       this.capi.Logger.VerboseDebug("Done wearable stats");
   }
@@ -44,7 +44,7 @@ public class DamageEvent : ModSystem
 
   private void Event_PlayerJoin(IServerPlayer byPlayer)
   {
-    EntityBehaviorHealth behavior = byPlayer.Entity.GetBehavior<EntityBehaviorHealth>();
+    var behavior = byPlayer.Entity.GetBehavior<EntityBehaviorHealth>();
     if (behavior != null)
       behavior.onDamaged +=
         (OnDamagedDelegate)((dmg, dmgSource) => this.handleDamaged((IPlayer)byPlayer, dmg, dmgSource));
@@ -58,20 +58,20 @@ public class DamageEvent : ModSystem
 
     private float applyShieldProtection(IPlayer player, float damage, DamageSource dmgSource)
     {
-      double num1 = 1.0471975803375244;
-      float num2 = damage;
-      ItemSlot[] itemSlotArray = new ItemSlot[2]
+      var num1 = 1.0471975803375244;
+      var num2 = damage;
+      var itemSlotArray = new ItemSlot[2]
       {
         player.Entity.LeftHandItemSlot,
         player.Entity.RightHandItemSlot
       };
-      for (int index = 0; index < itemSlotArray.Length; ++index)
+      for (var index = 0; index < itemSlotArray.Length; ++index)
       {
-        ItemSlot itemslot = itemSlotArray[index];
-        JsonObject itemAttribute = itemslot.Itemstack?.ItemAttributes?["eshield"];
+        var itemslot = itemSlotArray[index];
+        var itemAttribute = itemslot.Itemstack?.ItemAttributes?["eshield"];
         if (itemAttribute != null && itemAttribute.Exists)
         {
-          Entity sourceEntity = dmgSource.SourceEntity;
+          var sourceEntity = dmgSource.SourceEntity;
           bool? nullable1;
           bool? nullable2;
           if (sourceEntity == null)
@@ -81,7 +81,7 @@ public class DamageEvent : ModSystem
           }
           else
           {
-            JsonObject attributes = sourceEntity.Properties.Attributes;
+            var attributes = sourceEntity.Properties.Attributes;
             if (attributes == null)
             {
               nullable1 = new bool?();
@@ -91,8 +91,8 @@ public class DamageEvent : ModSystem
               nullable2 = new bool?(attributes["isProjectile"].AsBool());
           }
           nullable1 = nullable2;
-          bool valueOrDefault = nullable1.GetValueOrDefault();
-          string key1 = !player.Entity.Controls.Sneak || player.Entity.Attributes.GetInt("aiming", 0) == 1 ? "passive" : "active";
+          var valueOrDefault = nullable1.GetValueOrDefault();
+          var key1 = !player.Entity.Controls.Sneak || player.Entity.Attributes.GetInt("aiming", 0) == 1 ? "passive" : "active";
           float num3;
           float num4;
           if (valueOrDefault && itemAttribute["protectionChance"][key1 + "-projectile"].Exists)
@@ -109,31 +109,31 @@ public class DamageEvent : ModSystem
           double attackPitch;
           if (dmgSource.GetAttackAngle(player.Entity.Pos.XYZ, out attackYaw, out attackPitch))
           {
-            bool flag = Math.Abs(attackPitch) > 1.1344640254974365;
-            double yaw = (double) player.Entity.Pos.Yaw;
-            double pitch = (double) player.Entity.Pos.Pitch;
+            var flag = Math.Abs(attackPitch) > 1.1344640254974365;
+            var yaw = (double) player.Entity.Pos.Yaw;
+            var pitch = (double) player.Entity.Pos.Pitch;
             if (valueOrDefault)
             {
-              double x = dmgSource.SourceEntity.SidedPos.Motion.X;
-              double y = dmgSource.SourceEntity.SidedPos.Motion.Y;
-              double z = dmgSource.SourceEntity.SidedPos.Motion.Z;
+              var x = dmgSource.SourceEntity.SidedPos.Motion.X;
+              var y = dmgSource.SourceEntity.SidedPos.Motion.Y;
+              var z = dmgSource.SourceEntity.SidedPos.Motion.Z;
               flag = Math.Sqrt(x * x + z * z) < Math.Abs(y);
             }
             if (!flag ? (double) Math.Abs(GameMath.AngleRadDistance((float) yaw, (float) attackYaw)) < num1 : (double) Math.Abs(GameMath.AngleRadDistance((float) pitch, (float) attackPitch)) < 0.5235987901687622)
             {
-              float val1 = 0.0f;
-              double num5 = this.api.World.Rand.NextDouble();
+              var val1 = 0.0f;
+              var num5 = this.api.World.Rand.NextDouble();
               if (num5 < (double) num3)
                 val1 += num4;
               if (player is IServerPlayer serverPlayer)
               {
-                int damageLogChatGroup = GlobalConstants.DamageLogChatGroup;
-                string message = Lang.Get("{0:0.#} of {1:0.#} damage blocked by shield ({2} use)", (object) Math.Min(val1, damage), (object) damage, (object) key1);
+                var damageLogChatGroup = GlobalConstants.DamageLogChatGroup;
+                var message = Lang.Get("{0:0.#} of {1:0.#} damage blocked by shield ({2} use)", (object) Math.Min(val1, damage), (object) damage, (object) key1);
                 serverPlayer.SendMessage(damageLogChatGroup, message, EnumChatType.Notification);
               }
               if(itemslot.Itemstack.Attributes.GetInt("durability") > 1)
                 damage = Math.Max(0.0f, damage - val1);
-              string key2 = "blockSound" + ((double) num2 > 6.0 ? "Heavy" : "Light");
+              var key2 = "blockSound" + ((double) num2 > 6.0 ? "Heavy" : "Light");
               this.api.World.PlaySoundAt(AssetLocation.Create(itemslot.Itemstack.ItemAttributes["eshield"][key2].AsString("game:held/shieldblock-wood-light"), itemslot.Itemstack.Collectible.Code.Domain).WithPathPrefixOnce("sounds/").WithPathAppendixOnce(".ogg"), player);
               if (num5 < (double) num3)
                 (this.api as ICoreServerAPI).Network.BroadcastEntityPacket(player.Entity.EntityId, 200, SerializerUtil.Serialize<string>("shieldBlock" + (index == 0 ? "L" : "R")));

@@ -50,11 +50,11 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     /// <summary>
     /// Заглушка. I_max, speed_max , resistance_factor, resistance_load, base_resistance, kpd_max
     /// </summary>
-    private static float[] def_Params => new[] { 100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F };
+    private static float[] def_Params => [100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F];
     /// <summary>
     /// Сюда берем параметры из ассетов
     /// </summary>
-    private float[] Params = { 0, 0, 0, 0, 0, 0 };
+    private float[] Params = [0, 0, 0, 0, 0, 0];
 
     // задает коэффициент сглаживания фильтра
     public ExponentialMovingAverage EmaFilter;
@@ -67,14 +67,14 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     protected CompositeShape? CompositeShape;  //не трогать уровни доступа
 
     private static readonly int[][] _axisSigns =
-    {
-        new[] { +0, +0, -1 }, // index 0
-        new[] { -1, +0, +0 }, // index 1
-        new[] { +0, +0, -1 }, // index 2
-        new[] { -1, +0, +0 }, // index 3
-        new[] { +0, -1, +0 }, // index 4
-        new[] { +0, +1, +0 }  // index 5
-    };
+    [
+        [+0, +0, -1], // index 0
+        [-1, +0, +0], // index 1
+        [+0, +0, -1], // index 2
+        [-1, +0, +0], // index 3
+        [+0, -1, +0], // index 4
+        [+0, +1, +0] // index 5
+    ];
 
 
 
@@ -125,7 +125,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         {
             if (_axisSign == null && OutFacingForNetworkDiscovery != null)
             {
-                int index = OutFacingForNetworkDiscovery.Index;
+                var index = OutFacingForNetworkDiscovery.Index;
                 _axisSign = (index >= 0 && index < _axisSigns.Length)
                     ? _axisSigns[index]
                     : _axisSigns[0]; // fallback to default
@@ -167,9 +167,9 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     /// <inheritdoc />
     public float Produce_give()
     {
-        float speed = network?.Speed * GearedRatio ?? 0.0F;
+        var speed = network?.Speed * GearedRatio ?? 0.0F;
 
-        float power = (Math.Abs(speed) <= speed_max) // Задаем форму кривых тока(мощности)
+        var power = (Math.Abs(speed) <= speed_max) // Задаем форму кривых тока(мощности)
             ? Math.Abs(speed) / speed_max * I_max
             : I_max; // Линейная горизонтальная
 
@@ -231,8 +231,8 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
             return;
         }
 
-        bool hasBurnout = false;
-        bool prepareBurnout = false;
+        var hasBurnout = false;
+        var prepareBurnout = false;
 
         // Однопроходная проверка условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
@@ -289,7 +289,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         PowerGive = tree.GetFloat(PowerGiveKey);
 
         // Восстанавливаем направление из сохраненных данных
-        int savedFacingIndex = tree.GetInt("savedOutFacing", -1);
+        var savedFacingIndex = tree.GetInt("savedOutFacing", -1);
         if (savedFacingIndex >= 0 && savedFacingIndex < BlockFacing.ALLFACES.Length)
         {
             _outFacingForNetworkDiscovery = BlockFacing.ALLFACES[savedFacingIndex];
@@ -313,7 +313,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
 
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(PowerGive, PowerOrder) / I_max * 100));
         stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(PowerGive, PowerOrder)).ToString() + "/" + I_max + " " + Lang.Get("W"));
-        float speed = network?.Speed * GearedRatio ?? 0.0F;
+        var speed = network?.Speed * GearedRatio ?? 0.0F;
         stringBuilder.AppendLine("└ " + Lang.Get("Speed") + ": " + speed.ToString("F3") + " " + Lang.Get("rps"));
     }
 
@@ -332,7 +332,7 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         var direction = OutFacingForNetworkDiscovery;
         if (CompositeShape == null)
         {
-            string tier = entity.Block.Variant["tier"];             // какой тир
+            var tier = entity.Block.Variant["tier"];             // какой тир
 
             CompositeShape = Block.Shape.Clone();
 

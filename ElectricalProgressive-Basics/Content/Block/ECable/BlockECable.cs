@@ -337,7 +337,7 @@ namespace ElectricalProgressive.Content.Block.ECable
             // тут ломаем переключатель
             if (selectedSwitches != Facing.None)
             {
-                var switchesStackSize = FacingHelper.Faces(selectedSwitches).ToList().Count();
+                var switchesStackSize = FacingHelper.Faces(selectedSwitches).ToList().Count;
                 if (switchesStackSize > 0)
                 {
                     entity.Orientation &= ~faceSelect;
@@ -429,9 +429,9 @@ namespace ElectricalProgressive.Content.Block.ECable
                 return base.GetDrops(world, position, byPlayer, dropQuantityMultiplier);
 
 
-            var itemStacks = new ItemStack[] { };
+            var itemStacks = Array.Empty<ItemStack>();
 
-            var connection = entity.Connection;
+
 
             foreach (var face in FacingHelper.Faces(entity.Connection))         //перебираем все грани выделенных кабелей
             {
@@ -441,7 +441,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 var isolated = entity.ElectricalProgressive.AllEparams[face.Index].isolated;          //изолировано ли?
                 var burnout = entity.ElectricalProgressive.AllEparams[face.Index].burnout;          //сгорело ли?
 
-                connection = entity.Connection & FacingHelper.FromFace(face);                   //берем направления только в этой грани
+                var connection = entity.Connection & FacingHelper.FromFace(face);                   //берем направления только в этой грани
 
                 if ((entity.Connection & FacingHelper.FromFace(face)) == 0) //если грань осталась пустая
                     entity.ElectricalProgressive.AllEparams[face.Index] = new();
@@ -500,7 +500,7 @@ namespace ElectricalProgressive.Content.Block.ECable
             var selectedSwitches = entity.Switches & selectedFacing;
             if (selectedSwitches != Facing.None)
             {
-                var switchStackSize = FacingHelper.Faces(selectedSwitches).ToList().Count();
+                var switchStackSize = FacingHelper.Faces(selectedSwitches).ToList().Count;
                 if (switchStackSize > 0)
                 {
                     var assetLocation = new AssetLocation("electricalprogressivebasics:switch-enabled");
@@ -690,7 +690,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 var deg2rad = GameMath.DEG2RAD;
 
                 // helper to add rotated+translated dot
-                void AddDot(MeshData? md, MeshData? dot, float rx, float ry, float rz, Vec3f trans)
+                void AddDot(MeshData? dot, float rx, float ry, float rz, Vec3f trans)
                 {
                     if (dot == null) return;
                     var m = dot.Clone()
@@ -701,7 +701,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 }
 
                 // helper to add rotated part
-                void AddPart(MeshData? md, MeshData? part, float rx, float ry, float rz)
+                void AddPart(MeshData? part, float rx, float ry, float rz)
                 {
                     if (part == null) return;
                     AddMeshData(ref built, part.Clone().Rotate(origin, rx * deg2rad, ry * deg2rad, rz * deg2rad));
@@ -712,7 +712,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 {
                     if ((key.Connection & faceAll) == 0) return;
 
-                    int bufIndex = FacingHelper.Faces(faceAll).First().Index;
+                    var bufIndex = FacingHelper.Faces(faceAll).First().Index;
                     var eparam = entity.ElectricalProgressive.AllEparams[bufIndex];
                     var indexV = eparam.voltage;
                     var indexM = eparam.material;
@@ -721,7 +721,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                     var isol = eparam.isolated;
 
                     var dotVariant = new BlockVariants(api, entity.Block, indexV, indexM, indexQ, isol ? 7 : 0);
-                    BlockVariants partVariant = !indexB
+                    var partVariant = !indexB
                         ? new BlockVariants(api, entity.Block, indexV, indexM, indexQ, isol ? 6 : 1)
                         : new BlockVariants(api, entity.Block, indexV, indexM, indexQ, 3);
                     var fixVariant = new BlockVariants(api, entity.Block, indexV, indexM, indexQ, 4);
@@ -735,20 +735,20 @@ namespace ElectricalProgressive.Content.Block.ECable
                     {
                         if ((key.Connection & sub) != 0)
                         {
-                            AddPart(built, partVariant.MeshData, rx, ry, rz);
-                            AddDot(built, dotVariant.MeshData, rx, ry, rz, trans);
+                            AddPart(partVariant.MeshData, rx, ry, rz);
+                            AddDot(dotVariant.MeshData, rx, ry, rz, trans);
                         }
                     }
                 }
 
                 // Define subfaces for each face (rotations in degrees, translations)
-                ProcessFace(Facing.NorthAll, new (Facing, float, float, float, Vec3f)[]
-                {
+                ProcessFace(Facing.NorthAll,
+                [
                     (Facing.NorthEast, 90f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
                     (Facing.NorthWest, 90f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f)),
                     (Facing.NorthUp, 90f, 0f, 0f, new Vec3f(0f, 0.5f, 0f)),
                     (Facing.NorthDown, 90f, 180f, 0f, new Vec3f(0f, -0.5f, 0f))
-                }, 90f, 0f, 0f);
+                ], 90f, 0f, 0f);
 
                 ProcessFace(Facing.EastAll, new (Facing, float, float, float, Vec3f)[]
                 {
@@ -869,7 +869,11 @@ namespace ElectricalProgressive.Content.Block.ECable
             // helper для добавления набора RotatedCopy'ов
             void AddRotated(Facing addKey, Cuboidf[] baseBoxes, double rx, double ry, double rz)
             {
-                AddBoxes(ref boxes, addKey, baseBoxes.Select(b => b.RotatedCopy((float)rx, (float)ry, (float)rz, origin)).ToArray());
+                var list = new List<Cuboidf>();
+                foreach (var b in baseBoxes)
+                    list.Add(b.RotatedCopy((float)rx, (float)ry, (float)rz, origin));
+
+                AddBoxes(ref boxes, addKey, list.ToArray());
             }
 
             // Обрабатываем каждую грань: один раз вычисляем partBoxes и fixBoxes, потом добавляем нужные повороты
@@ -879,7 +883,7 @@ namespace ElectricalProgressive.Content.Block.ECable
             {
                 if ((key.Connection & faceAll) == 0) return;
 
-                int bufIndex = FacingHelper.Faces(faceAll).First().Index;
+                var bufIndex = FacingHelper.Faces(faceAll).First().Index;
                 var eparam = entity.ElectricalProgressive.AllEparams![bufIndex];
                 var indexV = eparam.voltage;
                 var indexM = eparam.material;
@@ -887,7 +891,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 var indexB = eparam.burnout;
                 var isol = eparam.isolated;
 
-                Cuboidf[] partBoxes = !indexB
+                var partBoxes = !indexB
                     ? new BlockVariants(entity.Api, entity.Block, indexV, indexM, indexQ, isol ? 6 : 1).CollisionBoxes
                     : new BlockVariants(entity.Api, entity.Block, indexV, indexM, indexQ, 3).CollisionBoxes;
 
@@ -1043,7 +1047,7 @@ namespace ElectricalProgressive.Content.Block.ECable
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
-            string text = inSlot.Itemstack.Block.Variant["voltage"];
+            var text = inSlot.Itemstack.Block.Variant["voltage"];
             dsc.AppendLine(Lang.Get("Voltage") + ": " + text.Substring(0, text.Length - 1) + " " + Lang.Get("V"));
             dsc.AppendLine(Lang.Get("Max. current") + ": " + MyMiniLib.GetAttributeFloat(inSlot.Itemstack.Block, "maxCurrent", 0) + " " + Lang.Get("A"));
             dsc.AppendLine(Lang.Get("Resistivity") + ": " + MyMiniLib.GetAttributeFloat(inSlot.Itemstack.Block, "res", 0) + " " + Lang.Get("units"));
@@ -1062,7 +1066,7 @@ namespace ElectricalProgressive.Content.Block.ECable
         {
             return new WorldInteraction[]
             {
-                new WorldInteraction()
+                new()
                 {
                     ActionLangCode = "ThickenCables",
                     HotKeyCode = "shift",
@@ -1094,7 +1098,7 @@ namespace ElectricalProgressive.Content.Block.ECable
 
             public static CacheDataKey FromEntity(BlockEntityECable entityE)
             {
-                EParams[] bufAllEparams = entityE.ElectricalProgressive.AllEparams!.ToArray();
+                var bufAllEparams = entityE.ElectricalProgressive.AllEparams!.ToArray();
                 return new(
                     entityE.Connection,
                     entityE.Orientation,
@@ -1111,7 +1115,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                     AllEparams.Length != other.AllEparams.Length)
                     return false;
 
-                for (int i = 0; i < AllEparams.Length; i++)
+                for (var i = 0; i < AllEparams.Length; i++)
                 {
                     if (!AllEparams[i].Equals(other.AllEparams[i]))
                         return false;
@@ -1129,7 +1133,7 @@ namespace ElectricalProgressive.Content.Block.ECable
             {
                 unchecked
                 {
-                    int hash = 17;
+                    var hash = 17;
                     hash = hash * 31 + Connection.GetHashCode();
                     hash = hash * 31 + Orientation.GetHashCode();
                     hash = hash * 31 + SwitchesState.GetHashCode();

@@ -34,7 +34,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     /// </summary>
     public void CentrifugeRecipe()
     {
-        CentrifugeRecipes = new List<CentrifugeRecipe>();
+        CentrifugeRecipes = [];
 
         LoadRecipes<CentrifugeRecipe>("Centrifuge Recipe", "recipes/electric/centrifugerecipe", (r) => CentrifugeRecipes.Add(r));
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
@@ -47,7 +47,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     /// </summary>
     public void HammerRecipe()
     {
-        HammerRecipes = new List<HammerRecipe>();
+        HammerRecipes = [];
         LoadRecipes<HammerRecipe>("Hammer Recipe", "recipes/electric/hammerrecipe", (r) => HammerRecipes.Add(r));
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
 
@@ -60,7 +60,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     /// </summary>
     public void PressRecipe()
     {
-        PressRecipes = new List<PressRecipe>();
+        PressRecipes = [];
         LoadRecipes<PressRecipe>("Press Recipe", "recipes/electric/pressrecipe", (r) => PressRecipes.Add(r));
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
 
@@ -73,7 +73,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     /// </summary>
     public void DrawingRecipe()
     {
-        DrawingRecipes = new List<DrawingRecipe>();
+        DrawingRecipes = [];
         LoadRecipes<DrawingRecipe>("Drawing Recipe", "recipes/electric/drawingrecipe", (r) => DrawingRecipes.Add(r));
         api.World.Logger.StoryEvent(Lang.Get("electricalprogressiveindustry:recipeloading"));
 
@@ -90,11 +90,11 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     /// <param name="RegisterMethod"></param>
     public void LoadRecipes<T>(string name, string path, Action<T> RegisterMethod) where T : IRecipeBase<T>
     {
-        Dictionary<AssetLocation, JToken> many = this.api.Assets.GetMany<JToken>(this.api.Server.Logger, path);
-        int num = 0;
-        int quantityRegistered = 0;
-        int quantityIgnored = 0;
-        foreach (KeyValuePair<AssetLocation, JToken> keyValuePair in many)
+        var many = this.api.Assets.GetMany<JToken>(this.api.Server.Logger, path);
+        var num = 0;
+        var quantityRegistered = 0;
+        var quantityIgnored = 0;
+        foreach (var keyValuePair in many)
         {
             if (keyValuePair.Value is JObject)
             {
@@ -103,7 +103,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
             }
             if (keyValuePair.Value is JArray)
             {
-                foreach (JToken token in keyValuePair.Value as JArray)
+                foreach (var token in keyValuePair.Value as JArray)
                 {
                     LoadGenericRecipe<T>(name, keyValuePair.Key, token.ToObject<T>(keyValuePair.Key.Domain), RegisterMethod, ref quantityRegistered, ref quantityIgnored);
                     ++num;
@@ -138,14 +138,14 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         if (recipe.Name == (AssetLocation)null)
             recipe.Name = path;
 
-        IServerWorldAccessor world1 = this.api.World;
-        Dictionary<string, string[]> nameToCodeMapping = recipe.GetNameToCodeMapping((IWorldAccessor)world1);
+        var world1 = this.api.World;
+        var nameToCodeMapping = recipe.GetNameToCodeMapping((IWorldAccessor)world1);
         if (nameToCodeMapping.Count > 0)
         {
-            List<T> objList = new List<T>();
-            int num = 0;
-            bool flag1 = true;
-            foreach (KeyValuePair<string, string[]> keyValuePair in nameToCodeMapping)
+            List<T> objList = [];
+            var num = 0;
+            var flag1 = true;
+            foreach (var keyValuePair in nameToCodeMapping)
             {
                 if (flag1)
                     num = keyValuePair.Value.Length;
@@ -153,12 +153,12 @@ public class ElectricalProgressiveRecipeManager : ModSystem
                     num *= keyValuePair.Value.Length;
                 flag1 = false;
             }
-            bool flag2 = true;
-            foreach (KeyValuePair<string, string[]> keyValuePair in nameToCodeMapping)
+            var flag2 = true;
+            foreach (var keyValuePair in nameToCodeMapping)
             {
-                string key = keyValuePair.Key;
-                string[] strArray = keyValuePair.Value;
-                for (int index = 0; index < num; ++index)
+                var key = keyValuePair.Key;
+                var strArray = keyValuePair.Value;
+                for (var index = 0; index < num; ++index)
                 {
                     T obj2;
                     if (flag2)
@@ -167,7 +167,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
                         obj2 = objList[index];
                     if (obj2.Ingredients != null)
                     {
-                        foreach (IRecipeIngredient ingredient in obj2.Ingredients)
+                        foreach (var ingredient in obj2.Ingredients)
                         {
                             if (ingredient.Name == key)
                                 ingredient.Code = ingredient.Code.CopyWithPath(ingredient.Code.Path.Replace("*", strArray[index % strArray.Length]));
@@ -191,7 +191,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
             }
             if (objList.Count == 0)
                 this.api.World.Logger.Warning("{1} file {0} make uses of wildcards, but no blocks or item matching those wildcards were found.", (object)path, (object)className);
-            foreach (T obj3 in objList)
+            foreach (var obj3 in objList)
             {
                 if (!obj3.Resolve((IWorldAccessor)this.api.World, className + " " + (string)path))
                 {

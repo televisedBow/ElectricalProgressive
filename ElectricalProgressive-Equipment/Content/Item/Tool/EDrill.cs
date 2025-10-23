@@ -12,7 +12,7 @@ namespace ElectricalProgressive.Content.Item.Tool;
 
 class EDrill : Vintagestory.API.Common.Item
 {
-    public SkillItem[] toolModes = Array.Empty<SkillItem>();
+    public SkillItem[] toolModes = [];
     int consume;
 
 
@@ -25,7 +25,7 @@ class EDrill : Vintagestory.API.Common.Item
 
 
         //режимы дрели
-        ICoreClientAPI? capi = api as ICoreClientAPI;
+        var capi = api as ICoreClientAPI;
         if (capi == null)
             return;
 
@@ -68,7 +68,7 @@ class EDrill : Vintagestory.API.Common.Item
     }
     public override void OnUnloaded(ICoreAPI api)
     {
-        for (int index = 0; toolModes != null && index < toolModes.Length; ++index)
+        for (var index = 0; toolModes != null && index < toolModes.Length; ++index)
             toolModes[index]?.Dispose();
     }
 
@@ -85,7 +85,7 @@ class EDrill : Vintagestory.API.Common.Item
         BlockSelection blockSel,
         int toolMode)
     {
-        ItemSlot mouseItemSlot = byPlayer.InventoryManager.MouseItemSlot;
+        var mouseItemSlot = byPlayer.InventoryManager.MouseItemSlot;
         if (!mouseItemSlot.Empty && mouseItemSlot.Itemstack.Block != null)
         {
             api.Event.PushEvent("keepopentoolmodedlg");
@@ -103,7 +103,7 @@ class EDrill : Vintagestory.API.Common.Item
     /// <param name="amount"></param>
     public override void DamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int amount)
     {
-        int durability = itemslot.Itemstack.Attributes.GetInt("durability");
+        var durability = itemslot.Itemstack.Attributes.GetInt("durability");
         var toolMode = GetToolMode(itemslot, byEntity as IPlayer, null!);
         if (toolMode == 3)
             amount = 3;
@@ -133,8 +133,8 @@ class EDrill : Vintagestory.API.Common.Item
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        int energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
         dsc.AppendLine(energy + "/" + maxEnergy + " " + Lang.Get("J"));
     }
 
@@ -173,7 +173,7 @@ class EDrill : Vintagestory.API.Common.Item
     /// <returns></returns>
     public override bool OnBlockBrokenWith(IWorldAccessor world, Entity byEntity, ItemSlot slot, BlockSelection blockSel, float dropQuantityMultiplier = 1)
     {
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
         if (durability > 1)
         {
             DamageItem(world, byEntity, slot, 1);
@@ -275,7 +275,7 @@ class EDrill : Vintagestory.API.Common.Item
     //credit to stitch37 for this code
     public void destroyBlocks(IWorldAccessor world, BlockPos min, BlockPos max, IPlayer player, BlockSelection block, ItemSlot slot)
     {
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
         var wBA = world.BlockAccessor;  //тяжелая штука, нужно разочек обьявить
         var centerBlock = wBA.GetBlock(block.Position);
         var itemStack = new ItemStack(this);
@@ -284,11 +284,11 @@ class EDrill : Vintagestory.API.Common.Item
         float miningTime;
         var tempPos = new BlockPos(min.dimension);
 
-        for (int x = min.X; x <= max.X; x++)
+        for (var x = min.X; x <= max.X; x++)
         {
-            for (int y = min.Y; y <= max.Y; y++)
+            for (var y = min.Y; y <= max.Y; y++)
             {
-                for (int z = min.Z; z <= max.Z; z++)
+                for (var z = min.Z; z <= max.Z; z++)
                 {
                     tempPos.Set(x, y, z);
                     tempBlock = wBA.GetBlock(tempPos);

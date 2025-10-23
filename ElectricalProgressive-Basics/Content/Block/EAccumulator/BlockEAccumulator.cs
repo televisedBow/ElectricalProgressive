@@ -30,14 +30,14 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
     /// <returns></returns>
     public int receiveEnergy(ItemStack itemstack, int maxReceive)
     {
-        int energy = itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = itemstack.Collectible.GetMaxDurability(itemstack) * consume;       //максимальная энергия
+        var energy = itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = itemstack.Collectible.GetMaxDurability(itemstack) * consume;       //максимальная энергия
 
-        int received = Math.Min(maxEnergy - energy, maxReceive);
+        var received = Math.Min(maxEnergy - energy, maxReceive);
 
         energy += received;
 
-        int durab = Math.Max(1, energy / consume);
+        var durab = Math.Max(1, energy / consume);
         itemstack.Attributes.SetInt("durability", durab);
         return received;
     }
@@ -78,8 +78,8 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        int energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
 
         dsc.AppendLine(Lang.Get("Storage") + ": " + energy + "/" + maxEnergy + " " + Lang.Get("J"));
         dsc.AppendLine(Lang.Get("Voltage") + ": " + MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "voltage", 0) + " " + Lang.Get("V"));
@@ -95,14 +95,14 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
 
         if (be != null)
         {
-            int maxDurability = item.Collectible.GetMaxDurability(item); //максимальная прочность
-            int maxEnergy = maxDurability * consume;       //максимальная энергия
+            var maxDurability = item.Collectible.GetMaxDurability(item); //максимальная прочность
+            var maxEnergy = maxDurability * consume;       //максимальная энергия
 
 
             item.Attributes.SetInt("durability", (int)(maxDurability * be.GetBehavior<BEBehaviorEAccumulator>().GetCapacity() / maxEnergy));
         }
 
-        return new ItemStack[] { item };
+        return [item];
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
@@ -113,8 +113,8 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
 
         if (be != null)
         {
-            int maxDurability = item.Collectible.GetMaxDurability(item); //максимальная прочность
-            int maxEnergy = maxDurability * consume;       //максимальная энергия
+            var maxDurability = item.Collectible.GetMaxDurability(item); //максимальная прочность
+            var maxEnergy = maxDurability * consume;       //максимальная энергия
 
 
             item.Attributes.SetInt("durability", (int)(maxDurability * be.GetBehavior<BEBehaviorEAccumulator>().GetCapacity() / maxEnergy));
@@ -136,11 +136,11 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
         {
             var be = world.BlockAccessor.GetBlockEntity(blockPos) as BlockEntityEAccumulator;
 
-            int maxDurability = byItemStack.Collectible.GetMaxDurability(byItemStack); //максимальная прочность
-            int standartDurability = byItemStack.Collectible.Durability;       //стандартная прочность
+            var maxDurability = byItemStack.Collectible.GetMaxDurability(byItemStack); //максимальная прочность
+            var standartDurability = byItemStack.Collectible.Durability;       //стандартная прочность
 
-            int durability = byItemStack.Attributes.GetInt("durability", 1);  //текущая прочность
-            int energy = durability * consume;       //максимальная энергия
+            var durability = byItemStack.Attributes.GetInt("durability", 1);  //текущая прочность
+            var energy = durability * consume;       //максимальная энергия
 
             be!.GetBehavior<BEBehaviorEAccumulator>().SetCapacity(energy, maxDurability * 1.0F / standartDurability);
         }

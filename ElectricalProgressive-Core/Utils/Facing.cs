@@ -63,32 +63,35 @@ public enum Facing {
 /// </summary>
 public static class FacingHelper
 {
-    private static readonly BlockFacing[] blockfaces = {
+    private static readonly BlockFacing[] Blockfaces =
+    [
         BlockFacing.NORTH,
         BlockFacing.EAST,
         BlockFacing.SOUTH,
         BlockFacing.WEST,
         BlockFacing.UP,
         BlockFacing.DOWN
-    };
+    ];
 
-    private static readonly Facing[] facesAll = {
+    private static readonly Facing[] FacesAll =
+    [
         Facing.NorthAll,
         Facing.EastAll,
         Facing.SouthAll,
         Facing.WestAll,
         Facing.UpAll,
         Facing.DownAll
-    };
+    ];
 
-    private static readonly Facing[] directionsAll = {
+    private static readonly Facing[] DirectionsAll =
+    [
         Facing.AllNorth,
         Facing.AllEast,
         Facing.AllSouth,
         Facing.AllWest,
         Facing.AllUp,
         Facing.AllDown
-    };
+    ];
 
 
 
@@ -100,7 +103,7 @@ public static class FacingHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Facing FromFace(BlockFacing face)
     {
-        return (face?.Index >= 0 && face?.Index < 6) ? facesAll[face.Index] : Facing.None;
+        return face?.Index is >= 0 and < 6 ? FacesAll[face.Index] : Facing.None;
     }
 
     /// <summary>
@@ -111,7 +114,7 @@ public static class FacingHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Facing FromDirection(BlockFacing direction)
     {
-        return (direction?.Index >= 0 && direction?.Index < 6) ? directionsAll[direction.Index] : Facing.None;
+        return direction?.Index is >= 0 and < 6 ? DirectionsAll[direction.Index] : Facing.None;
     }
 
 
@@ -123,7 +126,7 @@ public static class FacingHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static BlockFacing BlockFacingFromIndex(int flag)
     {
-        return (flag >= 0 && flag < blockfaces.Length) ? blockfaces[flag] : null!;
+        return (flag >= 0 && flag < Blockfaces.Length) ? Blockfaces[flag] : null!;
     }
 
 

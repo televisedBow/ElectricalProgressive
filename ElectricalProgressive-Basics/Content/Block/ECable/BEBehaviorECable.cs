@@ -44,8 +44,8 @@ namespace ElectricalProgressive.Content.Block.ECable
                 return;
             }
 
-            bool hasBurnout = false;
-            bool prepareBurnout = false;
+            var hasBurnout = false;
+            var prepareBurnout = false;
 
             // Проверяем все параметры на наличие перегрева
             foreach (var eParam in entity.ElectricalProgressive.AllEparams)

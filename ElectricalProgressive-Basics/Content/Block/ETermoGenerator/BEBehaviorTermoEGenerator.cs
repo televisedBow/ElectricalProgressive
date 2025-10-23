@@ -43,7 +43,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
             return;
         }
 
-        bool hasBurnout = false;
+        var hasBurnout = false;
 
         // Проверяем наличие burnout без использования LINQ
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)

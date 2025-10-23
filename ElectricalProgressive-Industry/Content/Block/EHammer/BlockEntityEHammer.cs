@@ -112,8 +112,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
 
     public int GetRotation()
     {
-        string side = Block.Variant["side"];
-        int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
+        var side = Block.Variant["side"];
+        var adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
 
@@ -131,7 +131,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         if (AnimUtil.activeAnimationsByAnimCode.ContainsKey("craft"))
         {
             // Получаем текущее время в миллисекундах
-            long currentTime = Api.World.ElapsedMilliseconds;
+            var currentTime = Api.World.ElapsedMilliseconds;
 
             _lastAnimationCheckTime = currentTime;
 
@@ -162,7 +162,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         if (Api?.Side != EnumAppSide.Client)
             return;
 
-        ICoreClientAPI capi = Api as ICoreClientAPI;
+        var capi = Api as ICoreClientAPI;
         capi.World.PlaySoundAt(
             _soundHammer,
             Pos.X + 0.5, Pos.Y + 0.5, Pos.Z + 0.5,
@@ -297,7 +297,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             return;
 
         var stack = this.inventory[slotId].Itemstack;
-        Vec3f origin = new Vec3f(0.5f, 0, 0.5f);
+        var origin = new Vec3f(0.5f, 0, 0.5f);
 
         if (stack.Class == EnumItemClass.Item)
         {
@@ -429,11 +429,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// <returns></returns>
     public static bool FindMatchingRecipe(ref HammerRecipe currentRecipe, ref string currentRecipeName, ItemSlot inputSlot)
     {
-        ItemSlot[] inputSlots = new ItemSlot[] { inputSlot };
+        ItemSlot[] inputSlots = [inputSlot];
         currentRecipe = null;
         currentRecipeName = string.Empty;
 
-        foreach (HammerRecipe recipe in ElectricalProgressiveRecipeManager.HammerRecipes)
+        foreach (var recipe in ElectricalProgressiveRecipeManager.HammerRecipes)
         {
             if (recipe.Matches(inputSlots, out _))
             {
@@ -468,9 +468,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             stack.Collectible.Attributes == null)
             return;
 
-        bool hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
-        bool hasRecipe = !InputSlot.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]); ;
-        bool isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
+        var hasPower = beh.PowerSetting >= _maxConsumption * 0.1F;
+        var hasRecipe = !InputSlot.Empty && FindMatchingRecipe(ref CurrentRecipe, ref CurrentRecipeName, inventory[0]); ;
+        var isCraftingNow = hasPower && hasRecipe && CurrentRecipe != null;
 
         if (isCraftingNow) // крафтим?
         {
@@ -481,7 +481,6 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             RecipeProgress = Math.Min(RecipeProgress + (float)(beh.PowerSetting / CurrentRecipe.EnergyOperation), 1f);
             UpdateState(RecipeProgress);
 
-            var temperature = stack.Collectible.GetTemperature(this.Api.World, stack);
 
             if (RecipeProgress < 0.5f)
             {
@@ -497,8 +496,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
                 ProcessCompletedCraft();
 
                 // Проверяем возможность следующего цикла без лишних вызовов
-                bool canContinueCrafting = hasPower && !InputSlot.Empty && CurrentRecipe != null &&
-                                           InputSlot.Itemstack.StackSize >= CurrentRecipe.Ingredients[0].Quantity;
+                var canContinueCrafting = hasPower && !InputSlot.Empty && CurrentRecipe != null &&
+                                          InputSlot.Itemstack.StackSize >= CurrentRecipe.Ingredients[0].Quantity;
 
                 if (!canContinueCrafting)
                 {
@@ -532,7 +531,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         try
         {
             // Обработка основного выхода
-            ItemStack outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
+            var outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
 
             outputItem.Collectible.SetTemperature(this.Api.World, outputItem, _maxTargetTemp);
 
@@ -543,7 +542,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
                 CurrentRecipe.SecondaryOutput.ResolvedItemstack != null &&
                 Api.World.Rand.NextDouble() < CurrentRecipe.SecondaryOutputChance)
             {
-                ItemStack secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
+                var secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
 
                 secondaryOutput.Collectible.SetTemperature(this.Api.World, secondaryOutput, _maxTargetTemp);
 
@@ -574,15 +573,15 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         else if (targetSlot.Itemstack.Collectible == stack.Collectible &&
                 targetSlot.Itemstack.StackSize < targetSlot.Itemstack.Collectible.MaxStackSize)
         {
-            int freeSpace = targetSlot.Itemstack.Collectible.MaxStackSize - targetSlot.Itemstack.StackSize;
-            int toAdd = Math.Min(freeSpace, stack.StackSize);
+            var freeSpace = targetSlot.Itemstack.Collectible.MaxStackSize - targetSlot.Itemstack.StackSize;
+            var toAdd = Math.Min(freeSpace, stack.StackSize);
 
             // учитываем температуру при объединении
-            float stackTemp = stack.Collectible.GetTemperature(this.Api.World, stack);
-            float targetstackTemp = targetSlot.Itemstack.Collectible.GetTemperature(this.Api.World, targetSlot.Itemstack);
+            var stackTemp = stack.Collectible.GetTemperature(this.Api.World, stack);
+            var targetstackTemp = targetSlot.Itemstack.Collectible.GetTemperature(this.Api.World, targetSlot.Itemstack);
 
-            float stackCapacity = stackTemp * toAdd;
-            float targetCapacity = targetstackTemp * targetSlot.Itemstack.StackSize;
+            var stackCapacity = stackTemp * toAdd;
+            var targetCapacity = targetstackTemp * targetSlot.Itemstack.StackSize;
 
             targetSlot.Itemstack.StackSize += toAdd;
 
@@ -733,7 +732,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        this.Inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+        this.Inventory.FromTreeAttributes(tree.GetTreeAttribute("_inventory"));
         this.RecipeProgress = tree.GetFloat("PowerCurrent");
 
         if (this.Api != null)
@@ -744,7 +743,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             UpdateMeshes(); // обновляем меши при загрузке
         }
 
-        ICoreAPI api = this.Api;
+        var api = this.Api;
         if ((api != null ? (api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0 || this._clientDialog == null)
             return;
         this._clientDialog.Update(RecipeProgress);
@@ -753,9 +752,9 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
-        ITreeAttribute tree1 = (ITreeAttribute)new TreeAttribute();
+        var tree1 = (ITreeAttribute)new TreeAttribute();
         this.Inventory.ToTreeAttributes(tree1);
-        tree["inventory"] = (IAttribute)tree1;
+        tree["_inventory"] = (IAttribute)tree1;
         tree.SetFloat("PowerCurrent", this.RecipeProgress);
     }
 

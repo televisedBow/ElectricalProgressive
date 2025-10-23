@@ -136,8 +136,8 @@ class BlockEntityEFreezer2 : ContainerEFreezer2, ITexPositionSource
     /// <returns></returns>
     public int GetRotation()
     {
-        string side = Block.Variant["side"];
-        int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
+        var side = Block.Variant["side"];
+        var adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
 

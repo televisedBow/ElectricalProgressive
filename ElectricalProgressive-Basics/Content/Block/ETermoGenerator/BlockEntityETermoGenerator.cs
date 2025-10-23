@@ -55,7 +55,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// Коэффициенты КПД в зависимости от высоты пластин
     /// </summary>
     public static readonly float[] kpdPerHeight =
-{
+    [
         0.15F, // 1-й 
         0.14F, // 2-й 
         0.13F, // 3-й 
@@ -66,7 +66,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         0.07F, // 8-й 
         0.06F, // 9-й 
         0.05F  // 10-й 
-    };
+    ];
 
     /// <summary>
     /// Максимальная температура топлива
@@ -96,7 +96,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     {
         get
         {
-            int envTemp = EnvironmentTemperature(); //температура окружающей среды
+            var envTemp = EnvironmentTemperature(); //температура окружающей среды
             if (kpd > 0)
             {
                 if (genTemp <= envTemp) //окружающая среда теплее? 
@@ -256,8 +256,8 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// <returns></returns>
     public int GetRotation()
     {
-        string side = Block.Variant["side"];
-        int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
+        var side = Block.Variant["side"];
+        var adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
 
@@ -380,7 +380,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
             clientDialog.Update(genTemp, fuelBurnTime);
         }
 
-        IWorldChunk chunkatPos = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
+        var chunkatPos = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
         if (chunkatPos == null)
             return;
 
@@ -399,7 +399,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
 
         var stack = Inventory[0].Itemstack;
-        int sizeFuel = 0; // размер топлива в генераторе
+        var sizeFuel = 0; // размер топлива в генераторе
 
         if (stack != null && stack.Collectible.CombustibleProps != null)
         {
@@ -496,7 +496,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         kpd = 0f;
 
         // Перебираем потенциальные термопластины по высоте
-        for (int level = 1; level <= 11; level++)
+        for (var level = 1; level <= 11; level++)
         {
             // Получаем позицию и блок термопластины
             var platePos = Pos.UpCopy(level);
@@ -507,7 +507,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
             }
 
             // Проверяем соседние блоки и считаем количество воздухом незаполненных сторон
-            float airSides = 0f;
+            var airSides = 0f;
             foreach (var face in offsets_horizontal)
             {
                 var neighBlock = accessor.GetBlock(platePos.AddCopy(face));
@@ -531,7 +531,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// </summary>
     private void CanDoBurn()
     {
-        CombustibleProperties fuelProps = FuelSlot.Itemstack?.Collectible?.CombustibleProps ?? null!;
+        var fuelProps = FuelSlot.Itemstack?.Collectible?.CombustibleProps ?? null!;
         if (fuelProps == null)
             return;
 
@@ -563,7 +563,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// <returns></returns>
     private static float ChangeTemperature(float fromTemp, float toTemp, float deltaTime)
     {
-        float diff = Math.Abs(fromTemp - toTemp);
+        var diff = Math.Abs(fromTemp - toTemp);
         deltaTime += deltaTime * (diff / 28f);
         if (diff < deltaTime)
         {

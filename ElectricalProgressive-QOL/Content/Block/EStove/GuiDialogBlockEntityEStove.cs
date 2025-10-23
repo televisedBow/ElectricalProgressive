@@ -41,7 +41,7 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
     /// </summary>
     void SetupDialog()
     {
-        ItemSlot hoveredSlot = capi.World.Player.InventoryManager.CurrentHoveredSlot;
+        var hoveredSlot = capi.World.Player.InventoryManager.CurrentHoveredSlot;
         if (hoveredSlot != null && hoveredSlot.Inventory.InventoryID != Inventory.InventoryID)
         {
             //capi.Input.TriggerOnMouseLeaveSlot(hoveredSlot); - wtf is this for?
@@ -49,8 +49,8 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
         }
 
 
-        string newOutputText = Attributes.GetString("outputText", "");
-        bool newHaveCookingContainer = Attributes.GetInt("haveCookingContainer") > 0;
+        var newOutputText = Attributes.GetString("outputText", "");
+        var newHaveCookingContainer = Attributes.GetInt("haveCookingContainer") > 0;
 
         GuiElementDynamicText outputTextElem;
 
@@ -80,26 +80,26 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
         haveCookingContainer = newHaveCookingContainer;
         currentOutputText = newOutputText;
 
-        int qCookingSlots = Attributes.GetInt("quantityCookingSlots");
+        var qCookingSlots = Attributes.GetInt("quantityCookingSlots");
 
-        ElementBounds stoveBounds = ElementBounds.Fixed(0, 0, 210, 250);
+        var stoveBounds = ElementBounds.Fixed(0, 0, 210, 250);
 
         cookingSlotsSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, 30 + 45, 4, qCookingSlots / 4);
         cookingSlotsSlotBounds.fixedHeight += 10;
 
-        double top = cookingSlotsSlotBounds.fixedHeight + cookingSlotsSlotBounds.fixedY;
+        var top = cookingSlotsSlotBounds.fixedHeight + cookingSlotsSlotBounds.fixedY;
 
-        ElementBounds inputSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, top, 1, 1);
-        ElementBounds fuelSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, 110 + top, 1, 1);
-        ElementBounds outputSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 153, top, 1, 1);
+        var inputSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, top, 1, 1);
+        var fuelSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, 110 + top, 1, 1);
+        var outputSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.None, 153, top, 1, 1);
 
         // 2. Around all that is 10 pixel padding
-        ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
+        var bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
         bgBounds.BothSizing = ElementSizing.FitToChildren;
         bgBounds.WithChildren(stoveBounds);
 
         // 3. Finally Dialog
-        ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog
+        var dialogBounds = ElementStdBounds.AutosizedMainDialog
                 .WithFixedAlignmentOffset(
                     IsRight(screenPos) ? -GuiStyle.DialogToScreenPadding : GuiStyle.DialogToScreenPadding, 0)
                 .WithAlignment(IsRight(screenPos) ? EnumDialogArea.RightMiddle : EnumDialogArea.LeftMiddle)
@@ -113,8 +113,8 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
         }
 
 
-        int[] cookingSlotIds = new int[qCookingSlots];
-        for (int i = 0; i < qCookingSlots; i++) cookingSlotIds[i] = 3 + i;
+        var cookingSlotIds = new int[qCookingSlots];
+        for (var i = 0; i < qCookingSlots; i++) cookingSlotIds[i] = 3 + i;
 
         SingleComposer = capi.Gui
             .CreateCompo("blockentitystove" + BlockEntityPosition, dialogBounds)
@@ -161,11 +161,11 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
     {
         if (!IsOpened()) return;
 
-        float ftemp = Attributes.GetFloat("stoveTemperature");
-        float otemp = Attributes.GetFloat("oreTemperature");
+        var ftemp = Attributes.GetFloat("stoveTemperature");
+        var otemp = Attributes.GetFloat("oreTemperature");
 
-        string fuelTemp = ftemp.ToString("#");
-        string oreTemp = otemp.ToString("#");
+        var fuelTemp = ftemp.ToString("#");
+        var oreTemp = otemp.ToString("#");
 
         fuelTemp += fuelTemp.Length > 0 ? "°C" : "";
         oreTemp += oreTemp.Length > 0 ? "°C" : "";
@@ -190,11 +190,11 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
 
     private void OnBgDraw(Context ctx, ImageSurface surface, ElementBounds currentBounds)
     {
-        double top = cookingSlotsSlotBounds!.fixedHeight + cookingSlotsSlotBounds.fixedY;
+        var top = cookingSlotsSlotBounds!.fixedHeight + cookingSlotsSlotBounds.fixedY;
 
         // 1. Рисовка огонька
         ctx.Save();
-        Matrix m = ctx.Matrix;
+        var m = ctx.Matrix;
         m.Translate(GuiElement.scaled(5), GuiElement.scaled(53 + top));
         m.Scale(GuiElement.scaled(0.25), GuiElement.scaled(0.25));
         ctx.Matrix = m;
@@ -203,7 +203,7 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
         double dy = 210 - 210 * (Attributes.GetFloat("stoveTemperature") / maxTemperature);
         ctx.Rectangle(0, dy, 200, 210 - dy);
         ctx.Clip();
-        LinearGradient gradient = new LinearGradient(0, GuiElement.scaled(250), 0, 0);
+        var gradient = new LinearGradient(0, GuiElement.scaled(250), 0, 0);
         gradient.AddColorStop(0, new Color(1, 1, 0, 1));
         gradient.AddColorStop(1, new Color(1, 0, 0, 1));
         ctx.SetSource(gradient);

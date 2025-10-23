@@ -18,13 +18,13 @@ public class ESpear : Vintagestory.API.Common.Item
 {
     int consume;
     int lightstrike;
-    public SkillItem[] toolModes = Array.Empty<SkillItem>();
+    public SkillItem[] toolModes = [];
 
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
 
-        CollectibleBehaviorAnimationAuthoritative collectibleBehaviorAnimationAuthoritative = GetCollectibleBehavior<CollectibleBehaviorAnimationAuthoritative>(withInheritance: true);
+        var collectibleBehaviorAnimationAuthoritative = GetCollectibleBehavior<CollectibleBehaviorAnimationAuthoritative>(withInheritance: true);
         if (collectibleBehaviorAnimationAuthoritative == null)
         {
             api.World.Logger.Warning("Spear {0} uses ItemSpear class, but lacks required AnimationAuthoritative behavior. I'll take the freedom to add this behavior, but please fix json item type.", Code);
@@ -37,7 +37,7 @@ public class ESpear : Vintagestory.API.Common.Item
         consume = MyMiniLib.GetAttributeInt(this, "consume", 20);
 
 
-        ICoreClientAPI? capi = api as ICoreClientAPI;
+        var capi = api as ICoreClientAPI;
         if (capi == null)
             return;
 
@@ -80,7 +80,7 @@ public class ESpear : Vintagestory.API.Common.Item
 
     public override void OnUnloaded(ICoreAPI api)
     {
-        for (int index = 0; toolModes != null && index < toolModes.Length; ++index)
+        for (var index = 0; toolModes != null && index < toolModes.Length; ++index)
             toolModes[index]?.Dispose();
     }
 
@@ -98,7 +98,7 @@ public class ESpear : Vintagestory.API.Common.Item
         BlockSelection blockSel,
         int toolMode)
     {
-        ItemSlot mouseItemSlot = byPlayer.InventoryManager.MouseItemSlot;
+        var mouseItemSlot = byPlayer.InventoryManager.MouseItemSlot;
         if (!mouseItemSlot.Empty && mouseItemSlot.Itemstack.Block != null)
         {
             api.Event.PushEvent("keepopentoolmodedlg");
@@ -123,7 +123,7 @@ public class ESpear : Vintagestory.API.Common.Item
 
     public override void OnHeldAttackStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, ref EnumHandHandling handling)
     {
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
         if (durability <= 1)
         {
             handling = EnumHandHandling.PreventDefault;
@@ -152,7 +152,7 @@ public class ESpear : Vintagestory.API.Common.Item
             return;
         }
 
-        float damage = 1.5f;
+        var damage = 1.5f;
         if (slot.Itemstack.Collectible.Attributes != null)
         {
             damage = slot.Itemstack.Collectible.Attributes["damage"].AsFloat();
@@ -167,21 +167,21 @@ public class ESpear : Vintagestory.API.Common.Item
         }
 
         //берем режим копья
-        bool can = false;
+        var can = false;
         if (GetToolMode(slot, player, blockSel) == 1)
             can = true;
 
-        ItemStack projectileStack = slot.TakeOut(1);
+        var projectileStack = slot.TakeOut(1);
         slot.MarkDirty();
 
 
         byEntity.World.PlaySoundAt(new AssetLocation("game:sounds/player/throw"), byEntity, player, randomizePitch: false, 8f);
 
         //берем проджектайл нашего копья и работаем с ним
-        EntityProperties entityType = byEntity.World.GetEntityType(new AssetLocation("electricalprogressiveequipment:static-spear-projectile"));
-        EntityESpear entityProjectile = (byEntity.World.ClassRegistry.CreateEntity(entityType) as EntityESpear)!;
+        var entityType = byEntity.World.GetEntityType(new AssetLocation("electricalprogressiveequipment:static-spear-projectile"));
+        var entityProjectile = (byEntity.World.ClassRegistry.CreateEntity(entityType) as EntityESpear)!;
 
-        int energy = projectileStack.Attributes.GetInt("durability") * consume;
+        var energy = projectileStack.Attributes.GetInt("durability") * consume;
         
         //а заряда на обычный урон хватит?
         if (energy > consume)
@@ -208,12 +208,12 @@ public class ESpear : Vintagestory.API.Common.Item
         entityProjectile.DamageStackOnImpact = true;
         entityProjectile.Weight = 0.3f;
 
-        float num = 1f - byEntity.Attributes.GetFloat("aimingAccuracy");
-        double num2 = byEntity.WatchedAttributes.GetDouble("aimingRandPitch", 1.0) * (double)num * 0.75;
-        double num3 = byEntity.WatchedAttributes.GetDouble("aimingRandYaw", 1.0) * (double)num * 0.75;
-        Vec3d vec3d = byEntity.ServerPos.XYZ.Add(0.0, byEntity.LocalEyePos.Y - 0.2, 0.0);
-        Vec3d pos = (vec3d.AheadCopy(1.0, (double)byEntity.ServerPos.Pitch + num2, (double)byEntity.ServerPos.Yaw + num3) - vec3d) * 0.65 * byEntity.Stats.GetBlended("bowDrawingStrength");
-        Vec3d posWithDimension = byEntity.ServerPos.BehindCopy(0.15).XYZ.Add(byEntity.LocalEyePos.X, byEntity.LocalEyePos.Y - 0.2, byEntity.LocalEyePos.Z);
+        var num = 1f - byEntity.Attributes.GetFloat("aimingAccuracy");
+        var num2 = byEntity.WatchedAttributes.GetDouble("aimingRandPitch", 1.0) * (double)num * 0.75;
+        var num3 = byEntity.WatchedAttributes.GetDouble("aimingRandYaw", 1.0) * (double)num * 0.75;
+        var vec3d = byEntity.ServerPos.XYZ.Add(0.0, byEntity.LocalEyePos.Y - 0.2, 0.0);
+        var pos = (vec3d.AheadCopy(1.0, (double)byEntity.ServerPos.Pitch + num2, (double)byEntity.ServerPos.Yaw + num3) - vec3d) * 0.65 * byEntity.Stats.GetBlended("bowDrawingStrength");
+        var posWithDimension = byEntity.ServerPos.BehindCopy(0.15).XYZ.Add(byEntity.LocalEyePos.X, byEntity.LocalEyePos.Y - 0.2, byEntity.LocalEyePos.Z);
         entityProjectile.ServerPos.SetPosWithDimension(posWithDimension);
         entityProjectile.ServerPos.Motion.Set(pos);
         entityProjectile.Pos.SetFrom(entityProjectile.ServerPos);
@@ -227,7 +227,7 @@ public class ESpear : Vintagestory.API.Common.Item
             RefillSlotIfEmpty(slot, byEntity, (ItemStack itemstack) => itemstack.Collectible is ESpear);
         }
 
-        float pitchModifier = (byEntity as EntityPlayer)!.talkUtil.pitchModifier;
+        var pitchModifier = (byEntity as EntityPlayer)!.talkUtil.pitchModifier;
         player.Entity.World.PlaySoundAt(new AssetLocation("game:sounds/player/strike2"), player.Entity, player, pitchModifier * 0.9f + (float)api.World.Rand.NextDouble() * 0.2f, 16f, 0.35f);
     }
 
@@ -262,14 +262,14 @@ public class ESpear : Vintagestory.API.Common.Item
         
         secondsPassed *= 1.25f;
 
-        float backwards = -Math.Min(0.35f, 2 * secondsPassed);
-        float stab = Math.Min(1.2f, 20 * Math.Max(0, secondsPassed - 0.35f));
+        var backwards = -Math.Min(0.35f, 2 * secondsPassed);
+        var stab = Math.Min(1.2f, 20 * Math.Max(0, secondsPassed - 0.35f));
 
         if (byEntity.World.Side == EnumAppSide.Client)
         {
-            IClientWorldAccessor? world = byEntity.World as IClientWorldAccessor;
+            var world = byEntity.World as IClientWorldAccessor;
 
-            int energy = slot.Itemstack.Attributes.GetInt("durability") * consume;
+            var energy = slot.Itemstack.Attributes.GetInt("durability") * consume;
 
             if (stab > 1.15f && byEntity.Attributes.GetInt("didattack") == 0 && energy > consume)
             {
@@ -308,7 +308,7 @@ public class ESpear : Vintagestory.API.Common.Item
     /// <param name="amount"></param>
     public override void DamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int amount = 1)
     {
-        int durability = itemslot.Itemstack.Attributes.GetInt("durability");
+        var durability = itemslot.Itemstack.Attributes.GetInt("durability");
         if (durability > amount)
         {
             durability -= amount;
@@ -343,14 +343,14 @@ public class ESpear : Vintagestory.API.Common.Item
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        int energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
 
         dsc.AppendLine(energy + "/" + maxEnergy + " " + Lang.Get("J"));
 
         if (inSlot.Itemstack.Collectible.Attributes != null)
         {
-            float num = 1.5f;
+            var num = 1.5f;
             if (inSlot.Itemstack.Collectible.Attributes != null)
             {
                 num = inSlot.Itemstack.Collectible.Attributes["damage"].AsFloat();
@@ -372,7 +372,7 @@ public class ESpear : Vintagestory.API.Common.Item
     public override WorldInteraction[] GetHeldInteractionHelp(ItemSlot inSlot)
     {
         return new WorldInteraction[] {
-                new WorldInteraction()
+                new()
                 {
                     ActionLangCode = "heldhelp-throw",
                     MouseButton = EnumMouseButton.Right,

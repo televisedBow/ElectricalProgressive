@@ -18,8 +18,7 @@ namespace ElectricalProgressive.Utils
         public int CountWorkingStores;
         public int CountWorkingCustomers;
 
-        /// Массив для хранения всех расстояний между клиентами и магазинами
-        /// </summary>
+        // Массив для хранения всех расстояний между клиентами и магазинами
         public int[] Distances = new int[100];
 
 
@@ -44,9 +43,9 @@ namespace ElectricalProgressive.Utils
             if (Customers == null || Stores == null)
                 return;
 
-            for (int i = 0; i < CountWorkingStores; i++)
+            for (var i = 0; i < CountWorkingStores; i++)
             {
-                Stores[i].totalRequest = 0;
+                Stores[i].TotalRequest = 0;
             }
 
             bool hasActiveStores;
@@ -54,30 +53,30 @@ namespace ElectricalProgressive.Utils
 
             do
             {
-                for (int i = 0; i < CountWorkingStores; i++)
+                for (var i = 0; i < CountWorkingStores; i++)
                 {
                     Stores[i].ResetRequests();
                 }
 
-                for (int c = 0; c < CountWorkingCustomers; c++)
+                for (var c = 0; c < CountWorkingCustomers; c++)
                 {
                     var customer = Customers[c];
                     customer.ResetStoreIndex();
                     if (customer.Remaining <= 0.001f)
                         continue;
 
-                    float remaining = customer.Remaining;
-                    int[] availableStoreIds = customer.GetAvailableStoreIds();
+                    var remaining = customer.Remaining;
+                    var availableStoreIds = customer.GetAvailableStoreIds();
                     ProcessStoresArray(customer, remaining, availableStoreIds);
                 }
 
-                for (int i = 0; i < CountWorkingStores; i++)
+                for (var i = 0; i < CountWorkingStores; i++)
                 {
                     Stores[i].ProcessRequests(Customers);
                 }
 
                 hasActiveStores = false;
-                for (int i = 0; i < CountWorkingStores; i++)
+                for (var i = 0; i < CountWorkingStores; i++)
                 {
                     if (!Stores[i].ImNull)
                     {
@@ -87,7 +86,7 @@ namespace ElectricalProgressive.Utils
                 }
 
                 hasPendingCustomers = false;
-                for (int i = 0; i < CountWorkingCustomers; i++)
+                for (var i = 0; i < CountWorkingCustomers; i++)
                 {
                     if (Customers[i].Remaining > 0.001f)
                     {
@@ -110,12 +109,12 @@ namespace ElectricalProgressive.Utils
         {
             while (customer.HasMoreStores() && remaining > 0.001f)
             {
-                int s = customer.GetNextStoreIndex();
+                var s = customer.GetNextStoreIndex();
                 var store = Stores![storeIds[s]];
                 if (store.Stock <= 0.001f && store.ImNull)
                     continue;
 
-                float requested = remaining;
+                var requested = remaining;
                 store.CurrentRequests[customer.Id] = requested;
                 remaining -= requested;
             }

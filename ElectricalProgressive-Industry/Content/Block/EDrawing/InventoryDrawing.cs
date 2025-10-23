@@ -46,7 +46,7 @@ public class InventoryDrawing : InventoryGeneric
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
         // Проверяем входной слот
-        int currentCount = this[0].Itemstack?.StackSize ?? 0;
+        var currentCount = this[0].Itemstack?.StackSize ?? 0;
 
         // Если количество изменилось (например, загрузился новый предмет)
         if (currentCount != lastSlot0Count)
@@ -56,7 +56,7 @@ public class InventoryDrawing : InventoryGeneric
         }
 
         // есть рецепт?
-        bool hasRecipe = !this[0].Empty && BlockEntityEDrawing.FindMatchingRecipe(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this);
+        var hasRecipe = !this[0].Empty && BlockEntityEDrawing.FindMatchingRecipe(ref _entity.CurrentRecipe, ref _entity.CurrentRecipeName, this);
 
         if (!hasRecipe || _entity.CurrentRecipe == null)
         {

@@ -71,21 +71,21 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     /// <summary>
     /// Заглушка. I_min , I_max, torque_max, kpd_max, speed_max, resistance_factor, base_resistance 
     /// </summary>
-    private static float[] def_Params => new[] { 10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F };
+    private static float[] def_Params => [10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F];
     /// <summary>
     /// Сюда берем параметры из ассетов
     /// </summary>
-    private float[] Params = { 0, 0, 0, 0, 0, 0, 0 };
+    private float[] Params = [0, 0, 0, 0, 0, 0, 0];
 
 
     private static readonly int[][] _axisSigns = new int[][]
     {
-        new[] { +0, +0, -1 }, // index 0
-        new[] { -1, +0, +0 }, // index 1
-        new[] { +0, +0, -1 }, // index 2
-        new[] { -1, +0, +0 }, // index 3
-        new[] { +0, -1, +0 }, // index 4
-        new[] { +0, +1, +0 }  // index 5
+        [+0, +0, -1], // index 0
+        [-1, +0, +0], // index 1
+        [+0, +0, -1], // index 2
+        [-1, +0, +0], // index 3
+        [+0, -1, +0], // index 4
+        [+0, +1, +0] // index 5
     };
 
 
@@ -130,7 +130,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
         {
             if (_axisSign == null && OutFacingForNetworkDiscovery != null)
             {
-                int index = OutFacingForNetworkDiscovery.Index;
+                var index = OutFacingForNetworkDiscovery.Index;
                 _axisSign = (index >= 0 && index < _axisSigns.Length)
                     ? _axisSigns[index]
                     : _axisSigns[0]; // fallback to default
@@ -199,8 +199,8 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
             return;
         }
 
-        bool hasBurnout = false;
-        bool prepareBurnout = false;
+        var hasBurnout = false;
+        var prepareBurnout = false;
 
         // Однопроходная проверка всех условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
@@ -275,7 +275,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
 
         I_value = 0;                        // Ток потребления
 
-        float I_amount = powerReceive;     // Доступно тока/энергии 
+        var I_amount = powerReceive;     // Доступно тока/энергии 
 
         if (I_amount <= I_min)                   // Если ток меньше минимального, двигатель не работает
             return torque;
@@ -317,7 +317,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
 
         if (CompositeShape == null)
         {
-            string tier = entity.Block.Variant["tier"];             // какой тир
+            var tier = entity.Block.Variant["tier"];             // какой тир
 
             CompositeShape = Block.Shape.Clone();
 
@@ -381,7 +381,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
         powerReceive = tree.GetFloat(PowerReceiveKey);
 
         // Восстанавливаем направление из сохраненных данных
-        int savedFacingIndex = tree.GetInt("savedOutFacing", -1);
+        var savedFacingIndex = tree.GetInt("savedOutFacing", -1);
         if (savedFacingIndex >= 0 && savedFacingIndex < BlockFacing.ALLFACES.Length)
         {
             _outFacingForNetworkDiscovery = BlockFacing.ALLFACES[savedFacingIndex];
@@ -406,7 +406,7 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
         stringBuilder.AppendLine(StringHelper.Progressbar(powerReceive / I_max * 100));
         stringBuilder.AppendLine("└ " + Lang.Get("Consumption") + ": " + ((int)powerReceive).ToString() + "/" + I_max + " " + Lang.Get("W"));
 
-        float speed = network?.Speed * GearedRatio ?? 0.0F;
+        var speed = network?.Speed * GearedRatio ?? 0.0F;
         stringBuilder.AppendLine("└ " + Lang.Get("Speed") + ": " + speed.ToString("F3") + " " + Lang.Get("rps"));
 
     }

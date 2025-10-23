@@ -25,7 +25,7 @@ public class BlockETermoGenerator : BlockEBase
        BlockSelection blockSel, ref string failureCode)
     {
         var selection = new Selection(blockSel);
-        Facing facing = Facing.None;
+        var facing = Facing.None;
 
         try
         {
@@ -71,7 +71,7 @@ public class BlockETermoGenerator : BlockEBase
 
         var selection = new Selection(blockSel);
 
-        Facing facing = Facing.None;
+        var facing = Facing.None;
 
         try
         {
@@ -108,7 +108,7 @@ public class BlockETermoGenerator : BlockEBase
     {
         base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityETermoGenerator entity)
+        if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityETermoGenerator)
         {
 
             if (!world.BlockAccessor.GetBlock(pos.AddCopy(BlockFacing.DOWN)).SideSolid[4]) //если блок под ним перестал быть сплошным
@@ -135,24 +135,24 @@ public class BlockETermoGenerator : BlockEBase
         }
 
         // текущее выбранное в руке
-        ItemStack stack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
+        var stack = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
 
         // получаем блокэнтити
-        BlockEntityETermoGenerator bef = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityETermoGenerator;
+        var bef = world.BlockAccessor.GetBlockEntity(blockSel.Position) as BlockEntityETermoGenerator;
 
 
         // если есть блокэнтити и в руке что-то есть
         if (bef != null && stack != null)
         {
             // флаг, что что-то поменяли
-            bool activated = false;
+            var activated = false;
 
             // шифт нажата
             if (byPlayer.Entity.Controls.CtrlKey)
             {
                 if (stack.Collectible.CombustibleProps != null && stack.Collectible.CombustibleProps.MeltingPoint > 0)
                 {
-                    ItemStackMoveOperation op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
+                    var op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
                     byPlayer.InventoryManager.ActiveHotbarSlot.TryPutInto(bef.FuelSlot, ref op);
                     if (op.MovedQuantity > 0)
                         activated = true;
@@ -160,7 +160,7 @@ public class BlockETermoGenerator : BlockEBase
 
                 if (stack.Collectible.CombustibleProps != null && stack.Collectible.CombustibleProps.BurnTemperature > 0)
                 {
-                    ItemStackMoveOperation op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
+                    var op = new ItemStackMoveOperation(world, EnumMouseButton.Left, 0, EnumMergePriority.DirectMerge, 1);
                     byPlayer.InventoryManager.ActiveHotbarSlot.TryPutInto(bef.FuelSlot, ref op);
                     if (op.MovedQuantity > 0)
                         activated = true;
@@ -194,7 +194,7 @@ public class BlockETermoGenerator : BlockEBase
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer,
         float dropQuantityMultiplier = 1)
     {
-        return new[] { OnPickBlock(world, pos) };
+        return [OnPickBlock(world, pos)];
     }
 
 
@@ -210,12 +210,12 @@ public class BlockETermoGenerator : BlockEBase
     {
         return new WorldInteraction[]
         {
-                new WorldInteraction()
+                new()
                 {
                     ActionLangCode = "blockhelp-door-openclose",
                     MouseButton = EnumMouseButton.Right
                 },
-                new WorldInteraction()
+                new()
                 {
                     ActionLangCode = "blockhelp-firepit-refuel",
                     MouseButton = EnumMouseButton.Right,

@@ -75,10 +75,10 @@ public class BlockEHorn : BlockEBase
                             if (api.World.BlockAccessor.GetBlockEntity(blockSelection.Position) is
                                 BlockEntityEHorn { Contents: not null } bef)
                             {
-                                return new[]
-                                {
+                                return
+                                [
                                     bef.Contents
-                                };
+                                ];
                             }
 
                             return null;
@@ -123,7 +123,7 @@ public class BlockEHorn : BlockEBase
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
-        return new[] { OnPickBlock(world, pos) };
+        return [OnPickBlock(world, pos)];
     }
 
     public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)

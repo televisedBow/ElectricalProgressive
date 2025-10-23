@@ -25,7 +25,7 @@ public class EWeapon : Vintagestory.API.Common.Item
     {
         base.OnLoaded(api);
 
-        CollectibleBehaviorAnimationAuthoritative collectibleBehaviorAnimationAuthoritative = GetCollectibleBehavior<CollectibleBehaviorAnimationAuthoritative>(withInheritance: true);
+        var collectibleBehaviorAnimationAuthoritative = GetCollectibleBehavior<CollectibleBehaviorAnimationAuthoritative>(withInheritance: true);
         if (collectibleBehaviorAnimationAuthoritative == null)
         {
             api.World.Logger.Warning("Spear {0} uses ItemSpear class, but lacks required AnimationAuthoritative behavior. I'll take the freedom to add this behavior, but please fix json item type.", Code);
@@ -85,7 +85,7 @@ public class EWeapon : Vintagestory.API.Common.Item
 
     public override void OnHeldAttackStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, ref EnumHandHandling handling)
     {
-        int durability = slot.Itemstack.Attributes.GetInt("durability");
+        var durability = slot.Itemstack.Attributes.GetInt("durability");
 
         if (durability <= 1)
         {
@@ -148,7 +148,7 @@ public class EWeapon : Vintagestory.API.Common.Item
             return;
         }
 
-        EntitySelection? entitySelection = (byEntity as EntityPlayer)?.EntitySelection;
+        var entitySelection = (byEntity as EntityPlayer)?.EntitySelection;
         //меч горит и противник живой
         if (entitySelection != null && entitySelection.Entity.Alive && this.Variant["type"] == "hot")
         {
@@ -193,14 +193,14 @@ public class EWeapon : Vintagestory.API.Common.Item
         
         secondsPassed *= 1.25f;
 
-        float backwards = -Math.Min(0.35f, 2 * secondsPassed);
-        float stab = Math.Min(1.2f, 20 * Math.Max(0, secondsPassed - 0.35f));
+        var backwards = -Math.Min(0.35f, 2 * secondsPassed);
+        var stab = Math.Min(1.2f, 20 * Math.Max(0, secondsPassed - 0.35f));
 
         if (byEntity.World.Side == EnumAppSide.Client)
         {
-            IClientWorldAccessor? world = byEntity.World as IClientWorldAccessor;
+            var world = byEntity.World as IClientWorldAccessor;
 
-            int energy = slot.Itemstack.Attributes.GetInt("durability")* consume;
+            var energy = slot.Itemstack.Attributes.GetInt("durability")* consume;
 
             if (stab > 1.15f && byEntity.Attributes.GetInt("didattack") == 0 && energy > consume)
             {
@@ -227,7 +227,7 @@ public class EWeapon : Vintagestory.API.Common.Item
     /// <param name="amount"></param>
     public override void DamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int amount = 1)
     {
-        int durability = itemslot.Itemstack.Attributes.GetInt("durability");
+        var durability = itemslot.Itemstack.Attributes.GetInt("durability");
         if (durability > amount)
         {
             durability -= amount;
@@ -271,10 +271,10 @@ public class EWeapon : Vintagestory.API.Common.Item
 
         byEntity.StopAnimation("helditemready");
 
-        ItemStack EW = slot.Itemstack;
+        var EW = slot.Itemstack;
 
         //зажигаем
-        int energy = EW.Attributes.GetInt("durability")* consume;
+        var energy = EW.Attributes.GetInt("durability")* consume;
         if (EW.Item.Variant["type"] != "hot")
         {
             //хватает заряда?            
@@ -377,8 +377,8 @@ public class EWeapon : Vintagestory.API.Common.Item
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        int energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        int maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
         dsc.AppendLine(energy + "/" + maxEnergy + " " + Lang.Get("J"));
     }
 
@@ -392,7 +392,7 @@ public class EWeapon : Vintagestory.API.Common.Item
     public override WorldInteraction[] GetHeldInteractionHelp(ItemSlot inSlot)
     {
         return new WorldInteraction[] {
-                new WorldInteraction()
+                new()
                 {
                     ActionLangCode = "saber_right",
                     MouseButton = EnumMouseButton.Right,

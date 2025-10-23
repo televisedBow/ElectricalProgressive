@@ -24,8 +24,8 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
 
     public HammerRecipe Clone()
     {
-        CraftingRecipeIngredient[] ingredients = new CraftingRecipeIngredient[Ingredients.Length];
-        for (int i = 0; i < Ingredients.Length; i++)
+        var ingredients = new CraftingRecipeIngredient[Ingredients.Length];
+        for (var i = 0; i < Ingredients.Length; i++)
         {
             ingredients[i] = Ingredients[i].Clone();
         }
@@ -45,32 +45,32 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
 
     public Dictionary<string, string[]> GetNameToCodeMapping(IWorldAccessor world)
     {
-        Dictionary<string, string[]> mappings = new Dictionary<string, string[]>();
+        Dictionary<string, string[]> mappings = new();
 
         if (Ingredients == null || Ingredients.Length == 0)
             return mappings;
 
-        foreach (CraftingRecipeIngredient ingred in Ingredients)
+        foreach (var ingred in Ingredients)
         {
             if (!ingred.Code.Path.Contains("*"))
                 continue;
 
-            int wildcardStartLen = ingred.Code.Path.IndexOf("*");
-            int wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;
+            var wildcardStartLen = ingred.Code.Path.IndexOf("*");
+            var wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;
 
-            List<string> codes = new List<string>();
+            List<string> codes = [];
 
             if (ingred.Type == EnumItemClass.Block)
             {
-                for (int i = 0; i < world.Blocks.Count; i++)
+                for (var i = 0; i < world.Blocks.Count; i++)
                 {
                     if (world.Blocks[i].Code == null || world.Blocks[i].IsMissing)
                         continue;
 
                     if (WildcardUtil.Match(ingred.Code, world.Blocks[i].Code))
                     {
-                        string code = world.Blocks[i].Code.Path.Substring(wildcardStartLen);
-                        string codepart = code.Substring(0, code.Length - wildcardEndLen);
+                        var code = world.Blocks[i].Code.Path.Substring(wildcardStartLen);
+                        var codepart = code.Substring(0, code.Length - wildcardEndLen);
                         if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
                             continue;
 
@@ -80,15 +80,15 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
             }
             else
             {
-                for (int i = 0; i < world.Items.Count; i++)
+                for (var i = 0; i < world.Items.Count; i++)
                 {
                     if (world.Items[i].Code == null || world.Items[i].IsMissing)
                         continue;
 
                     if (WildcardUtil.Match(ingred.Code, world.Items[i].Code))
                     {
-                        string code = world.Items[i].Code.Path.Substring(wildcardStartLen);
-                        string codepart = code.Substring(0, code.Length - wildcardEndLen);
+                        var code = world.Items[i].Code.Path.Substring(wildcardStartLen);
+                        var codepart = code.Substring(0, code.Length - wildcardEndLen);
                         if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
                             continue;
 
@@ -105,9 +105,9 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
 
     public bool Resolve(IWorldAccessor world, string sourceForErrorLogging)
     {
-        bool ok = true;
+        var ok = true;
 
-        for (int i = 0; i < Ingredients.Length; i++)
+        for (var i = 0; i < Ingredients.Length; i++)
         {
             ok &= Ingredients[i].Resolve(world, sourceForErrorLogging);
         }
@@ -127,7 +127,7 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
         Code = reader.ReadString();
         Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
 
-        for (int i = 0; i < Ingredients.Length; i++)
+        for (var i = 0; i < Ingredients.Length; i++)
         {
             Ingredients[i] = new CraftingRecipeIngredient();
             Ingredients[i].FromBytes(reader, resolver);
@@ -139,7 +139,7 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
         Output.Resolve(resolver, "Hammer Recipe (FromBytes)");
 
         // Чтение дополнительного выхода
-        bool hasSecondaryOutput = reader.ReadBoolean();
+        var hasSecondaryOutput = reader.ReadBoolean();
         if (hasSecondaryOutput)
         {
             SecondaryOutput = new JsonItemStack();
@@ -155,7 +155,7 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
     {
         writer.Write(Code);
         writer.Write(Ingredients.Length);
-        for (int i = 0; i < Ingredients.Length; i++)
+        for (var i = 0; i < Ingredients.Length; i++)
         {
             Ingredients[i].ToBytes(writer);
         }
@@ -177,7 +177,7 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
     {
         outputStackSize = 0;
 
-        List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> matched = PairInput(inputSlots);
+        var matched = PairInput(inputSlots);
         if (matched == null) return false;
 
         outputStackSize = Output.StackSize;
@@ -187,10 +187,10 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
 
     List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> PairInput(ItemSlot[] inputStacks)
     {
-        List<CraftingRecipeIngredient> ingredientList = new List<CraftingRecipeIngredient>(Ingredients);
+        List<CraftingRecipeIngredient> ingredientList = [..Ingredients];
 
-        Queue<ItemSlot> inputSlotsList = new Queue<ItemSlot>();
-        foreach (ItemSlot val in inputStacks)
+        Queue<ItemSlot> inputSlotsList = new();
+        foreach (var val in inputStacks)
         {
             if (!val.Empty)
             {
@@ -203,16 +203,16 @@ public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
             return null;
         }
 
-        List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> matched = new List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>>();
+        List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> matched = [];
 
         while (inputSlotsList.Count > 0)
         {
-            ItemSlot inputSlot = inputSlotsList.Dequeue();
-            bool found = false;
+            var inputSlot = inputSlotsList.Dequeue();
+            var found = false;
 
-            for (int i = 0; i < ingredientList.Count; i++)
+            for (var i = 0; i < ingredientList.Count; i++)
             {
-                CraftingRecipeIngredient ingred = ingredientList[i];
+                var ingred = ingredientList[i];
 
                 if (ingred.SatisfiesAsIngredient(inputSlot.Itemstack))
                 {

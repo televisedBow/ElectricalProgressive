@@ -48,7 +48,7 @@ namespace ElectricalProgressive.Content.Block.ESFonar
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             //проверяем не сгорел ли прибор
-            if (Blockentity is not BlockEntityESFonar entity)
+            if (Blockentity is not BlockEntityESFonar)
                 return;
 
             if (IsBurned)
@@ -77,7 +77,7 @@ namespace ElectricalProgressive.Content.Block.ESFonar
             if (Api is null)
                 return;
 
-            int roundAmount = (int)Math.Round(Math.Min(amount, _maxConsumption), MidpointRounding.AwayFromZero);
+            var roundAmount = (int)Math.Round(Math.Min(amount, _maxConsumption), MidpointRounding.AwayFromZero);
 
             if (roundAmount == LightLevel || Block.Variant["state"] == "burned")
                 return;
@@ -121,8 +121,8 @@ namespace ElectricalProgressive.Content.Block.ESFonar
                 return;
             }
 
-            bool hasBurnout = false;
-            bool prepareBurnout = false;
+            var hasBurnout = false;
+            var prepareBurnout = false;
 
             // Однопроходная проверка всех условий
             foreach (var eParam in entity.ElectricalProgressive.AllEparams)
@@ -162,8 +162,8 @@ namespace ElectricalProgressive.Content.Block.ESFonar
 
             // Получаем блок только один раз
             var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
-                new[] { heightType, formatType, stateType },
-                new[] { heightStr, format, burnedVariant }
+                [heightType, formatType, stateType],
+                [heightStr, format, burnedVariant]
             ));
 
             Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);

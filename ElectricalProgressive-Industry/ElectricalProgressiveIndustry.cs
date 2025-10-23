@@ -19,10 +19,11 @@ using Vintagestory.API.Common;
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Additional electrical devices.",
     Version = "0.3.0",
-    Authors = new[] {
+    Authors =
+    [
         "Tehtelev",
         "Kotl"
-    }
+    ]
 )]
 
 namespace ElectricalProgressive;

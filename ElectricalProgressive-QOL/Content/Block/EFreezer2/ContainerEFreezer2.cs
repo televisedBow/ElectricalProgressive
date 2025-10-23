@@ -84,11 +84,11 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
         if (Room.AnyChunkUnloaded != 0)
             return;
 
-        foreach (ItemSlot slot in Inventory)
+        foreach (var slot in Inventory)
         {
             if (slot.Itemstack == null) continue;
 
-            AssetLocation codeBefore = slot.Itemstack.Collectible.Code;
+            var codeBefore = slot.Itemstack.Collectible.Code;
             slot.Itemstack.Collectible.UpdateAndGetTransitionStates(Api.World, slot);
 
             if (slot.Itemstack?.Collectible.Code != codeBefore)
@@ -101,9 +101,9 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
     protected virtual bool HasTransitionables()
     {
-        foreach (ItemSlot slot in Inventory)
+        foreach (var slot in Inventory)
         {
-            ItemStack stack = slot.Itemstack;
+            var stack = slot.Itemstack;
             if (stack == null) continue;
 
             if (stack.Collectible.RequiresTransitionableTicking(Api.World, stack)) return true;
@@ -113,7 +113,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
     protected virtual float Inventory_OnAcquireTransitionSpeed(EnumTransitionType transType, ItemStack stack, float baseMul)
     {
-        float positionAwarePerishRate = Api != null && transType == EnumTransitionType.Perish ? GetPerishRate() : 1;
+        var positionAwarePerishRate = Api != null && transType == EnumTransitionType.Perish ? GetPerishRate() : 1;
         if (transType == EnumTransitionType.Dry) positionAwarePerishRate = 0.25f;
 
         return baseMul * positionAwarePerishRate;
@@ -122,10 +122,10 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
     public virtual float GetPerishRate()
     {
-        BlockPos sealevelpos = Pos.Copy();
+        var sealevelpos = Pos.Copy();
         sealevelpos.Y = Api.World.SeaLevel;
 
-        float temperature = TemperatureCached;
+        var temperature = TemperatureCached;
         if (temperature < -999f)
         {
             temperature = Api.World.BlockAccessor.GetClimateAt(sealevelpos, EnumGetClimateMode.ForSuppliedDate_TemperatureOnly, Api.World.Calendar.TotalDays).Temperature;
@@ -137,8 +137,8 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
             Room = _roomReg!.GetRoomForPosition(Pos);
         }
 
-        float soilTempWeight = 0f;
-        float skyLightProportion = (float)Room.SkylightCount / Math.Max(1, Room.SkylightCount + Room.NonSkylightCount);   // avoid any risk of divide by zero
+        var soilTempWeight = 0f;
+        var skyLightProportion = (float)Room.SkylightCount / Math.Max(1, Room.SkylightCount + Room.NonSkylightCount);   // avoid any risk of divide by zero
 
         if (Room.IsSmallRoom)
         {
@@ -149,10 +149,10 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
             soilTempWeight -= 0.5f * GameMath.Clamp((float)Room.NonCoolingWallCount / Math.Max(1, Room.CoolingWallCount), 0f, 1f);
         }
 
-        int lightlevel = Api.World.BlockAccessor.GetLightLevel(Pos, EnumLightLevelType.OnlySunLight);
+        var lightlevel = Api.World.BlockAccessor.GetLightLevel(Pos, EnumLightLevelType.OnlySunLight);
 
         // light level above 12 makes it additionally warmer, especially when part of a cellar or a greenhouse
-        float lightImportance = 0.1f;
+        var lightImportance = 0.1f;
         // light in small fully enclosed rooms has a big impact
         if (Room.IsSmallRoom) lightImportance += 0.3f * soilTempWeight + 1.75f * skyLightProportion;
         // light in large most enclosed rooms (e.g. houses, greenhouses) has medium impact
@@ -160,14 +160,14 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
         // light outside rooms (e.g. chests on world surface) has low impact but still warms them above base air temperature
         else lightImportance += 0.5f * skyLightProportion;
         lightImportance = GameMath.Clamp(lightImportance, 0f, 1.5f);
-        float airTemp = temperature + GameMath.Clamp(lightlevel - 11, 0, 10) * lightImportance;
+        var airTemp = temperature + GameMath.Clamp(lightlevel - 11, 0, 10) * lightImportance;
 
 
         // Lets say deep soil temperature is a constant 5°C
         float cellarTemp = 5;
 
         // How good of a cellar it is depends on how much rock or soil was used on he cellars walls
-        float hereTemp = GameMath.Lerp(airTemp, cellarTemp, soilTempWeight);
+        var hereTemp = GameMath.Lerp(airTemp, cellarTemp, soilTempWeight);
 
         // For fairness lets say if its colder outside, use that temp instead
         hereTemp = Math.Min(hereTemp, airTemp);
@@ -175,7 +175,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
         // Some neat curve to turn the temperature into a spoilage rate
         // http://fooplot.com/#W3sidHlwZSI6MCwiZXEiOiJtYXgoMC4xLG1pbigyLjUsM14oeC8xOS0xLjIpKS0wLjEpIiwiY29sb3IiOiIjMDAwMDAwIn0seyJ0eXBlIjoxMDAwLCJ3aW5kb3ciOlsiLTIwIiwiNDAiLCIwIiwiMyJdLCJncmlkIjpbIjIuNSIsIjAuMjUiXX1d
         // max(0.1, min(2.5, 3^(x/15 - 1.2))-0.1)
-        float rate = Math.Max(0.1f, Math.Min(2.4f, (float)Math.Pow(3, hereTemp / 19 - 1.2) - 0.1f));
+        var rate = Math.Max(0.1f, Math.Min(2.4f, (float)Math.Pow(3, hereTemp / 19 - 1.2) - 0.1f));
 
         return rate;
     }
@@ -205,7 +205,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
     public ItemStack[] GetNonEmptyContentStacks(bool cloned = true)
     {
-        List<ItemStack> stacklist = new List<ItemStack>();
+        List<ItemStack> stacklist = [];
         foreach (var slot in Inventory)
         {
             if (slot.Empty) continue;
@@ -277,11 +277,11 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
         var room = Api.ModLoader.GetModSystem<RoomRegistry>()?.GetRoomForPosition(Pos);
         if (room == null) return; // или добавить альтернативную логику
-        float rate = GetPerishRate();
+        var rate = GetPerishRate();
 
         if (Inventory is InventoryGeneric)
         {
-            InventoryGeneric? inv = (InventoryBase)Inventory as InventoryGeneric;
+            var inv = (InventoryBase)Inventory as InventoryGeneric;
             float rateMul;
             if (inv!.TransitionableSpeedMulByType != null && inv.TransitionableSpeedMulByType.TryGetValue(EnumTransitionType.Perish, out rateMul))
             {
@@ -294,7 +294,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
                 foreach (var val in inv.PerishableFactorByFoodCategory)
                 {
-                    string type = Lang.Get("foodcategory-" + val.Key.ToString().ToLowerInvariant());
+                    var type = Lang.Get("foodcategory-" + val.Key.ToString().ToLowerInvariant());
                     dsc.AppendLine(Lang.Get("- {0}: {1}x", type, Math.Round(rate * val.Value, 2)));
                 }
 

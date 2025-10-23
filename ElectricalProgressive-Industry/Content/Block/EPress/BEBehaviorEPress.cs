@@ -69,7 +69,7 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
                     return false;
 
 
-                bool hasRecipe = BlockEntityEPress.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory);
+                var hasRecipe = BlockEntityEPress.FindMatchingRecipe(ref entity.CurrentRecipe, ref entity.CurrentRecipeName, entity.inventory);
                 _recipeProgress = entity.RecipeProgress;
                 return hasRecipe;
                     
@@ -130,7 +130,7 @@ public class BEBehaviorEPress : BEBehaviorBase, IElectricConsumer
         if (hasBurnout)
             ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
 
-        bool prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
+        var prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
         if (prepareBurnout)
         {
             ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));

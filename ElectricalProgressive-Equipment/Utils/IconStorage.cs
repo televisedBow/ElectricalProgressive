@@ -13,11 +13,11 @@ public class IconStorage
     float height,
     double[] rgba)
   {
-    Matrix matrix = cr.Matrix;
+    var matrix = cr.Matrix;
     cr.Save();
-    float num1 = 129f;
-    float num2 = 129f;
-    float num3 = Math.Min(width / num1, height / num2);
+    var num1 = 129f;
+    var num2 = 129f;
+    var num3 = Math.Min(width / num1, height / num2);
     matrix.Translate(x + (double)Math.Max(0.0f, (float)((width - num1 * (double)num3) / 2.0)),
       y + (double)Math.Max(0.0f, (float)((height - num2 * (double)num3) / 2.0)));
     matrix.Scale(num3, num3);
@@ -133,11 +133,11 @@ public class IconStorage
     float height,
     double[] rgba)
   {
-    Matrix matrix = cr.Matrix;
+    var matrix = cr.Matrix;
     cr.Save();
-    float num1 = 129f;
-    float num2 = 129f;
-    float num3 = Math.Min(width / num1, height / num2);
+    var num1 = 129f;
+    var num2 = 129f;
+    var num3 = Math.Min(width / num1, height / num2);
     matrix.Translate(x + (double) Math.Max(0.0f, (float) ((width - num1 * (double) num3) / 2.0)), y + (double) Math.Max(0.0f, (float) ((height - num2 * (double) num3) / 2.0)));
     matrix.Scale(num3, num3);
     cr.Matrix = matrix;
@@ -187,11 +187,11 @@ public class IconStorage
       float height,
       double[] rgba)
     {
-        Matrix matrix = cr.Matrix;
+        var matrix = cr.Matrix;
         cr.Save();
-        float num1 = 129f;
-        float num2 = 129f;
-        float num3 = Math.Min(width / num1, height / num2);
+        var num1 = 129f;
+        var num2 = 129f;
+        var num3 = Math.Min(width / num1, height / num2);
         matrix.Translate(x + (double)Math.Max(0.0f, (float)((width - num1 * (double)num3) / 2.0)),
           y + (double)Math.Max(0.0f, (float)((height - num2 * (double)num3) / 2.0)));
         matrix.Scale(num3, num3);
@@ -306,11 +306,11 @@ public class IconStorage
       float height,
       double[] rgba)
     {
-        Matrix matrix = cr.Matrix;
+        var matrix = cr.Matrix;
         cr.Save();
-        float num1 = 129f;
-        float num2 = 129f;
-        float num3 = Math.Min(width / num1, height / num2);
+        var num1 = 129f;
+        var num2 = 129f;
+        var num3 = Math.Min(width / num1, height / num2);
         matrix.Translate(x + (double)Math.Max(0.0f, (float)((width - num1 * (double)num3) / 2.0)),
           y + (double)Math.Max(0.0f, (float)((height - num2 * (double)num3) / 2.0)));
         matrix.Scale(num3, num3);

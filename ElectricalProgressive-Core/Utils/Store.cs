@@ -18,7 +18,7 @@ namespace ElectricalProgressive.Utils
         /// <summary>
         /// Словарь текущих запросов от клиентов, ключ - Id клиента.
         /// </summary>
-        public Dictionary<int, float> CurrentRequests { get; } = new Dictionary<int, float>();
+        public Dictionary<int, float> CurrentRequests { get; } = new();
 
         /// <summary>
         /// Флаг, указывающий, что магазин больше не имеет товара.
@@ -28,7 +28,7 @@ namespace ElectricalProgressive.Utils
         /// <summary>
         /// Общее количество товара, запрошенного от магазина за все время.
         /// </summary>
-        public float totalRequest;
+        public float TotalRequest;
 
         /// <summary>
         /// Инициализирует новый экземпляр класса Store.
@@ -39,7 +39,7 @@ namespace ElectricalProgressive.Utils
         {
             Id = id;
             Stock = stock;
-            totalRequest = 0f;
+            TotalRequest = 0f;
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace ElectricalProgressive.Utils
                 totalRequested += req;
             }
 
-            totalRequest += totalRequested;
+            TotalRequest += totalRequested;
 
             if (Stock <= 0.001f)
             {
@@ -81,20 +81,20 @@ namespace ElectricalProgressive.Utils
             {
                 foreach (var kvp in CurrentRequests)
                 {
-                    int customerId = kvp.Key;
-                    float requested = kvp.Value;
+                    var customerId = kvp.Key;
+                    var requested = kvp.Value;
                     customers[customerId].AddReceived(Id, requested);
                     Stock -= requested;
                 }
             }
             else
             {
-                float ratio = Stock / totalRequested;
+                var ratio = Stock / totalRequested;
                 foreach (var kvp in CurrentRequests)
                 {
-                    int customerId = kvp.Key;
-                    float requested = kvp.Value;
-                    float allocated = requested * ratio;
+                    var customerId = kvp.Key;
+                    var requested = kvp.Value;
+                    var allocated = requested * ratio;
                     customers[customerId].AddReceived(Id, allocated);
                     Stock -= allocated;
                 }
@@ -113,7 +113,7 @@ namespace ElectricalProgressive.Utils
         {
             Id = id;
             Stock = stock;
-            totalRequest = 0f;
+            TotalRequest = 0f;
             ImNull = false;
         }
     }

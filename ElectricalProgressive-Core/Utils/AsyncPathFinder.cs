@@ -11,13 +11,13 @@ namespace ElectricalProgressive.Utils
 {
     public class AsyncPathFinder
     {
-        private readonly ConcurrentQueue<PathRequest> requestQueue = new(); // потокобезопасная очередь запросов
-        private volatile bool isRunning = true;                             // Флаг для управления остановкой
-        private bool busy = false;                                          // Флаг для отслеживания загрузки очереди
-        private readonly int maxConcurrentTasks;                            // Максимальное количество параллельных задач
-        private Dictionary<BlockPos, NetworkPart> parts;                    // Словарь частей сети
-        private int sizeOfQueue;
-        private int sizeOfNotBusy;
+        private readonly ConcurrentQueue<PathRequest> _requestQueue = new(); // потокобезопасная очередь запросов
+        private volatile bool _isRunning = true;                             // Флаг для управления остановкой
+        private bool _busy = false;                                          // Флаг для отслеживания загрузки очереди
+        private readonly int _maxConcurrentTasks;                            // Максимальное количество параллельных задач
+        private readonly Dictionary<BlockPos, NetworkPart> _parts;           // Словарь частей сети
+        private readonly int _sizeOfQueue;
+        private readonly int _sizeOfNotBusy;
 
         /// <summary>
         /// Инициализирует новый экземпляр класса AsyncPathFinder.
@@ -26,14 +26,14 @@ namespace ElectricalProgressive.Utils
         /// <param name="maxConcurrentTasks"></param>
         public AsyncPathFinder(Dictionary<BlockPos, NetworkPart> parts, int maxConcurrentTasks)
         {
-            this.parts = parts;
-            this.maxConcurrentTasks = maxConcurrentTasks;
-            this.sizeOfQueue = 1000 * maxConcurrentTasks;
-            this.sizeOfNotBusy = 200 * maxConcurrentTasks;
+            this._parts = parts;
+            this._maxConcurrentTasks = maxConcurrentTasks;
+            this._sizeOfQueue = 1000 * maxConcurrentTasks;
+            this._sizeOfNotBusy = 200 * maxConcurrentTasks;
 
 
             // Запускаем задачи-потребители один раз при старте
-            for (int i = 0; i < maxConcurrentTasks; i++)
+            for (var i = 0; i < maxConcurrentTasks; i++)
             {
                 Task.Factory.StartNew(() => ProcessRequests(), TaskCreationOptions.LongRunning)
                     .ConfigureAwait(false);                     // Используем LongRunning для выделенных потоков
@@ -51,17 +51,17 @@ namespace ElectricalProgressive.Utils
         public void EnqueueRequest(BlockPos start, BlockPos end, Network network)
         {
             // если очередь пуста считай, то можно снова заполнять
-            if (requestQueue.Count < sizeOfNotBusy)
-                busy = false;
+            if (_requestQueue.Count < _sizeOfNotBusy)
+                _busy = false;
 
             // если очередь меньше sizeOfQueue и не занята, то добавляем запрос
-            if (requestQueue.Count < sizeOfQueue && !busy)
+            if (_requestQueue.Count < _sizeOfQueue && !_busy)
             {
-                requestQueue.Enqueue(new PathRequest(start, end, network));
+                _requestQueue.Enqueue(new PathRequest(start, end, network));
             }
             else
             {
-                busy = true;
+                _busy = true;
             }
         }
 
@@ -73,31 +73,31 @@ namespace ElectricalProgressive.Utils
             var pathFinder = new PathFinder(); // Создаем новый экземпляр PathFinder для каждого потока
 
             // Цикл обработки запросов
-            while (isRunning)
+            while (_isRunning)
             {
                 // Если очередь пуста, очищаем PathFinder и ждем
-                if (requestQueue.Count == 0)
+                if (_requestQueue.Count == 0)
                 {
                     pathFinder.Clear();
                     Thread.Sleep(50); // Если очередь пуста, ждем 100 мс
                 }
 
                 // Пытаемся извлечь запрос из очереди
-                if (requestQueue.TryDequeue(out var request))
+                if (_requestQueue.TryDequeue(out var request))
                 {
                     try //при изменении сетей неизбежно будет исключение, поэтому обрабатываем его здесь, чтобы не крашить. Особенно это касается загрузки и выгрузки мира
                     {
                         var (path, facing, processed, usedConn) =
-                            pathFinder.FindShortestPath(request.Start, request.End, request.Network, parts);
+                            pathFinder.FindShortestPath(request.Start, request.End, request.Network, _parts);
 
 
                         if (path != null)
                         {
                             // проверка на null, чтобы потом снова посчитать попробовать
                             // Глубокое копирование Start и End
-                            BlockPos copiedStart = request.Start.Copy();
-                            BlockPos copiedEnd = request.End.Copy();
-                            var voltage = parts[copiedEnd].eparams[facing.Last()].voltage;
+                            var copiedStart = request.Start.Copy();
+                            var copiedEnd = request.End.Copy();
+                            var voltage = _parts[copiedEnd].eparams[facing.Last()].voltage;
 
                             // Добавление скопированных данных в кэш
                             PathCacheManager.AddOrUpdate(
@@ -132,9 +132,9 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         public void Stop()
         {
-            isRunning = false;
+            _isRunning = false;
             // Очистка очереди
-            while (requestQueue.TryDequeue(out _)) { }
+            while (_requestQueue.TryDequeue(out _)) { }
         }
 
 

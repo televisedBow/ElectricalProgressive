@@ -18,10 +18,11 @@ using ElectricalProgressive.Content.Item.Tool;
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electric weapons, armor and tools",
     Version = "2.3.5",
-    Authors = new[] {
+    Authors =
+    [
         "Tehtelev",
         "Kotl"
-    }
+    ]
 )]
 
 namespace ElectricalProgressive;

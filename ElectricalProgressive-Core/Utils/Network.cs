@@ -9,12 +9,12 @@ namespace ElectricalProgressive.Utils
     /// </summary>
     public class Network
     {
-        public readonly HashSet<IElectricAccumulator> Accumulators = new();  //Аккумуляторы
-        public readonly HashSet<IElectricConsumer> Consumers = new();       //Потребители
-        public readonly HashSet<IElectricConductor> Conductors = new();       //Проводники
-        public readonly HashSet<IElectricProducer> Producers = new();           //Генераторы
-        public readonly HashSet<IElectricTransformator> Transformators = new();  //Трансформаторы
-        public readonly HashSet<BlockPos> PartPositions = new();     //Координаты позиций сети
+        public readonly HashSet<IElectricAccumulator> Accumulators = [];  //Аккумуляторы
+        public readonly HashSet<IElectricConsumer> Consumers = [];       //Потребители
+        public readonly HashSet<IElectricConductor> Conductors = [];       //Проводники
+        public readonly HashSet<IElectricProducer> Producers = [];           //Генераторы
+        public readonly HashSet<IElectricTransformator> Transformators = [];  //Трансформаторы
+        public readonly HashSet<BlockPos> PartPositions = [];     //Координаты позиций сети
         public float Consumption; //Потребление
         public float Capacity;    //Емкость батарей
         public float MaxCapacity; //Максимальная емкость батарей

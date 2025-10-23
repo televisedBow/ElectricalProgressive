@@ -33,22 +33,22 @@ public class GuiDialogHammer : GuiDialogBlockEntity
 
 private void SetupDialog()
 {
-    ItemSlot itemSlot = this.capi.World.Player.InventoryManager.CurrentHoveredSlot;
+    var itemSlot = this.capi.World.Player.InventoryManager.CurrentHoveredSlot;
     if (itemSlot != null && itemSlot.Inventory == this.Inventory)
         this.capi.Input.TriggerOnMouseLeaveSlot(itemSlot);
     else
         itemSlot = (ItemSlot)null;
     
-    ElementBounds bounds1 = ElementBounds.Fixed(0.0, 0.0, 250.0, 90.0);
-    ElementBounds bounds2 = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0.0, 30.0, 1, 1); // Input slot
-    ElementBounds bounds3 = ElementStdBounds.SlotGrid(EnumDialogArea.None, 153.0, 30.0, 1, 1); // Main output slot
-    ElementBounds boundsChance = ElementStdBounds.SlotGrid(EnumDialogArea.None, 220.0, 30.0, 1, 1); // New chance output slot (40px to the right of main output)
+    var bounds1 = ElementBounds.Fixed(0.0, 0.0, 250.0, 90.0);
+    var bounds2 = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0.0, 30.0, 1, 1); // Input slot
+    var bounds3 = ElementStdBounds.SlotGrid(EnumDialogArea.None, 153.0, 30.0, 1, 1); // Main output slot
+    var boundsChance = ElementStdBounds.SlotGrid(EnumDialogArea.None, 220.0, 30.0, 1, 1); // New chance output slot (40px to the right of main output)
     
-    ElementBounds bounds4 = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
+    var bounds4 = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
     bounds4.BothSizing = ElementSizing.FitToChildren;
     bounds4.WithChildren(bounds1);
     
-    ElementBounds bounds5 = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
+    var bounds5 = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
         .WithFixedAlignmentOffset(-GuiStyle.DialogToScreenPadding, 0.0);
     
     this.ClearComposers();
@@ -83,9 +83,9 @@ private void SetupDialog()
 
   private void OnBgDraw(Context ctx, ImageSurface surface, ElementBounds currentBounds)
   {
-      double num1 = 30.0;
+      var num1 = 30.0;
       ctx.Save();
-      Matrix matrix = ctx.Matrix;
+      var matrix = ctx.Matrix;
       matrix.Translate(GuiElement.scaled(63.0), GuiElement.scaled(num1 + 2.0));
       matrix.Scale(GuiElement.scaled(0.6), GuiElement.scaled(0.6));
       ctx.Matrix = matrix;
@@ -94,7 +94,7 @@ private void SetupDialog()
       ctx.Clip();
     
       // Изменённый градиент от зелёного к красному
-      LinearGradient source = new LinearGradient(0.0, 0.0, GuiElement.scaled(200.0), 0.0);
+      var source = new LinearGradient(0.0, 0.0, GuiElement.scaled(200.0), 0.0);
       source.AddColorStop(0.0, new Color(0.0, 0.4, 0.0, 1.0));  // Тёмно-зелёный
       source.AddColorStop(0.5, new Color(0.8, 0.8, 0.0, 1.0));  // Жёлтый (промежуточный)
       source.AddColorStop(1.0, new Color(0.6, 0.0, 0.0, 1.0)); // Красный

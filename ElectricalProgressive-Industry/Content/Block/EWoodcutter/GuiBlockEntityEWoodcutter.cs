@@ -43,12 +43,11 @@ public class GuiBlockEntityEWoodcutter : GuiDialogBlockEntity
         var outputGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 0, 48 + 20 + GuiStyle.TitleBarHeight, 5, 1);
 
         dialog.BothSizing = ElementSizing.FitToChildren;
-        dialog.WithChildren(new[]
-        {
+        dialog.WithChildren([
             dialogBounds,
             inputGrid,
             outputGrid
-        });
+        ]);
 
         SingleComposer = capi.Gui.CreateCompo("ewoodcutter" + BlockEntityPosition, window)
             .AddShadedDialogBG(dialog)

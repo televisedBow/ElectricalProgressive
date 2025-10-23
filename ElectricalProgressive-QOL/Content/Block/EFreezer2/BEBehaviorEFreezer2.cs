@@ -41,7 +41,7 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         //проверяем не сгорел ли прибор
-        if (Blockentity is not BlockEntityEFreezer2 entity)
+        if (Blockentity is not BlockEntityEFreezer2)
             return;
 
         if (IsBurned)
@@ -74,8 +74,8 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
             return;
         }
 
-        bool hasBurnout = false;
-        bool prepareBurnout = false;
+        var hasBurnout = false;
+        var prepareBurnout = false;
 
         // Однопроходная проверка всех условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)

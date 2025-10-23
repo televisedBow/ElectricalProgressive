@@ -85,7 +85,7 @@ public class BlockEFence : BlockEBase
 
     public string GetOrientations(IWorldAccessor world, BlockPos pos)
     {
-        string text = GetFenceCode(world, pos, BlockFacing.NORTH) + GetFenceCode(world, pos, BlockFacing.EAST) + GetFenceCode(world, pos, BlockFacing.SOUTH) + GetFenceCode(world, pos, BlockFacing.WEST);
+        var text = GetFenceCode(world, pos, BlockFacing.NORTH) + GetFenceCode(world, pos, BlockFacing.EAST) + GetFenceCode(world, pos, BlockFacing.SOUTH) + GetFenceCode(world, pos, BlockFacing.WEST);
         if (text.Length == 0)
         {
             text = "empty";
@@ -109,7 +109,7 @@ public class BlockEFence : BlockEBase
         // Проверка, что под этим блоком находится и над ним
         var blockDown = world.BlockAccessor.GetBlock(blockSel.Position.AddCopy(BlockFacing.DOWN));
         var blockUp = world.BlockAccessor.GetBlock(blockSel.Position.AddCopy(BlockFacing.UP));
-        string partType = "bottom";
+        var partType = "bottom";
 
         if (blockDown is BlockEFence)
         {
@@ -149,7 +149,7 @@ public class BlockEFence : BlockEBase
         // Проверка, что под этим блоком находится и над ним
         var blockDown = world.BlockAccessor.GetBlock(pos.AddCopy(BlockFacing.DOWN));
         var blockUp = world.BlockAccessor.GetBlock(pos.AddCopy(BlockFacing.UP));
-        string partType = "bottom";
+        var partType = "bottom";
 
         if (blockDown is BlockEFence)
         {
@@ -169,7 +169,7 @@ public class BlockEFence : BlockEBase
         };
 
 
-        AssetLocation assetLocation = CodeWithVariants(variant);
+        var assetLocation = CodeWithVariants(variant);
         if (!Code.Equals(assetLocation))
         {
             var block = world.BlockAccessor.GetBlock(assetLocation);
@@ -187,19 +187,19 @@ public class BlockEFence : BlockEBase
 
     public override BlockDropItemStack[] GetDropsForHandbook(ItemStack handbookStack, IPlayer forPlayer)
     {
-        return new BlockDropItemStack[1]
-        {
+        return
+        [
             new BlockDropItemStack(handbookStack)
-        };
+        ];
     }
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
     {
         var block = world.BlockAccessor.GetBlock(CodeWithVariants(["type", "part"], ["ew", "bottom"]));
-        return new ItemStack[1]
-        {
+        return
+        [
             new ItemStack(block)
-        };
+        ];
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
@@ -211,13 +211,13 @@ public class BlockEFence : BlockEBase
     public bool ShouldConnectAt(IWorldAccessor world, BlockPos ownPos, BlockFacing side)
     {
         var block = world.BlockAccessor.GetBlock(ownPos.AddCopy(side));
-        JsonObject attributes = block.Attributes;
+        var attributes = block.Attributes;
         if (attributes != null && attributes["fenceConnect"][side.Code].Exists)
         {
             return block.Attributes["fenceConnect"][side.Code].AsBool(defaultValue: true);
         }
 
-        Cuboidi attachmentArea = (new Cuboidi[4]
+        var attachmentArea = (new Cuboidi[4]
         {
             new RotatableCube(6f, 0f, 15f, 10f, 14f, 15f).ToHitboxCuboidi(180f),
             new RotatableCube(6f, 0f, 15f, 10f, 14f, 15f).ToHitboxCuboidi(270f),
@@ -236,12 +236,12 @@ public class BlockEFence : BlockEBase
 
     static BlockEFence()
     {
-        OneDir = new string[4] { "n", "e", "s", "w" };
-        TwoDir = new string[2] { "ns", "ew" };
-        AngledDir = new string[4] { "ne", "es", "sw", "nw" };
-        ThreeDir = new string[4] { "nes", "new", "nsw", "esw" };
-        GateLeft = new string[2] { "egw", "ngs" };
-        GateRight = new string[2] { "gew", "gns" };
+        OneDir = ["n", "e", "s", "w"];
+        TwoDir = ["ns", "ew"];
+        AngledDir = ["ne", "es", "sw", "nw"];
+        ThreeDir = ["nes", "new", "nsw", "esw"];
+        GateLeft = ["egw", "ngs"];
+        GateRight = ["gew", "gns"];
         AngleGroups = new Dictionary<string, KeyValuePair<string[], int>>();
         AngleGroups["n"] = new KeyValuePair<string[], int>(OneDir, 0);
         AngleGroups["e"] = new KeyValuePair<string[], int>(OneDir, 1);
@@ -265,15 +265,15 @@ public class BlockEFence : BlockEBase
 
     public override AssetLocation GetRotatedBlockCode(int angle)
     {
-        string text = Variant["type"];
+        var text = Variant["type"];
         if (text == "empty" || text == "nesw")
         {
             return Code;
         }
 
-        int num = angle / 90;
-        KeyValuePair<string[], int> keyValuePair = AngleGroups[text];
-        string value = keyValuePair.Key[GameMath.Mod(keyValuePair.Value + num, keyValuePair.Key.Length)];
+        var num = angle / 90;
+        var keyValuePair = AngleGroups[text];
+        var value = keyValuePair.Key[GameMath.Mod(keyValuePair.Value + num, keyValuePair.Key.Length)];
         return CodeWithVariant("type", value);
     }
 

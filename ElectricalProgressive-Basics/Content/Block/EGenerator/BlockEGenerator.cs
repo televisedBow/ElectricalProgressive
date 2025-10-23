@@ -13,7 +13,7 @@ namespace ElectricalProgressive.Content.Block.EGenerator;
 public class BlockEGenerator : BlockEBase, IMechanicalPowerBlock
 {
     private readonly static Dictionary<(Facing, string), MeshData> MeshData = new();
-    private static float[] def_Params = { 100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F };          //заглушка
+    private static float[] def_Params = [100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F];          //заглушка
 
     public override void OnUnloaded(ICoreAPI api)
     {
@@ -57,7 +57,7 @@ public class BlockEGenerator : BlockEBase, IMechanicalPowerBlock
         BlockSelection blockSel, ref string failureCode)
     {
         var selection = new Selection(blockSel);
-        Facing facing = Facing.None;
+        var facing = Facing.None;
 
         try
         {

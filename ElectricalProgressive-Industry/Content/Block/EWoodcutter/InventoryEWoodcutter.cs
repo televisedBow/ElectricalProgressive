@@ -15,7 +15,7 @@ public class InventoryEWoodcutter : InventoryGeneric, ISlotProvider
         : base(api)
     {
         // Слоты инициализирует InventoryGeneric в методе Init
-        slots = Array.Empty<ItemSlot>();
+        slots = [];
     }
 
     public override void LateInitialize(string inventoryID, ICoreAPI api)

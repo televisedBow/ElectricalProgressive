@@ -22,8 +22,8 @@ namespace ElectricalProgressive.Utils
         /// <param name="indexType"></param>
         public Block CableAsset(ICoreAPI api, CollectibleObject baseBlock, int indexVoltage, string material, int indexQuantity, int indexType)
         {
-            string[] t = new string[4];
-            string[] v = new string[4];
+            var t = new string[4];
+            var v = new string[4];
 
             t[0] = "voltage";
             t[1] = "material";

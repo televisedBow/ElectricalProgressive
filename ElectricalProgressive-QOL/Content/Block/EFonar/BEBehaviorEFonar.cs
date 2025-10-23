@@ -56,7 +56,7 @@ namespace ElectricalProgressive.Content.Block.EFonar
             if (Api is null)
                 return;
 
-            int roundAmount = (int)Math.Round(Math.Min(amount, _maxConsumption), MidpointRounding.AwayFromZero);
+            var roundAmount = (int)Math.Round(Math.Min(amount, _maxConsumption), MidpointRounding.AwayFromZero);
 
             if (roundAmount == LightLevel || IsBurned) //если сгорело или не поменялось
                 return;
@@ -100,8 +100,8 @@ namespace ElectricalProgressive.Content.Block.EFonar
                 return;
             }
 
-            bool hasBurnout = false;
-            bool prepareBurnout = false;
+            var hasBurnout = false;
+            var prepareBurnout = false;
 
             // Однопроходная проверка всех условий
             foreach (var eParam in entity.ElectricalProgressive.AllEparams)

@@ -12,24 +12,24 @@ namespace ElectricalProgressive.Utils
     public class DamageManager
     {
         //урон в зависимости от напряжения в проводе
-        public static readonly Dictionary<int, float> DAMAGE_AMOUNT = new Dictionary<int, float>
+        public static readonly Dictionary<int, float> DamageAmount = new()
         {
             { 32,  0.1f },
             { 128,  0.5f }
         };
 
         //сила отталкивания
-        private const double KNOCKBACK_STRENGTH = 0.4;
+        private const double KnockbackStrength = 0.4;
 
         // Интервал в миллисекундах (2 секунды)
-        private const long DAMAGE_INTERVAL_MS = 2000;
+        private const long DamageIntervalMs = 2000;
 
         // Ключ для хранения времени удара
-        private const string key = "damageByElectricity";
+        private const string Key = "damageByElectricity";
 
         public static global::ElectricalProgressive.ElectricalProgressive? System;
 
-        private ICoreServerAPI sapi;
+        private ICoreServerAPI _sapi;
 
 
         /// <summary>
@@ -38,19 +38,19 @@ namespace ElectricalProgressive.Utils
         /// <param name="api"></param>
         public DamageManager(ICoreServerAPI api)
         {
-            this.sapi = api;
+            this._sapi = api;
 
             // Получаем ссылку на систему ElectricalProgressive, если она есть
-            System = sapi!.ModLoader.GetModSystem<global::ElectricalProgressive.ElectricalProgressive>();
+            System = _sapi!.ModLoader.GetModSystem<global::ElectricalProgressive.ElectricalProgressive>();
         }
 
 
 
 
         // Время жизни кэша в миллисекундах (например, 1 с)
-        private static long CacheTtlMs = 1000;
+        private static long _cacheTtlMs = 1000;
         // Интервал между автосбросами кэша в миллисекундах (например, 1 минута)
-        private static long CleanupIntervalMs = 60 * 1000;
+        private static long _cleanupIntervalMs = 60 * 1000;
 
         // Структура для хранения данных + время записи
         private class CacheEntry
@@ -60,8 +60,7 @@ namespace ElectricalProgressive.Utils
             public long Timestamp;
         }
 
-        private static readonly Dictionary<(int X, int Z), CacheEntry> _cache
-            = new Dictionary<(int, int), CacheEntry>();
+        private static readonly Dictionary<(int X, int Z), CacheEntry> Cache = [];
 
         // Последний момент, когда мы чистили кэш
         private static long _lastCleanup = Environment.TickCount;
@@ -73,23 +72,23 @@ namespace ElectricalProgressive.Utils
         private static void CleanupIfNeeded()
         {
             long now = Environment.TickCount;
-            if (now - _lastCleanup < CleanupIntervalMs)
+            if (now - _lastCleanup < _cleanupIntervalMs)
                 return;
 
 
             _lastCleanup = now;
 
             var toRemove = new List<(int, int)>();
-            foreach (var kv in _cache)
+            foreach (var kv in Cache)
             {
-                if (now - kv.Value.Timestamp > CacheTtlMs)
+                if (now - kv.Value.Timestamp > _cacheTtlMs)
                 {
                     toRemove.Add(kv.Key);
                 }
             }
             foreach (var key in toRemove)
             {
-                _cache.Remove(key);
+                Cache.Remove(key);
             }
         }
 
@@ -110,10 +109,10 @@ namespace ElectricalProgressive.Utils
             if (sapi != null)
             {
                 // Получаем актуальные данные
-                int heightRain = sapi.World.BlockAccessor.GetRainMapHeightAt(pos.X, pos.Z);
-                float precip = ElectricalProgressive.WeatherSystemServer!.GetPrecipitation(tmpPos);
+                var heightRain = sapi.World.BlockAccessor.GetRainMapHeightAt(pos.X, pos.Z);
+                var precip = ElectricalProgressive.WeatherSystemServer!.GetPrecipitation(tmpPos);
 
-                _cache[key] = new CacheEntry
+                Cache[key] = new CacheEntry
                 {
                     HeightRain = heightRain,
                     Precip = precip,
@@ -125,7 +124,7 @@ namespace ElectricalProgressive.Utils
             else
             {
                 // sapi == null — возвращаем из кэша, если есть
-                if (_cache.TryGetValue(key, out var entry))
+                if (Cache.TryGetValue(key, out var entry))
                 {
                     return (entry.HeightRain, entry.Precip);
                 }
@@ -163,11 +162,11 @@ namespace ElectricalProgressive.Utils
             if (System == null) // Если система ElectricalProgressive не инициализирована, ничего не делаем
                 return;
 
-            bool doDamage = false;
-            int voltage = 0;
+            var doDamage = false;
+            var voltage = 0;
             NetworkInformation networkInformation;
 
-            for (int i = 0; i <= 5; i++) //перебор всех граней
+            for (var i = 0; i <= 5; i++) //перебор всех граней
             {
                 networkInformation = System.GetNetworks(pos, FacingHelper.FromFace(FacingHelper.BlockFacingFromIndex(i)));      //получаем информацию о сети
 
@@ -201,14 +200,14 @@ namespace ElectricalProgressive.Utils
                 return;
 
             // Текущее время в миллисекундах с запуска сервера
-            long now = world.ElapsedMilliseconds;
-            double last = entity.Attributes.GetDouble(key);
+            var now = world.ElapsedMilliseconds;
+            var last = entity.Attributes.GetDouble(Key);
 
             if (last > now)
                 last = 0;
 
             // Если прошло >= 2 секунд, наносим урон и сбрасываем таймер
-            if (now - last >= DAMAGE_INTERVAL_MS)
+            if (now - last >= DamageIntervalMs)
             {
                 // 1) Наносим урон
                 var dmg = new DamageSource()
@@ -218,20 +217,20 @@ namespace ElectricalProgressive.Utils
                     Type = EnumDamageType.Electricity,
                     SourcePos = pos.ToVec3d()
                 };
-                entity.ReceiveDamage(dmg, ((specifiedDamage>0.0f)? specifiedDamage: DAMAGE_AMOUNT[voltage]));
+                entity.ReceiveDamage(dmg, ((specifiedDamage>0.0f)? specifiedDamage: DamageAmount[voltage]));
 
                 // 2) Вычисляем вектор от блока к сущности и отталкиваем
-                Vec3d center = pos.ToVec3d().Add(0.5, 0.5, 0.5);
-                Vec3d diff = entity.ServerPos.XYZ - center;
+                var center = pos.ToVec3d().Add(0.5, 0.5, 0.5);
+                var diff = entity.ServerPos.XYZ - center;
                 diff.Y = 0.2; // небольшой подъём
                 diff.Normalize();
 
-                entity.Attributes.SetDouble("kbdirX", diff.X * KNOCKBACK_STRENGTH);
-                entity.Attributes.SetDouble("kbdirY", diff.Y * KNOCKBACK_STRENGTH);
-                entity.Attributes.SetDouble("kbdirZ", diff.Z * KNOCKBACK_STRENGTH);
+                entity.Attributes.SetDouble("kbdirX", diff.X * KnockbackStrength);
+                entity.Attributes.SetDouble("kbdirY", diff.Y * KnockbackStrength);
+                entity.Attributes.SetDouble("kbdirZ", diff.Z * KnockbackStrength);
 
                 // 3) Запоминаем время удара
-                entity.Attributes.SetDouble(key, now);
+                entity.Attributes.SetDouble(Key, now);
 
                 //рисуем искры
                 ParticleManager.SpawnElectricSparks(entity.World, entity.Pos.XYZ);
@@ -267,10 +266,10 @@ namespace ElectricalProgressive.Utils
 
 
 
-            Vec3d tmpPos = new Vec3d();
-            Block here = blockAccessor.GetBlock(part.Position);
-            float Y = 0.0f;
-            bool updated = false;
+            var tmpPos = new Vec3d();
+            var here = blockAccessor.GetBlock(part.Position);
+            var Y = 0.0f;
+            var updated = false;
 
             // Проверка мультиблока
             var multiblockBehavior = here.GetBehavior<BlockBehaviorMultiblock>();
@@ -281,7 +280,7 @@ namespace ElectricalProgressive.Utils
                 {
                     try
                     {
-                        JObject jo = JObject.Parse(properties);
+                        var jo = JObject.Parse(properties);
                         Y = (float)jo["sizey"]! - 1;
                     }
                     catch
@@ -303,23 +302,23 @@ namespace ElectricalProgressive.Utils
             // с некоторым шансом даже если дождь попадает
             // но рано или поздно спалит
             // heightRain=0 когда чанк не прогружен, либо sapi=null не трогать условие, иначе спалит ВСЁ
-            bool isRaining = heightRain > 0
-                && heightRain <= part.Position.Y + Y
-                && precip > 0.1f;
+            var isRaining = heightRain > 0
+                            && heightRain <= part.Position.Y + Y
+                            && precip > 0.1f;
 
 
 
 
 
-            BlockPos pos = part.Position; // Позиция блока, к которому относится часть сети
+            var pos = part.Position; // Позиция блока, к которому относится часть сети
 
 
 
             // проверяем находится ли кабель под нагрузкой
-            bool[] powered = new bool[6]; //массив для хранения устройств, которые под напряжением
+            var powered = new bool[6]; //массив для хранения устройств, которые под напряжением
 
             NetworkInformation networkInformation;
-            for (int i = 0; i <= 5; i++) //перебор всех граней
+            for (var i = 0; i <= 5; i++) //перебор всех граней
             {
                 networkInformation = System.GetNetworks(pos, FacingHelper.FromFace(FacingHelper.BlockFacingFromIndex(i)));      //получаем информацию о сети
 
@@ -334,7 +333,7 @@ namespace ElectricalProgressive.Utils
             // Проверка осадков для всех граней
             if (isRaining)
             {
-                for (int i = 0; i < 6; i++)
+                for (var i = 0; i < 6; i++)
                 {
                     if (!part.eparams[i].burnout && !part.eparams[i].isolatedEnvironment && powered[i])
                     {
@@ -345,12 +344,12 @@ namespace ElectricalProgressive.Utils
             }
 
             // Проверка жидкости в текущем блоке
-            Block fluidHere = blockAccessor.GetBlock(pos, BlockLayersAccess.Fluid);
+            var fluidHere = blockAccessor.GetBlock(pos, BlockLayersAccess.Fluid);
             if (fluidHere.IsLiquid())
             {
                 if (fluidHere.Code.Path.Contains("lava"))
                 {
-                    for (int i = 0; i < 6; i++)
+                    for (var i = 0; i < 6; i++)
                     {
                         Burnout(i, ref part);
                     }
@@ -362,7 +361,7 @@ namespace ElectricalProgressive.Utils
                 }
                 else if (fluidHere.Code.Path.Contains("water"))
                 {
-                    for (int i = 0; i < 6; i++)
+                    for (var i = 0; i < 6; i++)
                     {
                         if (!part.eparams[i].burnout && !part.eparams[i].isolatedEnvironment && powered[i])
                         {
@@ -376,13 +375,13 @@ namespace ElectricalProgressive.Utils
             // Проверка соседних блоков
             foreach (var face in BlockFacing.ALLFACES)
             {
-                BlockPos neighborPos = pos.AddCopy(face);
-                Block fluid = blockAccessor.GetBlock(neighborPos, BlockLayersAccess.Fluid);
+                var neighborPos = pos.AddCopy(face);
+                var fluid = blockAccessor.GetBlock(neighborPos, BlockLayersAccess.Fluid);
                 if (fluid.IsLiquid())
                 {
                     if (fluid.Code.Path.Contains("lava"))
                     {
-                        for (int i = 0; i < 6; i++)
+                        for (var i = 0; i < 6; i++)
                         {
                             Burnout(i, ref part);
                         }
@@ -393,7 +392,7 @@ namespace ElectricalProgressive.Utils
                     }
                     else if (fluid.Code.Path.Contains("water"))
                     {
-                        for (int i = 0; i < 6; i++)
+                        for (var i = 0; i < 6; i++)
                         {
                             if (!part.eparams[i].burnout && !part.eparams[i].isolatedEnvironment && powered[i])
                             {

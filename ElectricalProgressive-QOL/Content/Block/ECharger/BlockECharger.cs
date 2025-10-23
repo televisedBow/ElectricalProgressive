@@ -19,7 +19,7 @@ public class BlockECharger : BlockEBase
         if (api.Side != EnumAppSide.Client)
             return;
 
-        ICoreClientAPI? capi = api as ICoreClientAPI;
+        var capi = api as ICoreClientAPI;
 
 
         _output = MyMiniLib.GetAttributeInt(this, "output", 1000);
@@ -97,7 +97,7 @@ public class BlockECharger : BlockEBase
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
-        return new[] { OnPickBlock(world, pos) };
+        return [OnPickBlock(world, pos)];
     }
 
     /// <summary>

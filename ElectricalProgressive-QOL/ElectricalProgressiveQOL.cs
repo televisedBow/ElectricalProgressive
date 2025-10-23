@@ -25,10 +25,11 @@ using Vintagestory.API.Common;
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Additional electrical devices.",
     Version = "2.4.0",
-    Authors = new[] {
+    Authors =
+    [
         "Tehtelev",
         "Kotl"
-    }
+    ]
 )]
 
 namespace ElectricalProgressive;
@@ -139,11 +140,11 @@ public class ElectricalProgressiveQOL : ModSystem
                     // Пытаемся получить Instance(XLeveling)
                     if (typeXLeveling != null)
                     {
-                        var instMethod = typeXLeveling.GetMethod("Instance", new[] { typeof(ICoreAPI) });
+                        var instMethod = typeXLeveling.GetMethod("Instance", [typeof(ICoreAPI)]);
                         if (instMethod != null)
                         {
-                            xLevelingInstance = instMethod.Invoke(null, new object[] { api });
-                            methodGetSkill = typeXLeveling.GetMethod("GetSkill", new[] { typeof(string), typeof(bool) });
+                            xLevelingInstance = instMethod.Invoke(null, [api]);
+                            methodGetSkill = typeXLeveling.GetMethod("GetSkill", [typeof(string), typeof(bool)]);
                         }
                     }
 
@@ -154,7 +155,7 @@ public class ElectricalProgressiveQOL : ModSystem
                     {
                         methodGetCookingTimeMultiplier = typeCookingUtil.GetMethod(
                             "GetCookingTimeMultiplier",
-                            new[] { typeof(BlockEntity) }
+                            [typeof(BlockEntity)]
                         );
                     }
 

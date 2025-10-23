@@ -160,8 +160,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     /// <returns></returns>
     public int GetRotation()
     {
-        string side = Block.Variant["side"];
-        int adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
+        var side = Block.Variant["side"];
+        var adjustedIndex = ((BlockFacing.FromCode(side)?.HorizontalAngleIndex ?? 1) + 3) & 3;
         return adjustedIndex * 90;
     }
 
@@ -284,7 +284,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             _clientDialog.Update(_genTemp, _fuelBurnTime);
         }
 
-        IWorldChunk chunkatPos = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
+        var chunkatPos = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
         if (chunkatPos == null)
             return;
 
@@ -418,7 +418,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     /// </summary>
     private void CanDoBurn()
     {
-        CombustibleProperties fuelProps = FuelSlot.Itemstack?.Collectible?.CombustibleProps ?? null!;
+        var fuelProps = FuelSlot.Itemstack?.Collectible?.CombustibleProps ?? null!;
         if (fuelProps == null)
             return;
 

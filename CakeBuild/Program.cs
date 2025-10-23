@@ -26,14 +26,15 @@ public static class Program
 
 public class BuildContext : FrostingContext
 {
-    public List<string> ProjectNames = new List<string> {
+    public List<string> ProjectNames =
+    [
         "ElectricalProgressive-Core",
         "ElectricalProgressive-Basics",
         "ElectricalProgressive-Equipment",
         "ElectricalProgressive-QOL",
-        "ElectricalProgressive-Industry",
+        "ElectricalProgressive-Industry"
         // Add other project names here
-    };
+    ];
 
     public BuildContext(ICakeContext context) : base(context)
     {

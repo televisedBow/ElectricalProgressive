@@ -74,7 +74,7 @@ namespace ElectricalProgressive.Utils
             get
             {
                 double total = 0;
-                for (int i = 0; i < StoreDistances.Length; i++)
+                for (var i = 0; i < StoreDistances.Length; i++)
                 {
                     total += StoreDistances[i] * Received[i];
                 }
@@ -87,8 +87,8 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         private void UpdateOrderedStores()
         {
-            int n = StoreDistances.Length;
-            for (int i = 0; i < n; i++)
+            var n = StoreDistances.Length;
+            for (var i = 0; i < n; i++)
             {
                 orderedStoreIds[i] = i;
             }
@@ -110,26 +110,26 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         private void RadixSort(int[] indices, int[] keys, int[] output, int[] count)
         {
-            int n = indices.Length;
+            var n = indices.Length;
 
-            for (int shift = 0; shift < 4; shift++)
+            for (var shift = 0; shift < 4; shift++)
             {
                 Array.Fill(count, 0, 0, 256);
 
-                for (int i = 0; i < n; i++)
+                for (var i = 0; i < n; i++)
                 {
-                    uint key = (uint)keys[indices[i]];
-                    byte b = (byte)((key >> (shift * 8)) & 0xFF);
+                    var key = (uint)keys[indices[i]];
+                    var b = (byte)((key >> (shift * 8)) & 0xFF);
                     count[b]++;
                 }
 
-                for (int i = 1; i < 256; i++)
+                for (var i = 1; i < 256; i++)
                     count[i] += count[i - 1];
 
-                for (int i = n - 1; i >= 0; i--)
+                for (var i = n - 1; i >= 0; i--)
                 {
-                    uint key = (uint)keys[indices[i]];
-                    byte b = (byte)((key >> (shift * 8)) & 0xFF);
+                    var key = (uint)keys[indices[i]];
+                    var b = (byte)((key >> (shift * 8)) & 0xFF);
                     output[--count[b]] = indices[i];
                 }
 

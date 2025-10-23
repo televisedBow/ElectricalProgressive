@@ -25,20 +25,13 @@ public class Selection
     {
         get
         {
-            switch (this.Face.Index)
+            return this.Face.Index switch
             {
-                case BlockFacing.indexNORTH:
-                case BlockFacing.indexSOUTH:
-                    return new Vec2d(this.hitPosition.X, this.hitPosition.Y);
-                case BlockFacing.indexEAST:
-                case BlockFacing.indexWEST:
-                    return new Vec2d(this.hitPosition.Y, this.hitPosition.Z);
-                case BlockFacing.indexUP:
-                case BlockFacing.indexDOWN:
-                    return new Vec2d(this.hitPosition.X, this.hitPosition.Z);
-                default:
-                    throw new Exception();
-            }
+                BlockFacing.indexNORTH or BlockFacing.indexSOUTH => new Vec2d(this.hitPosition.X, this.hitPosition.Y),
+                BlockFacing.indexEAST or BlockFacing.indexWEST => new Vec2d(this.hitPosition.Y, this.hitPosition.Z),
+                BlockFacing.indexUP or BlockFacing.indexDOWN => new Vec2d(this.hitPosition.X, this.hitPosition.Z),
+                _ => throw new Exception()
+            };
         }
     }
 
@@ -46,25 +39,16 @@ public class Selection
     {
         get
         {
-            switch (this.Face.Index)
+            return this.Face.Index switch
             {
-                case BlockFacing.indexNORTH:
-                case BlockFacing.indexSOUTH:
-                    return this.DirectionHelper(BlockFacing.EAST, BlockFacing.WEST, BlockFacing.UP, BlockFacing.DOWN);
-                case BlockFacing.indexEAST:
-                case BlockFacing.indexWEST:
-                    return this.DirectionHelper(BlockFacing.UP, BlockFacing.DOWN, BlockFacing.SOUTH, BlockFacing.NORTH);
-                case BlockFacing.indexUP:
-                case BlockFacing.indexDOWN:
-                    return this.DirectionHelper(
-                        BlockFacing.EAST,
-                        BlockFacing.WEST,
-                        BlockFacing.SOUTH,
-                        BlockFacing.NORTH
-                    );
-                default:
-                    throw new Exception();
-            }
+                BlockFacing.indexNORTH or BlockFacing.indexSOUTH => this.DirectionHelper(BlockFacing.EAST,
+                    BlockFacing.WEST, BlockFacing.UP, BlockFacing.DOWN),
+                BlockFacing.indexEAST or BlockFacing.indexWEST => this.DirectionHelper(BlockFacing.UP, BlockFacing.DOWN,
+                    BlockFacing.SOUTH, BlockFacing.NORTH),
+                BlockFacing.indexUP or BlockFacing.indexDOWN => this.DirectionHelper(BlockFacing.EAST, BlockFacing.WEST,
+                    BlockFacing.SOUTH, BlockFacing.NORTH),
+                _ => throw new Exception()
+            };
         }
     }
 

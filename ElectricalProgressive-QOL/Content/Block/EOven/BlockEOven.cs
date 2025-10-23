@@ -28,7 +28,7 @@ public class BlockEOven : BlockEBase
             {
                 if (obj.Attributes?["bakingProperties"]?.AsObject<BakingProperties>() == null)
                     continue;
-                List<ItemStack> stacks = obj.GetHandBookStacks(capi);
+                var stacks = obj.GetHandBookStacks(capi);
                 if (stacks != null) rackableStacklist.AddRange(stacks);
             }
 
@@ -94,7 +94,7 @@ public class BlockEOven : BlockEBase
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
-        return new[] { OnPickBlock(world, pos) };
+        return [OnPickBlock(world, pos)];
     }
 
     /// <summary>
