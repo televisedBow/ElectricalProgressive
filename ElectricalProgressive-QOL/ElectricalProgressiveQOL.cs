@@ -8,6 +8,7 @@ using ElectricalProgressive.Content.Block.ELamp;
 using ElectricalProgressive.Content.Block.EOven;
 using ElectricalProgressive.Content.Block.ESFonar;
 using ElectricalProgressive.Content.Block.EStove;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -187,6 +188,65 @@ public class ElectricalProgressiveQOL : ModSystem
         this.capi = api;
 
 
+    }
+
+
+
+    public override void AssetsFinalize(ICoreAPI api)
+    {
+        foreach (CollectibleObject obj in api.World.Collectibles)
+        {
+            if (HasTag(obj))
+                continue;
+
+            if (obj.Code.Path == "rot")
+            {
+                AddTag(obj, "finished");
+                continue;
+            }
+
+            if (ResolveBakeables(api, obj))
+                continue;
+            
+        }
+    }
+
+    private bool ResolveBakeables(ICoreAPI api, CollectibleObject obj)
+    {
+        BakingProperties props = obj?.Attributes?["bakingProperties"]?.AsObject<BakingProperties>();
+        if (props == null || props.ResultCode != null)
+        {
+            return false;
+        }
+
+        AddTag(obj, "finished"); // charred
+
+        CollectibleObject perfectItem = GetCollectible(api, props.InitialCode);
+        if (perfectItem == null)
+            return true;
+
+        AddTag(perfectItem, "finished"); // perfect
+        return true;
+    }
+
+    public CollectibleObject GetCollectible(ICoreAPI api, AssetLocation code)
+    {
+        return api.World.GetItem(code) ?? api.World.GetBlock(code) as CollectibleObject;
+    }
+
+    public void AddTag(CollectibleObject obj, string tag)
+    {
+        obj.Attributes.Token["foodtag"] = JToken.FromObject(tag);
+    }
+
+    public static bool HasTag(CollectibleObject obj)
+    {
+        return obj?.Attributes?.KeyExists("foodtag") == true;
+    }
+
+    public static bool IsFinished(CollectibleObject obj)
+    {
+        return HasTag(obj) && obj.Attributes["foodtag"].AsString() == "finished";
     }
 
 }

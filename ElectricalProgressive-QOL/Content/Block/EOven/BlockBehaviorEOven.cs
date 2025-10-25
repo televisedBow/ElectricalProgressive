@@ -54,49 +54,14 @@ public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
                 if (itemstack == null)
                     continue;
 
-                var bakingProperties = BakingProperties.ReadFrom(itemstack);
-                if (bakingProperties == null ||
-                    
-                    !itemstack.Attributes.GetBool("bakeable", true)) //если свойства выпекания не найдены
+                if (ElectricalProgressiveQOL.IsFinished(itemstack.Collectible))
                 {
                     stack_count_perfect++;
-                    stack_count++;
-                    continue;    // продолжаем цикл, если не выпекаемая еда в этом слоте
-                }
-
-                if (itemstack.Class == EnumItemClass.Block)
-                {
-                    var blockCode = itemstack.Block.Code.ToString();
-                    if (blockCode.Contains("perfect") ||
-                        blockCode.Contains("charred") ||
-                        (blockCode.Contains("rot") && !blockCode.Contains("carrot")) ||
-                        (blockCode.Contains("-cooked") && !blockCode.Contains("-cookedpartbaked"))  ||
-                        blockCode.Contains("bake1") ||
-                        blockCode.Contains("bake2") ||
-                        (blockCode.Contains("tender") && !blockCode.Contains("tenderpartbaked")) ||
-                        (blockCode.Contains("dry") && !blockCode.Contains("dryad")))
-                    {
-                        stack_count_perfect++;
-                    }
-                }
-                else
-                {
-                    var itemCode = itemstack.Item.Code.ToString();
-                    if (itemCode.Contains("perfect") ||
-                        itemCode.Contains("charred") ||
-                        (itemCode.Contains("rot") && !itemCode.Contains("carrot")) ||
-                        (itemCode.Contains("-cooked") && !itemCode.Contains("-cookedpartbaked")) ||
-                        itemCode.Contains("bake1") ||
-                        itemCode.Contains("bake2") ||
-                        (itemCode.Contains("tender") && !itemCode.Contains("tenderpartbaked")) ||
-                        (itemCode.Contains("dry") && !itemCode.Contains("dryad")))
-                    {
-                        stack_count_perfect++;
-                    }
                 }
 
                 stack_count++;
             }
+            
 
             if (stack_count_perfect == stack_count)   // если все готово - не работаем
                 return false;
