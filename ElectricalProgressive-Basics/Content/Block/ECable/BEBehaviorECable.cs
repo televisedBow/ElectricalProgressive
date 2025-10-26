@@ -16,6 +16,9 @@ namespace ElectricalProgressive.Content.Block.ECable
         public new BlockPos Pos => Blockentity.Pos;
 
 
+        bool hasBurnout = false;
+        bool prepareBurnout = false;
+
         /// <summary>
         /// Подсказка при наведении на блок
         /// </summary>
@@ -44,27 +47,41 @@ namespace ElectricalProgressive.Content.Block.ECable
                 return;
             }
 
-            var hasBurnout = false;
-            var prepareBurnout = false;
+            bool anyBurnout = false;
+            bool anyPrepareBurnout = false;
 
-            // Проверяем все параметры на наличие перегрева
             foreach (var eParam in entity.ElectricalProgressive.AllEparams)
             {
-                hasBurnout |= eParam.burnout;
-                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+                if (!hasBurnout && eParam.burnout)
+                {
+                    hasBurnout = true;
+                    entity.MarkDirty(true);
+                }
 
-                if (hasBurnout || prepareBurnout)
-                    break;
+                if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+                {
+                    prepareBurnout = true;
+                    entity.MarkDirty(true);
+                }
+
+                if (eParam.burnout)
+                    anyBurnout = true;
+
+                if (eParam.ticksBeforeBurnout > 0)
+                    anyPrepareBurnout = true;
             }
 
-            // Генерируем частицы черного дыма
-            if (hasBurnout)
-                ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
+            if (!anyBurnout && hasBurnout)
+            {
+                hasBurnout = false;
+                entity.MarkDirty(true);
+            }
 
-            // Генерируем частицы белого дыма
-            if (prepareBurnout)
-                ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-
+            if (!anyPrepareBurnout && prepareBurnout)
+            {
+                prepareBurnout = false;
+                entity.MarkDirty(true);
+            }
         }
 
 

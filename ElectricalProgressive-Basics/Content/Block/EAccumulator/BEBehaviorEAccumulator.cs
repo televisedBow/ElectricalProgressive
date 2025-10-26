@@ -4,6 +4,7 @@ using ElectricalProgressive.Utils;
 using System;
 using System.Text;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -16,6 +17,32 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
     public BEBehaviorEAccumulator(BlockEntity blockEntity) : base(blockEntity)
     {
     }
+
+    public override void Initialize(ICoreAPI api, JsonObject properties)
+    {
+        base.Initialize(api, properties);
+
+        // Кэшируем значения вариантов блока
+        string tier = this.Block.Variant["tier"];
+
+
+        if (Blockentity is BlockEntityEAccumulator entity &&
+            entity.ElectricalProgressive != null)
+        {
+            if (tier == "tier2")
+                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 1.5, 0.1);
+            else
+            {
+                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
+            }
+        }
+    }
+
+
+
+
+    bool hasBurnout = false;
+    bool prepareBurnout = false;
 
     public bool IsBurned => this.Block.Variant["state"] == "burned";
 
@@ -118,34 +145,47 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
             return;
         }
 
-        var hasBurnout = false;
-        var prepareBurnout = false;
 
-        // Однопроходная проверка условий
+        bool anyBurnout = false;
+        bool anyPrepareBurnout = false;
+
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
-            hasBurnout |= eParam.burnout;
-            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+            if (!hasBurnout && eParam.burnout)
+            {
+                hasBurnout = true;
+                entity.MarkDirty(true);
+            }
 
-            // Ранний выход если оба условия уже выполнены
-            if (hasBurnout || prepareBurnout)
-                break;
+            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+            {
+                prepareBurnout = true;
+                entity.MarkDirty(true);
+            }
+
+            if (eParam.burnout)
+                anyBurnout = true;
+
+            if (eParam.ticksBeforeBurnout > 0)
+                anyPrepareBurnout = true;
         }
+
+        if (!anyBurnout && hasBurnout)
+        {
+            hasBurnout = false;
+            entity.MarkDirty(true);
+        }
+
+        if (!anyPrepareBurnout && prepareBurnout)
+        {
+            prepareBurnout = false;
+            entity.MarkDirty(true);
+        }
+
 
         // Кэшируем значения вариантов блока
-        var tier = entity.Block.Variant["tier"];
         var state = entity.Block.Variant["state"];
-
-        // Обработка burnout
-        if (hasBurnout)
-        {
-            var posVec = Pos.ToVec3d().Add(0.1, 0, 0.1);
-
-            if (tier == "tier2")
-                posVec = Pos.ToVec3d().Add(0.1, 1.0, 0.1);
-
-            ParticleManager.SpawnBlackSmoke(Api.World, posVec);
-        }
+        
 
         // Обмен блока если нужно
         if (hasBurnout && state != "burned")
@@ -154,16 +194,6 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
             Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
         }
 
-        // Обработка prepareBurnout
-        if (prepareBurnout)
-        {
-            var posVec = Pos.ToVec3d().Add(0.1, 0, 0.1);
-
-            if (tier == "tier2")
-                posVec = Pos.ToVec3d().Add(0.1, 1.0, 0.1);
-
-            ParticleManager.SpawnWhiteSlowSmoke(Api.World, posVec);
-        }
 
 
         LastCapacity = Capacity;

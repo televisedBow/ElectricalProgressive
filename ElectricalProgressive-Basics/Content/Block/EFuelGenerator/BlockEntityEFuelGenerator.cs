@@ -436,7 +436,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             }
 
             FuelSlot.MarkDirty();
-            MarkDirty(true);
+            //MarkDirty(true);
         }
     }
 
@@ -550,7 +550,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         ITreeAttribute invtree = new TreeAttribute();
         this._inventory.ToTreeAttributes(invtree);
         tree["inventory"] = invtree;
-        tree.SetFloat("genTemp", _genTemp);
+        tree.SetFloat("_genTemp", _genTemp);
         tree.SetInt("maxTemp", _maxTemp);
         tree.SetFloat("fuelBurnTime", _fuelBurnTime);
     }
@@ -567,7 +567,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         this._inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
         if (Api != null)
             Inventory.AfterBlocksLoaded(this.Api.World);
-        _genTemp = tree.GetFloat("genTemp", 0);
+        _genTemp = tree.GetFloat("_genTemp", 0);
         _maxTemp = tree.GetInt("maxTemp", 0);
         _fuelBurnTime = tree.GetFloat("fuelBurnTime", 0);
 

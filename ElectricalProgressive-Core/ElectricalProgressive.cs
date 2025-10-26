@@ -47,7 +47,7 @@ namespace ElectricalProgressive
 
 
         public ICoreAPI Api = null!;
-        private ICoreClientAPI _capi = null!;
+        public ICoreClientAPI _capi = null!;
         private ICoreServerAPI _sapi = null!;
         private ElectricityConfig? _config;
         public static DamageManager? damageManager;

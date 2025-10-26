@@ -62,7 +62,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
         else if (entity.GenTemp > 20)
         {
             // Кэшируем вычисление позиции
-            ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin + 0.9, 0.4));
+            ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.HeightTermoplastin + 0.9, 0.4));
         }
 
     }
@@ -119,8 +119,8 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
 
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / entity.Power * 100));
         stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
-        stringBuilder.AppendLine("└ " + Lang.Get("electricalprogressivebasics:block-termoplastini") + ": " + entity.heightTermoplastin);
-        stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.kpd * 100).ToString("F1") + " %");
+        stringBuilder.AppendLine("└ " + Lang.Get("electricalprogressivebasics:block-termoplastini") + ": " + entity.HeightTermoplastin);
+        stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.Kpd * 100).ToString("F1") + " %");
     }
 
 

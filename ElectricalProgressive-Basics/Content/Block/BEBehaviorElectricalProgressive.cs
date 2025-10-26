@@ -22,8 +22,6 @@ namespace ElectricalProgressive.Content.Block;
 
 public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 {
-
-
     public const string InterruptionKey = "electricalprogressive:interruption";
     public const string ConnectionKey = "electricalprogressive:connection";
     public const string IsLoadedKey = "electricalprogressive:isloaded";
@@ -43,6 +41,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     private bool dirty = true;
     private bool paramsSet = false;
 
+    public Vec3d ParticlesOffsetPos= new Vec3d();
 
     public EParams eparams;
     public int eparamsFace;
@@ -142,14 +141,71 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     {
         base.Initialize(api, properties);
 
+
+        // Регистрируем спавнер частиц для асинхронных частиц
+        if (api is ICoreClientAPI capi)
+        {
+            capi.Event.RegisterAsyncParticleSpawner(OnAsyncParticles);
+        }
+
+
         intervalMSeconds = this.System!.TickTimeMs;
 
+        // Инициализация мультиблока
         InitMultiblock();
 
         this.isLoaded = true;   // оно загрузилось!
         this.dirty = true;
         this.Update();          // обновляем систему, чтобы она знала, что блок загрузился
     }
+
+
+    /// <summary>
+    /// Асинхронный спавн частиц
+    /// </summary>
+    /// <param name="dt"></param>
+    /// <param name="manager"></param>
+    /// <returns></returns>
+    private bool OnAsyncParticles(float dt, IAsyncParticleManager manager)
+    {
+        // еще не загружено или нет параметров
+        if (!this.isLoaded || AllEparams is null)
+            return true; 
+        
+        var hasBurnout = false;
+        var prepareBurnout = false;
+
+        // Однопроходная проверка условий
+        foreach (var eParam in AllEparams)
+        {
+            hasBurnout |= eParam.burnout;
+            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+
+            // Ранний выход если оба условия уже выполнены
+            if (hasBurnout || prepareBurnout)
+                break;
+        }
+        
+
+
+        // Обработка prepareBurnout
+        if (prepareBurnout)
+        {
+            ParticleManager.SpawnWhiteSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
+        }
+
+
+        // Обработка burnout
+        if (hasBurnout)
+        {
+            ParticleManager.SpawnBlackSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
+        }
+
+        return this.isLoaded;
+    }
+
+
+
 
 
     /// <summary>
@@ -312,6 +368,9 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
+
+        this.isLoaded = false;
+
         // Удаляем все части мультиблока из системы
         if (multiblockParts != null)
         {
@@ -323,6 +382,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             this.System?.Remove(this.Blockentity.Pos);
         }
         networkInformation = null;
+
     }
 
 
@@ -350,6 +410,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             this.Update();
         }
         networkInformation = null;
+
+
     }
 
  

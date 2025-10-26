@@ -1,4 +1,5 @@
-﻿using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Content.Block.EAccumulator;
+using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Linq;
@@ -135,9 +136,18 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
         }
     }
 
+    bool hasBurnout = false;
+    bool prepareBurnout = false;
+
     public override void Initialize(ICoreAPI api, JsonObject properties)
     {
         base.Initialize(api, properties);
+
+        if (Blockentity is BlockEntityEAccumulator entity &&
+            entity.ElectricalProgressive != null)
+        {
+            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
+        }
     }
 
     /// <inheritdoc />
@@ -231,25 +241,45 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
             return;
         }
 
-        var hasBurnout = false;
-        var prepareBurnout = false;
+        bool anyBurnout = false;
+        bool anyPrepareBurnout = false;
 
-        // Однопроходная проверка условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
-            hasBurnout |= eParam.burnout;
-            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+            if (!hasBurnout && eParam.burnout)
+            {
+                hasBurnout = true;
+                entity.MarkDirty(true);
+            }
 
-            // Ранний выход если оба условия уже выполнены
-            if (hasBurnout || prepareBurnout)
-                break;
+            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+            {
+                prepareBurnout = true;
+                entity.MarkDirty(true);
+            }
+
+            if (eParam.burnout)
+                anyBurnout = true;
+
+            if (eParam.ticksBeforeBurnout > 0)
+                anyPrepareBurnout = true;
+        }
+
+        if (!anyBurnout && hasBurnout)
+        {
+            hasBurnout = false;
+            entity.MarkDirty(true);
+        }
+
+        if (!anyPrepareBurnout && prepareBurnout)
+        {
+            prepareBurnout = false;
+            entity.MarkDirty(true);
         }
 
         // Обработка burnout
         if (hasBurnout)
         {
-            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-
             // Проверяем и обновляем состояние блока если нужно
             if (entity.Block.Variant["type"] != "burned")
             {
@@ -259,11 +289,6 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
             }
         }
 
-        // Обработка prepareBurnout
-        if (prepareBurnout)
-        {
-            ParticleManager.SpawnWhiteSlowSmoke(Api.World, Pos.ToVec3d().Add(0.1, 0, 0.1));
-        }
 
     }
 

@@ -17,44 +17,44 @@ namespace ElectricalProgressive.Content.Block.ETermoGenerator;
 public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHeatSource
 {
 
-    private Facing facing = Facing.None;
+    private Facing _facing = Facing.None;
 
     public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
     public Facing Facing
     {
-        get => this.facing;
+        get => this._facing;
         set
         {
-            if (value != this.facing)
+            if (value != this._facing)
             {
                 this.ElectricalProgressive!.Connection =
-                    FacingHelper.FullFace(this.facing = value);
+                    FacingHelper.FullFace(this._facing = value);
             }
         }
     }
 
     
 
-    ICoreClientAPI? capi;
-    ICoreServerAPI? sapi;
-    private InventoryTermoGenerator inventory;
-    private GuiBlockEntityETermoGenerator? clientDialog;
+    ICoreClientAPI? _capi;
+    ICoreServerAPI? _sapi;
+    private InventoryTermoGenerator _inventory;
+    private GuiBlockEntityETermoGenerator? _clientDialog;
 
 
     //private float prevGenTemp = 20f;
-    public float genTemp = 20f;
+    public float _genTemp = 20f;
 
     /// <summary>
     /// Rэш для мэша топлива, где int - размер топлива в генераторе (от 0 до 8)
     /// </summary>
-    private readonly static Dictionary<int, MeshData> MeshData = new();
+    private static readonly Dictionary<int, MeshData> MeshData = new();
 
 
     /// <summary>
     /// Коэффициенты КПД в зависимости от высоты пластин
     /// </summary>
-    public static readonly float[] kpdPerHeight =
+    public static readonly float[] KpdPerHeight =
     [
         0.15F, // 1-й 
         0.14F, // 2-й 
@@ -71,22 +71,22 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// <summary>
     /// Максимальная температура топлива
     /// </summary>
-    private int maxTemp;
+    private int _maxTemp;
 
     /// <summary>
     /// Текущее время горения топлива
     /// </summary>
-    private float fuelBurnTime;
+    private float _fuelBurnTime;
 
     /// <summary>
     /// Максимальное время горения топлива
     /// </summary>
-    private float maxBurnTime;
+    private float _maxBurnTime;
 
     /// <summary>
     /// Температура в генераторе
     /// </summary>
-    public float GenTemp => genTemp;
+    public float GenTemp => _genTemp;
 
 
     /// <summary>
@@ -97,15 +97,15 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         get
         {
             var envTemp = EnvironmentTemperature(); //температура окружающей среды
-            if (kpd > 0)
+            if (Kpd > 0)
             {
-                if (genTemp <= envTemp) //окружающая среда теплее? 
+                if (_genTemp <= envTemp) //окружающая среда теплее? 
                 {
                     return 1f;
                 }
                 else
                 {
-                    return (genTemp - envTemp) * kpd / 2.0F;  //учитываем разницу температур с окружающей средой и КПД
+                    return (_genTemp - envTemp) * Kpd / 2.0F;  //учитываем разницу температур с окружающей средой и КПД
                 }
             }
             else
@@ -116,22 +116,22 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// <summary>
     /// КПД генератора в долях
     /// </summary>
-    public float kpd = 0f;
+    public float Kpd = 0f;
 
     /// <summary>
     /// Горизонтальные направления для смещения
     /// </summary>
-    private static readonly BlockFacing[] offsets_horizontal = BlockFacing.HORIZONTALS;
+    private static readonly BlockFacing[] OffsetsHorizontal = BlockFacing.HORIZONTALS;
 
     /// <summary>
     /// Слот для топлива в инвентаре генератора
     /// </summary>
-    public ItemSlot FuelSlot => this.inventory[0];
+    public ItemSlot FuelSlot => this._inventory[0];
 
     /// <summary>
     /// Сколько термопластин установлено в генераторе по высоте
     /// </summary>
-    public int heightTermoplastin = 0;
+    public int HeightTermoplastin = 0;
 
 
 
@@ -140,18 +140,18 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// </summary>
     public ItemStack FuelStack
     {
-        get { return this.inventory[0].Itemstack; }
+        get { return this._inventory[0].Itemstack; }
         set
         {
-            this.inventory[0].Itemstack = value;
-            this.inventory[0].MarkDirty();
+            this._inventory[0].Itemstack = value;
+            this._inventory[0].MarkDirty();
         }
     }
 
     /// <summary>
     /// Аниматор блока, используется для анимации открывания дверцы генератора
     /// </summary>
-    private BlockEntityAnimationUtil animUtil
+    private BlockEntityAnimationUtil AnimUtil
     {
         get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil!; }
     }
@@ -162,9 +162,9 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// </summary>
     public new void OpenLid()
     {
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("open") == false)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("open") == false)
         {
-            animUtil?.StartAnimation(new AnimationMetaData()
+            AnimUtil?.StartAnimation(new AnimationMetaData()
             {
                 Animation = "open",
                 Code = "open",
@@ -177,7 +177,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
             Block.LightHsv = new byte[] { 7, 7, 11 };
 
             //добавляем звук
-            capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-open"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
+            _capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-open"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
 
         }
 
@@ -189,22 +189,22 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// </summary>
     public new void CloseLid()
     {
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("open") == true)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("open") == true)
         {
-            animUtil?.StopAnimation("open");
+            AnimUtil?.StopAnimation("open");
 
             //применяем цвет и яркость
             Block.LightHsv = new byte[] { 7, 7, 0 };
 
             //добавляем звук
-            capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-close"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
+            _capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-close"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
         }
     }
 
 
-    private long listenerId;
+    private long _listenerId;
 
-    public override InventoryBase Inventory => inventory;
+    public override InventoryBase Inventory => _inventory;
 
     public override string DialogTitle => Lang.Get("termogen");
 
@@ -212,8 +212,8 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
     public BlockEntityETermoGenerator()
     {
-        this.inventory = new InventoryTermoGenerator(null!, null!);
-        this.inventory.SlotModified += OnSlotModified;
+        this._inventory = new InventoryTermoGenerator(null!, null!);
+        this._inventory.SlotModified += OnSlotModified;
     }
 
 
@@ -227,24 +227,24 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
         if (api.Side == EnumAppSide.Server)
         {
-            sapi = api as ICoreServerAPI;
+            _sapi = api as ICoreServerAPI;
         }
         else
         {
-            capi = api as ICoreClientAPI;
+            _capi = api as ICoreClientAPI;
 
             // инициализируем аниматор
-            if (animUtil != null)
+            if (AnimUtil != null)
             {
-                animUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
+                AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
             }
 
         }
 
-        this.inventory.Pos = this.Pos;
-        this.inventory.LateInitialize(InventoryClassName + "-" + Pos, api);
+        this._inventory.Pos = this.Pos;
+        this._inventory.LateInitialize(InventoryClassName + "-" + Pos, api);
 
-        listenerId=this.RegisterGameTickListener(new Action<float>(OnBurnTick), 1000);
+        _listenerId=this.RegisterGameTickListener(new Action<float>(OnBurnTick), 1000);
 
         CanDoBurn();
     }
@@ -303,7 +303,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
       BlockPos heatSourcePos,
       BlockPos heatReceiverPos)
     {
-        return Math.Max((float)(((float)this.genTemp - 20.0F) / ((float)1300F - 20.0F) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
+        return Math.Max((float)(((float)this._genTemp - 20.0F) / ((float)1300F - 20.0F) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
     }
 
 
@@ -335,24 +335,24 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         this.ElectricalProgressive?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
 
         // закрываем диалоговое окно, если оно открыто
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            this.clientDialog.TryClose();
-            this.clientDialog = null;
+            this._clientDialog.TryClose();
+            this._clientDialog = null;
         }
 
         // отключаем слушатель тика горения топлива
-        UnregisterGameTickListener(listenerId);
+        UnregisterGameTickListener(_listenerId);
 
         // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
         {
-            this.animUtil.Dispose();
+            this.AnimUtil.Dispose();
         }
 
         // очищаем ссылки на API
-        capi = null;
-        sapi = null;
+        _capi = null;
+        _sapi = null;
 
     }
 
@@ -367,7 +367,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
             if (Inventory[0].Itemstack != null && !Inventory[0].Empty &&
                 Inventory[0].Itemstack.Collectible.CombustibleProps != null)
             {
-                if (fuelBurnTime == 0)
+                if (_fuelBurnTime == 0)
                     CanDoBurn();
             }
         }
@@ -375,9 +375,9 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         base.Block = this.Api.World.BlockAccessor.GetBlock(this.Pos);
         this.MarkDirty(this.Api.Side == EnumAppSide.Server, null);
 
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            clientDialog.Update(genTemp, fuelBurnTime);
+            _clientDialog.Update(_genTemp, _fuelBurnTime);
         }
 
         var chunkatPos = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
@@ -413,9 +413,9 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         {
             // если есть топливо, то добавляем его в мэш
             
-            capi?.Tesselator.TesselateShape(this.Block, Vintagestory.API.Common.Shape.TryGet(Api, "electricalprogressivebasics:shapes/block/termogenerator/toplivo/toplivo-" + sizeFuel + ".json"), out fuelMesh);
+            _capi?.Tesselator.TesselateShape(this.Block, Vintagestory.API.Common.Shape.TryGet(Api, "electricalprogressivebasics:shapes/block/termogenerator/toplivo/toplivo-" + sizeFuel + ".json"), out fuelMesh);
 
-            capi?.TesselatorManager.ThreadDispose(); //обязательно
+            _capi?.TesselatorManager.ThreadDispose(); //обязательно
 
             MeshData.TryAdd(sizeFuel, fuelMesh!);
             
@@ -428,7 +428,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
 
         // если анимации нет, то рисуем блок базовый
-        if (animUtil?.activeAnimationsByAnimCode.ContainsKey("open") == false)
+        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("open") == false)
         {
             return false;
         }
@@ -447,23 +447,23 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
         if (this.Api is ICoreServerAPI)
         {
-            if (fuelBurnTime > 0f)
+            if (_fuelBurnTime > 0f)
             {
-                genTemp = ChangeTemperature(genTemp, maxTemp, deltatime);
-                fuelBurnTime -= deltatime; 
-                if (fuelBurnTime <= 0f)
+                _genTemp = ChangeTemperature(_genTemp, _maxTemp, deltatime);
+                _fuelBurnTime -= deltatime; 
+                if (_fuelBurnTime <= 0f)
                 {
-                    fuelBurnTime = 0f;
-                    maxBurnTime = 0f;
-                    maxTemp = 20; // важно
+                    _fuelBurnTime = 0f;
+                    _maxBurnTime = 0f;
+                    _maxTemp = 20; // важно
                     if (!Inventory[0].Empty)
                         CanDoBurn();
                 }
             }
             else
             {
-                if (genTemp != 20f)
-                    genTemp = ChangeTemperature(genTemp, 20f, deltatime);
+                if (_genTemp != 20f)
+                    _genTemp = ChangeTemperature(_genTemp, 20f, deltatime);
                 CanDoBurn();
             }
 
@@ -477,8 +477,8 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         // обновляем диалоговое окно на клиенте
         if (this.Api != null && this.Api.Side == EnumAppSide.Client)
         {
-            if (this.clientDialog != null)
-                clientDialog.Update(genTemp, fuelBurnTime);
+            if (this._clientDialog != null)
+                _clientDialog.Update(_genTemp, _fuelBurnTime);
 
         }
 
@@ -493,7 +493,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     {
         // Получаем доступ к блочным данным один раз
         var accessor = this.Api.World.BlockAccessor;
-        kpd = 0f;
+        Kpd = 0f;
 
         // Перебираем потенциальные термопластины по высоте
         for (var level = 1; level <= 11; level++)
@@ -502,13 +502,13 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
             var platePos = Pos.UpCopy(level);
             if (accessor.GetBlock(platePos) is not BlockTermoplastini)
             {
-                heightTermoplastin = level-1; //сохраняем высоту термопластин
+                HeightTermoplastin = level-1; //сохраняем высоту термопластин
                 break;
             }
 
             // Проверяем соседние блоки и считаем количество воздухом незаполненных сторон
             var airSides = 0f;
-            foreach (var face in offsets_horizontal)
+            foreach (var face in OffsetsHorizontal)
             {
                 var neighBlock = accessor.GetBlock(platePos.AddCopy(face));
                 if (neighBlock != null && neighBlock.BlockId == 0)
@@ -519,7 +519,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
             // Учитываем множитель КПД на данном уровне
             // 0.25f — вклад одной стороны в КПД
-            kpd += airSides * 0.25f * kpdPerHeight[level - 1];
+            Kpd += airSides * 0.25f * KpdPerHeight[level - 1];
         }
     }
 
@@ -535,13 +535,13 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         if (fuelProps == null)
             return;
 
-        if (fuelBurnTime > 0)
+        if (_fuelBurnTime > 0)
             return;
 
         if (fuelProps.BurnTemperature > 0f && fuelProps.BurnDuration > 0f)
         {
-            maxBurnTime = fuelBurnTime = fuelProps.BurnDuration;
-            maxTemp = fuelProps.BurnTemperature;
+            _maxBurnTime = _fuelBurnTime = fuelProps.BurnDuration;
+            _maxTemp = fuelProps.BurnTemperature;
             FuelStack.StackSize--;
             if (FuelStack.StackSize <= 0)
             {
@@ -549,7 +549,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
             }
 
             FuelSlot.MarkDirty();
-            MarkDirty(true);
+            //MarkDirty(true);
         }
     }
 
@@ -603,10 +603,10 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         {
             base.toggleInventoryDialogClient(byPlayer, delegate
             {
-                this.clientDialog =
-                    new GuiBlockEntityETermoGenerator(DialogTitle, Inventory, this.Pos, this.capi!, this);
-                clientDialog.Update(genTemp, fuelBurnTime);
-                return this.clientDialog;
+                this._clientDialog =
+                    new GuiBlockEntityETermoGenerator(DialogTitle, Inventory, this.Pos, this._capi!, this);
+                _clientDialog.Update(_genTemp, _fuelBurnTime);
+                return this._clientDialog;
             });
         }
         return true;
@@ -633,24 +633,24 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         MeshData.Clear(); //не забываем очищать кэш мэша при выгрузке блока
 
         // закрываем диалоговое окно, если оно открыто
-        if (this.Api is ICoreClientAPI && this.clientDialog != null)
+        if (this.Api is ICoreClientAPI && this._clientDialog != null)
         {
-            this.clientDialog.TryClose();
-            this.clientDialog = null;
+            this._clientDialog.TryClose();
+            this._clientDialog = null;
         }
 
         // отключаем слушатель тика горения топлива
-        UnregisterGameTickListener(listenerId);
+        UnregisterGameTickListener(_listenerId);
 
         // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.animUtil != null)
+        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
         {
-            this.animUtil.Dispose();
+            this.AnimUtil.Dispose();
         }
 
         // очищаем ссылки на API
-        capi = null;
-        sapi = null;
+        _capi = null;
+        _sapi = null;
     }
 
 
@@ -663,12 +663,12 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     {
         base.ToTreeAttributes(tree);
         ITreeAttribute invtree = new TreeAttribute();
-        this.inventory.ToTreeAttributes(invtree);
+        this._inventory.ToTreeAttributes(invtree);
         tree["inventory"] = invtree;
-        tree.SetFloat("genTemp", genTemp);
-        tree.SetInt("maxTemp", maxTemp);
-        tree.SetFloat("fuelBurnTime", fuelBurnTime);
-        tree.SetBytes("electricalprogressive:facing", SerializerUtil.Serialize(this.facing));
+        tree.SetFloat("_genTemp", _genTemp);
+        tree.SetInt("maxTemp", _maxTemp);
+        tree.SetFloat("fuelBurnTime", _fuelBurnTime);
+        tree.SetBytes("electricalprogressive:facing", SerializerUtil.Serialize(this._facing));
     }
 
 
@@ -680,23 +680,23 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        this.inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+        this._inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
         if (Api != null)
             Inventory.AfterBlocksLoaded(this.Api.World);
-        genTemp = tree.GetFloat("genTemp", 0);
-        maxTemp = tree.GetInt("maxTemp", 0);
-        fuelBurnTime = tree.GetFloat("fuelBurnTime", 0);
+        _genTemp = tree.GetFloat("_genTemp", 0);
+        _maxTemp = tree.GetInt("maxTemp", 0);
+        _fuelBurnTime = tree.GetFloat("fuelBurnTime", 0);
 
         if (Api != null && Api.Side == EnumAppSide.Client)
         {
-            if (this.clientDialog != null)
-                clientDialog.Update(genTemp, fuelBurnTime);
+            if (this._clientDialog != null)
+                _clientDialog.Update(_genTemp, _fuelBurnTime);
             MarkDirty(true, null);
         }
 
         try
         {
-            this.facing = SerializerUtil.Deserialize<Facing>(tree.GetBytes("electricalprogressive:facing"));
+            this._facing = SerializerUtil.Deserialize<Facing>(tree.GetBytes("electricalprogressive:facing"));
         }
         catch (Exception exception)
         {
