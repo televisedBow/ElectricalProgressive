@@ -28,6 +28,8 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
     /// Прогресс текущего крафта (0-1)
     /// </summary>
     private float _recipeProgress;
+    private bool hasBurnout;
+    private bool prepareBurnout;
 
     public BEBehaviorECentrifuge(BlockEntity blockEntity) : base(blockEntity)
     {
@@ -116,17 +118,43 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
             return;
         }
 
-        var hasBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.burnout);
-        if (hasBurnout)
-            ParticleManager.SpawnBlackSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
+        bool anyBurnout = false;
+        bool anyPrepareBurnout = false;
 
-        var prepareBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.ticksBeforeBurnout > 0);
-        if (prepareBurnout)
+        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
-            ParticleManager.SpawnWhiteSlowSmoke(this.Api.World, Pos.ToVec3d().Add(0.1, 1, 0.1));
+            if (!hasBurnout && eParam.burnout)
+            {
+                hasBurnout = true;
+                entity.MarkDirty(true);
+            }
+
+            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+            {
+                prepareBurnout = true;
+                entity.MarkDirty(true);
+            }
+
+            if (eParam.burnout)
+                anyBurnout = true;
+
+            if (eParam.ticksBeforeBurnout > 0)
+                anyPrepareBurnout = true;
         }
 
-        
+        if (!anyBurnout && hasBurnout)
+        {
+            hasBurnout = false;
+            entity.MarkDirty(true);
+        }
+
+        if (!anyPrepareBurnout && prepareBurnout)
+        {
+            prepareBurnout = false;
+            entity.MarkDirty(true);
+        }
+
+
     }
 
     public float getPowerReceive()

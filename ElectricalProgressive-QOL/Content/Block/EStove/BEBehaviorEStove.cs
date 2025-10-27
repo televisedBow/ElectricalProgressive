@@ -17,6 +17,8 @@ public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
     public const string PowerSettingKey = "electricalprogressive:powersetting";
 
     private int _stoveTemperature;
+    private bool hasBurnout;
+    private bool prepareBurnout;
 
     /// <summary>
     /// Максимальное потребление
@@ -92,28 +94,46 @@ public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
             return;
         }
 
-        var hasBurnout = false;
-        var prepareBurnout = false;
+        bool anyBurnout = false;
+        bool anyPrepareBurnout = false;
 
-        // Однопроходная проверка всех условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
-            hasBurnout |= eParam.burnout;
-            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+            if (!hasBurnout && eParam.burnout)
+            {
+                hasBurnout = true;
+                entity.MarkDirty(true);
+            }
 
-            // Ранний выход если оба условия уже выполнены
-            if (hasBurnout && prepareBurnout)
-                break;
+            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+            {
+                prepareBurnout = true;
+                entity.MarkDirty(true);
+            }
+
+            if (eParam.burnout)
+                anyBurnout = true;
+
+            if (eParam.ticksBeforeBurnout > 0)
+                anyPrepareBurnout = true;
+        }
+
+        if (!anyBurnout && hasBurnout)
+        {
+            hasBurnout = false;
+            entity.MarkDirty(true);
+        }
+
+        if (!anyPrepareBurnout && prepareBurnout)
+        {
+            prepareBurnout = false;
+            entity.MarkDirty(true);
         }
 
         // Кэшируем позицию для частиц
         var particlePos = Pos.ToVec3d().Add(0.1, 0, 0.1);
 
-        if (hasBurnout)
-            ParticleManager.SpawnBlackSmoke(Api.World, particlePos);
-
-        if (prepareBurnout)
-            ParticleManager.SpawnWhiteSlowSmoke(Api.World, particlePos);
+        
 
         if (!hasBurnout || entity.Block.Variant["state"] == "burned")
             return;

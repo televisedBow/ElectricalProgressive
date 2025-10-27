@@ -25,7 +25,7 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
         // Кэшируем значения вариантов блока
         string tier = this.Block.Variant["tier"];
 
-
+        // Устанавливаем позицию частиц
         if (Blockentity is BlockEntityEAccumulator entity &&
             entity.ElectricalProgressive != null)
         {

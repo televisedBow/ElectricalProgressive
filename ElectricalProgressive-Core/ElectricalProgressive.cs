@@ -282,7 +282,7 @@ namespace ElectricalProgressive
                 {
                     for (var i = 0; i < 6; i++)
                     {
-                        if (!part.Value.eparams[i].burnout && part.Value.eparams[i].ticksBeforeBurnout > 0) // если проводник не сгорел и есть тики до сгорания
+                        if (!part.Value.eparams[i].burnout && part.Value.eparams[i].ticksBeforeBurnout > 0 && part.Value.Conductor is not VirtualConductor) // если проводник не сгорел и есть тики до сгорания
                             part.Value.eparams[i].ticksBeforeBurnout--;                               // уменьшаем тики до сгорания
                     }
 
@@ -1005,7 +1005,7 @@ namespace ElectricalProgressive
 
 
                         ResetComponents(ref part);
-                        break;
+                        //break;
                     }
                 }
 

@@ -15,9 +15,20 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
 
     private float _powerGive;           // Отдаем столько энергии (сохраняется)
+    private bool hasBurnout;
+    private bool prepareBurnout;
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
+    public override void Initialize(ICoreAPI api, JsonObject properties)
+    {
+        base.Initialize(api, properties);
 
+        if (Blockentity is BlockEntityETermoGenerator entity &&
+            entity.ElectricalProgressive != null)
+        {
+            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
+        }
+    }
 
     private static bool IsBurned => false;
 
@@ -31,7 +42,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
 
     }
 
-    
+
 
 
     public void Update()
@@ -43,28 +54,51 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
             return;
         }
 
-        var hasBurnout = false;
+        bool anyBurnout = false;
+        bool anyPrepareBurnout = false;
 
-        // Проверяем наличие burnout без использования LINQ
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
-            if (eParam.burnout)
+            if (!hasBurnout && eParam.burnout)
             {
                 hasBurnout = true;
-                break; // Ранний выход при нахождении первого burnout
+                entity.MarkDirty(true);
+            }
+
+            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+            {
+                prepareBurnout = true;
+                entity.MarkDirty(true);
+            }
+
+            if (eParam.burnout)
+                anyBurnout = true;
+
+            if (eParam.ticksBeforeBurnout > 0)
+                anyPrepareBurnout = true;
+        }
+
+        if (!anyBurnout && hasBurnout)
+        {
+            hasBurnout = false;
+            entity.MarkDirty(true);
+        }
+
+        if (!anyPrepareBurnout && prepareBurnout)
+        {
+            prepareBurnout = false;
+            entity.MarkDirty(true);
+        }
+
+
+        if (!hasBurnout)
+        {
+            if (entity.GenTemp > 20)
+            {
+                // Кэшируем вычисление позиции
+                //ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.HeightTermoplastin + 0.9, 0.4));
             }
         }
-
-        if (hasBurnout)
-        {
-            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
-        }
-        else if (entity.GenTemp > 20)
-        {
-            // Кэшируем вычисление позиции
-            ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.HeightTermoplastin + 0.9, 0.4));
-        }
-
     }
 
 

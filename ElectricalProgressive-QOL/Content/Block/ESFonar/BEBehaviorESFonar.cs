@@ -25,6 +25,8 @@ namespace ElectricalProgressive.Content.Block.ESFonar
         /// Максимальное потребление
         /// </summary>
         private readonly int _maxConsumption;
+        private bool hasBurnout;
+        private bool prepareBurnout;
 
         public BEBehaviorESFonar(BlockEntity blockEntity) : base(blockEntity)
         {
@@ -121,32 +123,49 @@ namespace ElectricalProgressive.Content.Block.ESFonar
                 return;
             }
 
-            var hasBurnout = false;
-            var prepareBurnout = false;
+            bool anyBurnout = false;
+            bool anyPrepareBurnout = false;
 
-            // Однопроходная проверка всех условий
             foreach (var eParam in entity.ElectricalProgressive.AllEparams)
             {
-                hasBurnout |= eParam.burnout;
-                prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+                if (!hasBurnout && eParam.burnout)
+                {
+                    hasBurnout = true;
+                    entity.MarkDirty(true);
+                }
 
-                // Ранний выход если оба условия уже выполнены
-                if (hasBurnout || prepareBurnout)
-                    break;
+                if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+                {
+                    prepareBurnout = true;
+                    entity.MarkDirty(true);
+                }
+
+                if (eParam.burnout)
+                    anyBurnout = true;
+
+                if (eParam.ticksBeforeBurnout > 0)
+                    anyPrepareBurnout = true;
             }
 
+            if (!anyBurnout && hasBurnout)
+            {
+                hasBurnout = false;
+                entity.MarkDirty(true);
+            }
+
+            if (!anyPrepareBurnout && prepareBurnout)
+            {
+                prepareBurnout = false;
+                entity.MarkDirty(true);
+            }
+            
             // Кэшируем значения вариантов блока
             var heightStr = entity.Block.Variant["height"];
             var height = heightStr.ToFloat() - 1;
 
             // Кэшируем позицию для частиц
             var particlePos = Pos.ToVec3d().Add(0.1, height, 0.1);
-
-            if (hasBurnout)
-                ParticleManager.SpawnBlackSmoke(Api.World, particlePos);
-
-            if (prepareBurnout)
-                ParticleManager.SpawnWhiteSlowSmoke(Api.World, particlePos);
+            
 
             if (!hasBurnout || entity.Block.Variant["state"] == "burned")
                 return;

@@ -4,12 +4,16 @@ using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.EFreezer2;
 
-public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
+public class BEBehaviorEFreezer2 : BlockEntityBehavior, IElectricConsumer
 {
     public int PowerSetting { get; set; }
+
+    public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
+
 
     public const string PowerSettingKey = "electricalprogressive:powersetting";
 
@@ -17,12 +21,28 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
     /// Максимальное потребление
     /// </summary>
     private readonly int _maxConsumption;
+    private bool hasBurnout;
+    private bool prepareBurnout;
 
     public float AvgConsumeCoeff { get; set; }
 
     public BEBehaviorEFreezer2(BlockEntity blockEntity) : base(blockEntity)
     {
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
+        /*
+
+        */
+    }
+
+    public override void Initialize(ICoreAPI api, JsonObject properties)
+    {
+        base.Initialize(api, properties);
+
+        if (Blockentity is BlockEntityEFreezer2 entity &&
+            entity.ElectricalProgressive != null)
+        {
+            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 1.0, 0.1);
+        }
     }
 
     public void Consume_receive(float amount)
@@ -74,28 +94,41 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
             return;
         }
 
-        var hasBurnout = false;
-        var prepareBurnout = false;
+        bool anyBurnout = false;
+        bool anyPrepareBurnout = false;
 
-        // Однопроходная проверка всех условий
         foreach (var eParam in entity.ElectricalProgressive.AllEparams)
         {
-            hasBurnout |= eParam.burnout;
-            prepareBurnout |= eParam.ticksBeforeBurnout > 0;
+            if (!hasBurnout && eParam.burnout)
+            {
+                hasBurnout = true;
+                entity.MarkDirty(true);
+            }
 
-            // Ранний выход если оба условия уже выполнены
-            if (hasBurnout || prepareBurnout)
-                break;
+            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
+            {
+                prepareBurnout = true;
+                entity.MarkDirty(true);
+            }
+
+            if (eParam.burnout)
+                anyBurnout = true;
+
+            if (eParam.ticksBeforeBurnout > 0)
+                anyPrepareBurnout = true;
         }
 
-        // Кэшируем позицию для частиц (одинаковая для обоих типов дыма)
-        var particlePos = Pos.ToVec3d().Add(0.1, 1.0, 0.1);
+        if (!anyBurnout && hasBurnout)
+        {
+            hasBurnout = false;
+            entity.MarkDirty(true);
+        }
 
-        if (hasBurnout)
-            ParticleManager.SpawnBlackSmoke(Api.World, particlePos);
-
-        if (prepareBurnout)
-            ParticleManager.SpawnWhiteSlowSmoke(Api.World, particlePos);
+        if (!anyPrepareBurnout && prepareBurnout)
+        {
+            prepareBurnout = false;
+            entity.MarkDirty(true);
+        }
 
         if (!hasBurnout || entity.Block.Variant["state"] == "burned")
             return;
@@ -108,8 +141,6 @@ public class BEBehaviorEFreezer2 : BEBehaviorBase, IElectricConsumer
         var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant(type, variant));
         Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
     }
-
-
 
 
 
