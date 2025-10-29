@@ -41,7 +41,9 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     private bool dirty = true;
     private bool paramsSet = false;
 
+    // настройка частиц
     public Vec3d ParticlesOffsetPos= new Vec3d();
+    public int ParticlesType = 0;
 
     public EParams eparams;
     public int eparamsFace;
@@ -198,8 +200,14 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         // Обработка burnout
         if (hasBurnout)
         {
-            ParticleManager.SpawnBlackSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
+            ParticleManager.SpawnBlackSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
         }
+
+        if (ParticlesType == 1)
+        {
+            ParticleManager.SpawnWhiteSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
+        }
+
 
         return this.isLoaded;
     }
@@ -624,11 +632,12 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             tree.SetBytes(BlockEntityEBase.AllEparamsKey, EParamsSerializer.Serialize(allEparams!));
         }
 
-
-    }
-
-
-    
+        // Сохраняем параметры частиц
+        tree.SetInt("ParticlesType", ParticlesType);
+        tree.SetDouble("ParticlesOffsetPosX", ParticlesOffsetPos.X);
+        tree.SetDouble("ParticlesOffsetPosY", ParticlesOffsetPos.Y);
+        tree.SetDouble("ParticlesOffsetPosZ", ParticlesOffsetPos.Z);
+}
 
     /// <summary>
     /// Считывает из дерева атрибутов
@@ -659,7 +668,13 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             AllEparamss = JsonConvert.DeserializeObject<EParams[]>(Encoding.UTF8.GetString(tree.GetBytes(BlockEntityEBase.AllEparamsKey)));
         }
 
-
+        // Загрузка параметров частиц
+        ParticlesType = tree.GetInt("ParticlesType", 0);
+        ParticlesOffsetPos = new Vec3d(
+            tree.GetDouble("ParticlesOffsetPosX", 0.0),
+            tree.GetDouble("ParticlesOffsetPosY", 0.0),
+            tree.GetDouble("ParticlesOffsetPosZ", 0.0)
+        );
 
         // Проверяем, изменились ли данные
         if (connection == this.connection &&

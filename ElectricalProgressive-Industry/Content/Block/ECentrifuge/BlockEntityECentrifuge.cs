@@ -32,7 +32,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
 
     public override InventoryBase Inventory => this._inventory;
 
-    private BlockEntityAnimationUtil? AnimUtil => this.GetBehavior<BEBehaviorAnimatable>().animUtil;
+    private BlockEntityAnimationUtil? AnimUtil => this.GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
 
     public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();

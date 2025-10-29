@@ -7,7 +7,7 @@ using Vintagestory.API.Datastructures;
 
 namespace ElectricalProgressive.Content.Block.EHorn;
 
-public class BEBehaviorEHorn : BEBehaviorBase, IElectricConsumer
+public class BEBehaviorEHorn : BlockEntityBehavior, IElectricConsumer
 {
     /// <summary>
     /// Дали энергии  (сохраняется)
@@ -16,7 +16,7 @@ public class BEBehaviorEHorn : BEBehaviorBase, IElectricConsumer
     
     public const string PowerReceiveKey = "electricalprogressive:powerReceive";
 
-
+    public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
     private float _maxTemp;
     private bool hasBurnout;

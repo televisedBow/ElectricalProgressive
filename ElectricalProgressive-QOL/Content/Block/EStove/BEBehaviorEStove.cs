@@ -7,12 +7,15 @@ using Vintagestory.API.Datastructures;
 
 namespace ElectricalProgressive.Content.Block.EStove;
 
-public class BEBehaviorEStove : BEBehaviorBase, IElectricConsumer
+public class BEBehaviorEStove : BlockEntityBehavior, IElectricConsumer
 {
     /// <summary>
     /// Текущее потребление
     /// </summary>
     public int PowerSetting { get; set; }
+
+
+    public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
     public const string PowerSettingKey = "electricalprogressive:powersetting";
 

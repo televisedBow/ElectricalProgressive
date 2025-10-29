@@ -95,9 +95,19 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
         {
             if (entity.GenTemp > 20)
             {
-                // Кэшируем вычисление позиции
-                //ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.HeightTermoplastin + 0.9, 0.4));
+                entity.ElectricalProgressive.ParticlesType = 1;
+                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4);
             }
+            else
+            {
+                entity.ElectricalProgressive.ParticlesType = 0;
+                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
+            }
+        }
+        else
+        {
+            entity.ElectricalProgressive.ParticlesType = 0;
+            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
         }
     }
 

@@ -8,7 +8,7 @@ using Vintagestory.API.Config;
 
 namespace ElectricalProgressive.Content.Block.EWoodcutter;
 
-public class BEBehaviorEWoodcutter : BEBehaviorBase, IElectricConsumer
+public class BEBehaviorEWoodcutter : BlockEntityBehavior, IElectricConsumer
 {
     public int PowerSetting { get; set; }
 
@@ -19,6 +19,7 @@ public class BEBehaviorEWoodcutter : BEBehaviorBase, IElectricConsumer
 
     private readonly BlockEntityEWoodcutter _entityEWoodcutter;
 
+    public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
     public float AvgConsumeCoeff { get; set; }
 
     public BEBehaviorEWoodcutter(BlockEntity blockentity) : base(blockentity)

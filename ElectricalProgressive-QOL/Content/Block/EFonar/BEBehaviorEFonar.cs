@@ -1,19 +1,23 @@
-﻿using ElectricalProgressive.Utils;
+﻿using ElectricalProgressive.Content.Block.EFreezer2;
+using ElectricalProgressive.Interface;
+using ElectricalProgressive.Utils;
 using System;
 using System.Text;
-using ElectricalProgressive.Interface;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.EFonar
 {
-    public class BEBehaviorEFonar : BEBehaviorBase, IElectricConsumer
+    public class BEBehaviorEFonar : BlockEntityBehavior, IElectricConsumer
     {
         /// <summary>
         /// Уровень света
         /// </summary>
         public int LightLevel { get; private set; }
+
+        public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
 
         /// <summary>
@@ -35,6 +39,18 @@ namespace ElectricalProgressive.Content.Block.EFonar
         {
             _maxConsumption = MyMiniLib.GetAttributeInt(Block, "maxConsumption", 4);
         }
+
+        public override void Initialize(ICoreAPI api, JsonObject properties)
+        {
+            base.Initialize(api, properties);
+
+            if (Blockentity is BlockEntityEFonar entity &&
+                entity.ElectricalProgressive != null)
+            {
+                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
+            }
+        }
+
 
         public override void ToTreeAttributes(ITreeAttribute tree)
         {

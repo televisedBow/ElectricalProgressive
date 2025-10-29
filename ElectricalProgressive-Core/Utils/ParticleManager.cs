@@ -199,13 +199,13 @@ namespace ElectricalProgressive.Utils
             template.HsvaColor[0].var = 0;
             template.HsvaColor[1].avg = 0;
             template.HsvaColor[1].var = 0;
-            template.HsvaColor[2].avg = 90; // Более светлый чем черный дым
+            template.HsvaColor[2].avg = 200; // Более светлый чем черный дым
             template.HsvaColor[2].var = 5;
             template.HsvaColor[3].avg = 200;
             template.HsvaColor[3].var = 20;
 
             template.Velocity[0].avg = 0;
-            template.Velocity[1].avg = 0;
+            template.Velocity[1].avg = 0.2f;
             template.Velocity[2].avg = 0;
             template.Velocity[0].var = 0.1f;
             template.Velocity[1].var = 0.1f;
@@ -300,7 +300,7 @@ namespace ElectricalProgressive.Utils
             manager.Spawn(particles);
         }
 
-        public static void SpawnBlackSmokeAsync(IAsyncParticleManager manager, Vec3d pos, Vec3d variationPos)
+        public static void SpawnBlackSlowSmokeAsync(IAsyncParticleManager manager, Vec3d pos, Vec3d variationPos)
         {
             var particles = BlackSmokeTemplateAdvanced.Clone();
             particles.WindAffectednesAtPos = 1f; // обязательно
@@ -330,9 +330,9 @@ namespace ElectricalProgressive.Utils
             SpawnElectricSparksAsync(manager, pos, new Vec3d(0.1, 0.0, 0.1));
         }
 
-        public static void SpawnBlackSmokeAsync(IAsyncParticleManager manager, Vec3d pos)
+        public static void SpawnBlackSlowSmokeAsync(IAsyncParticleManager manager, Vec3d pos)
         {
-            SpawnBlackSmokeAsync(manager, pos, new Vec3d(0.8, 0.1, 0.8));
+            SpawnBlackSlowSmokeAsync(manager, pos, new Vec3d(0.8, 0.1, 0.8));
         }
 
         public static void SpawnWhiteSmokeAsync(IAsyncParticleManager manager, Vec3d pos)

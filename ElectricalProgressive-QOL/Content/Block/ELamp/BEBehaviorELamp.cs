@@ -8,7 +8,7 @@ using Vintagestory.API.Datastructures;
 
 namespace ElectricalProgressive.Content.Block.ELamp
 {
-    public class BEBehaviorELamp : BEBehaviorBase, IElectricConsumer
+    public class BEBehaviorELamp : BlockEntityBehavior, IElectricConsumer
     {
         /// <summary>
         /// Уровень света
@@ -19,6 +19,8 @@ namespace ElectricalProgressive.Content.Block.ELamp
         /// Ключ для сохранения уровня света в дереве атрибутов
         /// </summary>
         public const string LightLevelKey = "electricalprogressive:LightLevel";
+
+        public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
         public float AvgConsumeCoeff { get; set; }
 

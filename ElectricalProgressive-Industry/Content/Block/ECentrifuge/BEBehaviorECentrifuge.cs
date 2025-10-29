@@ -5,10 +5,11 @@ using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.ECentrifuge;
 
-public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
+public class BEBehaviorECentrifuge : BlockEntityBehavior, IElectricConsumer
 {
     /// <summary>
     /// Текущее потребление
@@ -16,6 +17,8 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
     public int PowerSetting { get; set; }
 
     public const string PowerSettingKey = "electricalprogressive:powersetting";
+
+    public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
     public float AvgConsumeCoeff { get; set; }
 
@@ -34,6 +37,18 @@ public class BEBehaviorECentrifuge : BEBehaviorBase, IElectricConsumer
     public BEBehaviorECentrifuge(BlockEntity blockEntity) : base(blockEntity)
     {
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
+    }
+
+
+    public override void Initialize(ICoreAPI api, JsonObject properties)
+    {
+        base.Initialize(api, properties);
+
+        if (Blockentity is BlockEntityECentrifuge entity &&
+            entity.ElectricalProgressive != null)
+        {
+            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 1.0, 0.1);
+        }
     }
 
 

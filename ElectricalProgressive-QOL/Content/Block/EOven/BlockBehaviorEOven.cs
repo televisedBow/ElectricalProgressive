@@ -8,13 +8,15 @@ using Vintagestory.API.Datastructures;
 
 namespace ElectricalProgressive.Content.Block.EOven;
 
-public class BEBehaviorEOven : BEBehaviorBase, IElectricConsumer
+public class BEBehaviorEOven : BlockEntityBehavior, IElectricConsumer
 {
     public int PowerSetting { get; set; }
 
 
     public const string PowerSettingKey = "electricalprogressive:powersetting";
     public const string OvenTemperatureKey = "electricalprogressive:oventemperature";
+
+    public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
     /// <summary>
     /// Температура печи

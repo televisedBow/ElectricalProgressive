@@ -1,20 +1,24 @@
-﻿using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Content.Block.EFonar;
+using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
 namespace ElectricalProgressive.Content.Block.ESFonar
 {
-    public class BEBehaviorESFonar : BEBehaviorBase, IElectricConsumer
+    public class BEBehaviorESFonar : BlockEntityBehavior, IElectricConsumer
     {
         /// <summary>
         /// Уровень света
         /// </summary>
         public int LightLevel { get; private set; }
+
+        public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
         /// <summary>
         /// Ключ для сохранения уровня света в дереве атрибутов
@@ -31,6 +35,21 @@ namespace ElectricalProgressive.Content.Block.ESFonar
         public BEBehaviorESFonar(BlockEntity blockEntity) : base(blockEntity)
         {
             _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 4);
+        }
+
+        public override void Initialize(ICoreAPI api, JsonObject properties)
+        {
+            base.Initialize(api, properties);
+
+            if (Blockentity is BlockEntityESFonar entity &&
+                entity.ElectricalProgressive != null)
+            {
+                // вычисляем высоту для частиц дыма
+                var heightStr = entity.Block.Variant["height"];
+                var height = heightStr.ToFloat() - 1;
+
+                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, height, 0.1);
+            }
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree)

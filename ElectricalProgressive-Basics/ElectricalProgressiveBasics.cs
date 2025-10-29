@@ -1,30 +1,32 @@
-﻿using ElectricalProgressive.Content.Block.EAccumulator;
+﻿using ElectricalProgressive.Content.Block;
+using ElectricalProgressive.Content.Block.EAccumulator;
+using ElectricalProgressive.Content.Block.ECable;
 using ElectricalProgressive.Content.Block.EConnector;
+using ElectricalProgressive.Content.Block.EFuelGenerator;
 using ElectricalProgressive.Content.Block.EGenerator;
 using ElectricalProgressive.Content.Block.EMotor;
-using Vintagestory.API.Common;
-using ElectricalProgressive.Content.Block;
 using ElectricalProgressive.Content.Block.ESwitch;
-using Vintagestory.API.Client;
-using ElectricalProgressive.Content.Block.ECable;
-using ElectricalProgressive.Content.Block.EFuelGenerator;
-using ElectricalProgressive.Content.Block.ETransformator;
 using ElectricalProgressive.Content.Block.ETermoGenerator;
+using ElectricalProgressive.Content.Block.ETransformator;
 using ElectricalProgressive.Content.Block.Termoplastini;
-using Vintagestory.API.Config;
+using HarmonyLib;
 using System.Collections.Generic;
+using System.Reflection;
+using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 
 
 
 [assembly: ModDependency("game", "1.21.0")]
-[assembly: ModDependency("electricalprogressivecore", "2.4.0")]
+[assembly: ModDependency("electricalprogressivecore", "2.5.0")]
 [assembly: ModInfo(
     "Electrical Progressive: Basics",
     "electricalprogressivebasics",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Basic electrical devices.",
-    Version = "2.4.0",
+    Version = "2.5.0",
     Authors =
     [
         "Tehtelev",
@@ -51,7 +53,7 @@ public class ElectricalProgressiveBasics : ModSystem
         { 3, Lang.Get("causeEnvironment") }
     };
 
-    
+
 
     /// <summary>
     /// Старт общего потока
@@ -108,6 +110,10 @@ public class ElectricalProgressiveBasics : ModSystem
 
         api.RegisterBlockClass("BlockTermoplastini", typeof(BlockTermoplastini));
 
+
+        // применение патчика на механику и вылеты
+        var harmony = new Harmony("electricalprogressive.mechanicalpowermod.patches");
+        harmony.PatchAll(Assembly.GetExecutingAssembly());
 
     }
 

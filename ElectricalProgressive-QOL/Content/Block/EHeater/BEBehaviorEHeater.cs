@@ -8,12 +8,14 @@ using Vintagestory.API.Datastructures;
 
 namespace ElectricalProgressive.Content.Block.EHeater
 {
-    public class BEBehaviorEHeater : BEBehaviorBase, IElectricConsumer
+    public class BEBehaviorEHeater : BlockEntityBehavior, IElectricConsumer
     {
         public int HeatLevel { get; private set; }
 
 
         public const string HeatLevelKey = "electricalprogressive:heatlevel";
+
+        public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
         /// <summary>
         /// Максимальное потребление

@@ -29,9 +29,7 @@ public class BEBehaviorEFreezer2 : BlockEntityBehavior, IElectricConsumer
     public BEBehaviorEFreezer2(BlockEntity blockEntity) : base(blockEntity)
     {
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
-        /*
 
-        */
     }
 
     public override void Initialize(ICoreAPI api, JsonObject properties)
