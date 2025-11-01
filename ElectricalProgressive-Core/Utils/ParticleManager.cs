@@ -205,7 +205,7 @@ namespace ElectricalProgressive.Utils
             template.HsvaColor[3].var = 20;
 
             template.Velocity[0].avg = 0;
-            template.Velocity[1].avg = 0.2f;
+            template.Velocity[1].avg = 0.5f;
             template.Velocity[2].avg = 0;
             template.Velocity[0].var = 0.1f;
             template.Velocity[1].var = 0.1f;

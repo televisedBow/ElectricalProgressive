@@ -8,6 +8,7 @@ using ElectricalProgressive.Content.Block.ELamp;
 using ElectricalProgressive.Content.Block.EOven;
 using ElectricalProgressive.Content.Block.ESFonar;
 using ElectricalProgressive.Content.Block.EStove;
+using HarmonyLib;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
@@ -176,6 +177,9 @@ public class ElectricalProgressiveQOL : ModSystem
         }
 
 
+        // применение патчика на механику и вылеты
+        var harmony = new Harmony("electricalprogressive.farmland.patches");
+        harmony.PatchAll(Assembly.GetExecutingAssembly());
 
 
     }

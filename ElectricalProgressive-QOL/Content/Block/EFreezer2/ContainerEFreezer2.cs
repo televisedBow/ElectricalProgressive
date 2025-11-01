@@ -55,6 +55,8 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
         RegisterGameTickListener(OnTick, 10000);
 
         _roomReg = Api.ModLoader.GetModSystem<RoomRegistry>();
+
+        
     }
 
     private void Inventory_OnInventoryOpenedClient(IPlayer player)
@@ -104,9 +106,11 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
         foreach (var slot in Inventory)
         {
             var stack = slot.Itemstack;
-            if (stack == null) continue;
+            if (stack == null)
+                continue;
 
-            if (stack.Collectible.RequiresTransitionableTicking(Api.World, stack)) return true;
+            if (stack.Collectible.RequiresTransitionableTicking(Api.World, stack))
+                return true;
         }
         return false;
     }
