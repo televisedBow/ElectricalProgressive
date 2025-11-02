@@ -18,27 +18,7 @@ public class BEBehaviorEAccumulator : BlockEntityBehavior, IElectricAccumulator
     {
     }
 
-    public override void Initialize(ICoreAPI api, JsonObject properties)
-    {
-        base.Initialize(api, properties);
-
-        // Кэшируем значения вариантов блока
-        string tier = this.Block.Variant["tier"];
-
-        // Устанавливаем позицию частиц
-        if (Blockentity is BlockEntityEAccumulator entity &&
-            entity.ElectricalProgressive != null)
-        {
-            if (tier == "tier2")
-                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 1.5, 0.1);
-            else
-            {
-                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
-            }
-        }
-    }
-
-
+    
 
 
     bool hasBurnout = false;

@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+﻿using System;
+using Vintagestory.API.Common;
 
 namespace ElectricalProgressive.Utils;
 
@@ -69,7 +70,7 @@ public static class MyMiniLib
     }
 
     /// <summary>
-    /// Получение аттрибута в виде массива int
+    /// Получение аттрибута в виде массива string
     /// </summary>
     /// <param name="block"></param>
     /// <param name="attrname"></param>
@@ -100,6 +101,9 @@ public static class MyMiniLib
         return def;
     }
 
+
+
+
     /// <summary>
     /// Получение аттрибута в виде массива float
     /// </summary>
@@ -112,6 +116,34 @@ public static class MyMiniLib
         if (block is { Attributes: not null } && block.Attributes[attrname] != null)
         {
             return block.Attributes[attrname].AsArray<float>(def, "float");
+        }
+        return def;
+    }
+
+    /// <summary>
+    /// Получение аттрибута в виде массива float
+    /// </summary>
+    /// <param name="block"></param>
+    /// <param name="attrname"></param>
+    /// <param name="def"></param>
+    /// <returns></returns>
+    public static float[][] GetAttributeArrayArrayFloat(CollectibleObject block, string attrname, float[][] def)
+    {
+        if (block is { Attributes: not null } && block.Attributes[attrname] != null)
+        {
+            try
+            {
+                // Получаем JSON строку и десериализуем с помощью Newtonsoft.Json
+                string json = block.Attributes[attrname].ToString();
+                var result = Newtonsoft.Json.JsonConvert.DeserializeObject<float[][]>(json);
+
+                return result ?? def;
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку если нужно
+                Console.WriteLine($"Error parsing array {attrname}: {ex.Message}");
+            }
         }
         return def;
     }

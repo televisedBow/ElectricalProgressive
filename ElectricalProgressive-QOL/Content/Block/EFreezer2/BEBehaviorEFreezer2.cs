@@ -32,16 +32,7 @@ public class BEBehaviorEFreezer2 : BlockEntityBehavior, IElectricConsumer
 
     }
 
-    public override void Initialize(ICoreAPI api, JsonObject properties)
-    {
-        base.Initialize(api, properties);
 
-        if (Blockentity is BlockEntityEFreezer2 entity &&
-            entity.ElectricalProgressive != null)
-        {
-            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 1.0, 0.1);
-        }
-    }
 
     public void Consume_receive(float amount)
     {

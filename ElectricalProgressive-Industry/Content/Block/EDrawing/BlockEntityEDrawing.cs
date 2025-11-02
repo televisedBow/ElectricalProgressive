@@ -496,7 +496,15 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             RecipeProgress = tree.GetFloat("PowerCurrent");
 
             if (Api != null)
-                Inventory.AfterBlocksLoaded(Api.World);
+                try
+                {
+                    Inventory.AfterBlocksLoaded(Api.World);
+                }
+                catch (Exception e)
+                {
+
+                }
+                
 
             if (Api?.Side == EnumAppSide.Client && _clientDialog != null)
                 _clientDialog.Update(RecipeProgress);

@@ -79,10 +79,17 @@
     "*-burned": 0
   },
 
+
+
+
+
+
+
   "attributesByType": {
     "*-tier1-normal": {
       "blockEProperties": "main",
       "facesEProperties": [ "down" ],
+      "particlesOffsetPos": [ [ 0.1, 0.5, 0.1 ] ],
       "maxcapacity": 64000,
       "voltage": 32,
       "maxCurrent": 20.0,
@@ -95,6 +102,7 @@
     "*-tier2-normal": {
       "blockEProperties": "main",
       "facesEProperties": [ "down" ],
+      "particlesOffsetPos": [ [ 0.1, 1.5, 0.1 ] ],
       "maxcapacity": 256000,
       "voltage": 128,
       "maxCurrent": 20.0,
@@ -103,6 +111,12 @@
       "power": 512.0,
       "chargable": false,
       "consume": 20
+    },
+    "*-tier1-*": {
+      "particlesOffsetPos": [ [ 0.1, 0.5, 0.1 ] ]
+    },
+    "*-tier2-*": {
+      "particlesOffsetPos": [ [ 0.1, 1.5, 0.1 ] ]
     },
     "*": {
       "chargable": false
@@ -114,7 +128,7 @@
   },
 
   "resistance": 1,
-  
+
   "drawType": "JSON",
   "lightAbsorption": 0.0,
   "faceCullMode": "NeverCull",

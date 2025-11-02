@@ -19,16 +19,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
     private bool prepareBurnout;
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
-    public override void Initialize(ICoreAPI api, JsonObject properties)
-    {
-        base.Initialize(api, properties);
 
-        if (Blockentity is BlockEntityETermoGenerator entity &&
-            entity.ElectricalProgressive != null)
-        {
-            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
-        }
-    }
 
     private static bool IsBurned => false;
 
@@ -96,18 +87,21 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
             if (entity.GenTemp > 20)
             {
                 entity.ElectricalProgressive.ParticlesType = 1;
-                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4);
+                entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
+                entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4));
             }
             else
             {
                 entity.ElectricalProgressive.ParticlesType = 0;
-                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
+                entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
+                entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.1, 0.5, 0.1));
             }
         }
         else
         {
             entity.ElectricalProgressive.ParticlesType = 0;
-            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
+            entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
+            entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.1, 0.5, 0.1));
         }
     }
 

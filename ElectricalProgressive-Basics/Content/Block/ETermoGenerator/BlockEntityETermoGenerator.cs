@@ -401,7 +401,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         var stack = Inventory[0].Itemstack;
         var sizeFuel = 0; // размер топлива в генераторе
 
-        if (stack != null && stack.Collectible.CombustibleProps != null)
+        if (stack != null && stack.Collectible!=null &&  stack.Collectible.CombustibleProps != null)
         {
             // смотрим сколько топлива в генераторе
             sizeFuel = (int)(stack.StackSize * 8.0F / stack.Collectible.MaxStackSize) + 1;

@@ -359,6 +359,7 @@
   "renderPass": "OpaqueNoCull",
 
   "attributes": {
+    "particlesOffsetPos": [ [ 0.1, 0.0, 0.1 ] ],
     "handbook": {
       "groupBy": [ "ecable-*" ],
       "extraSections": [

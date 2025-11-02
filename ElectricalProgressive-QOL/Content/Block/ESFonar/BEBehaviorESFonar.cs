@@ -1,5 +1,4 @@
-﻿using ElectricalProgressive.Content.Block.EFonar;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Text;
@@ -47,8 +46,8 @@ namespace ElectricalProgressive.Content.Block.ESFonar
                 // вычисляем высоту для частиц дыма
                 var heightStr = entity.Block.Variant["height"];
                 var height = heightStr.ToFloat() - 1;
-
-                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, height, 0.1);
+                entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
+                entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.1, height, 0.1));
             }
         }
 

@@ -39,16 +39,7 @@ public class BEBehaviorEPress : BlockEntityBehavior, IElectricConsumer
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
     }
 
-    public override void Initialize(ICoreAPI api, JsonObject properties)
-    {
-        base.Initialize(api, properties);
 
-        if (Blockentity is BlockEntityEPress entity &&
-            entity.ElectricalProgressive != null)
-        {
-            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 1.0, 0.1);
-        }
-    }
 
     public bool IsWorking
     {

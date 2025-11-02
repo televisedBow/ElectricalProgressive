@@ -19,16 +19,7 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
     private bool prepareBurnout;
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
-    public override void Initialize(ICoreAPI api, JsonObject properties)
-    {
-        base.Initialize(api, properties);
 
-        if (Blockentity is BlockEntityEFuelGenerator entity &&
-            entity.ElectricalProgressive != null)
-        {
-            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
-        }
-    }
 
     private static bool IsBurned => false;
 
@@ -83,11 +74,19 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
 
         if (!hasBurnout)
         {
-            if (entity.GenTemp > 20)
+            if (entity.GenTemp > 200)
             {
                 // Кэшируем вычисление позиции
-                //  ParticleManager.SpawnWhiteSmoke(Api.World, Pos.ToVec3d().Add(0.4, entity.heightTermoplastin + 0.9, 0.4));
+                entity.ElectricalProgressive.ParticlesType = 1;
             }
+            else
+            {
+                entity.ElectricalProgressive.ParticlesType = 0;
+            }
+        }
+        else
+        {
+            entity.ElectricalProgressive.ParticlesType = 0;
         }
     }
 
@@ -104,8 +103,8 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
             return 0f;
         }
 
-        // отдаём энергию только если температура генератора выше 20 градусов
-        if (temp.GenTemp > 20)
+        // отдаём энергию только если температура генератора выше 200 градусов
+        if (temp.GenTemp > 200)
             _powerGive = temp.Power;
         else
             _powerGive = 0;
@@ -142,8 +141,8 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
         if (IsBurned)
             return;
 
-        stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / entity.Power * 100));
-        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
+        stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / Math.Max(1f, _powerGive) * 100));
+        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + Math.Max(1f, _powerGive).ToString() + " " + Lang.Get("W"));
        
     }
 

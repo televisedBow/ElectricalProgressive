@@ -40,16 +40,7 @@ namespace ElectricalProgressive.Content.Block.EFonar
             _maxConsumption = MyMiniLib.GetAttributeInt(Block, "maxConsumption", 4);
         }
 
-        public override void Initialize(ICoreAPI api, JsonObject properties)
-        {
-            base.Initialize(api, properties);
 
-            if (Blockentity is BlockEntityEFonar entity &&
-                entity.ElectricalProgressive != null)
-            {
-                entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 0.5, 0.1);
-            }
-        }
 
 
         public override void ToTreeAttributes(ITreeAttribute tree)

@@ -42,7 +42,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     private bool paramsSet = false;
 
     // настройка частиц
-    public Vec3d ParticlesOffsetPos= new Vec3d();
+    public List<Vec3d> ParticlesOffsetPos = new List<Vec3d>(1);
     public int ParticlesType = 0;
 
     public EParams eparams;
@@ -143,6 +143,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     {
         base.Initialize(api, properties);
 
+        // получаем параметры частиц
+        GetParticlesPos();
 
         // Регистрируем спавнер частиц для асинхронных частиц
         if (api is ICoreClientAPI capi)
@@ -159,6 +161,28 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         this.isLoaded = true;   // оно загрузилось!
         this.dirty = true;
         this.Update();          // обновляем систему, чтобы она знала, что блок загрузился
+    }
+
+    /// <summary>
+    /// Получение позиций частиц из атрибутов блока
+    /// </summary>
+    private void GetParticlesPos()
+    {
+        ParticlesOffsetPos.Clear();
+        var arrayOffsetPos = MyMiniLib.GetAttributeArrayArrayFloat(this.Block, "particlesOffsetPos", new float[1][]{[0,0,0]});
+        if (arrayOffsetPos != null)
+        {
+            for (int i = 0; i < arrayOffsetPos.Length; i++)
+            {
+                Vec3d buf = new Vec3d(
+                    arrayOffsetPos[i][0],
+                    arrayOffsetPos[i][1],
+                    arrayOffsetPos[i][2]
+                );
+
+                ParticlesOffsetPos.Add(buf);
+            }
+        }
     }
 
 
@@ -187,27 +211,30 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             if (hasBurnout || prepareBurnout)
                 break;
         }
-        
 
-
-        // Обработка prepareBurnout
-        if (prepareBurnout)
+        // Спавн частиц в указанных позициях
+        if (ParticlesOffsetPos != null && ParticlesOffsetPos.Count > 0)
         {
-            ParticleManager.SpawnWhiteSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
+            foreach (var partPos in ParticlesOffsetPos)
+            {
+                // Обработка prepareBurnout
+                if (prepareBurnout)
+                {
+                    ParticleManager.SpawnWhiteSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos));
+                }
+                
+                // Обработка burnout
+                if (hasBurnout)
+                {
+                    ParticleManager.SpawnBlackSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos));
+                }
+                
+                if (ParticlesType == 1)
+                {
+                    ParticleManager.SpawnWhiteSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos));
+                }
+            }
         }
-
-
-        // Обработка burnout
-        if (hasBurnout)
-        {
-            ParticleManager.SpawnBlackSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
-        }
-
-        if (ParticlesType == 1)
-        {
-            ParticleManager.SpawnWhiteSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(ParticlesOffsetPos));
-        }
-
 
         return this.isLoaded;
     }
@@ -623,21 +650,25 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         tree.SetBytes(InterruptionKey, SerializerUtil.Serialize(this.interruption));
         tree.SetBool(IsLoadedKey, this.isLoaded);
 
-        // Сохраняем флаг формата (например, "binary" или "json")
         tree.SetString("SerializationFormat", "binary");
 
         if (allEparams != null)
         {
-            // Используем пользовательскую бинарную сериализацию
             tree.SetBytes(BlockEntityEBase.AllEparamsKey, EParamsSerializer.Serialize(allEparams!));
         }
 
         // Сохраняем параметры частиц
         tree.SetInt("ParticlesType", ParticlesType);
-        tree.SetDouble("ParticlesOffsetPosX", ParticlesOffsetPos.X);
-        tree.SetDouble("ParticlesOffsetPosY", ParticlesOffsetPos.Y);
-        tree.SetDouble("ParticlesOffsetPosZ", ParticlesOffsetPos.Z);
-}
+
+        // Сохраняем массив смещений частиц
+        tree.SetInt("ParticlesOffsetPosCount", ParticlesOffsetPos.Count);
+        for (int i = 0; i < ParticlesOffsetPos.Count; i++)
+        {
+            tree.SetDouble($"ParticlesOffsetPosX_{i}", ParticlesOffsetPos[i].X);
+            tree.SetDouble($"ParticlesOffsetPosY_{i}", ParticlesOffsetPos[i].Y);
+            tree.SetDouble($"ParticlesOffsetPosZ_{i}", ParticlesOffsetPos[i].Z);
+        }
+    }
 
     /// <summary>
     /// Считывает из дерева атрибутов
@@ -650,31 +681,32 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         var connection = SerializerUtil.Deserialize<Facing>(tree.GetBytes(ConnectionKey));
         var interruption = SerializerUtil.Deserialize<Facing>(tree.GetBytes(InterruptionKey));
-
         var isLoaded = tree.GetBool(IsLoadedKey, false);
 
-        // Проверяем флаг формата
-        var format = tree.GetString("SerializationFormat", "json"); // По умолчанию "json", если флаг отсутствует
+        var format = tree.GetString("SerializationFormat", "json");
 
         EParams[]? AllEparamss;
         if (format == "binary")
         {
-            // Используем бинарную десериализацию
             AllEparamss = EParamsSerializer.Deserialize(tree.GetBytes(BlockEntityEBase.AllEparamsKey));
         }
         else
         {
-            // Используем Newtonsoft.Json для старых данных
             AllEparamss = JsonConvert.DeserializeObject<EParams[]>(Encoding.UTF8.GetString(tree.GetBytes(BlockEntityEBase.AllEparamsKey)));
         }
 
         // Загрузка параметров частиц
         ParticlesType = tree.GetInt("ParticlesType", 0);
-        ParticlesOffsetPos = new Vec3d(
-            tree.GetDouble("ParticlesOffsetPosX", 0.0),
-            tree.GetDouble("ParticlesOffsetPosY", 0.0),
-            tree.GetDouble("ParticlesOffsetPosZ", 0.0)
-        );
+
+        int count = tree.GetInt("ParticlesOffsetPosCount", 0);
+        ParticlesOffsetPos = new List<Vec3d>(count);
+        for (int i = 0; i < count; i++)
+        {
+            double x = tree.GetDouble($"ParticlesOffsetPosX_{i}", 0.0);
+            double y = tree.GetDouble($"ParticlesOffsetPosY_{i}", 0.0);
+            double z = tree.GetDouble($"ParticlesOffsetPosZ_{i}", 0.0);
+            ParticlesOffsetPos.Add(new Vec3d(x, y, z));
+        }
 
         // Проверяем, изменились ли данные
         if (connection == this.connection &&

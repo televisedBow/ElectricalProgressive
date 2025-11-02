@@ -323,7 +323,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
 
         if (_fuelBurnTime > 0f)
         {
-            StartAnimation();
+            if (_genTemp>200)
+                StartAnimation();
 
             _genTemp = ChangeTemperature(_genTemp, _maxTemp, deltatime);
             _fuelBurnTime -= deltatime;
@@ -338,7 +339,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         }
         else
         {
-            StopAnimation();
+            if (_genTemp < 200)
+                StopAnimation();
 
             if (_genTemp != 20f)
                 _genTemp = ChangeTemperature(_genTemp, 20f, deltatime);

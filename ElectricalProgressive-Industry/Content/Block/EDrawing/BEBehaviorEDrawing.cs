@@ -41,16 +41,7 @@ public class BEBehaviorEDrawing : BlockEntityBehavior, IElectricConsumer
     }
 
 
-    public override void Initialize(ICoreAPI api, JsonObject properties)
-    {
-        base.Initialize(api, properties);
 
-        if (Blockentity is BlockEntityEDrawing entity &&
-            entity.ElectricalProgressive != null)
-        {
-            entity.ElectricalProgressive.ParticlesOffsetPos = new Vec3d(0.1, 1.0, 0.1);
-        }
-    }
 
     public bool IsWorking
     {

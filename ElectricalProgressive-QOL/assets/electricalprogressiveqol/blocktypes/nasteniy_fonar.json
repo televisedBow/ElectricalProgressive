@@ -12,6 +12,7 @@
   ],
   "attributes": {
     "blockEProperties": "main",
+    "particlesOffsetPos": [ [ 0.1, 0.5, 0.1 ] ],
     "maxConsumption": 16, //максимальное потребление
     "voltage": 128,
     "maxCurrent": 20.0,
