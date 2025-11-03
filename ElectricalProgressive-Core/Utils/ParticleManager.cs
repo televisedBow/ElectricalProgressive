@@ -96,6 +96,7 @@ namespace ElectricalProgressive.Utils
         private static readonly AdvancedParticleProperties SparksTemplateAdvanced;
         private static readonly AdvancedParticleProperties BlackSmokeTemplateAdvanced;
         private static readonly AdvancedParticleProperties WhiteSmokeTemplateAdvanced;
+        private static readonly AdvancedParticleProperties WhiteSmoke2TemplateAdvanced;
         private static readonly AdvancedParticleProperties WhiteSlowSmokeTemplateAdvanced;
 
         static ParticleManager()
@@ -104,6 +105,7 @@ namespace ElectricalProgressive.Utils
             SparksTemplateAdvanced = CreateSparksTemplate();
             BlackSmokeTemplateAdvanced = CreateBlackSmokeTemplate();
             WhiteSmokeTemplateAdvanced = CreateWhiteSmokeTemplate();
+            WhiteSmoke2TemplateAdvanced = CreateWhiteSmoke2Template();
             WhiteSlowSmokeTemplateAdvanced = CreateWhiteSlowSmokeTemplate();
         }
 
@@ -116,22 +118,23 @@ namespace ElectricalProgressive.Utils
             template.Quantity.var = 2.5f;
 
             // Настройки цвета в формате HSVA
-            template.HsvaColor[0].avg = 180; // Hue - голубоватый оттенок
-            template.HsvaColor[0].var = 10;
-            template.HsvaColor[1].avg = 40;  // Saturation
-            template.HsvaColor[1].var = 10;
-            template.HsvaColor[2].avg = 100; // Value
-            template.HsvaColor[2].var = 20;
-            template.HsvaColor[3].avg = 83;  // Alpha
-            template.HsvaColor[3].var = 20;
+            template.HsvaColor[0].avg = 39; // Hue - голубоватый оттенок
+            template.HsvaColor[0].var = 2;
+            template.HsvaColor[1].avg = 255;  // Saturation
+            template.HsvaColor[1].var = 2;
+            template.HsvaColor[2].avg = 255; // Value
+            template.HsvaColor[2].var = 2;
+            template.HsvaColor[3].avg = 240;  // Alpha
+            template.HsvaColor[3].var = 10;
 
             // Настройки скорости частиц
             template.Velocity[0].avg = 0f;
-            template.Velocity[1].avg = 2f;
+            template.Velocity[1].avg = 1.1f;
             template.Velocity[2].avg = 0f;
-            template.Velocity[0].var = 4f;
-            template.Velocity[1].var = 2f;
-            template.Velocity[2].var = 4f;
+            template.Velocity[0].var = 3.5f;
+            template.Velocity[1].var = 0.2f;
+            template.Velocity[2].var = 3.5f;
+
 
             // Физические свойства
             template.WindAffectednes = 0f;
@@ -143,8 +146,8 @@ namespace ElectricalProgressive.Utils
 
             // Визуальные свойства
             template.ParticleModel = EnumParticleModel.Cube;
-            template.Size.avg = 0.5f;
-            template.Size.var = 0.1f;
+            template.Size.avg = 0.2f;
+            template.Size.var = 0.05f;
             
             return template;
         }
@@ -227,6 +230,48 @@ namespace ElectricalProgressive.Utils
             return template;
         }
 
+
+        private static AdvancedParticleProperties CreateWhiteSmoke2Template()
+        {
+            var template = new AdvancedParticleProperties();
+
+            template.Quantity.avg = 1.0f;
+            template.Quantity.var = 0.0f;
+
+            template.HsvaColor[0].avg = 0;
+            template.HsvaColor[0].var = 0;
+            template.HsvaColor[1].avg = 0;
+            template.HsvaColor[1].var = 0;
+            template.HsvaColor[2].avg = 200; // Более светлый чем черный дым
+            template.HsvaColor[2].var = 5;
+            template.HsvaColor[3].avg = 220;
+            template.HsvaColor[3].var = 20;
+
+            template.Velocity[0].avg = 0;
+            template.Velocity[1].avg = 0.5f;
+            template.Velocity[2].avg = 0;
+            template.Velocity[0].var = 0.1f;
+            template.Velocity[1].var = 0.1f;
+            template.Velocity[2].var = 0.1f;
+
+            template.WindAffectednes = 1f;
+            template.WindAffectednesAtPos = 1f;
+            template.LifeLength.avg = 2f;
+            template.LifeLength.var = 0.5f;
+            template.GravityEffect.avg = -0.02f;
+            template.GravityEffect.var = 0f;
+
+            template.ParticleModel = EnumParticleModel.Quad;
+            template.SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 1f);
+            template.OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100);
+            template.Size.avg = 0.65f;
+            template.Size.var = 0.2f;
+
+            return template;
+        }
+
+
+
         private static AdvancedParticleProperties CreateWhiteSlowSmokeTemplate()
         {
             var template = new AdvancedParticleProperties();
@@ -291,11 +336,12 @@ namespace ElectricalProgressive.Utils
             world.SpawnParticles(WhiteSlowSmokeTemplate);
         }
 
+
         // Асинхронные методы с использованием шаблонов
         public static void SpawnElectricSparksAsync(IAsyncParticleManager manager, Vec3d pos, Vec3d variationPos)
         {
             var particles = SparksTemplateAdvanced.Clone();
-            particles.WindAffectednesAtPos = 1f; // обязательно
+            particles.WindAffectednesAtPos = 0.1f; // обязательно
             particles.basePos = RandomBlockPos(pos, variationPos);
             manager.Spawn(particles);
         }
@@ -311,6 +357,14 @@ namespace ElectricalProgressive.Utils
         public static void SpawnWhiteSmokeAsync(IAsyncParticleManager manager, Vec3d pos, Vec3d variationPos)
         {
             var particles = WhiteSmokeTemplateAdvanced.Clone();
+            particles.WindAffectednesAtPos = 1f; // обязательно
+            particles.basePos = RandomBlockPos(pos, variationPos);
+            manager.Spawn(particles);
+        }
+
+        public static void SpawnWhiteSmoke2Async(IAsyncParticleManager manager, Vec3d pos, Vec3d variationPos)
+        {
+            var particles = WhiteSmoke2TemplateAdvanced.Clone();
             particles.WindAffectednesAtPos = 1f; // обязательно
             particles.basePos = RandomBlockPos(pos, variationPos);
             manager.Spawn(particles);
@@ -340,10 +394,36 @@ namespace ElectricalProgressive.Utils
             SpawnWhiteSmokeAsync(manager, pos, new Vec3d(0.1, 0.1, 0.1));
         }
 
+        public static void SpawnWhiteSmoke2Async(IAsyncParticleManager manager, Vec3d pos)
+        {
+            SpawnWhiteSmoke2Async(manager, pos, new Vec3d(0.1, 0.1, 0.1));
+        }
+
+
         public static void SpawnWhiteSlowSmokeAsync(IAsyncParticleManager manager, Vec3d pos)
         {
             SpawnWhiteSlowSmokeAsync(manager, pos, new Vec3d(0.8, 0.1, 0.8));
         }
+
+
+        public static void SpawnParticlesAsync(IAsyncParticleManager manager, Vec3d pos, int type)
+        {
+            if (type == 0)
+                SpawnWhiteSlowSmokeAsync(manager, pos);
+            else if (type == 1)
+                SpawnBlackSlowSmokeAsync(manager, pos);
+            else if (type == 2)
+                SpawnWhiteSmokeAsync(manager, pos);
+            else if (type == 3)
+                SpawnWhiteSmoke2Async(manager, pos);
+            else if (type == 4)
+                SpawnElectricSparksAsync(manager, pos);
+
+        }
+        
+
+
+
 
         private static readonly Random rand = new Random();
 
@@ -355,5 +435,8 @@ namespace ElectricalProgressive.Utils
                 pos.Z + rand.NextDouble() * variation.Z
             );
         }
+
+
+
     }
 }

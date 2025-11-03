@@ -147,4 +147,33 @@ public static class MyMiniLib
         }
         return def;
     }
+
+
+    /// <summary>
+    /// Получение аттрибута в виде массива int
+    /// </summary>
+    /// <param name="block"></param>
+    /// <param name="attrname"></param>
+    /// <param name="def"></param>
+    /// <returns></returns>
+    public static int[][] GetAttributeArrayArrayInt(CollectibleObject block, string attrname, int[][] def)
+    {
+        if (block is { Attributes: not null } && block.Attributes[attrname] != null)
+        {
+            try
+            {
+                // Получаем JSON строку и десериализуем с помощью Newtonsoft.Json
+                string json = block.Attributes[attrname].ToString();
+                var result = Newtonsoft.Json.JsonConvert.DeserializeObject<int[][]>(json);
+
+                return result ?? def;
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку если нужно
+                Console.WriteLine($"Error parsing array {attrname}: {ex.Message}");
+            }
+        }
+        return def;
+    }
 }

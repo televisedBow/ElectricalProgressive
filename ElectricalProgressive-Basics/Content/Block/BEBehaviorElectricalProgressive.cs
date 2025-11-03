@@ -43,7 +43,9 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
     // настройка частиц
     public List<Vec3d> ParticlesOffsetPos = new List<Vec3d>(1);
+    public List<int[]> ParticlesFramesAnim = new List<int[]>(1);
     public int ParticlesType = 0;
+    private BlockEntityAnimationUtil AnimUtil;
 
     public EParams eparams;
     public int eparamsFace;
@@ -144,7 +146,10 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         base.Initialize(api, properties);
 
         // получаем параметры частиц
-        GetParticlesPos();
+        GetParticles();
+
+        // получаем аниматор, если есть
+        AnimUtil = Blockentity.GetBehavior<BEBehaviorAnimatable>()?.animUtil!;
 
         // Регистрируем спавнер частиц для асинхронных частиц
         if (api is ICoreClientAPI capi)
@@ -166,9 +171,13 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     /// <summary>
     /// Получение позиций частиц из атрибутов блока
     /// </summary>
-    private void GetParticlesPos()
+    private void GetParticles()
     {
-        ParticlesOffsetPos.Clear();
+        // тип частиц
+        ParticlesType = MyMiniLib.GetAttributeInt(this.Block, "particlesType", 0 );
+
+        // получаем позиции частиц из атрибутов блока
+        ParticlesOffsetPos.Clear(); // чистим данные из сохранений
         var arrayOffsetPos = MyMiniLib.GetAttributeArrayArrayFloat(this.Block, "particlesOffsetPos", new float[1][]{[0,0,0]});
         if (arrayOffsetPos != null)
         {
@@ -181,6 +190,23 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
                 );
 
                 ParticlesOffsetPos.Add(buf);
+            }
+        }
+
+        // получаем привязку частиц к фрэймам анимации
+        ParticlesFramesAnim.Clear(); // чистим данные из сохранений
+        var arrayFrames = MyMiniLib.GetAttributeArrayArrayInt(this.Block, "particlesFramesAnim", new int[1][] { [-1, -1] });
+        if (arrayFrames != null)
+        {
+            for (int i = 0; i < arrayFrames.Length; i++)
+            {
+                int[] buf =
+                [
+                    arrayFrames[i][0],
+                    arrayFrames[i][1]
+                ];
+
+                ParticlesFramesAnim.Add(buf);
             }
         }
     }
@@ -215,24 +241,38 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         // Спавн частиц в указанных позициях
         if (ParticlesOffsetPos != null && ParticlesOffsetPos.Count > 0)
         {
+            int k = 0;
             foreach (var partPos in ParticlesOffsetPos)
             {
                 // Обработка prepareBurnout
                 if (prepareBurnout)
                 {
-                    ParticleManager.SpawnWhiteSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos));
+                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), 0);
                 }
                 
                 // Обработка burnout
                 if (hasBurnout)
                 {
-                    ParticleManager.SpawnBlackSlowSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos));
+                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), 1);
                 }
                 
-                if (ParticlesType == 1)
+                // частицы собственные для блока
+                if (ParticlesType > 1 && !hasBurnout && !prepareBurnout)
                 {
-                    ParticleManager.SpawnWhiteSmokeAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos));
+                    // настреок анимации нет?
+                    if (ParticlesFramesAnim==null || ParticlesFramesAnim[k][0]==-1 || ParticlesFramesAnim[k][1] == -1)
+                        ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), ParticlesType);
+
+                    // ищем аниматор
+                    if (AnimUtil != null && AnimUtil.animator!=null && AnimUtil.animator.Animations.Length>0)
+                    {
+                        float buf = AnimUtil.animator.Animations[0].CurrentFrame;
+                        if (buf> ParticlesFramesAnim[k][0] && buf < ParticlesFramesAnim[k][1])
+                            ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), ParticlesType);
+                    }
                 }
+
+                k++;
             }
         }
 
@@ -418,6 +458,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         }
         networkInformation = null;
 
+        
+        AnimUtil?.Dispose();
     }
 
 
@@ -446,7 +488,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         }
         networkInformation = null;
 
-
+        AnimUtil?.Dispose();
     }
 
  
@@ -668,6 +710,16 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             tree.SetDouble($"ParticlesOffsetPosY_{i}", ParticlesOffsetPos[i].Y);
             tree.SetDouble($"ParticlesOffsetPosZ_{i}", ParticlesOffsetPos[i].Z);
         }
+
+        // Сохраняем массив фреймов для синхронизации
+        tree.SetInt("ParticlesFramesAnimCount", ParticlesFramesAnim.Count);
+        for (int i = 0; i < ParticlesOffsetPos.Count; i++)
+        {
+            tree.SetInt($"ParticlesFramesAnimMin_{i}", ParticlesFramesAnim[i][0]);
+            tree.SetInt($"ParticlesFramesAnimMax_{i}", ParticlesFramesAnim[i][1]);
+
+        }
+
     }
 
     /// <summary>
@@ -699,7 +751,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         ParticlesType = tree.GetInt("ParticlesType", 0);
 
         int count = tree.GetInt("ParticlesOffsetPosCount", 0);
-        ParticlesOffsetPos = new List<Vec3d>(count);
+        ParticlesOffsetPos = new (count);
         for (int i = 0; i < count; i++)
         {
             double x = tree.GetDouble($"ParticlesOffsetPosX_{i}", 0.0);
@@ -707,6 +759,17 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
             double z = tree.GetDouble($"ParticlesOffsetPosZ_{i}", 0.0);
             ParticlesOffsetPos.Add(new Vec3d(x, y, z));
         }
+
+        count = tree.GetInt("ParticlesFramesAnimCount", 0);
+        ParticlesFramesAnim = new (count);
+        for (int i = 0; i < count; i++)
+        {
+            int min = tree.GetInt($"ParticlesFramesAnimMin_{i}", -1);
+            int max = tree.GetInt($"ParticlesFramesAnimMax_{i}", -1);
+            ParticlesFramesAnim.Add([min,max]);
+        }
+
+
 
         // Проверяем, изменились ли данные
         if (connection == this.connection &&

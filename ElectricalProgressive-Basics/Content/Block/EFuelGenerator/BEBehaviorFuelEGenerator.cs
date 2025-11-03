@@ -77,7 +77,7 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
             if (entity.GenTemp > 200)
             {
                 // Кэшируем вычисление позиции
-                entity.ElectricalProgressive.ParticlesType = 1;
+                entity.ElectricalProgressive.ParticlesType = 3;
             }
             else
             {

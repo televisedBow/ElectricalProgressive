@@ -72,6 +72,12 @@
   "attributes": {
     "blockEProperties": "all_down",
     "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
+    "particlesType": 3,
+    "particlesFramesAnim": [
+      [ 90, 130 ],
+      [ 100, 140 ],
+      [ 110, 150 ]
+    ],
     "voltage": 128,
     "maxCurrent": 1024.0,
     "isolated": true,

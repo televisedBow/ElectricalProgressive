@@ -86,7 +86,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
         {
             if (entity.GenTemp > 20)
             {
-                entity.ElectricalProgressive.ParticlesType = 1;
+                entity.ElectricalProgressive.ParticlesType = 2;
                 entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
                 entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4));
             }

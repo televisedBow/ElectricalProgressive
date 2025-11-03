@@ -29,6 +29,7 @@
 
   "attributes": {
     "particlesOffsetPos": [ [ 0.1, 0.5, 0.1 ] ],
+    "particlesType": 2,
     "blockEProperties": "main",
     "facesEProperties": [ "down" ],
     "voltage": 32,
