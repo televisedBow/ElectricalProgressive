@@ -5,7 +5,7 @@
   "attributes": {
     "blockEProperties": "all",
     "facesEProperties": [ "north", "east", "south", "west", "up", "down" ],
-    "particlesOffsetPos": [ [ 0.5, 1.0, 0.5 ] ],
+    "particlesOffsetPos": [ [ 0.5, 1.01, 0.5 ] ],
     "particlesType": 4,
     "particlesFramesAnim": [
       [ 27, 37 ]

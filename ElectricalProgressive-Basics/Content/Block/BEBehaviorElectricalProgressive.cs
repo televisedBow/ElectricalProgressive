@@ -127,8 +127,15 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
     }
 
 
+    // информация о сети для подсказки 
+    public NetworkInformation? NetworkInformation
+    {
+        get => networkInformation;
+    }
 
-    private NetworkInformation? networkInformation=new();
+    private NetworkInformation? networkInformation = new();
+
+
     private DateTime lastExecution = DateTime.MinValue;
 
     private static double intervalMSeconds;
