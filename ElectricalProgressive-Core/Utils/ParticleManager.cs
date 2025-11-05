@@ -4,6 +4,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Utils
 {
@@ -14,7 +15,7 @@ namespace ElectricalProgressive.Utils
         /// </summary>
         private static readonly SimpleParticleProperties SparksTemplate = new(
             minQuantity: 5, maxQuantity: 10,
-            color: ColorUtil.ColorFromRgba(155, 255, 255, 83),
+            color: ColorUtil.ColorFromRgba(155, 255, 255, 153),
             minPos: new Vec3d(), maxPos: new Vec3d(0.1, 0.0, 0.1),
             minVelocity: new Vec3f(-4f, 0f, -4f), maxVelocity: new Vec3f(4f, 4f, 4f)
         )
@@ -30,6 +31,7 @@ namespace ElectricalProgressive.Utils
             LightEmission = 0,
             WindAffected = false
         };
+        
 
         /// <summary>
         /// Шаблон «чёрного дыма»
@@ -124,7 +126,7 @@ namespace ElectricalProgressive.Utils
             template.HsvaColor[1].var = 2;
             template.HsvaColor[2].avg = 255; // Value
             template.HsvaColor[2].var = 2;
-            template.HsvaColor[3].avg = 240;  // Alpha
+            template.HsvaColor[3].avg = 255;  // Alpha
             template.HsvaColor[3].var = 10;
 
             // Настройки скорости частиц
@@ -144,10 +146,12 @@ namespace ElectricalProgressive.Utils
             template.GravityEffect.var = 0f;
             template.Bounciness= 1f;
 
+            template.VertexFlags= 128;
+
             // Визуальные свойства
             template.ParticleModel = EnumParticleModel.Cube;
-            template.Size.avg = 0.2f;
-            template.Size.var = 0.05f;
+            template.Size.avg = 0.25f;
+            template.Size.var = 0.1f;
             
             return template;
         }

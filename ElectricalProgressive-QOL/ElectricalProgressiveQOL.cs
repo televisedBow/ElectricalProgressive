@@ -8,6 +8,7 @@ using ElectricalProgressive.Content.Block.ELamp;
 using ElectricalProgressive.Content.Block.EOven;
 using ElectricalProgressive.Content.Block.ESFonar;
 using ElectricalProgressive.Content.Block.EStove;
+using ElectricalProgressive.Patch;
 using HarmonyLib;
 using Newtonsoft.Json.Linq;
 using System;
@@ -15,6 +16,7 @@ using System.Linq;
 using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Server;
 
 
 
@@ -38,7 +40,7 @@ namespace ElectricalProgressive;
 
 public class ElectricalProgressiveQOL : ModSystem
 {
-
+    private Harmony harmony;
     private ICoreAPI api = null!;
     private ICoreClientAPI capi = null!;
 
@@ -195,6 +197,19 @@ public class ElectricalProgressiveQOL : ModSystem
     }
 
 
+    public override void StartServerSide(ICoreServerAPI api)
+    {
+        base.StartServerSide(api);
+
+        // применение патча для грядки обогревателю
+        harmony = new Harmony("electricalprogressive.farmlandheater");
+        FarmlandHeaterPatch.RegisterPatch(harmony);
+
+    }
+
+
+
+
 
     public override void AssetsFinalize(ICoreAPI api)
     {
@@ -253,6 +268,15 @@ public class ElectricalProgressiveQOL : ModSystem
         return HasTag(obj) && obj.Attributes["foodtag"].AsString() == "finished";
     }
 
+
+
+    public override void Dispose()
+    {
+        // Отменяем патч при выгрузке мода
+        FarmlandHeaterPatch.UnregisterPatch(harmony);
+        harmony?.UnpatchAll();
+        harmony = null;
+    }
 }
 
 

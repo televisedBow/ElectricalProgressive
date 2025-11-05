@@ -5,6 +5,7 @@ using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
+using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.EHeater
 {
@@ -12,10 +13,19 @@ namespace ElectricalProgressive.Content.Block.EHeater
     {
         public int HeatLevel { get; private set; }
 
+        public float GreenhouseBonus { get; set; }
 
         public const string HeatLevelKey = "electricalprogressive:heatlevel";
 
         public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
+
+        public override void Initialize(ICoreAPI api, JsonObject properties)
+        {
+            base.Initialize(api, properties);
+
+            GreenhouseBonus = -1;
+        }
+
 
         /// <summary>
         /// Максимальное потребление
@@ -47,6 +57,14 @@ namespace ElectricalProgressive.Content.Block.EHeater
             stringBuilder.AppendLine(StringHelper.Progressbar(this.HeatLevel * 100.0f / _maxConsumption));
             stringBuilder.AppendLine("└ " + Lang.Get("Consumption") + ": " + this.HeatLevel + "/" + _maxConsumption + " " + Lang.Get("W"));
 
+            if (GreenhouseBonus<0)
+                stringBuilder.AppendLine("Бонус не дает или грядки не обновлялись.");
+            else
+            {
+                stringBuilder.AppendLine("Бонус от обогревателей: +"+GreenhouseBonus.ToString("F2") + " \u00b0C");
+            }
+
+
             stringBuilder.AppendLine();
         }
 
@@ -56,7 +74,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
         {
             return _maxConsumption;
         }
-
+        
         public void Consume_receive(float amount)
         {
             if (this.Api is not { } api)
@@ -156,12 +174,14 @@ namespace ElectricalProgressive.Content.Block.EHeater
         {
             base.ToTreeAttributes(tree);
             tree.SetInt(HeatLevelKey, HeatLevel);
+            tree.SetFloat("GreenhouseBonus", GreenhouseBonus);
         }
 
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
         {
             base.FromTreeAttributes(tree, worldAccessForResolve);
             HeatLevel = tree.GetInt(HeatLevelKey);
+            GreenhouseBonus= tree.GetFloat("GreenhouseBonus");
         }
 
 

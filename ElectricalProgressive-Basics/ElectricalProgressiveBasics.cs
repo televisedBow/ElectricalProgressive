@@ -9,6 +9,7 @@ using ElectricalProgressive.Content.Block.ESwitch;
 using ElectricalProgressive.Content.Block.ETermoGenerator;
 using ElectricalProgressive.Content.Block.ETransformator;
 using ElectricalProgressive.Content.Block.Termoplastini;
+using ElectricalProgressive.Patch;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection;
@@ -39,6 +40,7 @@ namespace ElectricalProgressive;
 
 public class ElectricalProgressiveBasics : ModSystem
 {
+    private Harmony harmony;
 
     private ICoreAPI api = null!;
     private ICoreClientAPI capi = null!;
@@ -110,10 +112,9 @@ public class ElectricalProgressiveBasics : ModSystem
 
         api.RegisterBlockClass("BlockTermoplastini", typeof(BlockTermoplastini));
 
-
-        // применение патчика на механику и вылеты
-        var harmony = new Harmony("electricalprogressive.mechanicalpowermod.patches");
-        harmony.PatchAll(Assembly.GetExecutingAssembly());
+        // Регистрируем патч для механики
+        harmony = new Harmony("electricalprogressive.mechanicalpowermod");
+        MechanicalPowerMod_RebuildNetwork_Patch.RegisterPatch(harmony);
 
     }
 
@@ -125,4 +126,12 @@ public class ElectricalProgressiveBasics : ModSystem
         this.capi = api;
     }
 
+
+    public override void Dispose()
+    {
+        // Отменяем все патчи при выгрузке мода
+        MechanicalPowerMod_RebuildNetwork_Patch.UnregisterPatch(harmony);
+        harmony?.UnpatchAll();
+        harmony = null;
+    }
 }

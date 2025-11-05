@@ -781,8 +781,10 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         // Проверяем, изменились ли данные
         if (connection == this.connection &&
             interruption == this.interruption &&
-            isLoaded == this.isLoaded &&
-            AllEparamss!.SequenceEqual(allEparams!))
+            isLoaded == this.isLoaded
+            //&&
+            //AllEparamss!.SequenceEqual(allEparams!)
+            )
         {
             return;
         }

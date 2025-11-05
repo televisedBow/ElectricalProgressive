@@ -1,80 +1,103 @@
 ﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent.Mechanics;
 
-namespace ElectricalProgressive.Patch
+namespace ElectricalProgressive.Patch;
+
+public class MechanicalPowerMod_RebuildNetwork_Patch
 {
-    [HarmonyPatch(typeof(MechanicalPowerMod))]
-    [HarmonyPatch("RebuildNetwork")]
-    public class MechanicalPowerMod_RebuildNetwork_Patch
+    private static HarmonyMethod prefixMethod;
+
+    // Метод для регистрации патча
+    public static void RegisterPatch(Harmony harmony)
     {
+        // Ищем метод RebuildNetwork в MechanicalPowerMod
+        var originalMethod = typeof(MechanicalPowerMod).GetMethod("RebuildNetwork",
+            BindingFlags.Public | BindingFlags.Instance);
 
-
-
-        static bool Prefix(MechanicalPowerMod __instance, MechanicalNetwork network, IMechanicalPowerDevice nowRemovedNode = null)
+        if (originalMethod == null)
         {
-            // Ваш полностью замененный код метода
-            try
+            throw new Exception("Could not find MechanicalPowerMod.RebuildNetwork method!");
+        }
+
+        prefixMethod = new HarmonyMethod(typeof(MechanicalPowerMod_RebuildNetwork_Patch).GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic));
+
+        harmony.Patch(originalMethod, prefix: prefixMethod);
+    }
+
+    // Метод для отмены патча
+    public static void UnregisterPatch(Harmony harmony)
+    {
+        var originalMethod = typeof(MechanicalPowerMod).GetMethod("RebuildNetwork", BindingFlags.Public | BindingFlags.Instance);
+        if (originalMethod != null)
+        {
+            harmony.Unpatch(originalMethod, prefixMethod.method);
+        }
+    }
+
+    // Делаем метод приватным
+    static bool Prefix(MechanicalPowerMod __instance, MechanicalNetwork network, IMechanicalPowerDevice nowRemovedNode = null)
+    {
+        // Ваш полностью замененный код метода
+        try
+        {
+            network.Valid = false;
+
+            if (__instance.Api.Side == EnumAppSide.Server)
+                __instance.DeleteNetwork(network);
+
+            if (network.nodes.Values.Count == 0)
             {
-                network.Valid = false;
-
-                if (__instance.Api.Side == EnumAppSide.Server)
-                    __instance.DeleteNetwork(network);
-
-                if (network.nodes.Values.Count == 0)
-                {
-                    return false; // Прерываем выполнение оригинального метода
-                }
-
-                var nnodes = network.nodes.Values.ToArray();
-
-                foreach (var nnode in nnodes)
-                {
-                    nnode.LeaveNetwork();
-                }
-
-                foreach (var nnode in nnodes)
-                {
-                    if (!(nnode is IMechanicalPowerDevice)) continue;
-
-                    IMechanicalPowerDevice newnode = __instance.Api.World.BlockAccessor
-                        .GetBlockEntity((nnode as IMechanicalPowerDevice).Position)
-                        ?.GetBehavior<BEBehaviorMPBase>() as IMechanicalPowerDevice;
-
-                    if (newnode == null) continue;
-
-                    BlockFacing oldTurnDir = newnode.GetPropagationDirection();
-
-                    if (newnode.OutFacingForNetworkDiscovery != null &&
-                        (nowRemovedNode == null || newnode.Position != nowRemovedNode.Position))
-                    {
-                        MechanicalNetwork newnetwork = newnode.CreateJoinAndDiscoverNetwork(newnode.OutFacingForNetworkDiscovery);
-                        if (newnetwork == null)
-                            continue;
-
-                        bool reversed = newnode.GetPropagationDirection() == oldTurnDir.Opposite;
-                        newnetwork.Speed = reversed ? -network.Speed : network.Speed;
-                        newnetwork.AngleRad = network.AngleRad;
-                        newnetwork.TotalAvailableTorque = reversed ? -network.TotalAvailableTorque : network.TotalAvailableTorque;
-                        newnetwork.NetworkResistance = network.NetworkResistance;
-
-                        if (__instance.Api.Side == EnumAppSide.Server)
-                            newnetwork.broadcastData();
-                    }
-                }
-
-                return false; // Полностью заменяем оригинальный метод, не вызываем его
+                return false; // Прерываем выполнение оригинального метода
             }
-            catch (Exception ex)
+
+            var nnodes = network.nodes.Values.ToArray();
+
+            foreach (var nnode in nnodes)
             {
-                __instance.Api.Logger.Error($"Error in patched RebuildNetwork: {ex}");
-                return false;
+                nnode.LeaveNetwork();
             }
+
+            foreach (var nnode in nnodes)
+            {
+                if (!(nnode is IMechanicalPowerDevice)) continue;
+
+                IMechanicalPowerDevice newnode = __instance.Api.World.BlockAccessor
+                    .GetBlockEntity((nnode as IMechanicalPowerDevice).Position)
+                    ?.GetBehavior<BEBehaviorMPBase>() as IMechanicalPowerDevice;
+
+                if (newnode == null) continue;
+
+                BlockFacing oldTurnDir = newnode.GetPropagationDirection();
+
+                if (newnode.OutFacingForNetworkDiscovery != null &&
+                    (nowRemovedNode == null || newnode.Position != nowRemovedNode.Position))
+                {
+                    MechanicalNetwork newnetwork = newnode.CreateJoinAndDiscoverNetwork(newnode.OutFacingForNetworkDiscovery);
+                    if (newnetwork == null)
+                        continue;
+
+                    bool reversed = newnode.GetPropagationDirection() == oldTurnDir.Opposite;
+                    newnetwork.Speed = reversed ? -network.Speed : network.Speed;
+                    newnetwork.AngleRad = network.AngleRad;
+                    newnetwork.TotalAvailableTorque = reversed ? -network.TotalAvailableTorque : network.TotalAvailableTorque;
+                    newnetwork.NetworkResistance = network.NetworkResistance;
+
+                    if (__instance.Api.Side == EnumAppSide.Server)
+                        newnetwork.broadcastData();
+                }
+            }
+
+            return false; // Полностью заменяем оригинальный метод, не вызываем его
+        }
+        catch (Exception ex)
+        {
+            __instance.Api.Logger.Error($"Error in patched RebuildNetwork: {ex}");
+            return false;
         }
     }
 }
