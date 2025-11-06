@@ -69,7 +69,9 @@
 
 
   "block-handbooktitle-heater": "Użycie",
-  "block-handbooktext-heater": "Niewielkie źródło ciepła.",
+  "block-handbooktext-heater": "Małe źródło ciepła, które może zapewnić dodatkowy bonus temperaturowy grządkom w szklarni. Jeden grzejnik przy pełnej mocy zapewnia +5 stopni na 40 bloków wewnętrznej objętości szklarni. Ta objętość obejmuje również same grządki. Efekty grzejników mogą się kumulować: całkowity bonus można sprawdzić na dowolnym z nich. Informacje o bonusie są aktualizowane zaraz po przeliczeniu przez jedną z grządek.",
+  "electricalprogressiveqol:heater-no-bonus": "Brak bonusu temperaturowego",
+  "electricalprogressiveqol:heater-bonus": "Bonus od grzejników: +{0} °C",
 
   "block-handbooktitle-elamp": "Użycie",
   "block-handbooktext-elamp": "Dobre źródło światła, zużywa energię elektryczną.",

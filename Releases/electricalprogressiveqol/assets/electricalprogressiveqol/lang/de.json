@@ -69,7 +69,9 @@
 
 
   "block-handbooktitle-heater": "Verwendung",
-  "block-handbooktext-heater": "Kleine Wärmequelle.",
+  "block-handbooktext-heater": "Eine kleine Wärmequelle, die Beeten in einem Gewächshaus einen zusätzlichen Temperaturbonus bieten kann. Eine Heizung bei voller Leistung bietet +5 Grad für 40 Blöcke des Innenvolumens des Gewächshauses. Dieses Volumen umfasst auch die Beete selbst. Die Effekte von Heizungen können kumulativ sein: Sie können den Gesamtbonus auf jeder von ihnen einsehen. Die Bonusinformationen werden aktualisiert, sobald eines der Beete eine Neuberechnung vornimmt.",
+  "electricalprogressiveqol:heater-no-bonus": "Kein Temperaturbonus bereitgestellt",
+  "electricalprogressiveqol:heater-bonus": "Bonus von Heizungen: +{0} °C",
 
   "block-handbooktitle-elamp": "Verwendung",
   "block-handbooktext-elamp": "Gute Lichtquelle, die Strom verbraucht.",

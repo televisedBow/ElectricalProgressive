@@ -70,7 +70,10 @@
 
 
   "block-handbooktitle-heater": "Usage",
-  "block-handbooktext-heater": "A small heat source.",
+  "block-handbooktext-heater": "A small heat source that can provide an additional temperature bonus to beds in a greenhouse. One heater at full power provides +5 degrees for 40 blocks of the greenhouse's internal volume. This volume also includes the beds themselves. The effects of heaters can be cumulative: you can view the total bonus on any of them. Bonus information is updated as soon as one of the beds recalculates.",
+  "electricalprogressiveqol:heater-no-bonus": "No temperature bonus provided",
+  "electricalprogressiveqol:heater-bonus": "Bonus from heaters: +{0} °C",
+
 
   "block-handbooktitle-elamp": "Usage",
   "block-handbooktext-elamp": "A reliable light source that consumes electricity.",

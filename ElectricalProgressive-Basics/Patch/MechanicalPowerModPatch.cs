@@ -12,7 +12,11 @@ public class MechanicalPowerMod_RebuildNetwork_Patch
 {
     private static HarmonyMethod prefixMethod;
 
-    // Метод для регистрации патча
+    /// <summary>
+    /// Метод для регистрации патча
+    /// </summary>
+    /// <param name="harmony"></param>
+    /// <exception cref="Exception"></exception>
     public static void RegisterPatch(Harmony harmony)
     {
         // Ищем метод RebuildNetwork в MechanicalPowerMod
@@ -29,7 +33,12 @@ public class MechanicalPowerMod_RebuildNetwork_Patch
         harmony.Patch(originalMethod, prefix: prefixMethod);
     }
 
-    // Метод для отмены патча
+
+
+    /// <summary>
+    /// Метод для отмены патча
+    /// </summary>
+    /// <param name="harmony"></param>
     public static void UnregisterPatch(Harmony harmony)
     {
         var originalMethod = typeof(MechanicalPowerMod).GetMethod("RebuildNetwork", BindingFlags.Public | BindingFlags.Instance);
@@ -39,7 +48,15 @@ public class MechanicalPowerMod_RebuildNetwork_Patch
         }
     }
 
-    // Делаем метод приватным
+
+
+    /// <summary>
+    /// Метод Prefix для патча RebuildNetwork с имправлением ошибки null reference exception
+    /// </summary>
+    /// <param name="__instance"></param>
+    /// <param name="network"></param>
+    /// <param name="nowRemovedNode"></param>
+    /// <returns></returns>
     static bool Prefix(MechanicalPowerMod __instance, MechanicalNetwork network, IMechanicalPowerDevice nowRemovedNode = null)
     {
         // Ваш полностью замененный код метода

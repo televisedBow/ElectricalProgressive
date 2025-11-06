@@ -69,7 +69,9 @@
 
 
   "block-handbooktitle-heater": "Utilisation",
-  "block-handbooktext-heater": "Une petite source de chaleur.",
+  "block-handbooktext-heater": "Une petite source de chaleur qui peut fournir un bonus de température supplémentaire aux plates-bandes dans une serre. Un radiateur à pleine puissance fournit +5 degrés pour 40 blocs de volume interne de la serre. Ce volume inclut également les plates-bandes elles-mêmes. Les effets des radiateurs peuvent être cumulatifs : vous pouvez voir le bonus total sur n'importe lequel d'entre eux. Les informations sur le bonus sont mises à jour dès que l'une des plates-bandes recalcule.",
+  "electricalprogressiveqol:heater-no-bonus": "Aucun bonus de température fourni",
+  "electricalprogressiveqol:heater-bonus": "Bonus des radiateurs : +{0} °C",
 
   "block-handbooktitle-elamp": "Utilisation",
   "block-handbooktext-elamp": "Une bonne source de lumière consommant de l'énergie électrique.",

@@ -64,7 +64,9 @@
   "block-handbooktext-eoven": "El horno eléctrico puede reemplazar completamente al horno normal. Se apaga automáticamente cuando termina el proceso de cocción. ¡No más comida quemada!<br>Admite carga y descarga automática mediante tolvas.",
 
   "block-handbooktitle-heater": "Uso",
-  "block-handbooktext-heater": "Una pequeña fuente de calor.",
+  "block-handbooktext-heater": "Una pequeña fuente de calor que puede proporcionar una bonificación de temperatura adicional a los cultivos en un invernadero. Un calentador a máxima potencia proporciona +5 grados por 40 bloques del volumen interno del invernadero. Este volumen también incluye los propios cultivos. Los efectos de los calentadores pueden ser acumulativos: puedes ver la bonificación total en cualquiera de ellos. La información de la bonificación se actualiza tan pronto como uno de los cultivos recalcula.",
+  "electricalprogressiveqol:heater-no-bonus": "No se proporciona bonificación de temperatura",
+  "electricalprogressiveqol:heater-bonus": "Bonificación de calentadores: +{0} °C",
 
   "block-handbooktitle-elamp": "Uso",
   "block-handbooktext-elamp": "Una buena fuente de luz que consume energía eléctrica.",

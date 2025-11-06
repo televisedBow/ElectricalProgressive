@@ -15,7 +15,11 @@ public class FarmlandHeaterPatch
     private static MethodInfo heaterBonusMethod = AccessTools.Method(typeof(FarmlandHeaterPatch), "HeaterBonus");
     private static HarmonyMethod transpilerMethod;
 
-    // Метод для регистрации патча
+    /// <summary>
+    /// Метод для регистрации патча
+    /// </summary>
+    /// <param name="harmony"></param>
+    /// <exception cref="Exception"></exception>
     public static void RegisterPatch(Harmony harmony)
     {
         // Ищем private метод Update с параметром float
@@ -35,7 +39,10 @@ public class FarmlandHeaterPatch
         harmony.Patch(originalMethod, transpiler: transpilerMethod);
     }
 
-    // Метод для отмены патча
+    /// <summary>
+    /// Метод для отмены патча
+    /// </summary>
+    /// <param name="harmony"></param>
     public static void UnregisterPatch(Harmony harmony)
     {
         var originalMethod = typeof(BlockEntityFarmland).GetMethod("Update",
@@ -50,7 +57,16 @@ public class FarmlandHeaterPatch
         }
     }
 
-    // Делаем метод приватным
+
+
+
+
+    /// <summary>
+    /// Транспайлер для вставки вызова HeaterBonus в метод Update грядки
+    /// </summary>
+    /// <param name="instructions"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         var codes = new List<CodeInstruction>(instructions);
@@ -74,7 +90,7 @@ public class FarmlandHeaterPatch
                         codes[j + 2].opcode == OpCodes.Ldfld &&
                         (codes[j + 2].operand as FieldInfo)?.Name == "Temperature" &&
                         codes[j + 3].opcode == OpCodes.Ldc_R4 &&
-                        (float)codes[j + 3].operand == 5f &&
+                        (float)codes[j + 3].operand > 0f &&         // вместо  5f, так как кто-то может изменить значение другим патчем
                         codes[j + 4].opcode == OpCodes.Add &&
                         codes[j + 5].opcode == OpCodes.Stfld)
                     {
@@ -128,11 +144,14 @@ public class FarmlandHeaterPatch
 
 
 
+    
 
-
-
-
-
+    /// <summary>
+    /// Считаем бонус от обогревателей в комнате
+    /// </summary>
+    /// <param name="farmland"></param>
+    /// <param name="upPos"></param>
+    /// <returns></returns>
     public static float HeaterBonus(BlockEntityFarmland farmland, BlockPos upPos)
     {
         try
@@ -189,10 +208,8 @@ public class FarmlandHeaterPatch
                 }
             }
 
-            // 6) Ограничиваем максимальный бонус +10 градусов
 
-            //totalBonus= Math.Min(totalBonus, 10f);
-
+            // сообщаем обогревателям в комнате их бонус
             foreach (var heater in heatersInRoom)
             {
                 heater.GreenhouseBonus = totalBonus;
@@ -203,9 +220,11 @@ public class FarmlandHeaterPatch
         catch (Exception ex)
         {
             farmland.Api?.Logger.Error($"Error in HeaterBonus: {ex}");
-            return 0f;
+            return -1f;
         }
     }
+
+
 
     /// <summary>
     /// Считаем объем комнаты по битовой маске PosInRoom

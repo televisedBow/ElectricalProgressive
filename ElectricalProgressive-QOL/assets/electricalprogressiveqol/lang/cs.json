@@ -65,7 +65,9 @@
 
 
   "block-handbooktitle-heater": "Použití",
-  "block-handbooktext-heater": "Malý zdroj tepla.",
+  "block-handbooktext-heater": "Malý zdroj tepla, který může poskytnout další teplotní bonus záhonkům ve skleníku. Jeden ohřívač na plný výkon poskytne +5 stupňů na 40 bloků vnitřního objemu skleníku. Tento objem zahrnuje i samotné záhonky. Efekty ohřívačů se mohou sčítat: celkový bonus můžete zjistit na kterémkoli z nich. Informace o bonisu se aktualizují, jakmile jeden ze záhonků přepočítá.",
+  "electricalprogressiveqol:heater-no-bonus": "Nebyl poskytnut teplotní bonus",
+  "electricalprogressiveqol:heater-bonus": "Bonus z ohřívačů: +{0} °C",
 
   "block-handbooktitle-elamp": "Použití",
   "block-handbooktext-elamp": "Spolehlivý zdroj světla, který spotřebovává elektřinu.",

@@ -68,7 +68,9 @@
 
 
   "block-handbooktitle-heater": "Uso",
-  "block-handbooktext-heater": "Uma pequena fonte de calor.",
+  "block-handbooktext-heater": "Uma pequena fonte de calor que pode fornecer um bônus de temperatura adicional aos canteiros em uma estufa. Um aquecedor na potência máxima fornece +5 graus para 40 blocos do volume interno da estufa. Este volume também inclui os próprios canteiros. Os efeitos dos aquecedores podem ser cumulativos: você pode ver o bônus total em qualquer um deles. As informações do bônus são atualizadas assim que um dos canteiros recalcula.",
+  "electricalprogressiveqol:heater-no-bonus": "Nenhum bônus de temperatura fornecido",
+  "electricalprogressiveqol:heater-bonus": "Bônus dos aquecedores: +{0} °C",
 
   "block-handbooktitle-elamp": "Uso",
   "block-handbooktext-elamp": "Uma fonte de luz confiável que consome eletricidade.",

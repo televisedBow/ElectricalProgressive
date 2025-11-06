@@ -46,22 +46,19 @@ namespace ElectricalProgressive.Content.Block.EHeater
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             //проверяем не сгорел ли прибор
-            if (Blockentity is not BlockEntityEHeater entity)
+            if (Blockentity is not BlockEntityEHeater entity || IsBurned)
                 return;
 
-            if (IsBurned)
-            {
-                return;
-            }
+
 
             stringBuilder.AppendLine(StringHelper.Progressbar(this.HeatLevel * 100.0f / _maxConsumption));
             stringBuilder.AppendLine("└ " + Lang.Get("Consumption") + ": " + this.HeatLevel + "/" + _maxConsumption + " " + Lang.Get("W"));
 
             if (GreenhouseBonus<0)
-                stringBuilder.AppendLine("Бонус не дает или грядки не обновлялись.");
+                stringBuilder.AppendLine(Lang.Get("electricalprogressiveqol:heater-no-bonus"));
             else
             {
-                stringBuilder.AppendLine("Бонус от обогревателей: +"+GreenhouseBonus.ToString("F2") + " \u00b0C");
+                stringBuilder.AppendLine(Lang.Get("electricalprogressiveqol:heater-bonus", GreenhouseBonus.ToString("F2")));
             }
 
 
