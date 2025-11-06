@@ -779,6 +779,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
 
         // Проверяем, изменились ли данные
+        /*
         if (connection == this.connection &&
             interruption == this.interruption &&
             isLoaded == this.isLoaded
@@ -788,6 +789,8 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         {
             return;
         }
+        */
+
 
         this.interruption = interruption;
         this.isLoaded = isLoaded;
