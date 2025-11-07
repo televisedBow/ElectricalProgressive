@@ -227,14 +227,21 @@ public class HandbookPatch
                         outputStacks.Add(outputStack1);
                     }
 
-                    // только у молота есть второй выход
+                    // только у молота и пресса есть второй выход
                     if (recipe is HammerRecipe || recipe is PressRecipe)
                     {
-                        var outputStack2 = GetOrCreateStack((AssetLocation)recipe.SecondaryOutput.Code,
-                            (int)recipe.SecondaryOutput.Quantity, capi.World);
-                        if (outputStack2 != null)
+                        // второй выход может отсутствовать
+                        if (recipe.SecondaryOutput == null)
                         {
-                            secondaryOutputStacks.Add(outputStack2);
+                            secondaryOutputStacks.Add(new ItemStack());
+                        }
+                        else
+                        {
+                            var outputStack2 = GetOrCreateStack((AssetLocation)recipe.SecondaryOutput.Code, (int)recipe.SecondaryOutput.Quantity, capi.World);
+                            if (outputStack2 != null)
+                            {
+                                secondaryOutputStacks.Add(outputStack2);
+                            }
                         }
                     }
                 }
@@ -311,7 +318,11 @@ public class HandbookPatch
                         secondaryOutputStacks.ToArray(),
                         40.0,
                         EnumFloat.Inline,
-                        (Action<ItemStack>)(cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs))),
+                        (Action<ItemStack>)(cs =>
+                        {
+                            if (cs!=null && cs.Id!=0)
+                                openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs));
+                        }),
                         groupKey
                     )
                     {
@@ -561,7 +572,7 @@ public class HandbookPatch
                 state.LastSwitchTime = api.World.ElapsedMilliseconds;
             }
 
-            CurItemIndex = state.Index % this.Itemstacks.Length;
+            CurItemIndex = state.Index % (this.Itemstacks.Length==0 ? 1: this.Itemstacks.Length);
 
             // Остальной код рендера...
             var itemStack = this.Itemstacks[CurItemIndex];
@@ -582,18 +593,23 @@ public class HandbookPatch
             bounds.absInnerHeight *= this.renderSize / 0.58f;
 
             this.api.Render.PushScissor(bounds, true);
-            this.api.Render.RenderItemstackToGui(
-                this.slot,
-                renderX + rect.X + rect.Width * 0.5 + this.renderOffset.X + this.offX,
-                renderY + rect.Y + rect.Height * 0.5 + this.renderOffset.Y + this.offY,
-                100.0 + this.renderOffset.Z,
-                (float)rect.Width * this.renderSize,
-                -1,
-                showStackSize: this.ShowStackSize
-            );
+
+            if (this.slot.Itemstack != null && this.slot.Itemstack.Collectible != null && slot.Itemstack.Id!=0)
+            {
+                this.api.Render.RenderItemstackToGui(
+                    this.slot,
+                    renderX + rect.X + rect.Width * 0.5 + this.renderOffset.X + this.offX,
+                    renderY + rect.Y + rect.Height * 0.5 + this.renderOffset.Y + this.offY,
+                    100.0 + this.renderOffset.Z,
+                    (float)rect.Width * this.renderSize,
+                    -1,
+                    showStackSize: this.ShowStackSize
+                );
+            }
+
             this.api.Render.PopScissor();
 
-            if (nowHovered && this.ShowTooltip)
+            if (nowHovered && this.ShowTooltip && this.slot!=null && this.slot.Itemstack != null && this.slot.Itemstack.Id!=0) 
             {
                 this.RenderItemstackTooltip(this.slot, renderX + x, renderY + y, deltaTime);
             }
