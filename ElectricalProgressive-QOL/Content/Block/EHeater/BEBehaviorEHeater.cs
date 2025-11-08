@@ -48,13 +48,14 @@ namespace ElectricalProgressive.Content.Block.EHeater
             //проверяем не сгорел ли прибор
             if (Blockentity is not BlockEntityEHeater entity || IsBurned)
                 return;
-
-
+            
 
             stringBuilder.AppendLine(StringHelper.Progressbar(this.HeatLevel * 100.0f / _maxConsumption));
             stringBuilder.AppendLine("└ " + Lang.Get("Consumption") + ": " + this.HeatLevel + "/" + _maxConsumption + " " + Lang.Get("W"));
 
-            if (GreenhouseBonus<0)
+
+
+            if (GreenhouseBonus<=0)
                 stringBuilder.AppendLine(Lang.Get("electricalprogressiveqol:heater-no-bonus"));
             else
             {
@@ -140,6 +141,9 @@ namespace ElectricalProgressive.Content.Block.EHeater
                 prepareBurnout = false;
                 entity.MarkDirty(true);
             }
+
+
+
 
             if (!hasBurnout || entity.Block.Variant["state"] == "burned")
                 return;

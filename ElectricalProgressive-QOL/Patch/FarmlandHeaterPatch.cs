@@ -15,7 +15,6 @@ public class FarmlandHeaterPatch
 {
     private static MethodInfo heaterBonusMethod = AccessTools.Method(typeof(FarmlandHeaterPatch), "HeaterBonus");
     private static MethodInfo heaterBonusBerryBushMethod = AccessTools.Method(typeof(FarmlandHeaterPatch), "HeaterBonusBerryBush");
-    // Reflection для доступа к приватным полям
     private static FieldInfo berryBushRoomRegField = typeof(BlockEntityBerryBush).GetField("roomreg", BindingFlags.NonPublic | BindingFlags.Instance);
     private static HarmonyMethod farmlandTranspilerMethod;
     private static HarmonyMethod berryBushTranspilerMethod;
@@ -99,7 +98,7 @@ public class FarmlandHeaterPatch
         harmony.Patch(fruitTreeMethod, transpiler: fruitTreeTranspilerMethod);
 
 
-
+        // патч для растущего фруктового дерева
         var fruitTreeGrowingMethod = typeof(FruitTreeGrowingBranchBH).GetMethod("OnTick",
             BindingFlags.NonPublic | BindingFlags.Instance,
             null,
@@ -115,7 +114,7 @@ public class FarmlandHeaterPatch
         harmony.Patch(fruitTreeGrowingMethod, transpiler: fruitTreeGrowingTranspilerMethod);
 
 
-        // Патч для саженца
+        // Патч для саженца (обычные деревья)
         var saplingMethod = typeof(BlockEntitySapling).GetMethod("CheckGrow",
             BindingFlags.NonPublic | BindingFlags.Instance,
             null,
@@ -130,6 +129,8 @@ public class FarmlandHeaterPatch
         saplingTranspilerMethod = new HarmonyMethod(typeof(FarmlandHeaterPatch).GetMethod("TranspilerSapling", BindingFlags.Static | BindingFlags.NonPublic));
         harmony.Patch(saplingMethod, transpiler: saplingTranspilerMethod);
     }
+
+
 
     /// <summary>
     /// Метод для отмены всех патчей
@@ -549,139 +550,188 @@ public class FarmlandHeaterPatch
         return codes;
     }
 
-    // Добавить новый метод для расчета бонуса саженца
-    public static float HeaterBonusSapling(BlockEntitySapling sapling)
+
+
+
+    /// <summary>
+    /// Новый универсальный метод для расчета бонуса от обогревателей
+    /// </summary>
+    /// <param name="api"></param>
+    /// <param name="targetPos"></param>
+    /// <param name="roomForPosition"></param>
+    /// <returns></returns>
+    private static float CalculateHeaterBonus(
+        ICoreAPI api,
+        BlockPos targetPos,
+        Room roomForPosition)
     {
-        try
+        if (api == null || roomForPosition == null)
+            return 0;
+
+        // Проверяем условия комнаты (как в оригинальном коде)
+        if (roomForPosition.SkylightCount <= roomForPosition.NonSkylightCount || roomForPosition.ExitCount != 0)
+            return 0;
+
+        var electricalMod = api.ModLoader.GetModSystem<ElectricalProgressive>();
+        if (electricalMod == null)
+            return 0;
+
+        int roomVolume = CalculateRoomVolume(roomForPosition);
+        if (roomVolume <= 0)
+            return 0;
+
+        float totalBonus = 0f;
+        var heatersInRoom = new List<BEBehaviorEHeater>();
+
+        // Ищем обогреватели в пределах 20 блоков и в той же комнате
+        foreach (var part in electricalMod.Parts.Values)
         {
-            // Получаем RoomRegistry из API
-            var roomreg = sapling.Api.ModLoader.GetModSystem<RoomRegistry>();
-            if (roomreg == null)
-                return 0;
-
-            // Получаем комнату для позиции саженца
-            Room roomForPosition = roomreg.GetRoomForPosition(sapling.Pos);
-            if (roomForPosition == null)
-                return 0;
-
-            // Проверяем условия комнаты (как в оригинальном коде)
-            if (roomForPosition.SkylightCount <= roomForPosition.NonSkylightCount || roomForPosition.ExitCount != 0)
-                return 0;
-
-            // Получаем мод ElectricalProgressive
-            var electricalMod = sapling.Api.ModLoader.GetModSystem<ElectricalProgressive>();
-            if (electricalMod == null)
-                return 0;
-
-            int roomVolume = CalculateRoomVolume(roomForPosition);
-            if (roomVolume <= 0)
-                return 0;
-
-            float totalBonus = 0f;
-            var heatersInRoom = new List<BEBehaviorEHeater>();
-
-            // Ищем обогреватели в пределах 20 блоков и в той же комнате
-            foreach (var part in electricalMod.Parts.Values)
+            if (part.Consumer is BEBehaviorEHeater heater)
             {
-                if (part.Consumer is BEBehaviorEHeater heater)
+                if (Math.Abs(heater.Pos.X - targetPos.X) <= 20 &&
+                    Math.Abs(heater.Pos.Y - targetPos.Y) <= 20 &&
+                    Math.Abs(heater.Pos.Z - targetPos.Z) <= 20)
                 {
-                    // Проверяем расстояние
-                    if (Math.Abs(heater.Pos.X - sapling.Pos.X) <= 20 &&
-                        Math.Abs(heater.Pos.Y - sapling.Pos.Y) <= 20 &&
-                        Math.Abs(heater.Pos.Z - sapling.Pos.Z) <= 20)
+                    if (roomForPosition.Contains(heater.Pos))
                     {
-                        // Проверяем, находится ли обогреватель в той же комнате
-                        if (roomForPosition.Contains(heater.Pos))
-                        {
-                            heatersInRoom.Add(heater);
-
-                            // Рассчитываем бонус от одного обогревателя
-                            float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
-
-                            totalBonus += heaterBonus;
-                        }
+                        heatersInRoom.Add(heater);
+                        float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
+                        totalBonus += heaterBonus;
                     }
                 }
             }
+        }
 
-            // Сообщаем обогревателям в комнате их бонус
-            foreach (var heater in heatersInRoom)
-            {
+        foreach (var heater in heatersInRoom)
+        {
+            if (heater.HeatLevel>0)
                 heater.GreenhouseBonus = totalBonus;
+            else
+            {
+                heater.GreenhouseBonus = 0;
             }
+        }
 
-            return totalBonus;
+        return totalBonus;
+    }
+
+    /// <summary>
+    /// Модифицированные методы расчета бонуса
+    /// </summary>
+    /// <param name="farmland"></param>
+    /// <param name="upPos"></param>
+    /// <returns></returns>
+
+    public static float HeaterBonus(BlockEntityFarmland farmland, BlockPos upPos)
+    {
+        try
+        {
+            BlockFarmland blockFarmland = farmland.Block as BlockFarmland;
+            if (blockFarmland == null)
+                return 0f;
+
+            Room roomForPosition = blockFarmland.roomreg?.GetRoomForPosition(upPos);
+            int roomness = roomForPosition == null || roomForPosition.SkylightCount <= roomForPosition.NonSkylightCount || roomForPosition.ExitCount != 0 ? 0 : 1;
+            if (roomness <= 0)
+                return 0f;
+
+            return CalculateHeaterBonus(farmland.Api, upPos, roomForPosition);
         }
         catch (Exception ex)
         {
-            sapling.Api?.Logger.Error($"Error in HeaterBonusSapling: {ex}");
+            farmland.Api?.Logger.Error($"Error in HeaterBonus: {ex}");
+            return 0f;
+        }
+    }
+
+    public static float HeaterBonusBerryBush(BlockEntityBerryBush berryBush)
+    {
+        try
+        {
+            RoomRegistry roomreg = berryBushRoomRegField?.GetValue(berryBush) as RoomRegistry;
+            if (roomreg == null)
+            {
+                roomreg = berryBush.Api.ModLoader.GetModSystem<RoomRegistry>();
+                if (roomreg == null)
+                    return 0f;
+            }
+
+            Room roomForPosition = roomreg.GetRoomForPosition(berryBush.Pos);
+            if (roomForPosition == null)
+                return 0f;
+
+            return CalculateHeaterBonus(berryBush.Api, berryBush.Pos, roomForPosition);
+        }
+        catch (Exception ex)
+        {
+            berryBush.Api?.Logger.Error($"Error in HeaterBonusBerryBush: {ex}");
+            return 0f;
+        }
+    }
+
+    public static float HeaterBonusBeehive(BlockEntityBeehive beehive)
+    {
+        try
+        {
+            RoomRegistry roomreg = beehiveRoomRegField?.GetValue(beehive) as RoomRegistry;
+            if (roomreg == null)
+            {
+                roomreg = beehive.Api.ModLoader.GetModSystem<RoomRegistry>();
+                if (roomreg == null)
+                    return 0;
+            }
+
+            Room roomForPosition = roomreg.GetRoomForPosition(beehive.Pos);
+            if (roomForPosition == null)
+                return 0;
+
+            return CalculateHeaterBonus(beehive.Api, beehive.Pos, roomForPosition);
+        }
+        catch (Exception ex)
+        {
+            beehive.Api?.Logger.Error($"Error in HeaterBonusBeehive: {ex}");
             return 0;
         }
     }
 
+    public static float HeaterBonusFruitTree(FruitTreeRootBH fruitTree)
+    {
+        try
+        {
+            RoomRegistry roomreg = fruitTreeRoomRegField?.GetValue(fruitTree) as RoomRegistry;
+            if (roomreg == null)
+            {
+                roomreg = fruitTree.Api.ModLoader.GetModSystem<RoomRegistry>();
+                if (roomreg == null)
+                    return 0f;
+            }
 
-    // Добавить новый метод для расчета бонуса роста фруктового дерева
+            Room roomForPosition = roomreg.GetRoomForPosition(fruitTree.Blockentity.Pos);
+            if (roomForPosition == null)
+                return 0f;
+
+            return CalculateHeaterBonus(fruitTree.Api, fruitTree.Blockentity.Pos, roomForPosition);
+        }
+        catch (Exception ex)
+        {
+            fruitTree.Api?.Logger.Error($"Error in HeaterBonusFruitTree: {ex}");
+            return 0f;
+        }
+    }
+
     public static float HeaterBonusFruitTreeGrowing(FruitTreeGrowingBranchBH fruitTreeGrowing)
     {
         try
         {
-            // Получаем RoomRegistry из API
             var roomreg = fruitTreeGrowing.Api.ModLoader.GetModSystem<RoomRegistry>();
             if (roomreg == null)
                 return 0;
 
-            // Получаем комнату для позиции дерева
             Room roomForPosition = roomreg.GetRoomForPosition(fruitTreeGrowing.Blockentity.Pos);
             if (roomForPosition == null)
                 return 0;
 
-            // Проверяем условия комнаты (как в оригинальном коде)
-            if (roomForPosition.SkylightCount <= roomForPosition.NonSkylightCount || roomForPosition.ExitCount != 0)
-                return 0;
-
-            // Получаем мод ElectricalProgressive
-            var electricalMod = fruitTreeGrowing.Api.ModLoader.GetModSystem<ElectricalProgressive>();
-            if (electricalMod == null)
-                return 0;
-
-            int roomVolume = CalculateRoomVolume(roomForPosition);
-            if (roomVolume <= 0)
-                return 0;
-
-            float totalBonus = 0f;
-            var heatersInRoom = new List<BEBehaviorEHeater>();
-
-            // Ищем обогреватели в пределах 20 блоков и в той же комнате
-            foreach (var part in electricalMod.Parts.Values)
-            {
-                if (part.Consumer is BEBehaviorEHeater heater)
-                {
-                    // Проверяем расстояние
-                    if (Math.Abs(heater.Pos.X - fruitTreeGrowing.Blockentity.Pos.X) <= 20 &&
-                        Math.Abs(heater.Pos.Y - fruitTreeGrowing.Blockentity.Pos.Y) <= 20 &&
-                        Math.Abs(heater.Pos.Z - fruitTreeGrowing.Blockentity.Pos.Z) <= 20)
-                    {
-                        // Проверяем, находится ли обогреватель в той же комнате
-                        if (roomForPosition.Contains(heater.Pos))
-                        {
-                            heatersInRoom.Add(heater);
-
-                            // Рассчитываем бонус от одного обогревателя
-                            float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
-
-                            totalBonus += heaterBonus;
-                        }
-                    }
-                }
-            }
-
-            // Сообщаем обогревателям в комнате их бонус
-            foreach (var heater in heatersInRoom)
-            {
-                heater.GreenhouseBonus = totalBonus;
-            }
-
-            return totalBonus;
+            return CalculateHeaterBonus(fruitTreeGrowing.Api, fruitTreeGrowing.Blockentity.Pos, roomForPosition);
         }
         catch (Exception ex)
         {
@@ -691,305 +741,27 @@ public class FarmlandHeaterPatch
     }
 
 
-
-
-
-    /// <summary>
-    /// Считаем бонус от обогревателей в комнате для грядки
-    /// </summary>
-    public static float HeaterBonus(BlockEntityFarmland farmland, BlockPos upPos)
+    
+    public static float HeaterBonusSapling(BlockEntitySapling sapling)
     {
         try
         {
-            // Получаем blockFarmland через свойство Block
-            BlockFarmland blockFarmland = farmland.Block as BlockFarmland;
-            if (blockFarmland == null)
-                return -1f;
-
-            // 1) Получаем комнату для грядки
-            Room roomForPosition = blockFarmland.roomreg?.GetRoomForPosition(upPos);
-            int roomness = roomForPosition == null || roomForPosition.SkylightCount <= roomForPosition.NonSkylightCount || roomForPosition.ExitCount != 0 ? 0 : 1;
-
-            if (roomness <= 0)
-                return -1f;
-
-            // 2) Получаем мод ElectricalProgressive
-            var electricalMod = farmland.Api.ModLoader.GetModSystem<ElectricalProgressive>();
-            if (electricalMod == null)
-                return -1f;
-
-            int roomVolume = CalculateRoomVolume(roomForPosition);
-            if (roomVolume <= 0)
-                return -1f;
-
-            float totalBonus = 0f;
-            var heatersInRoom = new List<BEBehaviorEHeater>();
-
-            // 3) Ищем обогреватели в пределах 20 блоков и в той же комнате
-            foreach (var part in electricalMod.Parts.Values)
-            {
-                if (part.Consumer is BEBehaviorEHeater heater)
-                {
-                    // Проверяем расстояние
-                    if (Math.Abs(heater.Pos.X - upPos.X) <= 20 &&
-                        Math.Abs(heater.Pos.Y - upPos.Y) <= 20 &&
-                        Math.Abs(heater.Pos.Z - upPos.Z) <= 20)
-                    {
-                        // Проверяем, находится ли обогреватель в той же комнате
-                        if (roomForPosition.Contains(heater.Pos))
-                        {
-                            heatersInRoom.Add(heater);
-
-                            // 5) Рассчитываем бонус от одного обогревателя
-                            float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
-
-                            totalBonus += heaterBonus;
-                        }
-                    }
-                }
-            }
-
-            // сообщаем обогревателям в комнате их бонус
-            foreach (var heater in heatersInRoom)
-            {
-                heater.GreenhouseBonus = totalBonus;
-            }
-
-            return totalBonus;
-        }
-        catch (Exception ex)
-        {
-            farmland.Api?.Logger.Error($"Error in HeaterBonus: {ex}");
-            return -1f;
-        }
-    }
-
-
-
-
-
-
-    /// <summary>
-    /// Считаем бонус от обогревателей в комнате для куста ягод
-    /// </summary>
-    public static float HeaterBonusBerryBush(BlockEntityBerryBush berryBush)
-    {
-        try
-        {
-
-            // Получаем roomreg через reflection
-            RoomRegistry roomreg = berryBushRoomRegField?.GetValue(berryBush) as RoomRegistry;
+            var roomreg = sapling.Api.ModLoader.GetModSystem<RoomRegistry>();
             if (roomreg == null)
-            {
-                // Альтернативный способ получения RoomRegistry
-                roomreg = berryBush.Api.ModLoader.GetModSystem<RoomRegistry>();
-                if (roomreg == null)
-                    return -1f;
-            }
+                return 0;
 
-            // 1) Получаем комнату для куста
-            Room roomForPosition = roomreg.GetRoomForPosition(berryBush.Pos);
-            if (roomForPosition == null)
-                return -1f;
-
-            // 2) Получаем мод ElectricalProgressive
-            var electricalMod = berryBush.Api.ModLoader.GetModSystem<ElectricalProgressive>();
-            if (electricalMod == null)
-                return -1f;
-
-            int roomVolume = CalculateRoomVolume(roomForPosition);
-            if (roomVolume <= 0)
-                return -1f;
-
-            float totalBonus = 0f;
-            var heatersInRoom = new List<BEBehaviorEHeater>();
-
-            // 3) Ищем обогреватели в пределах 20 блоков и в той же комнате
-            foreach (var part in electricalMod.Parts.Values)
-            {
-                if (part.Consumer is BEBehaviorEHeater heater)
-                {
-                    // Проверяем расстояние
-                    if (Math.Abs(heater.Pos.X - berryBush.Pos.X) <= 20 &&
-                        Math.Abs(heater.Pos.Y - berryBush.Pos.Y) <= 20 &&
-                        Math.Abs(heater.Pos.Z - berryBush.Pos.Z) <= 20)
-                    {
-                        // Проверяем, находится ли обогреватель в той же комнате
-                        if (roomForPosition.Contains(heater.Pos))
-                        {
-                            heatersInRoom.Add(heater);
-
-                            // 4) Рассчитываем бонус от одного обогревателя
-                            float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
-
-                            totalBonus += heaterBonus;
-                        }
-                    }
-                }
-            }
-
-            // сообщаем обогревателям в комнате их бонус
-            foreach (var heater in heatersInRoom)
-            {
-                heater.GreenhouseBonus = totalBonus;
-            }
-
-            return totalBonus;
-        }
-        catch (Exception ex)
-        {
-            berryBush.Api?.Logger.Error($"Error in HeaterBonusBerryBush: {ex}");
-            return -1f;
-        }
-    }
-
-
-
-    public static float HeaterBonusBeehive(BlockEntityBeehive beehive)
-    {
-        try
-        {
-
-            // Получаем roomreg через reflection
-            RoomRegistry roomreg = beehiveRoomRegField?.GetValue(beehive) as RoomRegistry;
-            if (roomreg == null)
-            {
-                roomreg = beehive.Api.ModLoader.GetModSystem<RoomRegistry>();
-                if (roomreg == null)
-                    return 0;
-            }
-
-            // Получаем комнату для улья
-            Room roomForPosition = roomreg.GetRoomForPosition(beehive.Pos);
+            Room roomForPosition = roomreg.GetRoomForPosition(sapling.Pos);
             if (roomForPosition == null)
                 return 0;
 
-            // Получаем мод ElectricalProgressive
-            var electricalMod = beehive.Api.ModLoader.GetModSystem<ElectricalProgressive>();
-            if (electricalMod == null)
-                return 0;
-
-            int roomVolume = CalculateRoomVolume(roomForPosition);
-            if (roomVolume <= 0)
-                return 0;
-
-            float totalBonus = 0f;
-            var heatersInRoom = new List<BEBehaviorEHeater>();
-
-            // Ищем обогреватели в пределах 20 блоков и в той же комнате
-            foreach (var part in electricalMod.Parts.Values)
-            {
-                if (part.Consumer is BEBehaviorEHeater heater)
-                {
-                    // Проверяем расстояние
-                    if (Math.Abs(heater.Pos.X - beehive.Pos.X) <= 20 &&
-                        Math.Abs(heater.Pos.Y - beehive.Pos.Y) <= 20 &&
-                        Math.Abs(heater.Pos.Z - beehive.Pos.Z) <= 20)
-                    {
-                        // Проверяем, находится ли обогреватель в той же комнате
-                        if (roomForPosition.Contains(heater.Pos))
-                        {
-                            heatersInRoom.Add(heater);
-
-                            // Рассчитываем бонус от одного обогревателя
-                            float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
-
-                            totalBonus += heaterBonus;
-                        }
-                    }
-                }
-            }
-
-            // Сообщаем обогревателям в комнате их бонус
-            foreach (var heater in heatersInRoom)
-            {
-                heater.GreenhouseBonus = totalBonus;
-            }
-
-            return totalBonus;
+            return CalculateHeaterBonus(sapling.Api, sapling.Pos, roomForPosition);
         }
         catch (Exception ex)
         {
-            beehive.Api?.Logger.Error($"Error in HeaterBonusBeehive: {ex}");
+            sapling.Api?.Logger.Error($"Error in HeaterBonusSapling: {ex}");
             return 0;
         }
     }
-
-
-
-
-
-    // Добавить новый метод для расчета бонуса фруктового дерева
-    public static float HeaterBonusFruitTree(FruitTreeRootBH fruitTree)
-    {
-        try
-        {
-            // Получаем roomreg через reflection
-            RoomRegistry roomreg = fruitTreeRoomRegField?.GetValue(fruitTree) as RoomRegistry;
-            if (roomreg == null)
-            {
-                roomreg = fruitTree.Api.ModLoader.GetModSystem<RoomRegistry>();
-                if (roomreg == null)
-                    return 0;
-            }
-
-            // Получаем комнату для дерева
-            Room roomForPosition = roomreg.GetRoomForPosition(fruitTree.Blockentity.Pos);
-            if (roomForPosition == null)
-                return 0;
-
-            // Получаем мод ElectricalProgressive
-            var electricalMod = fruitTree.Api.ModLoader.GetModSystem<ElectricalProgressive>();
-            if (electricalMod == null)
-                return 0;
-
-            int roomVolume = CalculateRoomVolume(roomForPosition);
-            if (roomVolume <= 0)
-                return 0;
-
-            float totalBonus = 0f;
-            var heatersInRoom = new List<BEBehaviorEHeater>();
-
-            // Ищем обогреватели в пределах 20 блоков и в той же комнате
-            foreach (var part in electricalMod.Parts.Values)
-            {
-                if (part.Consumer is BEBehaviorEHeater heater)
-                {
-                    // Проверяем расстояние
-                    if (Math.Abs(heater.Pos.X - fruitTree.Blockentity.Pos.X) <= 20 &&
-                        Math.Abs(heater.Pos.Y - fruitTree.Blockentity.Pos.Y) <= 20 &&
-                        Math.Abs(heater.Pos.Z - fruitTree.Blockentity.Pos.Z) <= 20)
-                    {
-                        // Проверяем, находится ли обогреватель в той же комнате
-                        if (roomForPosition.Contains(heater.Pos))
-                        {
-                            heatersInRoom.Add(heater);
-
-                            // Рассчитываем бонус от одного обогревателя
-                            float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
-
-                            totalBonus += heaterBonus;
-                        }
-                    }
-                }
-            }
-
-            // Сообщаем обогревателям в комнате их бонус
-            foreach (var heater in heatersInRoom)
-            {
-                heater.GreenhouseBonus = totalBonus;
-            }
-
-            return totalBonus;
-        }
-        catch (Exception ex)
-        {
-            fruitTree.Api?.Logger.Error($"Error in HeaterBonusFruitTree: {ex}");
-            return -1;
-        }
-    }
-
-
 
 
 
