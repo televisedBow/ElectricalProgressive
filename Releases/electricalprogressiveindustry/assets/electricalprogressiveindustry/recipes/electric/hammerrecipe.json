@@ -15,13 +15,7 @@
       "type": "item",
       "code": "game:metalplate-{metal}",
       "stackSize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 4
-    },
-    "secondaryOutputChance": 0.357
+    }
   },
   {
     "code": "blistersteel",

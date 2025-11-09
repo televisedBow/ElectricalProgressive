@@ -3,15 +3,18 @@ using ElectricalProgressive.Utils;
 using System;
 using System.Text;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
-namespace ElectricalProgressive.Content.Block.EHeater
+namespace ElectricalProgressive.Content.Block.EHeatCannon
 {
-    public class BEBehaviorEHeater : BlockEntityBehavior, IElectricConsumer
+    public class BEBehaviorEHeatCannon : BlockEntityBehavior, IElectricConsumer
     {
         public int HeatLevel { get; private set; }
+
+        private BlockEntityEHeatCannon be;
 
         public float GreenhouseBonus { get; set; }
 
@@ -23,7 +26,10 @@ namespace ElectricalProgressive.Content.Block.EHeater
         {
             base.Initialize(api, properties);
 
+            be= Blockentity as BlockEntityEHeatCannon;
+
             GreenhouseBonus = 0;
+
         }
 
 
@@ -34,7 +40,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
         private bool hasBurnout;
         private bool prepareBurnout;
 
-        public BEBehaviorEHeater(BlockEntity blockEntity) : base(blockEntity)
+        public BEBehaviorEHeatCannon(BlockEntity blockEntity) : base(blockEntity)
         {
             _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 4);
         }
@@ -46,7 +52,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
             base.GetBlockInfo(forPlayer, stringBuilder);
 
             //проверяем не сгорел ли прибор
-            if (Blockentity is not BlockEntityEHeater entity || IsBurned)
+            if (Blockentity is not BlockEntityEHeatCannon entity || IsBurned)
                 return;
             
 
@@ -79,18 +85,20 @@ namespace ElectricalProgressive.Content.Block.EHeater
                 return;
 
             var roundAmount = (int)Math.Round(amount, MidpointRounding.AwayFromZero);
-            if (roundAmount == this.HeatLevel || this.Block.Variant["state"] == "burned")
+            if (roundAmount == this.HeatLevel)
                 return;
 
             // включаем если питание больше 1
             if (roundAmount >= 1 && this.Block.Variant["state"] == "disabled")
             {
                 api.World.BlockAccessor.ExchangeBlock(api.World.GetBlock(Block.CodeWithVariant("state", "enabled")).BlockId, Pos);
+                (Blockentity as BlockEntityEHeatCannon).ElectricalProgressive.ParticlesType = 5;
             }
             // гасим если питание меньше 1
             else if (roundAmount < 1 && this.Block.Variant["state"] == "enabled")
             {
                 api.World.BlockAccessor.ExchangeBlock(api.World.GetBlock(Block.CodeWithVariant("state", "disabled")).BlockId, Pos);
+                (Blockentity as BlockEntityEHeatCannon).ElectricalProgressive.ParticlesType = 0;
             }
 
             this.HeatLevel = roundAmount;
@@ -99,7 +107,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
 
         public void Update()
         {
-            if (Blockentity is not BlockEntityEHeater entity ||
+            if (Blockentity is not BlockEntityEHeatCannon entity ||
                 entity.ElectricalProgressive == null ||
                 entity.ElectricalProgressive.AllEparams is null)
             {
@@ -142,20 +150,24 @@ namespace ElectricalProgressive.Content.Block.EHeater
                 entity.MarkDirty(true);
             }
 
+            if (!hasBurnout)
+            {
+                if (HeatLevel > 1)
+                {
+                    // Кэшируем вычисление позиции
+                    entity.ElectricalProgressive.ParticlesType = 5;
+                }
+                else
+                {
+                    entity.ElectricalProgressive.ParticlesType = 0;
+                }
+            }
+            else
+            {
+                entity.ElectricalProgressive.ParticlesType = 0;
+            }
 
-
-
-            if (!hasBurnout || entity.Block.Variant["state"] == "burned")
-                return;
-
-            // Используем CodeWithVariant вместо CodeWithVariants для одного варианта
-            // Это эффективнее, так как не требует создания массивов
-            const string type = "state";
-            const string variant = "burned";
-
-            // Кэшируем блок для обмена
-            var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant(type, variant));
-            Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
+            
         }
 
         public float getPowerReceive()

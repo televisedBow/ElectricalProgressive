@@ -832,6 +832,14 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         base.OnBlockUnloaded();
         this._clientDialog?.TryClose();
 
+
+        StopAnimation();
+
+        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
+        {
+            this.AnimUtil.Dispose();
+        }
+
         // Очищаем ссылки как в холодильнике
         _meshes = null;
         _nowTesselatingShape = null;

@@ -2,6 +2,7 @@
 using ElectricalProgressive.Content.Block.EFence;
 using ElectricalProgressive.Content.Block.EFonar;
 using ElectricalProgressive.Content.Block.EFreezer2;
+using ElectricalProgressive.Content.Block.EHeatCannon;
 using ElectricalProgressive.Content.Block.EHeater;
 using ElectricalProgressive.Content.Block.EHorn;
 using ElectricalProgressive.Content.Block.ELamp;
@@ -92,6 +93,10 @@ public class ElectricalProgressiveQOL : ModSystem
         api.RegisterBlockClass("BlockEHeater", typeof(BlockEHeater));
         api.RegisterBlockEntityClass("BlockEntityEHeater", typeof(BlockEntityEHeater));
         api.RegisterBlockEntityBehaviorClass("BEBehaviorEHeater", typeof(BEBehaviorEHeater));
+
+        api.RegisterBlockClass("BlockEHeatCannon", typeof(BlockEHeatCannon));
+        api.RegisterBlockEntityClass("BlockEntityEHeatCannon", typeof(BlockEntityEHeatCannon));
+        api.RegisterBlockEntityBehaviorClass("BEBehaviorEHeatCannon", typeof(BEBehaviorEHeatCannon));
 
         api.RegisterBlockClass("BlockECharger", typeof(BlockECharger));
         api.RegisterBlockEntityClass("BlockEntityECharger", typeof(BlockEntityECharger));
