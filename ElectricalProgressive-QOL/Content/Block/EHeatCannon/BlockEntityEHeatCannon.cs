@@ -13,6 +13,9 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
     {
         private BEBehaviorEHeatCannon Behavior => this.GetBehavior<BEBehaviorEHeatCannon>();
 
+        private ILoadedSound _ambientSound;
+        private AssetLocation _heatCannonSound;
+
         public bool IsEnabled => this.Behavior?.HeatLevel >= 1;
 
         public override Facing GetConnection(Facing value)
@@ -36,8 +39,11 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
                 {
                     AnimUtil.InitializeAnimator("eheatcannon", null, null, new Vec3f(0, GetRotation(), 0f));
                 }
-                
+
+                _heatCannonSound = new AssetLocation("electricalprogressiveqol:sounds/eheatcannon.ogg");
             }
+
+
         }
 
 
@@ -48,6 +54,7 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
             if (beh == null)
             {
                 StopAnimation();
+                StopSound();
                 return;
             }
 
@@ -55,12 +62,50 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
             if (this.Block.Variant["state"] == "enabled")
             {
                 StartAnimation();
+                StartSound();
             }
             else
             {
                 StopAnimation();
+                StopSound();
             }
 
+        }
+
+
+        /// <summary>
+        /// Запуск звука
+        /// </summary>
+        public void StartSound()
+        {
+            if (this._ambientSound != null)
+                return;
+            if ((Api != null ? (Api.Side == EnumAppSide.Client ? 1 : 0) : 0) == 0)
+                return;
+            this._ambientSound = (this.Api as ICoreClientAPI).World.LoadSound(new SoundParams()
+            {
+                Location = _heatCannonSound,
+                ShouldLoop = true,
+                Position = this.Pos.ToVec3f().Add(0.5f, 0.25f, 0.5f),
+                DisposeOnFinish = false,
+                Volume = 1f,
+            });
+
+            this._ambientSound.Start();
+        }
+
+
+
+        /// <summary>
+        /// Остановка звука
+        /// </summary>
+        public void StopSound()
+        {
+            if (this._ambientSound == null)
+                return;
+            this._ambientSound.Stop();
+            this._ambientSound.Dispose();
+            this._ambientSound = (ILoadedSound)null;
         }
 
 
@@ -91,8 +136,8 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
                     Animation = "work-on",
                     Code = "work-on",
                     AnimationSpeed = 1.0f,
-                    EaseOutSpeed = 2.0f,
-                    EaseInSpeed = 1f
+                    EaseOutSpeed = 15f,
+                    EaseInSpeed = 15f
                 });
             }
         }
@@ -111,30 +156,6 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
             }
         }
 
-
-        /// <summary>
-        /// Вызывается при тесселяции блока
-        /// </summary>
-        /// <param name="mesher"></param>
-        /// <param name="tesselator"></param>
-        /// <returns></returns>
-        public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
-        {
-            base.OnTesselation(mesher, tesselator);
-
-
-            // если анимации нет, то рисуем блок базовый
-            if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false && this.Block.Variant["state"] == "disabled")
-            {
-                return false;
-            }
-            else if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == true && this.Block.Variant["state"] == "enabled")
-            {
-                return true;
-            }
-
-            return false;  // не рисует базовый блок, если есть анимация
-        }
 
 
         /// <summary>
@@ -167,6 +188,12 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
             {
                 this.AnimUtil.Dispose();
             }
+
+            if (this._ambientSound != null)
+            {
+                this._ambientSound.Stop();
+                this._ambientSound.Dispose();
+            }
         }
 
 
@@ -183,6 +210,12 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
             if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
             {
                 this.AnimUtil.Dispose();
+            }
+
+            if (this._ambientSound != null)
+            {
+                this._ambientSound.Stop();
+                this._ambientSound.Dispose();
             }
         }
 

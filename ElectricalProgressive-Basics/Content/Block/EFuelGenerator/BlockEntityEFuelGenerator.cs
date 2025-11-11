@@ -291,26 +291,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         chunkatPos.MarkModified();
     }
 
-    /// <summary>
-    /// Обработчик тесселяции блока, добавляет мэш блока и мэш топлива, если он есть
-    /// </summary>
-    /// <param name="mesher"></param>
-    /// <param name="tesselator"></param>
-    /// <returns></returns>
-    public override bool OnTesselation(ITerrainMeshPool mesher, ITesselatorAPI tesselator)
-    {
-        base.OnTesselation(mesher, tesselator); // вызываем базовую логику тесселяции
 
-
-        // если анимации нет, то рисуем блок базовый
-        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false)
-        {
-            return false;
-        }
-
-
-        return true;  // не рисует базовый блок, если есть анимация
-    }
 
 
 

@@ -9,7 +9,7 @@
     {
       "name": "HorizontalOrientable",
       "properties": {
-        "dropBlockFace": "south"
+        "dropBlockFace": "north"
       }
     },
     {
@@ -73,6 +73,7 @@
 
 
   "attributes": {
+    "temp_koeff": 40.0,
     "blockEProperties": "all_down",
     "facesEProperties": [ "down" ],
     "maxConsumption": 800, //максимальное потребление
@@ -93,8 +94,8 @@
   },
 
   "creativeinventory": {
-    "general": [ "*-south-disabled" ],
-    "electricity": [ "*-south-disabled" ]
+    "general": [ "*-north-disabled" ],
+    "electricity": [ "*-north-disabled" ]
   },
 
   "variantgroups": [
@@ -156,7 +157,6 @@
 
 
   "resistance": 1,
-  "drawType": "JSON",
   "lightAbsorption": 0.0,
   "lightHsvByType": {
     "*-enabled": [ 9, 6, 11 ],
@@ -199,20 +199,20 @@
   "guiTransform": {
     "translation": {
       "x": 0,
-      "y": 3,
+      "y": 6,
       "z": 0
     },
     "rotation": {
-      "x": -34,
-      "y": 47,
-      "z": -9
+      "x": -46,
+      "y": 49,
+      "z": 4
     },
     "origin": {
-      "x": 0,
+      "x": 1,
       "y": 0,
-      "z": 0.99
+      "z": 0
     },
-    "scale": 0.72
+    "scale": 0.9
   },
   "groundTransform": {
     "translation": {
@@ -238,13 +238,13 @@
   "tpHandTransform": {
     "translation": {
       "x": -1.8,
-      "y": -1.91,
-      "z": -0.99
+      "y": -0.91,
+      "z": -0.3
     },
     "rotation": {
-      "x": 95,
-      "y": 0,
-      "z": -72
+      "x": 99,
+      "y": -2,
+      "z": -78
     },
     "scale": 0.4
   }

@@ -1,15 +1,18 @@
 ﻿using System;
-using System.IO;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Utils
 {
     public static class ParticleManager
     {
+        // Синхронные методы (оставляем без изменений)
+        public static void SpawnElectricSparks(IWorldAccessor world, Vec3d pos)
+        {
+            SparksTemplate.MinPos = pos;
+            world.SpawnParticles(SparksTemplate);
+        }
         /// <summary>
         /// Шаблон «электрических искр»
         /// </summary>
@@ -31,68 +34,7 @@ namespace ElectricalProgressive.Utils
             LightEmission = 0,
             WindAffected = false
         };
-        
 
-        /// <summary>
-        /// Шаблон «чёрного дыма»
-        /// </summary>
-        private static readonly SimpleParticleProperties SmokeTemplate = new(
-            minQuantity: 2, maxQuantity: 2,
-            color: ColorUtil.ColorFromRgba(50, 50, 50, 200),
-            minPos: new Vec3d(), maxPos: new Vec3d(0.8, 0.1, 0.8),
-            minVelocity: new Vec3f(-0.1f, -0.1f, -0.1f), maxVelocity: new Vec3f(0.1f, 0.1f, 0.1f)
-        )
-        {
-            WindAffected = true,
-            WindAffectednes = 1.0f,
-            LifeLength = 2f,
-            GravityEffect = -0.01f,
-            ParticleModel = EnumParticleModel.Quad,
-            SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 1f),
-            OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100),
-            MinSize = 0.8f,
-            MaxSize = 1.2f,
-        };
-
-        /// <summary>
-        /// Шаблон «белого дыма» для дымовых труб
-        /// </summary>
-        private static readonly SimpleParticleProperties WhiteSmokeTemplate = new(
-            minQuantity: 1, maxQuantity: 1,
-            color: ColorUtil.ColorFromRgba(210, 210, 210, 200),
-            minPos: new Vec3d(-0.1, -0.1, -0.1), maxPos: new Vec3d(0.1, 0.1, 0.1),
-            minVelocity: new Vec3f(-0.1f, -0.1f, 0f), maxVelocity: new Vec3f(0.1f, 0.1f, 0.1f)
-        )
-        {
-            WindAffected = true,
-            WindAffectednes = 1.0f,
-            LifeLength = 2f,
-            GravityEffect = -0.02f,
-            ParticleModel = EnumParticleModel.Quad,
-            SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 1f),
-            OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100)
-        };
-
-        /// <summary>
-        /// Шаблон «белого дыма» подготовки сгореть
-        /// </summary>
-        private static readonly SimpleParticleProperties WhiteSlowSmokeTemplate = new(
-            minQuantity: 2, maxQuantity: 2,
-            color: ColorUtil.ColorFromRgba(210, 210, 210, 200),
-            minPos: new Vec3d(), maxPos: new Vec3d(0.8, 0.1, 0.8),
-            minVelocity: new Vec3f(-0.1f, -0.1f, -0.1f), maxVelocity: new Vec3f(0.1f, 0.1f, 0.1f)
-        )
-        {
-            WindAffected = true,
-            WindAffectednes = 1.0f,
-            LifeLength = 2f,
-            GravityEffect = -0.01f,
-            ParticleModel = EnumParticleModel.Quad,
-            SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 0.5f),
-            OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100),
-            MinSize = 0.5f,
-            MaxSize = 0.75f,
-        };
 
         // Advanced Particle Templates
         private static readonly AdvancedParticleProperties SparksTemplateAdvanced;
@@ -267,8 +209,6 @@ namespace ElectricalProgressive.Utils
             template.GravityEffect.var = 0f;
 
             template.ParticleModel = EnumParticleModel.Quad;
-            template.SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 1f);
-            template.OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100);
             template.Size.avg = 0.1f;
             template.Size.var = 0.025f;
 
@@ -357,30 +297,9 @@ namespace ElectricalProgressive.Utils
             return template;
         }
 
-        // Синхронные методы (оставляем без изменений)
-        public static void SpawnElectricSparks(IWorldAccessor world, Vec3d pos)
-        {
-            SparksTemplate.MinPos = pos;
-            world.SpawnParticles(SparksTemplate);
-        }
+       
 
-        public static void SpawnBlackSmoke(IWorldAccessor world, Vec3d pos)
-        {
-            SmokeTemplate.MinPos = pos;
-            world.SpawnParticles(SmokeTemplate);
-        }
 
-        public static void SpawnWhiteSmoke(IWorldAccessor world, Vec3d pos)
-        {
-            WhiteSmokeTemplate.MinPos = pos;
-            world.SpawnParticles(WhiteSmokeTemplate);
-        }
-
-        public static void SpawnWhiteSlowSmoke(IWorldAccessor world, Vec3d pos)
-        {
-            WhiteSlowSmokeTemplate.MinPos = pos;
-            world.SpawnParticles(WhiteSlowSmokeTemplate);
-        }
 
 
         // Асинхронные методы с использованием шаблонов
@@ -499,6 +418,97 @@ namespace ElectricalProgressive.Utils
                 pos.Z + (rand.NextDouble() * 2 - 1) * variation.Z
             );
         }
+
+
+
+
+
+        /*
+
+
+       public static void SpawnBlackSmoke(IWorldAccessor world, Vec3d pos)
+       {
+           SmokeTemplate.MinPos = pos;
+           world.SpawnParticles(SmokeTemplate);
+       }
+
+       public static void SpawnWhiteSmoke(IWorldAccessor world, Vec3d pos)
+       {
+           WhiteSmokeTemplate.MinPos = pos;
+           world.SpawnParticles(WhiteSmokeTemplate);
+       }
+
+       public static void SpawnWhiteSlowSmoke(IWorldAccessor world, Vec3d pos)
+       {
+           WhiteSlowSmokeTemplate.MinPos = pos;
+           world.SpawnParticles(WhiteSlowSmokeTemplate);
+       }
+
+
+
+
+
+     /// <summary>
+     /// Шаблон «чёрного дыма»
+     /// </summary>
+     private static readonly SimpleParticleProperties SmokeTemplate = new(
+         minQuantity: 2, maxQuantity: 2,
+         color: ColorUtil.ColorFromRgba(50, 50, 50, 200),
+         minPos: new Vec3d(), maxPos: new Vec3d(0.8, 0.1, 0.8),
+         minVelocity: new Vec3f(-0.1f, -0.1f, -0.1f), maxVelocity: new Vec3f(0.1f, 0.1f, 0.1f)
+     )
+     {
+         WindAffected = true,
+         WindAffectednes = 1.0f,
+         LifeLength = 2f,
+         GravityEffect = -0.01f,
+         ParticleModel = EnumParticleModel.Quad,
+         SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 1f),
+         OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100),
+         MinSize = 0.8f,
+         MaxSize = 1.2f,
+     };
+
+     /// <summary>
+     /// Шаблон «белого дыма» для дымовых труб
+     /// </summary>
+     private static readonly SimpleParticleProperties WhiteSmokeTemplate = new(
+         minQuantity: 1, maxQuantity: 1,
+         color: ColorUtil.ColorFromRgba(210, 210, 210, 200),
+         minPos: new Vec3d(-0.1, -0.1, -0.1), maxPos: new Vec3d(0.1, 0.1, 0.1),
+         minVelocity: new Vec3f(-0.1f, -0.1f, 0f), maxVelocity: new Vec3f(0.1f, 0.1f, 0.1f)
+     )
+     {
+         WindAffected = true,
+         WindAffectednes = 1.0f,
+         LifeLength = 2f,
+         GravityEffect = -0.02f,
+         ParticleModel = EnumParticleModel.Quad,
+         SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 1f),
+         OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100)
+     };
+
+     /// <summary>
+     /// Шаблон «белого дыма» подготовки сгореть
+     /// </summary>
+     private static readonly SimpleParticleProperties WhiteSlowSmokeTemplate = new(
+         minQuantity: 2, maxQuantity: 2,
+         color: ColorUtil.ColorFromRgba(210, 210, 210, 200),
+         minPos: new Vec3d(), maxPos: new Vec3d(0.8, 0.1, 0.8),
+         minVelocity: new Vec3f(-0.1f, -0.1f, -0.1f), maxVelocity: new Vec3f(0.1f, 0.1f, 0.1f)
+     )
+     {
+         WindAffected = true,
+         WindAffectednes = 1.0f,
+         LifeLength = 2f,
+         GravityEffect = -0.01f,
+         ParticleModel = EnumParticleModel.Quad,
+         SizeEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, 0.5f),
+         OpacityEvolve = new EvolvingNatFloat(EnumTransformFunction.LINEAR, -100),
+         MinSize = 0.5f,
+         MaxSize = 0.75f,
+     };
+     */
 
 
 

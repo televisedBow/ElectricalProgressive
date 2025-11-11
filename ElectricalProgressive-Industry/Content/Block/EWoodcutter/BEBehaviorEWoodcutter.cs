@@ -110,8 +110,8 @@ public class BEBehaviorEWoodcutter : BlockEntityBehavior, IElectricConsumer
         }
 
         var hasBurnout = entity.ElectricalProgressive.AllEparams.Any(e => e.burnout);
-        if (hasBurnout)
-            ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+        //if (hasBurnout)
+        //    ParticleManager.SpawnBlackSmoke(Api.World, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
 
         if (!hasBurnout || entity.Block.Variant["state"] == "burned")
             return;

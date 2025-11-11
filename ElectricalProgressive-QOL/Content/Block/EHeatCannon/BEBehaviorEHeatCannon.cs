@@ -3,10 +3,8 @@ using ElectricalProgressive.Utils;
 using System;
 using System.Text;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.EHeatCannon
 {
@@ -14,22 +12,20 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
     {
         public int HeatLevel { get; private set; }
 
-        private BlockEntityEHeatCannon be;
-
         public float GreenhouseBonus { get; set; }
 
         public const string HeatLevelKey = "electricalprogressive:heatlevel";
 
         public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
+        public float TempKoeff;
         public override void Initialize(ICoreAPI api, JsonObject properties)
         {
             base.Initialize(api, properties);
 
-            be= Blockentity as BlockEntityEHeatCannon;
-
             GreenhouseBonus = 0;
-
+        
+            TempKoeff = MyMiniLib.GetAttributeFloat(this.Block, "temp_koeff", 0f);
         }
 
 

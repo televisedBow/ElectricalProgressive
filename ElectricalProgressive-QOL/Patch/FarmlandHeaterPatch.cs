@@ -1,4 +1,5 @@
-﻿using ElectricalProgressive.Content.Block.EHeater;
+﻿using ElectricalProgressive.Content.Block.EHeatCannon;
+using ElectricalProgressive.Content.Block.EHeater;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -581,23 +582,31 @@ public class FarmlandHeaterPatch
             return 0;
 
         float totalBonus = 0f;
-        var heatersInRoom = new List<BEBehaviorEHeater>();
+        var heatersInRoom = new List<dynamic>();
 
         // Ищем обогреватели в пределах 20 блоков и в той же комнате
         foreach (var part in electricalMod.Parts.Values)
         {
-            if (part.Consumer is BEBehaviorEHeater heater)
+            dynamic heater = part.Consumer as BEBehaviorEHeater;
+            if (heater == null)
+                heater = part.Consumer as BEBehaviorEHeatCannon;
+            if (heater == null)
+                continue;
+
+            if (heater.getPowerRequest() <= 0)
+                continue;
+
+            if (Math.Abs(heater.Pos.X - targetPos.X) <= 20 &&
+                Math.Abs(heater.Pos.Y - targetPos.Y) <= 20 &&
+                Math.Abs(heater.Pos.Z - targetPos.Z) <= 20)
             {
-                if (Math.Abs(heater.Pos.X - targetPos.X) <= 20 &&
-                    Math.Abs(heater.Pos.Y - targetPos.Y) <= 20 &&
-                    Math.Abs(heater.Pos.Z - targetPos.Z) <= 20)
+                if (roomForPosition.Contains(heater.Pos))
                 {
-                    if (roomForPosition.Contains(heater.Pos))
-                    {
-                        heatersInRoom.Add(heater);
-                        float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (5.0f * (40.0f / roomVolume));
-                        totalBonus += heaterBonus;
-                    }
+                    heatersInRoom.Add(heater);
+
+                    float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (heater.TempKoeff*40.0f/ roomVolume);
+
+                    totalBonus += heaterBonus;
                 }
             }
         }

@@ -19,11 +19,15 @@ namespace ElectricalProgressive.Content.Block.EHeater
 
         public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
+        public float TempKoeff;
+
         public override void Initialize(ICoreAPI api, JsonObject properties)
         {
             base.Initialize(api, properties);
 
             GreenhouseBonus = 0;
+
+            TempKoeff = MyMiniLib.GetAttributeFloat(this.Block, "temp_koeff", 0f);
         }
 
 
