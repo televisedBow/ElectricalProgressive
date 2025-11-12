@@ -11,34 +11,42 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
     public class BEBehaviorEHeatCannon : BlockEntityBehavior, IElectricConsumer
     {
         public int HeatLevel { get; private set; }
-
-        public float GreenhouseBonus { get; set; }
-
         public const string HeatLevelKey = "electricalprogressive:heatlevel";
 
+
+        private int _maxConsumption;
+        private bool hasBurnout;
+        private bool prepareBurnout;
+
+        
         public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
-        public float TempKoeff;
+
+        public float GreenhouseBonus { get; set; }
+        private float _tempKoeff;
+        public float TempKoeff => _tempKoeff;
+
+
+
+
         public override void Initialize(ICoreAPI api, JsonObject properties)
         {
             base.Initialize(api, properties);
 
             GreenhouseBonus = 0;
         
-            TempKoeff = MyMiniLib.GetAttributeFloat(this.Block, "temp_koeff", 0f);
+            _tempKoeff = MyMiniLib.GetAttributeFloat(this.Block, "temp_koeff", 0f);
+
+            _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 4);
         }
 
 
-        /// <summary>
-        /// Максимальное потребление
-        /// </summary>
-        private readonly int _maxConsumption;
-        private bool hasBurnout;
-        private bool prepareBurnout;
+        
+
 
         public BEBehaviorEHeatCannon(BlockEntity blockEntity) : base(blockEntity)
         {
-            _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 4);
+           
         }
 
         public float AvgConsumeCoeff { get; set; }

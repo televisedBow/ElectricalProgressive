@@ -13,13 +13,19 @@ namespace ElectricalProgressive.Content.Block.EHeater
     {
         public int HeatLevel { get; private set; }
 
+        private int _maxConsumption;
+        private bool hasBurnout;
+        private bool prepareBurnout;
+
         public float GreenhouseBonus { get; set; }
 
         public const string HeatLevelKey = "electricalprogressive:heatlevel";
 
         public bool IsBurned => this.Block.Code.GetName().Contains("burned"); // пока так 
 
-        public float TempKoeff;
+        private float _tempKoeff;
+
+        public float TempKoeff => _tempKoeff;
 
         public override void Initialize(ICoreAPI api, JsonObject properties)
         {
@@ -27,20 +33,16 @@ namespace ElectricalProgressive.Content.Block.EHeater
 
             GreenhouseBonus = 0;
 
-            TempKoeff = MyMiniLib.GetAttributeFloat(this.Block, "temp_koeff", 0f);
+            _tempKoeff = MyMiniLib.GetAttributeFloat(this.Block, "temp_koeff", 0f);
+
+            _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 4);
         }
 
 
-        /// <summary>
-        /// Максимальное потребление
-        /// </summary>
-        private readonly int _maxConsumption;
-        private bool hasBurnout;
-        private bool prepareBurnout;
 
         public BEBehaviorEHeater(BlockEntity blockEntity) : base(blockEntity)
         {
-            _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 4);
+           
         }
 
         public float AvgConsumeCoeff { get; set; }
@@ -70,7 +72,6 @@ namespace ElectricalProgressive.Content.Block.EHeater
             stringBuilder.AppendLine();
         }
 
-        #region IElectricConsumer
 
         public float Consume_request()
         {
@@ -172,7 +173,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
             return _maxConsumption;
         }
 
-        #endregion
+       
 
 
         public override void ToTreeAttributes(ITreeAttribute tree)
