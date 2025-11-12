@@ -61,6 +61,7 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
 
             var blockCode = CodeWithVariants(new Dictionary<string, string>
             {
+                { "side", "north" },
                 { "state", newState }
             });
             var block = world.BlockAccessor.GetBlock(blockCode);
