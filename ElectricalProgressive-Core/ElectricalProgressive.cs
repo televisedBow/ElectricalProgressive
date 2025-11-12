@@ -20,7 +20,7 @@ using static ElectricalProgressive.ElectricalProgressive;
     "electricalprogressivecore",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electrical logic library.",
-    Version = "2.6.1",
+    Version = "2.6.2",
     Authors = ["Tehtelev", "Kotl"]
 )]
 
@@ -1079,6 +1079,10 @@ namespace ElectricalProgressive
                     {
                         partValue.packets.Add(packet);
                     }
+                }
+                else // чтобы не застревали в частях сети, которые перестали существовать
+                {
+                    packet.shouldBeRemoved = true; 
                 }
 
             }

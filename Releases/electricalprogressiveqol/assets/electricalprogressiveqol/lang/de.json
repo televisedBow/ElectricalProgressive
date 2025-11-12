@@ -30,6 +30,8 @@
   "block-heater-*": "Elektrischer Heizkörper",
   "block-heater-burned": "Elektrischer Heizkörper (verbrannt)",
 
+  "block-eheatcannon-*": "Thermalkanone",
+
   "block-elamp-3000-*": "Elektrische Lampe: warmorange (3000K)",
   "block-elamp-4000-*": "Elektrische Lampe: warmgelb (4000K)",
   "block-elamp-5000-*": "Elektrische Lampe: warmweiß (5000K)",
