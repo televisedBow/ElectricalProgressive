@@ -12,7 +12,7 @@ namespace ElectricalProgressive.Content.Item.Tool;
 
 class EDrill : Vintagestory.API.Common.Item
 {
-    public SkillItem[] toolModes = [];
+    public SkillItem[] toolModes = new SkillItem[0];
     int consume;
 
 

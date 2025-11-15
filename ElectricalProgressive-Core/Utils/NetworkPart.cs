@@ -10,17 +10,17 @@ namespace ElectricalProgressive.Utils
     public class NetworkPart
     {
         public readonly Network[] Networks = new Network[6];
-        public EParams[] eparams = [];
+        public EParams[] eparams = new EParams[0];
         public readonly BlockPos Position;
-        public Facing Connection = Facing.None;
+        public Facing Connection = Facing.None; 
         public IElectricAccumulator? Accumulator;
         public IElectricConsumer? Consumer;
         public IElectricConductor? Conductor;
         public IElectricProducer? Producer;
         public IElectricTransformator? Transformator;
         public bool IsLoaded = false;
-        public List<EnergyPacket> packets= [];
-
+        public List<EnergyPacket> packets= new();
+            
         public NetworkPart(BlockPos position)
         {
             Position = position;

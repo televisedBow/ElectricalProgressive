@@ -185,7 +185,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         // получаем позиции частиц из атрибутов блока
         ParticlesOffsetPos.Clear(); // чистим данные из сохранений
-        var arrayOffsetPos = MyMiniLib.GetAttributeArrayArrayFloat(this.Block, "particlesOffsetPos", new float[1][]{[0,0,0]});
+        var arrayOffsetPos = MyMiniLib.GetAttributeArrayArrayFloat(this.Block, "particlesOffsetPos", new float[1][]{new float[3]{0,0,0}});
         if (arrayOffsetPos != null)
         {
             for (int i = 0; i < arrayOffsetPos.Length; i++)
@@ -202,16 +202,16 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
 
         // получаем привязку частиц к фрэймам анимации
         ParticlesFramesAnim.Clear(); // чистим данные из сохранений
-        var arrayFrames = MyMiniLib.GetAttributeArrayArrayInt(this.Block, "particlesFramesAnim", new int[1][] { [-1, -1] });
+        var arrayFrames = MyMiniLib.GetAttributeArrayArrayInt(this.Block, "particlesFramesAnim", new int[1][] { new int[]{-1, -1} });
         if (arrayFrames != null)
         {
             for (int i = 0; i < arrayFrames.Length; i++)
             {
                 int[] buf =
-                [
+                    new int[]{
                     arrayFrames[i][0],
                     arrayFrames[i][1]
-                ];
+                };
 
                 ParticlesFramesAnim.Add(buf);
             }
@@ -349,7 +349,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         else
         {
             mainPartPos = this.Blockentity.Pos;
-            multiblockParts = [this.Blockentity.Pos];
+            multiblockParts = new BlockPos[1]{this.Blockentity.Pos};
         }
     }
 
@@ -773,7 +773,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         {
             int min = tree.GetInt($"ParticlesFramesAnimMin_{i}", -1);
             int max = tree.GetInt($"ParticlesFramesAnimMax_{i}", -1);
-            ParticlesFramesAnim.Add([min,max]);
+            ParticlesFramesAnim.Add(new int[] { min, max });
         }
 
 

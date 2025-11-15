@@ -47,11 +47,11 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
         dialog.WithChildren(stoveBounds);
 
         dialog.BothSizing = ElementSizing.FitToChildren;
-        dialog.WithChildren([
+        dialog.WithChildren(new[]{
             dialogBounds,
             fuelGrid,
             textBounds
-        ]);
+        });
         var window = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.RightMiddle)
             .WithFixedAlignmentOffset(-GuiStyle.DialogToScreenPadding, 0);
         if (capi.Settings.Bool["immersiveMouseMode"])

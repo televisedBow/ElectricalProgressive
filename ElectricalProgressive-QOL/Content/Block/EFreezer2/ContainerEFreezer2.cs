@@ -209,7 +209,7 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
 
     public ItemStack[] GetNonEmptyContentStacks(bool cloned = true)
     {
-        List<ItemStack> stacklist = [];
+        List<ItemStack> stacklist = new();
         foreach (var slot in Inventory)
         {
             if (slot.Empty) continue;

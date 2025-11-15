@@ -178,8 +178,8 @@ public class BEBehaviorECharger : BlockEntityBehavior, IElectricConsumer
 
         // Получаем блок только один раз
         var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
-            [stateType, sideType],
-            [burnedVariant, side]
+            new[]{stateType, sideType},
+            new[]{burnedVariant, side}
         ));
 
         Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);

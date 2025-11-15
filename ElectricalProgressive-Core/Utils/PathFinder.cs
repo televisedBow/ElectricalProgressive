@@ -69,10 +69,10 @@ public class PathFinder
 {
     // Маски направлений для соединений (север, восток, юг, запад, верх, низ)
     private static readonly Facing[] faceMasks =
-    [
+    new Facing[] {
         Facing.NorthAll, Facing.EastAll, Facing.SouthAll,
         Facing.WestAll, Facing.UpAll, Facing.DownAll
-    ];
+    };
 
     // Переиспользуемые коллекции и буферы для уменьшения нагрузки на GC
     private List<FastPosKey> _neighborsFast = new(27); // Соседние позиции
@@ -86,16 +86,16 @@ public class PathFinder
     private byte[] _faceBuffer = new byte[ElectricalProgressive.maxDistanceForFinding+1];
 
 
-    private List<byte> _startBlockFacing = []; // Стартовые направления
-    private List<byte> _endBlockFacing = []; // Конечные направления
+    private List<byte> _startBlockFacing = new(); // Стартовые направления
+    private List<byte> _endBlockFacing = new(); // Конечные направления
     private PriorityQueue<(FastPosKey, byte), int> _queue = new(); // Приоритетная очередь для A*
     private Dictionary<(FastPosKey, byte), (FastPosKey, byte)> _cameFrom = new(new FastPosKeyByteComparer()); // Для восстановления пути
     private Dictionary<FastPosKey, bool[]> _processedFaces = new(); // Обработанные направления для позиций
     private Dictionary<(FastPosKey, byte), byte> _facingFrom = new(new FastPosKeyByteComparer()); // Направления прихода
     public Dictionary<(FastPosKey, byte), bool[]> nowProcessedFaces = new(new FastPosKeyByteComparer()); // Текущие обработанные направления
-    private HashSet<BlockPos> _networkPositions = []; // Позиции в сети
-    private List<FastPosKey> _buf1 = []; // Временный буфер
-    private List<byte> _buf2 = []; // Временный буфер
+    private HashSet<BlockPos> _networkPositions = new(); // Позиции в сети
+    private List<FastPosKey> _buf1 = new(); // Временный буфер
+    private List<byte> _buf2 = new(); // Временный буфер
     private bool[]? _buf3; // Временный буфер
     private bool[]? _buf4; // Временный буфер
 
@@ -139,8 +139,8 @@ public class PathFinder
         _facingFrom.Clear();
         _buf1.Clear();
         _buf2.Clear();
-        _buf3 = [];
-        _buf4 = [];
+        _buf3 = Array.Empty<bool>();
+        _buf4 = Array.Empty<bool>();
 
         _networkPositions = network.PartPositions;
 

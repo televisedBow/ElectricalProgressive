@@ -20,10 +20,10 @@ using Vintagestory.API.Common;
     Description = "Additional electrical devices.",
     Version = "0.5.0",
     Authors =
-    [
+        new string[]{
         "Tehtelev",
         "Kotl"
-    ]
+    }
 )]
 
 namespace ElectricalProgressive;

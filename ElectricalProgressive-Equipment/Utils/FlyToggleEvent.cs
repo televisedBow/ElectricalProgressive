@@ -29,7 +29,7 @@ public class FlyToggleEvent : ModSystem
 
     // Статическое поле для хранения слотов брони
     private static readonly int[] ArmorSlots = ElectricalProgressiveEquipment.combatoverhaul
-        ? [34, 35, 36, 26, 27, 28]
+        ? new int[]{34, 35, 36, 26, 27, 28}
         : Enumerable.Repeat(13, 6).ToArray();
 
     int consume = 20; // Количество энергии, потребляемое в секунду при полете

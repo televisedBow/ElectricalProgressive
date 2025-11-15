@@ -90,7 +90,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
         public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer,
             float dropQuantityMultiplier = 1)
         {
-            return [OnPickBlock(world, pos)];
+            return new[] { OnPickBlock(world, pos) };
         }
 
         public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
@@ -117,7 +117,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
                 entity == null ||
                 entity.Facing == Facing.None)
             {
-                return [];
+                return new Cuboidf[0];
             }
 
 
@@ -231,7 +231,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
                 return boxes;
             }
 
-            return [];
+            return new Cuboidf[0];
         }
 
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
@@ -242,7 +242,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
                 entity == null ||
                 entity.Facing == Facing.None)
             {
-                return [];
+                return new Cuboidf[0];
             }
 
 
@@ -354,7 +354,7 @@ namespace ElectricalProgressive.Content.Block.ELamp
             if (boxes != null)
                 return boxes;
 
-            return [];
+            return new Cuboidf[0];
         }
 
 

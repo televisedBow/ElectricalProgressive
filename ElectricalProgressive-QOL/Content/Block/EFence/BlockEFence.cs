@@ -188,23 +188,23 @@ public class BlockEFence : BlockEBase
     public override BlockDropItemStack[] GetDropsForHandbook(ItemStack handbookStack, IPlayer forPlayer)
     {
         return
-        [
+        new[]{
             new BlockDropItemStack(handbookStack)
-        ];
+        };
     }
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1f)
     {
-        var block = world.BlockAccessor.GetBlock(CodeWithVariants(["type", "part"], ["ew", "bottom"]));
+        var block = world.BlockAccessor.GetBlock(CodeWithVariants(new[]{"type", "part"}, new[]{"ew", "bottom"}));
         return
-        [
+        new[]{
             new ItemStack(block)
-        ];
+        };
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
     {
-        return new ItemStack(world.BlockAccessor.GetBlock(CodeWithVariants(["type", "part"], ["ew", "bottom"])));
+        return new ItemStack(world.BlockAccessor.GetBlock(CodeWithVariants(new[]{"type", "part"}, new[]{"ew", "bottom"})));
     }
 
 
@@ -236,12 +236,12 @@ public class BlockEFence : BlockEBase
 
     static BlockEFence()
     {
-        OneDir = ["n", "e", "s", "w"];
-        TwoDir = ["ns", "ew"];
-        AngledDir = ["ne", "es", "sw", "nw"];
-        ThreeDir = ["nes", "new", "nsw", "esw"];
-        GateLeft = ["egw", "ngs"];
-        GateRight = ["gew", "gns"];
+        OneDir = new[]{"n", "e", "s", "w"};
+        TwoDir = new[]{"ns", "ew"};
+        AngledDir = new[]{"ne", "es", "sw", "nw"};
+        ThreeDir = new[]{"nes", "new", "nsw", "esw"};
+        GateLeft = new[]{"egw", "ngs"};
+        GateRight = new[]{"gew", "gns"};
         AngleGroups = new Dictionary<string, KeyValuePair<string[], int>>();
         AngleGroups["n"] = new KeyValuePair<string[], int>(OneDir, 0);
         AngleGroups["e"] = new KeyValuePair<string[], int>(OneDir, 1);

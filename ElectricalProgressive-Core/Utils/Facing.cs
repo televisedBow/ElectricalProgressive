@@ -64,34 +64,32 @@ public enum Facing {
 public static class FacingHelper
 {
     private static readonly BlockFacing[] Blockfaces =
-    [
+    new []{
         BlockFacing.NORTH,
         BlockFacing.EAST,
         BlockFacing.SOUTH,
         BlockFacing.WEST,
         BlockFacing.UP,
         BlockFacing.DOWN
-    ];
+    };
 
-    private static readonly Facing[] FacesAll =
-    [
+    private static readonly Facing[] FacesAll = new[]{
         Facing.NorthAll,
         Facing.EastAll,
         Facing.SouthAll,
         Facing.WestAll,
         Facing.UpAll,
         Facing.DownAll
-    ];
+    };
 
-    private static readonly Facing[] DirectionsAll =
-    [
+    private static readonly Facing[] DirectionsAll = new[]{
         Facing.AllNorth,
         Facing.AllEast,
         Facing.AllSouth,
         Facing.AllWest,
         Facing.AllUp,
         Facing.AllDown
-    ];
+    };
 
 
 

@@ -9,7 +9,7 @@ using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.EFuelGenerator;
 
-public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBehavior(blockEntity), IElectricProducer
+public class BEBehaviorFuelEGenerator : BlockEntityBehavior, IElectricProducer
 {
     private float _powerOrder;           // Просят столько энергии (сохраняется)
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
@@ -23,7 +23,10 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
 
     private static bool IsBurned => false;
 
-    
+    public BEBehaviorFuelEGenerator(BlockEntity blockEntity) : base(blockEntity)
+    {
+
+    }
 
     public new BlockPos Pos => Blockentity.Pos;
 

@@ -179,8 +179,8 @@ namespace ElectricalProgressive.Content.Block.ELamp
 
             // Получаем блок только один раз
             var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
-                [tempKType, stateType],
-                [tempK, burnedVariant]
+                new[] { tempKType, stateType },
+                new[] { tempK, burnedVariant }
             ));
 
             Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);

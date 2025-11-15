@@ -89,7 +89,7 @@ namespace ElectricalProgressive.Content.Block.ESFonar
 
         public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
         {
-            return [OnPickBlock(world, pos)];
+            return new[] { OnPickBlock(world, pos) };
         }
 
         public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)

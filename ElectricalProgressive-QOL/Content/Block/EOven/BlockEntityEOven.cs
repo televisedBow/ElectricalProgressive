@@ -143,7 +143,7 @@ public class BlockEntityEOven : BlockEntityDisplay, IHeatSource
 
             // 2) Fallback: пытаемся найти приватное поле/свойство, которое содержит массив/коллекцию behaviors
             // Возможные имена полей/свойств (разные версии API)
-            string[] candidateFieldNames = ["blockEntityBehaviors", "behaviors", "BlockEntityBehaviors", "Behaviors"];
+            string[] candidateFieldNames = new[]{"blockEntityBehaviors", "behaviors", "BlockEntityBehaviors", "Behaviors"};
 
             foreach (var name in candidateFieldNames)
             {
@@ -629,12 +629,13 @@ public class BlockEntityEOven : BlockEntityDisplay, IHeatSource
             if (ownerPlayer != null && ElectricalProgressiveQOL.methodGetSkill != null && ElectricalProgressiveQOL.typeCooking != null)
             {
                 var skill = ElectricalProgressiveQOL.methodGetSkill.Invoke(ElectricalProgressiveQOL.xLevelingInstance,
-                    ["cooking", false]);
+                    new object?[]{"cooking", false});
                 if (ElectricalProgressiveQOL.typeCooking.IsInstanceOfType(skill))
                 {
                     var applyAbilities = ElectricalProgressiveQOL.typeCooking.GetMethod("ApplyAbilities", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    applyAbilities?.Invoke(skill, [this.OvenInv[slotIndex], ownerPlayer, 0f, 1f, new ItemStack[] { prevStack }, 1f
-                    ]);
+                    applyAbilities?.Invoke(skill, new object?[]{
+                        this.OvenInv[slotIndex], ownerPlayer, 0f, 1f, new ItemStack[] { prevStack }, 1f
+                    });
                 }
             }
         }
@@ -719,7 +720,7 @@ public class BlockEntityEOven : BlockEntityDisplay, IHeatSource
             try
             {
                 var skill = ElectricalProgressiveQOL.methodGetSkill.Invoke(ElectricalProgressiveQOL.xLevelingInstance,
-                    ["cooking", false]);
+                    new object?[]{"cooking", false});
                 if (ElectricalProgressiveQOL.typeCooking.IsInstanceOfType(skill))
                 {
                     var getId = ElectricalProgressiveQOL.typeCooking.BaseType.GetProperty("Id");
@@ -732,9 +733,9 @@ public class BlockEntityEOven : BlockEntityDisplay, IHeatSource
 
                     var playerSkillSet = forPlayer?.Entity?.GetBehavior("SkillSet");
                     var indexer = pssType?.GetProperty("Item");
-                    var abilitiesForSkill = indexer?.GetValue(playerSkillSet, [id]);
+                    var abilitiesForSkill = indexer?.GetValue(playerSkillSet, new[] { id });
                     var specIndexer = abilitiesForSkill?.GetType().GetProperty("Item");
-                    var playerAbility = specIndexer?.GetValue(abilitiesForSkill, [specId]);
+                    var playerAbility = specIndexer?.GetValue(abilitiesForSkill, new[]{specId});
 
                     if (playerAbility != null && (int)(abilityType?.GetProperty("Tier")?.GetValue(playerAbility) ?? 0) >= 1)
                     {

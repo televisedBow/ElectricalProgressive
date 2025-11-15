@@ -49,7 +49,7 @@ public static class LoadEProperties
         {
             // какие грани могут получать электричество
             var facesEProperties =
-                MyMiniLib.GetAttributeArrayString(block, "facesEProperties", ["down"]);
+                MyMiniLib.GetAttributeArrayString(block, "facesEProperties", new string[]{"down"});
 
             foreach (var Face in facesEProperties)
             {

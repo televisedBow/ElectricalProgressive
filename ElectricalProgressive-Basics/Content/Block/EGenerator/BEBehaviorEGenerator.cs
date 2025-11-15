@@ -51,11 +51,11 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     /// <summary>
     /// Заглушка. I_max, speed_max , resistance_factor, resistance_load, base_resistance, kpd_max
     /// </summary>
-    private static float[] def_Params => [100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F];
+    private static float[] def_Params => new float[]{100.0F, 0.5F, 0.1F, 0.25F, 0.05F, 1F};
     /// <summary>
     /// Сюда берем параметры из ассетов
     /// </summary>
-    private float[] Params = [0, 0, 0, 0, 0, 0];
+    private float[] Params = new float[]{0, 0, 0, 0, 0, 0};
 
     // задает коэффициент сглаживания фильтра
     public ExponentialMovingAverage EmaFilter;
@@ -68,14 +68,14 @@ public class BEBehaviorEGenerator : BEBehaviorMPBase, IElectricProducer
     protected CompositeShape? CompositeShape;  //не трогать уровни доступа
 
     private static readonly int[][] _axisSigns =
-    [
-        [+0, +0, -1], // index 0
-        [-1, +0, +0], // index 1
-        [+0, +0, -1], // index 2
-        [-1, +0, +0], // index 3
-        [+0, -1, +0], // index 4
-        [+0, +1, +0] // index 5
-    ];
+    new int [][]{
+        new int[3]{+0, +0, -1}, // index 0
+        new int[3]{-1, +0, +0}, // index 1
+        new int[3] { + 0, + 0, + 0 }, // index 2
+        new int[3] { -1, + 0, + 0 }, // index 3
+        new int[3] { + 0, + 0, -1 }, // index 4
+        new int[3] { + 0, + 0, + 1 } // index 5
+    };
 
 
 

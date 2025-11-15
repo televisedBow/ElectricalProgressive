@@ -21,20 +21,20 @@ using Vintagestory.API.Server;
 
 
 
-[assembly: ModDependency("game", "1.21.0")]
-[assembly: ModDependency("electricalprogressivecore", "2.6.1")]
-[assembly: ModDependency("electricalprogressivebasics", "2.6.0")]
+[assembly: ModDependency("game", "1.20.12")]
+[assembly: ModDependency("electricalprogressivecore", "2.0.6")]
+[assembly: ModDependency("electricalprogressivebasics", "2.0.6")]
 [assembly: ModInfo(
     "Electrical Progressive: QoL",
     "electricalprogressiveqol",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Additional electrical devices.",
-    Version = "2.6.2",
+    Version = "2.0.6",
     Authors =
-    [
+        new string[]{
         "Tehtelev",
         "Kotl"
-    ]
+    }
 )]
 
 namespace ElectricalProgressive;
@@ -149,11 +149,11 @@ public class ElectricalProgressiveQOL : ModSystem
                     // Пытаемся получить Instance(XLeveling)
                     if (typeXLeveling != null)
                     {
-                        var instMethod = typeXLeveling.GetMethod("Instance", [typeof(ICoreAPI)]);
+                        var instMethod = typeXLeveling.GetMethod("Instance", new[]{typeof(ICoreAPI)});
                         if (instMethod != null)
                         {
-                            xLevelingInstance = instMethod.Invoke(null, [api]);
-                            methodGetSkill = typeXLeveling.GetMethod("GetSkill", [typeof(string), typeof(bool)]);
+                            xLevelingInstance = instMethod.Invoke(null, new[]{api});
+                            methodGetSkill = typeXLeveling.GetMethod("GetSkill", new[]{typeof(string), typeof(bool)});
                         }
                     }
 
@@ -164,7 +164,7 @@ public class ElectricalProgressiveQOL : ModSystem
                     {
                         methodGetCookingTimeMultiplier = typeCookingUtil.GetMethod(
                             "GetCookingTimeMultiplier",
-                            [typeof(BlockEntity)]
+                            new []{typeof(BlockEntity)}
                         );
                     }
 

@@ -8,9 +8,9 @@ namespace ElectricalProgressive.Utils;
 
 public class BlockVariants
 {
-    public readonly Cuboidf[] CollisionBoxes= [];
+    public readonly Cuboidf[] CollisionBoxes= new Cuboidf[0];
     public readonly MeshData? MeshData;
-    public readonly Cuboidf[] SelectionBoxes=[];
+    public readonly Cuboidf[] SelectionBoxes= new Cuboidf[0];
 
     /// <summary>
     /// Извлекаем нужный вариант блока провода

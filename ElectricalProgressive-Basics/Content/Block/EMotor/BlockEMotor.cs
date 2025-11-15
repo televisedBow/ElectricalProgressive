@@ -12,7 +12,7 @@ namespace ElectricalProgressive.Content.Block.EMotor;
 public class BlockEMotor : BlockEBase, IMechanicalPowerBlock
 {
     private readonly static Dictionary<(Facing, string), MeshData> MeshData = new();
-    private static float[] def_Params = [10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F];   //заглушка
+    private static float[] def_Params = new float[]{10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F};   //заглушка
 
 
 

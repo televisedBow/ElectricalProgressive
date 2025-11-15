@@ -14,14 +14,14 @@ using Vintagestory.GameContent;
 using static ElectricalProgressive.ElectricalProgressive;
 
 
-[assembly: ModDependency("game", "1.21.0")]
+[assembly: ModDependency("game", "1.20.12")]
 [assembly: ModInfo(
     "Electrical Progressive: Core",
     "electricalprogressivecore",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electrical logic library.",
-    Version = "2.6.2",
-    Authors = ["Tehtelev", "Kotl"]
+    Version = "2.0.6",
+    Authors = new string[]{"Tehtelev", "Kotl"}
 )]
 
 
@@ -30,13 +30,13 @@ namespace ElectricalProgressive
 {
     public class ElectricalProgressive : ModSystem
     {
-        public readonly HashSet<Network> Networks = [];
+        public readonly HashSet<Network> Networks = new();
         public readonly Dictionary<BlockPos, NetworkPart> Parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
 
         private Dictionary<BlockPos, List<EnergyPacket>> _packetsByPosition = new(new BlockPosComparer()); //Словарь для хранения пакетов по позициям
 
 
-        private readonly List<EnergyPacket> _globalEnergyPackets = []; // Глобальный список пакетов энергии
+        private readonly List<EnergyPacket> _globalEnergyPackets = new(); // Глобальный список пакетов энергии
 
         private AsyncPathFinder _asyncPathFinder = null!;
 
@@ -290,10 +290,10 @@ namespace ElectricalProgressive
                 else
                 {
                     part.Value.eparams =
-                    [
+                    new EParams[]{
                         new EParams(), new EParams(), new EParams(),
                             new EParams(), new EParams(), new EParams()
-                    ];
+                    };
                 }
 
 
@@ -514,19 +514,19 @@ namespace ElectricalProgressive
         // Добавляем класс для пула контекстов обработки
         private class NetworkProcessingContext
         {
-            public List<Consumer> LocalConsumers { get; } = [];
-            public List<Producer> LocalProducers { get; } = [];
-            public List<Accumulator> LocalAccums { get; } = [];
-            public List<EnergyPacket> LocalPackets { get; } = [];
+            public List<Consumer> LocalConsumers { get; } = new();
+            public List<Producer> LocalProducers { get; } = new();
+            public List<Accumulator> LocalAccums { get; } = new();
+            public List<EnergyPacket> LocalPackets { get; } = new();
 
-            public List<BlockPos> ConsumerPositions { get; } = [];
-            public List<float> ConsumerRequests { get; } = [];
-            public List<BlockPos> ProducerPositions { get; } = [];
-            public List<float> ProducerGive { get; } = [];
-            public List<BlockPos> Consumer2Positions { get; } = [];
-            public List<float> Consumer2Requests { get; } = [];
-            public List<BlockPos> Producer2Positions { get; } = [];
-            public List<float> Producer2Give { get; } = [];
+            public List<BlockPos> ConsumerPositions { get; } = new();
+            public List<float> ConsumerRequests { get; } = new();
+            public List<BlockPos> ProducerPositions { get; } = new();
+            public List<float> ProducerGive { get; } = new();
+            public List<BlockPos> Consumer2Positions { get; } = new();
+            public List<float> Consumer2Requests { get; } = new();
+            public List<BlockPos> Producer2Positions { get; } = new();
+            public List<float> Producer2Give { get; } = new();
 
             public Simulation Sim { get; } = new();
             public Simulation Sim2 { get; } = new();
@@ -549,7 +549,7 @@ namespace ElectricalProgressive
         }
 
         // Добавляем пул контекстов
-        private readonly ConcurrentBag<NetworkProcessingContext> _contextPool = [];
+        private readonly ConcurrentBag<NetworkProcessingContext> _contextPool = new();
 
         // Метод для получения контекста из пула
         private NetworkProcessingContext GetContext()
@@ -1074,7 +1074,7 @@ namespace ElectricalProgressive
                 if (Parts.TryGetValue(pos, out var partValue))
                 {
                     if (partValue.packets == null)
-                        partValue.packets = [];
+                        partValue.packets = new();
                     else
                     {
                         partValue.packets.Add(packet);
@@ -1437,7 +1437,7 @@ namespace ElectricalProgressive
         {
             var networksByFace = new[]
             {
-                [], [], [], [], [],
+                new(), new(), new(), new(), new(),
             new HashSet<Network>()
             };
 
@@ -1582,15 +1582,15 @@ namespace ElectricalProgressive
                 var i = 0;
                 if (part.eparams == null)
                 {
-                    part.eparams =
-                    [
+                    part.eparams = new EParams[]
+                    {
                         new EParams(),
                         new EParams(),
                         new EParams(),
                         new EParams(),
                         new EParams(),
                         new EParams()
-                    ];
+                    };
                 }
 
                 foreach (var ams in part.eparams)

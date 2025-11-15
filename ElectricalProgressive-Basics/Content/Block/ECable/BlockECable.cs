@@ -743,12 +743,12 @@ namespace ElectricalProgressive.Content.Block.ECable
 
                 // Define subfaces for each face (rotations in degrees, translations)
                 ProcessFace(Facing.NorthAll,
-                [
+                new []{
                     (Facing.NorthEast, 90f, 270f, 0f, new Vec3f(0.5f, 0f, 0f)),
                     (Facing.NorthWest, 90f, 90f, 0f, new Vec3f(-0.5f, 0f, 0f)),
                     (Facing.NorthUp, 90f, 0f, 0f, new Vec3f(0f, 0.5f, 0f)),
                     (Facing.NorthDown, 90f, 180f, 0f, new Vec3f(0f, -0.5f, 0f))
-                ], 90f, 0f, 0f);
+                }, 90f, 0f, 0f);
 
                 ProcessFace(Facing.EastAll, new (Facing, float, float, float, Vec3f)[]
                 {

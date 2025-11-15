@@ -199,8 +199,8 @@ namespace ElectricalProgressive.Content.Block.ESFonar
 
             // Получаем блок только один раз
             var burnedBlock = Api.World.GetBlock(Block.CodeWithVariants(
-                [heightType, formatType, stateType],
-                [heightStr, format, burnedVariant]
+                new[]{heightType, formatType, stateType},
+                new[]{heightStr, format, burnedVariant}
             ));
 
             Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);

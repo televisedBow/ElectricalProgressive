@@ -76,9 +76,8 @@ public class BlockEHorn : BlockEBase
                                 BlockEntityEHorn { Contents: not null } bef)
                             {
                                 return
-                                [
-                                    bef.Contents
-                                ];
+                                new[]{bef.Contents
+                                };
                             }
 
                             return null;
@@ -123,7 +122,7 @@ public class BlockEHorn : BlockEBase
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
-        return [OnPickBlock(world, pos)];
+        return new[] { OnPickBlock(world, pos) };
     }
 
     public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)

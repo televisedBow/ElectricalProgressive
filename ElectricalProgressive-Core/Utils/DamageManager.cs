@@ -60,7 +60,7 @@ namespace ElectricalProgressive.Utils
             public long Timestamp;
         }
 
-        private static readonly Dictionary<(int X, int Z), CacheEntry> Cache = [];
+        private static readonly Dictionary<(int X, int Z), CacheEntry> Cache = new();
 
         // Последний момент, когда мы чистили кэш
         private static long _lastCleanup = Environment.TickCount;

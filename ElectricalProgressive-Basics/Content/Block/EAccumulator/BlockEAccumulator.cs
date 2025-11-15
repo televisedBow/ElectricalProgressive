@@ -102,7 +102,7 @@ public class BlockEAccumulator : BlockEBase, IEnergyStorageItem
             item.Attributes.SetInt("durability", (int)(maxDurability * be.GetBehavior<BEBehaviorEAccumulator>().GetCapacity() / maxEnergy));
         }
 
-        return [item];
+        return new ItemStack[]{item};
     }
 
     public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)

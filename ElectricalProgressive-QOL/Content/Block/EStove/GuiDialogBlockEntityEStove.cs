@@ -129,11 +129,11 @@ public class GuiDialogBlockEntityEStove : GuiDialogBlockEntity
             .EndIf()
             .AddDynamicText("", CairoFont.WhiteDetailText(),
                 fuelSlotBounds.RightCopy(17, 16).WithFixedSize(60, 30), "fueltemp")
-            .AddItemSlotGrid(Inventory, SendInvPacket, 1, [1], inputSlotBounds, "oreslot")
+            .AddItemSlotGrid(Inventory, SendInvPacket, 1, new[]{1}, inputSlotBounds, "oreslot")
             .AddDynamicText("", CairoFont.WhiteDetailText(),
                 inputSlotBounds.RightCopy(23, 16).WithFixedSize(60, 30), "oretemp")
 
-            .AddItemSlotGrid(Inventory, SendInvPacket, 1, [2], outputSlotBounds, "outputslot")
+            .AddItemSlotGrid(Inventory, SendInvPacket, 1, new[]{2}, outputSlotBounds, "outputslot")
             .EndChildElements()
             .Compose();
 

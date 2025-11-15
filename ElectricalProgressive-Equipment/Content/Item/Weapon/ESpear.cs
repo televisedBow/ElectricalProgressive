@@ -18,7 +18,7 @@ public class ESpear : Vintagestory.API.Common.Item
 {
     int consume;
     int lightstrike;
-    public SkillItem[] toolModes = [];
+    public SkillItem[] toolModes = new SkillItem[0];
 
     public override void OnLoaded(ICoreAPI api)
     {

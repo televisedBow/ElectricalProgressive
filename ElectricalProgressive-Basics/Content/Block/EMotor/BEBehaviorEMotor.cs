@@ -73,22 +73,22 @@ public class BEBehaviorEMotor : BEBehaviorMPBase, IElectricConsumer
     /// <summary>
     /// Заглушка. I_min , I_max, torque_max, kpd_max, speed_max, resistance_factor, base_resistance 
     /// </summary>
-    private static float[] def_Params => [10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F];
+    private static float[] def_Params => new float[]{10.0F, 100.0F, 0.5F, 0.75F, 0.5F, 0.1F, 0.05F};
     /// <summary>
     /// Сюда берем параметры из ассетов
     /// </summary>
-    private float[] Params = [0, 0, 0, 0, 0, 0, 0];
+    private float[] Params = {0, 0, 0, 0, 0, 0, 0};
 
 
-    private static readonly int[][] _axisSigns = new int[][]
-    {
-        [+0, +0, -1], // index 0
-        [-1, +0, +0], // index 1
-        [+0, +0, -1], // index 2
-        [-1, +0, +0], // index 3
-        [+0, -1, +0], // index 4
-        [+0, +1, +0] // index 5
-    };
+    private static readonly int[][] _axisSigns =
+        new int[][]{
+            new int[3]{+0, +0, -1}, // index 0
+            new int[3]{-1, +0, +0}, // index 1
+            new int[3] { + 0, + 0, + 0 }, // index 2
+            new int[3] { -1, + 0, + 0 }, // index 3
+            new int[3] { + 0, + 0, -1 }, // index 4
+            new int[3] { + 0, + 0, + 1 } // index 5
+        };
 
 
     private bool IsBurned => Block.Variant["type"] == "burned";

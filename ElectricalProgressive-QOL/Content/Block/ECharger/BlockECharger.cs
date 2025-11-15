@@ -97,7 +97,7 @@ public class BlockECharger : BlockEBase
 
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier = 1)
     {
-        return [OnPickBlock(world, pos)];
+        return new []{OnPickBlock(world, pos)};
     }
 
     /// <summary>

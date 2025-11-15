@@ -63,7 +63,7 @@ class GuiEFreezer2 : GuiDialogBlockEntity
             .AddShadedDialogBG(bgBounds)
             .AddDialogTitleBar(DialogTitle, OnTitleBarClose)
             .BeginChildElements(bgBounds)
-            .AddItemSlotGrid(Inventory, SendInvPacket, 2, [0, 1, 2, 3, 4, 5], slotsBounds)
+            .AddItemSlotGrid(Inventory, SendInvPacket, 2, new[]{0, 1, 2, 3, 4, 5}, slotsBounds)
             .EndChildElements()
             .Compose();
 

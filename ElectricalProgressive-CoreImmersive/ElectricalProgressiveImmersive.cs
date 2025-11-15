@@ -22,7 +22,7 @@ using static ElectricalProgressiveImmersive.ElectricalProgressiveImmersive;
     Website = "https://github.com/tehtelev/ElectricalProgressiveImmersive",
     Description = "Electrical logic library.",
     Version = "2.6.2",
-    Authors = ["Tehtelev", "Kotl"]
+    Authors = new string[]{"Tehtelev", "Kotl"}
 )]
 
 
@@ -31,13 +31,13 @@ namespace ElectricalProgressiveImmersive
 {
     public class ElectricalProgressiveImmersive : ModSystem
     {
-        public readonly HashSet<Network> Networks = [];
+        public readonly HashSet<Network> Networks = new();
         public readonly Dictionary<BlockPos, NetworkPart> Parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
 
         private Dictionary<BlockPos, List<EnergyPacket>> _packetsByPosition = new(new BlockPosComparer()); //Словарь для хранения пакетов по позициям
 
 
-        private readonly List<EnergyPacket> _globalEnergyPackets = []; // Глобальный список пакетов энергии
+        private readonly List<EnergyPacket> _globalEnergyPackets = new(); // Глобальный список пакетов энергии
 
         private AsyncPathFinder _asyncPathFinder = null!;
 

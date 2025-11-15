@@ -176,7 +176,7 @@ public class BlockEFuelGenerator : BlockEBase
     public override ItemStack[] GetDrops(IWorldAccessor world, BlockPos pos, IPlayer byPlayer,
         float dropQuantityMultiplier = 1)
     {
-        return [OnPickBlock(world, pos)];
+        return new ItemStack[] { OnPickBlock(world, pos) };
     }
 
 

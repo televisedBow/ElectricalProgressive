@@ -55,7 +55,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
     /// Коэффициенты КПД в зависимости от высоты пластин
     /// </summary>
     public static readonly float[] KpdPerHeight =
-    [
+    new[]{
         0.15F, // 1-й 
         0.14F, // 2-й 
         0.13F, // 3-й 
@@ -66,7 +66,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         0.07F, // 8-й 
         0.06F, // 9-й 
         0.05F  // 10-й 
-    ];
+    };
 
     /// <summary>
     /// Максимальная температура топлива

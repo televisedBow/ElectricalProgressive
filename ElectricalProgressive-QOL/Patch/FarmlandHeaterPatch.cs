@@ -370,17 +370,17 @@ public class FarmlandHeaterPatch
                 while (j < codes.Count - 5)
                 {
                     // Ищем temp += 5
-                    if (codes[j].opcode == OpCodes.Ldloc_1 &&
+                    if (codes[j].opcode == OpCodes.Ldloc_0 &&
                         codes[j + 1].opcode == OpCodes.Ldc_R4 &&
                         (float)codes[j + 1].operand > 0f &&
                         codes[j + 2].opcode == OpCodes.Add &&
-                        codes[j + 3].opcode == OpCodes.Stloc_1)
+                        codes[j + 3].opcode == OpCodes.Stloc_0)
                     {
                         // Вставляем вызов HeaterBonusBeehive после temp += 5
                         var newCodes = new List<CodeInstruction>();
 
                         // Загружаем temp в стек
-                        newCodes.Add(new CodeInstruction(OpCodes.Ldloc_1, codes[j].operand));
+                        newCodes.Add(new CodeInstruction(OpCodes.Ldloc_0, codes[j].operand));
 
                         // Вызываем HeaterBonusBeehive
                         newCodes.Add(new CodeInstruction(OpCodes.Ldarg_0)); // this
@@ -390,7 +390,7 @@ public class FarmlandHeaterPatch
                         newCodes.Add(new CodeInstruction(OpCodes.Add));
 
                         // Сохраняем обратно в temp
-                        newCodes.Add(new CodeInstruction(OpCodes.Stloc_1, codes[j + 3].operand));
+                        newCodes.Add(new CodeInstruction(OpCodes.Stloc_0, codes[j + 3].operand));
 
                         // Вставляем новые инструкции
                         codes.InsertRange(j + 4, newCodes);

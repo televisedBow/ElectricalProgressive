@@ -55,7 +55,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         {
             var result = ElectricalProgressiveQOL.methodGetCookingTimeMultiplier?.Invoke(
                 null,
-                [(BlockEntity)this]
+                new Object?[]{(BlockEntity)this}
             );
 
             if (result is float multiplier)
@@ -581,7 +581,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
                 {
                     var result = ElectricalProgressiveQOL.methodGetCookingTimeMultiplier?.Invoke(
                         null,
-                        [(BlockEntity)this]
+                        new Object?[]{(BlockEntity)this}
                     );
 
                     if (result is float multiplier)
