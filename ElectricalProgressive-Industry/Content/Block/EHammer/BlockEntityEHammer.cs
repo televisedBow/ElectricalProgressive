@@ -438,7 +438,11 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             if (recipe.Matches(inputSlots, out _))
             {
                 currentRecipe = recipe;
-                currentRecipeName = recipe.Output.ResolvedItemstack.GetName();
+                // Берем название из первого выхода рецепта
+                if (recipe.Outputs.Length > 0 && recipe.Outputs[0].ResolvedItemstack != null)
+                {
+                    currentRecipeName = recipe.Outputs[0].ResolvedItemstack.GetName();
+                }
                 return true;
             }
         }
@@ -523,30 +527,44 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
     /// </summary>
     private void ProcessCompletedCraft()
     {
-        if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null)
+        if (CurrentRecipe == null || Api == null || CurrentRecipe.Outputs == null || CurrentRecipe.Outputs.Length == 0)
         {
             return;
         }
 
         try
         {
-            // Обработка основного выхода
-            var outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
-
-            outputItem.Collectible.SetTemperature(this.Api.World, outputItem, _maxTargetTemp);
-
-            TryMergeOrSpawn(outputItem, OutputSlot);
-
-            // Обработка дополнительного выхода с шансом
-            if (CurrentRecipe.SecondaryOutput != null &&
-                CurrentRecipe.SecondaryOutput.ResolvedItemstack != null &&
-                Api.World.Rand.NextDouble() < CurrentRecipe.SecondaryOutputChance)
+            // Обработка всех выходов рецепта
+            for (int i = 0; i < CurrentRecipe.Outputs.Length; i++)
             {
-                var secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
+                var output = CurrentRecipe.Outputs[i];
 
-                secondaryOutput.Collectible.SetTemperature(this.Api.World, secondaryOutput, _maxTargetTemp);
+                // Проверяем шанс для каждого выхода
+                if (Api.World.Rand.NextDouble() > output.Chance)
+                    continue;
 
-                TryMergeOrSpawn(secondaryOutput, SecondaryOutputSlot);
+                var outputItem = output.ResolvedItemstack?.Clone();
+                if (outputItem == null)
+                    continue;
+
+                outputItem.Collectible.SetTemperature(this.Api.World, outputItem, _maxTargetTemp);
+
+                // Распределяем выходы по слотам
+                if (i == 0)
+                {
+                    // Первый выход - основной слот
+                    TryMergeOrSpawn(outputItem, OutputSlot);
+                }
+                else if (i == 1)
+                {
+                    // Второй выход - дополнительный слот
+                    TryMergeOrSpawn(outputItem, SecondaryOutputSlot);
+                }
+                else
+                {
+                    // Остальные выходы спавним в мире
+                    Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+                }
             }
 
             // Извлекаем ингредиенты
@@ -558,6 +576,8 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             Api?.Logger.Error($"Ошибка в обработке крафта: {ex}");
         }
     }
+
+
 
     /// <summary>
     /// Попытка сложить в слот или заспавнить в мир
@@ -571,7 +591,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
             targetSlot.Itemstack = stack;
         }
         else if (targetSlot.Itemstack.Collectible == stack.Collectible &&
-                targetSlot.Itemstack.StackSize < targetSlot.Itemstack.Collectible.MaxStackSize)
+                 targetSlot.Itemstack.StackSize < targetSlot.Itemstack.Collectible.MaxStackSize)
         {
             var freeSpace = targetSlot.Itemstack.Collectible.MaxStackSize - targetSlot.Itemstack.StackSize;
             var toAdd = Math.Min(freeSpace, stack.StackSize);
@@ -600,6 +620,7 @@ public class BlockEntityEHammer : BlockEntityGenericTypedContainer, ITexPosition
         }
         targetSlot.MarkDirty();
     }
+
 
     /// <summary>
     /// Старт анимации

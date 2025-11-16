@@ -116,20 +116,26 @@ namespace ElectricalProgressive.Content.Block.EDrawing
         public static bool FindMatchingRecipe(ref DrawingRecipe currentRecipe, ref string currentRecipeName, InventoryDrawing inventory)
         {
             currentRecipe = null;
-            currentRecipeName = string.Empty;   
+            currentRecipeName = string.Empty;
 
             foreach (var recipe in ElectricalProgressiveRecipeManager.DrawingRecipes)
             {
                 if (MatchesRecipe(recipe, inventory))
                 {
                     currentRecipe = recipe;
-                    currentRecipeName = recipe.Output.ResolvedItemstack?.GetName() ?? "Unknown";
+                    // Берем название из первого выхода
+                    if (recipe.Outputs != null && recipe.Outputs.Length > 0)
+                    {
+                        currentRecipeName = recipe.Outputs[0].ResolvedItemstack?.GetName() ?? "Unknown";
+                    }
                     return true;
                 }
             }
 
             return false;
         }
+
+
 
         private static bool MatchesRecipe(DrawingRecipe recipe, InventoryDrawing inventory)
         {
@@ -173,6 +179,8 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             return true;
         }
 
+
+
         private bool HasRequiredItems()
         {
             if (CurrentRecipe == null) return false;
@@ -200,18 +208,37 @@ namespace ElectricalProgressive.Content.Block.EDrawing
 
         private void ProcessCompletedCraft()
         {
-            if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null)
+            if (CurrentRecipe == null || Api == null || CurrentRecipe.Outputs == null || CurrentRecipe.Outputs.Length == 0)
                 return;
 
             try
             {
                 var usedSlots = new List<int>();
 
-                // Обработка основного выхода
-                var outputStack1 = CurrentRecipe.Output.ResolvedItemstack.Clone();
-                TryMergeOrSpawn(outputStack1, OutputSlot1);
+                // Обработка всех выходов рецепта
+                foreach (var output in CurrentRecipe.Outputs)
+                {
+                    // Проверяем шанс выпадения
+                    if (output.Chance < 1.0f && Api.World.Rand.NextDouble() > output.Chance)
+                    {
+                        continue; // Пропускаем этот выход если не выпал
+                    }
 
-                
+                    // Создаем копию выходного предмета
+                    var outputStack = output.ResolvedItemstack?.Clone();
+                    if (outputStack == null) continue;
+
+                    // Пытаемся разместить в первом выходном слоте
+                    if (!TryMergeToOutputSlot(outputStack, OutputSlot1))
+                    {
+                        // Если не поместилось в первый слот, пробуем второй
+                        if (!TryMergeToOutputSlot(outputStack, OutputSlot1))
+                        {
+                            // Если все слоты заняты, выбрасываем в мир
+                            Api.World.SpawnItemEntity(outputStack, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+                        }
+                    }
+                }
 
                 // Удаляем расходуемые ингредиенты
                 foreach (var ingred in CurrentRecipe.Ingredients)
@@ -239,14 +266,16 @@ namespace ElectricalProgressive.Content.Block.EDrawing
             }
         }
 
-        private void TryMergeOrSpawn(ItemStack stack, ItemSlot targetSlot)
+        private bool TryMergeToOutputSlot(ItemStack stack, ItemSlot targetSlot)
         {
             if (targetSlot.Empty)
             {
                 targetSlot.Itemstack = stack;
+                targetSlot.MarkDirty();
+                return true;
             }
             else if (targetSlot.Itemstack.Collectible == stack.Collectible &&
-                    targetSlot.Itemstack.StackSize < targetSlot.Itemstack.Collectible.MaxStackSize)
+                     targetSlot.Itemstack.StackSize < targetSlot.Itemstack.Collectible.MaxStackSize)
             {
                 var freeSpace = targetSlot.Itemstack.Collectible.MaxStackSize - targetSlot.Itemstack.StackSize;
                 var toAdd = Math.Min(freeSpace, stack.StackSize);
@@ -254,16 +283,11 @@ namespace ElectricalProgressive.Content.Block.EDrawing
                 targetSlot.Itemstack.StackSize += toAdd;
                 stack.StackSize -= toAdd;
 
-                if (stack.StackSize > 0)
-                {
-                    Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
-                }
+                targetSlot.MarkDirty();
+                return stack.StackSize == 0; // Возвращаем true если весь стек поместился
             }
-            else
-            {
-                Api.World.SpawnItemEntity(stack, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
-            }
-            targetSlot.MarkDirty();
+
+            return false; // Не удалось поместить
         }
 
         private ItemSlot GetInputSlot(int index) => index switch

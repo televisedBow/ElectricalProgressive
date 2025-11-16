@@ -26,7 +26,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         api.Event.SaveGameLoaded += PressRecipe;
         api.Event.SaveGameLoaded += DrawingRecipe;
 
-        machines = new Dictionary<string, (string code, IEnumerable<dynamic> recipes)>(3);
+        machines = new Dictionary<string, (string code, IEnumerable<dynamic> recipes)>(4);
     }
 
     /// <summary>
@@ -54,7 +54,6 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         machines.Add("ehammer-", ("electricalprogressiveindustry:ehammer-north", ElectricalProgressiveRecipeManager.HammerRecipes));
     }
 
-
     /// <summary>
     /// Загружает рецепты для электрического пресса из JSON-файлов.
     /// </summary>
@@ -66,7 +65,6 @@ public class ElectricalProgressiveRecipeManager : ModSystem
 
         machines.Add("epress-", ("electricalprogressiveindustry:epress-north", ElectricalProgressiveRecipeManager.PressRecipes));
     }
-
 
     /// <summary>
     /// Загружает рецепты для волочильного станка из JSON-файлов.
@@ -80,7 +78,6 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         machines.Add("edrawing-", ("electricalprogressiveindustry:edrawing-north", ElectricalProgressiveRecipeManager.DrawingRecipes));
     }
 
-
     /// <summary>
     /// Загружает рецепты из JSON-файлов и регистрирует их с помощью указанного метода.
     /// </summary>
@@ -88,7 +85,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     /// <param name="name"></param>
     /// <param name="path"></param>
     /// <param name="RegisterMethod"></param>
-    public void LoadRecipes<T>(string name, string path, Action<T> RegisterMethod) where T : IRecipeBase<T>
+    public void LoadRecipes<T>(string name, string path, Action<T> RegisterMethod) where T : IRecipeMulty<T>
     {
         var many = this.api.Assets.GetMany<JToken>(this.api.Server.Logger, path);
         var num = 0;
@@ -113,7 +110,6 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         this.api.World.Logger.Event("{0} {1}s loaded{2}", (object)quantityRegistered, (object)name, quantityIgnored > 0 ? (object)string.Format(" ({0} could not be resolved)", (object)quantityIgnored) : (object)"");
     }
 
-
     /// <summary>
     /// Загружает и регистрирует рецепты с поддержкой подстановочных знаков.
     /// </summary>
@@ -131,7 +127,7 @@ public class ElectricalProgressiveRecipeManager : ModSystem
         Action<T> RegisterMethod,
         ref int quantityRegistered,
         ref int quantityIgnored)
-        where T : IRecipeBase<T>
+        where T : IRecipeMulty<T>
     {
         if (!recipe.Enabled)
             return;
@@ -173,19 +169,15 @@ public class ElectricalProgressiveRecipeManager : ModSystem
                                 ingredient.Code = ingredient.Code.CopyWithPath(ingredient.Code.Path.Replace("*", strArray[index % strArray.Length]));
                         }
                     }
-                    obj2.Output.FillPlaceHolder(keyValuePair.Key, strArray[index % strArray.Length]);
 
-                    // Обработка SecondaryOutput только для двух выходов
-                    if (obj2 is HammerRecipe hammerRecipe)
+                    // Обработка всех выходов для подстановки wildcards
+                    if (obj2.Outputs != null)
                     {
-                        hammerRecipe.SecondaryOutput?.FillPlaceHolder(keyValuePair.Key, strArray[index % strArray.Length]);
+                        foreach (var output in obj2.Outputs)
+                        {
+                            output.FillPlaceHolder(keyValuePair.Key, strArray[index % strArray.Length]);
+                        }
                     }
-
-                    if (obj2 is PressRecipe pressRecipe)
-                    {
-                        pressRecipe.SecondaryOutput?.FillPlaceHolder(keyValuePair.Key, strArray[index % strArray.Length]);
-                    }
-
                 }
                 flag2 = false;
             }
@@ -225,15 +217,16 @@ public class ElectricalProgressiveRecipeManager : ModSystem
     {
         base.Dispose();
 
-
         CentrifugeRecipes?.Clear();
         HammerRecipes?.Clear();
         PressRecipes?.Clear();
+        DrawingRecipes?.Clear();
         machines?.Clear();
+
         CentrifugeRecipes = null;
         HammerRecipes = null;
         PressRecipes = null;
+        DrawingRecipes = null;
         machines = null;
-
     }
 }

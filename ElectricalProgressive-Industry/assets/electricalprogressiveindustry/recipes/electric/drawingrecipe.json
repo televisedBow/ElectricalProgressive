@@ -26,11 +26,13 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "block",
-      "code": "electricalprogressivebasics:ecable-32v-{metal}-single-part",
-      "quantity": 16
-    }
+    "outputs": [
+      {
+        "type": "block",
+        "code": "electricalprogressivebasics:ecable-32v-{metal}-single-part",
+        "stackSize": 16
+      }
+    ]
   },
   {
     "code": "ecable-128v",
@@ -59,10 +61,12 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "block",
-      "code": "electricalprogressivebasics:ecable-128v-{metal}-single-part",
-      "quantity": 8
-    }
+    "outputs": [
+      {
+        "type": "block",
+        "code": "electricalprogressivebasics:ecable-128v-{metal}-single-part",
+        "stackSize": 8
+      }
+    ]
   }
 ]

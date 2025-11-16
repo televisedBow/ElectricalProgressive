@@ -349,6 +349,7 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         #region Логика рецептов
 
+
         public static bool FindMatchingRecipe(ref PressRecipe currentRecipe, ref string currentRecipeName, InventoryPress inventory)
         {
             currentRecipe = null;
@@ -359,7 +360,11 @@ namespace ElectricalProgressive.Content.Block.EPress
                 if (MatchesRecipe(recipe, inventory))
                 {
                     currentRecipe = recipe;
-                    currentRecipeName = recipe.Output.ResolvedItemstack?.GetName() ?? "Unknown";
+                    // Берем название из первого выхода рецепта
+                    if (recipe.Outputs.Length > 0 && recipe.Outputs[0].ResolvedItemstack != null)
+                    {
+                        currentRecipeName = recipe.Outputs[0].ResolvedItemstack.GetName();
+                    }
                     return true;
                 }
             }
@@ -436,24 +441,42 @@ namespace ElectricalProgressive.Content.Block.EPress
 
         private void ProcessCompletedCraft()
         {
-            if (CurrentRecipe == null || Api == null || CurrentRecipe.Output?.ResolvedItemstack == null)
+            if (CurrentRecipe == null || Api == null || CurrentRecipe.Outputs == null || CurrentRecipe.Outputs.Length == 0)
                 return;
 
             try
             {
                 var usedSlots = new List<int>();
 
-                // Обработка основного выхода
-                var outputStack1 = CurrentRecipe.Output.ResolvedItemstack.Clone();
-                TryMergeOrSpawn(outputStack1, OutputSlot1);
-
-                // Обработка дополнительного выхода с шансом
-                if (CurrentRecipe.SecondaryOutput != null &&
-                    CurrentRecipe.SecondaryOutput.ResolvedItemstack != null &&
-                    Api.World.Rand.NextDouble() < CurrentRecipe.SecondaryOutputChance)
+                // Обработка всех выходов рецепта
+                for (int i = 0; i < CurrentRecipe.Outputs.Length; i++)
                 {
-                    var secondaryOutput = CurrentRecipe.SecondaryOutput.ResolvedItemstack.Clone();
-                    TryMergeOrSpawn(secondaryOutput, OutputSlot2);
+                    var output = CurrentRecipe.Outputs[i];
+
+                    // Проверяем шанс для каждого выхода
+                    if (Api.World.Rand.NextDouble() > output.Chance)
+                        continue;
+
+                    var outputItem = output.ResolvedItemstack?.Clone();
+                    if (outputItem == null)
+                        continue;
+
+                    // Распределяем выходы по слотам
+                    if (i == 0)
+                    {
+                        // Первый выход - основной слот
+                        TryMergeOrSpawn(outputItem, OutputSlot1);
+                    }
+                    else if (i == 1)
+                    {
+                        // Второй выход - дополнительный слот
+                        TryMergeOrSpawn(outputItem, OutputSlot2);
+                    }
+                    else
+                    {
+                        // Остальные выходы спавним в мире
+                        Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+                    }
                 }
 
                 // Удаляем расходуемые ингредиенты
@@ -515,6 +538,7 @@ namespace ElectricalProgressive.Content.Block.EPress
             1 => InputSlot2,
             _ => throw new ArgumentOutOfRangeException()
         };
+
         #endregion
 
         #region Основной цикл работы

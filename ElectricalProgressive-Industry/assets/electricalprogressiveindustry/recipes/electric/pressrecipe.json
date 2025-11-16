@@ -16,17 +16,19 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:hammerhead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 1
-    },
-    "secondaryOutputChance": 0.5
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:hammerhead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 1,
+        "chance": 0.5
+      }
+    ]
   },
   {
     "code": "axe",
@@ -45,17 +47,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:axehead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 2
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:axehead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 2
+      }
+    ]
   },
   {
     "code": "pickaxe",
@@ -74,17 +77,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:pickaxehead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 8
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:pickaxehead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 8
+      }
+    ]
   },
   {
     "code": "shovel",
@@ -103,17 +107,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:shovelhead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 2
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:shovelhead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 2
+      }
+    ]
   },
   {
     "code": "falx",
@@ -132,17 +137,19 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:bladehead-falx-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 1
-    },
-    "secondaryOutputChance": 0.5
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:bladehead-falx-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 1,
+        "chance": 0.5
+      }
+    ]
   },
   {
     "code": "hoe",
@@ -161,17 +168,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:hoehead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 3
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:hoehead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 3
+      }
+    ]
   },
   {
     "code": "prospectingpick",
@@ -190,19 +198,19 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:prospectingpickhead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 12
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:prospectingpickhead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 12
+      }
+    ]
   },
-
   {
     "code": "hammerplate",
     "energyOperation": 8000,
@@ -220,17 +228,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:hammerhead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 19
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:hammerhead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 19
+      }
+    ]
   },
   {
     "code": "axeplate",
@@ -249,17 +258,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:axehead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 20
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:axehead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 20
+      }
+    ]
   },
   {
     "code": "pickaxeplate",
@@ -278,17 +288,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:pickaxehead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 27
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:pickaxehead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 27
+      }
+    ]
   },
   {
     "code": "shovelplate",
@@ -307,17 +318,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:shovelhead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 21
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:shovelhead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 21
+      }
+    ]
   },
   {
     "code": "falxplate",
@@ -336,17 +348,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:bladehead-falx-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 19
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:bladehead-falx-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 19
+      }
+    ]
   },
   {
     "code": "hoeplate",
@@ -365,17 +378,18 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:hoehead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 21
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:hoehead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 21
+      }
+    ]
   },
   {
     "code": "prospectingpickplate",
@@ -394,16 +408,17 @@
         "quantity": 0
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:prospectingpickhead-{metal}",
-      "stacksize": 1
-    },
-    "secondaryOutput": {
-      "type": "item",
-      "code": "game:metalbit-{metal}",
-      "stackSize": 30
-    },
-    "secondaryOutputChance": 1
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:prospectingpickhead-{metal}",
+        "stackSize": 1
+      },
+      {
+        "type": "item",
+        "code": "game:metalbit-{metal}",
+        "stackSize": 30
+      }
+    ]
   }
 ]

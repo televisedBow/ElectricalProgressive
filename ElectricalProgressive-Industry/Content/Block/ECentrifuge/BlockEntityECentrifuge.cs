@@ -148,8 +148,11 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
             if (recipe.Matches(inputSlots, out _))
             {
                 currentRecipe = recipe;
-                currentRecipeName = recipe.Output.ResolvedItemstack.GetName();
-                //MarkDirty(true);
+                // Берем название из первого выхода
+                if (recipe.Outputs != null && recipe.Outputs.Length > 0)
+                {
+                    currentRecipeName = recipe.Outputs[0].ResolvedItemstack?.GetName() ?? "Unknown";
+                }
                 return true;
             }
         }
@@ -177,7 +180,7 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
                     if (prop.TransitionedStack.Code.Path == "rot") // гниль?
                     {
                         // здесь считаем входные и выходные количества
-                        coeff = Math.Ceiling(8.0f / (prop.TransitionedStack.StackSize* prop.TransitionRatio));
+                        coeff = Math.Ceiling(8.0f / (prop.TransitionedStack.StackSize * prop.TransitionRatio));
                         inputSize = (int)coeff;
                         if (coeff < 1)
                         {
@@ -189,22 +192,26 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
                         continue;
                     }
 
-
-
                     foreach (var recipe in ElectricalProgressiveRecipeManager.CentrifugeRecipes)
                     {
                         if (recipe.Code == "default_perish" && inputSlot.StackSize >= inputSize) // нашли универсальный шаблон для гниения
                         {
-                            recipe.Ingredients[0].Quantity=inputSize;
-                            recipe.Output.StackSize = outputSize;
+                            recipe.Ingredients[0].Quantity = inputSize;
+                            // Обновляем размер стека для первого выхода
+                            if (recipe.Outputs != null && recipe.Outputs.Length > 0)
+                            {
+                                recipe.Outputs[0].StackSize = outputSize;
+                            }
 
                             currentRecipe = recipe;
-                            currentRecipeName = recipe.Output.ResolvedItemstack.GetName();
+                            // Берем название из первого выхода
+                            if (recipe.Outputs != null && recipe.Outputs.Length > 0)
+                            {
+                                currentRecipeName = recipe.Outputs[0].ResolvedItemstack?.GetName() ?? "Unknown";
+                            }
                             return true;
                         }
                     }
-
-
                 }
             }
         }
@@ -299,53 +306,65 @@ public class BlockEntityECentrifuge : BlockEntityGenericTypedContainer
         // Проверяем наличие рецепта и API
         if (CurrentRecipe == null
             || Api == null
-            || CurrentRecipe.Output?.ResolvedItemstack == null)
+            || CurrentRecipe.Outputs == null
+            || CurrentRecipe.Outputs.Length == 0)
         {
             return;
         }
-
+   
         try
         {
-            // Создаем копию выходного предмета
-            var outputItem = CurrentRecipe.Output.ResolvedItemstack.Clone();
-
-            // Проверяем ингредиенты и слоты
-            if (CurrentRecipe.Ingredients == null || CurrentRecipe.Ingredients.Length == 0 || InputSlot == null)
+            // Обрабатываем все выходы рецепта
+            foreach (var output in CurrentRecipe.Outputs)
             {
-                Api.Logger.Error("Ошибка в рецепте: отсутствуют ингредиенты или входной слот");
-                return;
-            }
+                // Проверяем шанс выпадения
+                if (output.Chance < 1.0f && Api.World.Rand.NextDouble() > output.Chance)
+                {
+                    continue; // Пропускаем этот выход если не выпал
+                }
 
-            // Обработка выходного слота
-            if (OutputSlot == null)
-            {
-                Api.Logger.Error("Ошибка: выходной слот не существует");
-                return;
-            }
+                // Создаем копию выходного предмета
+                var outputItem = output.ResolvedItemstack?.Clone();
+                if (outputItem == null) continue;
 
-            if (OutputSlot.Empty)
-            {
-                OutputSlot.Itemstack = outputItem;
-            }
-            else if (OutputSlot.Itemstack != null &&
-                    outputItem.Collectible != null &&
-                    OutputSlot.Itemstack.Collectible == outputItem.Collectible &&
-                    OutputSlot.Itemstack.StackSize < OutputSlot.Itemstack.Collectible.MaxStackSize)
-            {
-                var freeSpace = OutputSlot.Itemstack.Collectible.MaxStackSize - OutputSlot.Itemstack.StackSize;
-                var toAdd = Math.Min(freeSpace, outputItem.StackSize);
+                // Проверяем ингредиенты и слоты
+                if (CurrentRecipe.Ingredients == null || CurrentRecipe.Ingredients.Length == 0 || InputSlot == null)
+                {
+                    Api.Logger.Error("Ошибка в рецепте: отсутствуют ингредиенты или входной слот");
+                    return;
+                }
 
-                OutputSlot.Itemstack.StackSize += toAdd;
-                outputItem.StackSize -= toAdd;
+                // Обработка выходного слота
+                if (OutputSlot == null)
+                {
+                    Api.Logger.Error("Ошибка: выходной слот не существует");
+                    return;
+                }
 
-                if (outputItem.StackSize > 0)
+                if (OutputSlot.Empty)
+                {
+                    OutputSlot.Itemstack = outputItem;
+                }
+                else if (OutputSlot.Itemstack != null &&
+                        outputItem.Collectible != null &&
+                        OutputSlot.Itemstack.Collectible == outputItem.Collectible &&
+                        OutputSlot.Itemstack.StackSize < OutputSlot.Itemstack.Collectible.MaxStackSize)
+                {
+                    var freeSpace = OutputSlot.Itemstack.Collectible.MaxStackSize - OutputSlot.Itemstack.StackSize;
+                    var toAdd = Math.Min(freeSpace, outputItem.StackSize);
+
+                    OutputSlot.Itemstack.StackSize += toAdd;
+                    outputItem.StackSize -= toAdd;
+
+                    if (outputItem.StackSize > 0)
+                    {
+                        Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
+                    }
+                }
+                else
                 {
                     Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
                 }
-            }
-            else
-            {
-                Api.World.SpawnItemEntity(outputItem, Pos.ToVec3d().Add(0.5, 0.5, 0.5));
             }
 
             // Извлекаем ингредиенты из входного слота

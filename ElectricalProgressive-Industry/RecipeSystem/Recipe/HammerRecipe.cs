@@ -2,235 +2,234 @@
 using System.IO;
 using Vintagestory.API.Common;
 using Vintagestory.API.Util;
+using Newtonsoft.Json;
 
-namespace ElectricalProgressive.RecipeSystem.Recipe;
-
-public class HammerRecipe : IByteSerializable, IRecipeBase<HammerRecipe>
+namespace ElectricalProgressive.RecipeSystem.Recipe
 {
-    public string Code;
-    public double EnergyOperation;
-    public AssetLocation Name { get; set; }
-    public bool Enabled { get; set; } = true;
-    
-    IRecipeIngredient[] IRecipeBase<HammerRecipe>.Ingredients => Ingredients;
-    IRecipeOutput IRecipeBase<HammerRecipe>.Output => Output;
-    
-    public CraftingRecipeIngredient[] Ingredients;
-    public JsonItemStack Output;
-    
-    // Новые поля для второго выхода
-    public JsonItemStack SecondaryOutput;
-    public float SecondaryOutputChance = 0f; // Шанс в диапазоне 0-1 (0-100%)
-
-    public HammerRecipe Clone()
+    public class HammerRecipe : IByteSerializable, IRecipeMulty<HammerRecipe>
     {
-        var ingredients = new CraftingRecipeIngredient[Ingredients.Length];
-        for (var i = 0; i < Ingredients.Length; i++)
+        public string Code;
+        public double EnergyOperation;
+        public AssetLocation Name { get; set; }
+        public bool Enabled { get; set; } = true;
+
+        IRecipeIngredient[] IRecipeMulty<HammerRecipe>.Ingredients => Ingredients;
+        IRecipeOutput[] IRecipeMulty<HammerRecipe>.Outputs => Outputs;
+
+        public CraftingRecipeIngredient[] Ingredients;
+
+        // Заменяем одиночный Output на массив Outputs
+        [JsonProperty]
+        public RecipeOutput[] Outputs;
+
+        public HammerRecipe Clone()
         {
-            ingredients[i] = Ingredients[i].Clone();
+            var ingredients = new CraftingRecipeIngredient[Ingredients.Length];
+            for (var i = 0; i < Ingredients.Length; i++)
+            {
+                ingredients[i] = Ingredients[i].Clone();
+            }
+
+            var outputs = new RecipeOutput[Outputs.Length];
+            for (var i = 0; i < Outputs.Length; i++)
+            {
+                outputs[i] = Outputs[i].Clone();
+            }
+
+            return new HammerRecipe()
+            {
+                EnergyOperation = EnergyOperation,
+                Outputs = outputs,
+                Code = Code,
+                Enabled = Enabled,
+                Name = Name,
+                Ingredients = ingredients
+            };
         }
 
-        return new HammerRecipe()
+        public Dictionary<string, string[]> GetNameToCodeMapping(IWorldAccessor world)
         {
-            EnergyOperation = EnergyOperation,
-            Output = Output.Clone(),
-            SecondaryOutput = SecondaryOutput?.Clone(),
-            SecondaryOutputChance = SecondaryOutputChance,
-            Code = Code,
-            Enabled = Enabled,
-            Name = Name,
-            Ingredients = ingredients
-        };
-    }
+            Dictionary<string, string[]> mappings = new();
 
-    public Dictionary<string, string[]> GetNameToCodeMapping(IWorldAccessor world)
-    {
-        Dictionary<string, string[]> mappings = new();
+            if (Ingredients == null || Ingredients.Length == 0)
+                return mappings;
 
-        if (Ingredients == null || Ingredients.Length == 0)
+            foreach (var ingred in Ingredients)
+            {
+                if (!ingred.Code.Path.Contains("*"))
+                    continue;
+
+                var wildcardStartLen = ingred.Code.Path.IndexOf("*");
+                var wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;
+
+                List<string> codes = [];
+
+                if (ingred.Type == EnumItemClass.Block)
+                {
+                    for (var i = 0; i < world.Blocks.Count; i++)
+                    {
+                        if (world.Blocks[i].Code == null || world.Blocks[i].IsMissing)
+                            continue;
+
+                        if (WildcardUtil.Match(ingred.Code, world.Blocks[i].Code))
+                        {
+                            var code = world.Blocks[i].Code.Path.Substring(wildcardStartLen);
+                            var codepart = code.Substring(0, code.Length - wildcardEndLen);
+                            if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
+                                continue;
+
+                            codes.Add(codepart);
+                        }
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < world.Items.Count; i++)
+                    {
+                        if (world.Items[i].Code == null || world.Items[i].IsMissing)
+                            continue;
+
+                        if (WildcardUtil.Match(ingred.Code, world.Items[i].Code))
+                        {
+                            var code = world.Items[i].Code.Path.Substring(wildcardStartLen);
+                            var codepart = code.Substring(0, code.Length - wildcardEndLen);
+                            if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
+                                continue;
+
+                            codes.Add(codepart);
+                        }
+                    }
+                }
+
+                mappings[ingred.Name] = codes.ToArray();
+            }
+
             return mappings;
+        }
 
-        foreach (var ingred in Ingredients)
+        public bool Resolve(IWorldAccessor world, string sourceForErrorLogging)
         {
-            if (!ingred.Code.Path.Contains("*"))
-                continue;
+            var ok = true;
 
-            var wildcardStartLen = ingred.Code.Path.IndexOf("*");
-            var wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;
-
-            List<string> codes = [];
-
-            if (ingred.Type == EnumItemClass.Block)
+            for (var i = 0; i < Ingredients.Length; i++)
             {
-                for (var i = 0; i < world.Blocks.Count; i++)
+                ok &= Ingredients[i].Resolve(world, sourceForErrorLogging);
+            }
+
+            for (var i = 0; i < Outputs.Length; i++)
+            {
+                ok &= Outputs[i].Resolve(world, sourceForErrorLogging);
+            }
+
+            return ok;
+        }
+
+        public void FromBytes(BinaryReader reader, IWorldAccessor resolver)
+        {
+            Code = reader.ReadString();
+
+            // Чтение ингредиентов
+            Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
+            for (var i = 0; i < Ingredients.Length; i++)
+            {
+                Ingredients[i] = new CraftingRecipeIngredient();
+                Ingredients[i].FromBytes(reader, resolver);
+                Ingredients[i].Resolve(resolver, "Hammer Recipe (FromBytes)");
+            }
+
+            // Чтение выходов
+            Outputs = new RecipeOutput[reader.ReadInt32()];
+            for (var i = 0; i < Outputs.Length; i++)
+            {
+                Outputs[i] = new RecipeOutput();
+                Outputs[i].FromBytes(reader, resolver.ClassRegistry);
+                Outputs[i].Resolve(resolver, "Hammer Recipe Output (FromBytes)");
+            }
+
+            EnergyOperation = reader.ReadDouble();
+        }
+
+        public void ToBytes(BinaryWriter writer)
+        {
+            writer.Write(Code);
+
+            // Запись ингредиентов
+            writer.Write(Ingredients.Length);
+            for (var i = 0; i < Ingredients.Length; i++)
+            {
+                Ingredients[i].ToBytes(writer);
+            }
+
+            // Запись выходов
+            writer.Write(Outputs.Length);
+            for (var i = 0; i < Outputs.Length; i++)
+            {
+                Outputs[i].ToBytes(writer);
+            }
+
+            writer.Write(EnergyOperation);
+        }
+
+        public bool Matches(ItemSlot[] inputSlots, out int outputStackSize)
+        {
+            outputStackSize = 0;
+
+            var matched = PairInput(inputSlots);
+            if (matched == null) return false;
+
+            // Возвращаем общий размер стека (можно адаптировать под логику)
+            outputStackSize = Outputs.Length > 0 ? Outputs[0].StackSize : 1;
+
+            return outputStackSize >= 0;
+        }
+
+        List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> PairInput(ItemSlot[] inputStacks)
+        {
+            List<CraftingRecipeIngredient> ingredientList = [.. Ingredients];
+
+            Queue<ItemSlot> inputSlotsList = new();
+            foreach (var val in inputStacks)
+            {
+                if (!val.Empty)
                 {
-                    if (world.Blocks[i].Code == null || world.Blocks[i].IsMissing)
-                        continue;
+                    inputSlotsList.Enqueue(val);
+                }
+            }
 
-                    if (WildcardUtil.Match(ingred.Code, world.Blocks[i].Code))
+            if (inputSlotsList.Count != Ingredients.Length)
+            {
+                return null;
+            }
+
+            List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> matched = [];
+
+            while (inputSlotsList.Count > 0)
+            {
+                var inputSlot = inputSlotsList.Dequeue();
+                var found = false;
+
+                for (var i = 0; i < ingredientList.Count; i++)
+                {
+                    var ingred = ingredientList[i];
+
+                    if (ingred.SatisfiesAsIngredient(inputSlot.Itemstack))
                     {
-                        var code = world.Blocks[i].Code.Path.Substring(wildcardStartLen);
-                        var codepart = code.Substring(0, code.Length - wildcardEndLen);
-                        if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
-                            continue;
-
-                        codes.Add(codepart);
+                        matched.Add(new KeyValuePair<ItemSlot, CraftingRecipeIngredient>(inputSlot, ingred));
+                        found = true;
+                        ingredientList.RemoveAt(i);
+                        break;
                     }
                 }
+
+                if (!found) return null;
             }
-            else
+
+            if (ingredientList.Count > 0)
             {
-                for (var i = 0; i < world.Items.Count; i++)
-                {
-                    if (world.Items[i].Code == null || world.Items[i].IsMissing)
-                        continue;
-
-                    if (WildcardUtil.Match(ingred.Code, world.Items[i].Code))
-                    {
-                        var code = world.Items[i].Code.Path.Substring(wildcardStartLen);
-                        var codepart = code.Substring(0, code.Length - wildcardEndLen);
-                        if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
-                            continue;
-
-                        codes.Add(codepart);
-                    }
-                }
+                return null;
             }
 
-            mappings[ingred.Name] = codes.ToArray();
+            return matched;
         }
-
-        return mappings;
-    }
-
-    public bool Resolve(IWorldAccessor world, string sourceForErrorLogging)
-    {
-        var ok = true;
-
-        for (var i = 0; i < Ingredients.Length; i++)
-        {
-            ok &= Ingredients[i].Resolve(world, sourceForErrorLogging);
-        }
-
-        ok &= Output.Resolve(world, sourceForErrorLogging);
-        
-        if (SecondaryOutput != null)
-        {
-            ok &= SecondaryOutput.Resolve(world, sourceForErrorLogging);
-        }
-
-        return ok;
-    }
-
-    public void FromBytes(BinaryReader reader, IWorldAccessor resolver)
-    {
-        Code = reader.ReadString();
-        Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
-
-        for (var i = 0; i < Ingredients.Length; i++)
-        {
-            Ingredients[i] = new CraftingRecipeIngredient();
-            Ingredients[i].FromBytes(reader, resolver);
-            Ingredients[i].Resolve(resolver, "Hammer Recipe (FromBytes)");
-        }
-
-        Output = new JsonItemStack();
-        Output.FromBytes(reader, resolver.ClassRegistry);
-        Output.Resolve(resolver, "Hammer Recipe (FromBytes)");
-
-        // Чтение дополнительного выхода
-        var hasSecondaryOutput = reader.ReadBoolean();
-        if (hasSecondaryOutput)
-        {
-            SecondaryOutput = new JsonItemStack();
-            SecondaryOutput.FromBytes(reader, resolver.ClassRegistry);
-            SecondaryOutput.Resolve(resolver, "Hammer Recipe Secondary Output (FromBytes)");
-            SecondaryOutputChance = reader.ReadSingle();
-        }
-
-        EnergyOperation = reader.ReadDouble();
-    }
-
-    public void ToBytes(BinaryWriter writer)
-    {
-        writer.Write(Code);
-        writer.Write(Ingredients.Length);
-        for (var i = 0; i < Ingredients.Length; i++)
-        {
-            Ingredients[i].ToBytes(writer);
-        }
-
-        Output.ToBytes(writer);
-
-        // Запись дополнительного выхода
-        writer.Write(SecondaryOutput != null);
-        if (SecondaryOutput != null)
-        {
-            SecondaryOutput.ToBytes(writer);
-            writer.Write(SecondaryOutputChance);
-        }
-
-        writer.Write(EnergyOperation);
-    }
-
-    public bool Matches(ItemSlot[] inputSlots, out int outputStackSize)
-    {
-        outputStackSize = 0;
-
-        var matched = PairInput(inputSlots);
-        if (matched == null) return false;
-
-        outputStackSize = Output.StackSize;
-
-        return outputStackSize >= 0;
-    }
-
-    List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> PairInput(ItemSlot[] inputStacks)
-    {
-        List<CraftingRecipeIngredient> ingredientList = [..Ingredients];
-
-        Queue<ItemSlot> inputSlotsList = new();
-        foreach (var val in inputStacks)
-        {
-            if (!val.Empty)
-            {
-                inputSlotsList.Enqueue(val);
-            }
-        }
-
-        if (inputSlotsList.Count != Ingredients.Length)
-        {
-            return null;
-        }
-
-        List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> matched = [];
-
-        while (inputSlotsList.Count > 0)
-        {
-            var inputSlot = inputSlotsList.Dequeue();
-            var found = false;
-
-            for (var i = 0; i < ingredientList.Count; i++)
-            {
-                var ingred = ingredientList[i];
-
-                if (ingred.SatisfiesAsIngredient(inputSlot.Itemstack))
-                {
-                    matched.Add(new KeyValuePair<ItemSlot, CraftingRecipeIngredient>(inputSlot, ingred));
-                    found = true;
-                    ingredientList.RemoveAt(i);
-                    break;
-                }
-            }
-
-            if (!found) return null;
-        }
-
-        if (ingredientList.Count > 0)
-        {
-            return null;
-        }
-
-        return matched;
     }
 }

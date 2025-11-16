@@ -1,215 +1,225 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 
 namespace ElectricalProgressive.RecipeSystem.Recipe;
 
-  public class CentrifugeRecipe : IByteSerializable, IRecipeBase<CentrifugeRecipe>
-  {
+public class CentrifugeRecipe : IByteSerializable, IRecipeMulty<CentrifugeRecipe>
+{
     public string Code;
-
     public double EnergyOperation;
-
     public AssetLocation Name { get; set; }
-
     public bool Enabled { get; set; } = true;
 
-    IRecipeIngredient[] IRecipeBase<CentrifugeRecipe>.Ingredients => Ingredients;
-
-    IRecipeOutput IRecipeBase<CentrifugeRecipe>.Output => Output;
+    IRecipeIngredient[] IRecipeMulty<CentrifugeRecipe>.Ingredients => Ingredients;
+    IRecipeOutput[] IRecipeMulty<CentrifugeRecipe>.Outputs => Outputs;
 
     public CraftingRecipeIngredient[] Ingredients;
-
-    public JsonItemStack Output;
+    public RecipeOutput[] Outputs;
 
     public CentrifugeRecipe Clone()
     {
-      var ingredients = new CraftingRecipeIngredient[Ingredients.Length];
-      for (var i = 0; i < Ingredients.Length; i++)
-      {
-        ingredients[i] = Ingredients[i].Clone();
-      }
+        var ingredients = new CraftingRecipeIngredient[Ingredients.Length];
+        for (var i = 0; i < Ingredients.Length; i++)
+        {
+            ingredients[i] = Ingredients[i].Clone();
+        }
 
-      return new CentrifugeRecipe()
-      {
-        EnergyOperation = EnergyOperation,
-        Output = Output.Clone(),
-        Code = Code,
-        Enabled = Enabled,
-        Name = Name,
-        Ingredients = ingredients
-      };
+        var outputs = new RecipeOutput[Outputs.Length];
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            outputs[i] = Outputs[i].Clone();
+        }
+
+        return new CentrifugeRecipe()
+        {
+            EnergyOperation = EnergyOperation,
+            Outputs = outputs,
+            Code = Code,
+            Enabled = Enabled,
+            Name = Name,
+            Ingredients = ingredients
+        };
     }
 
     public Dictionary<string, string[]> GetNameToCodeMapping(IWorldAccessor world)
     {
-      Dictionary<string, string[]> mappings = new();
+        Dictionary<string, string[]> mappings = new();
 
-      if (Ingredients == null || Ingredients.Length == 0)
-          return mappings;
+        if (Ingredients == null || Ingredients.Length == 0)
+            return mappings;
 
-      foreach (var ingred in Ingredients)
-      {
-        if (ingred.Code==null || !ingred.Code.Path.Contains("*"))
-            continue;
-
-        var wildcardStartLen = ingred.Code.Path.IndexOf("*");
-        var wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;
-
-        List<string> codes = [];
-
-        if (ingred.Type == EnumItemClass.Block)
+        foreach (var ingred in Ingredients)
         {
-          for (var i = 0; i < world.Blocks.Count; i++)
-          {
-            if (world.Blocks[i].Code == null || world.Blocks[i].IsMissing)
+            if (ingred.Code == null || !ingred.Code.Path.Contains("*"))
                 continue;
 
-            if (WildcardUtil.Match(ingred.Code, world.Blocks[i].Code))
+            var wildcardStartLen = ingred.Code.Path.IndexOf("*");
+            var wildcardEndLen = ingred.Code.Path.Length - wildcardStartLen - 1;
+
+            List<string> codes = [];
+
+            if (ingred.Type == EnumItemClass.Block)
             {
-              var code = world.Blocks[i].Code.Path.Substring(wildcardStartLen);
-              var codepart = code.Substring(0, code.Length - wildcardEndLen);
-              if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
-                  continue;
+                for (var i = 0; i < world.Blocks.Count; i++)
+                {
+                    if (world.Blocks[i].Code == null || world.Blocks[i].IsMissing)
+                        continue;
 
-              codes.Add(codepart);
+                    if (WildcardUtil.Match(ingred.Code, world.Blocks[i].Code))
+                    {
+                        var code = world.Blocks[i].Code.Path.Substring(wildcardStartLen);
+                        var codepart = code.Substring(0, code.Length - wildcardEndLen);
+                        if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
+                            continue;
 
+                        codes.Add(codepart);
+                    }
+                }
             }
-          }
-        }
-        else
-        {
-          for (var i = 0; i < world.Items.Count; i++)
-          {
-            if (world.Items[i].Code == null || world.Items[i].IsMissing)
-                continue;
-
-            if (WildcardUtil.Match(ingred.Code, world.Items[i].Code))
+            else
             {
-              var code = world.Items[i].Code.Path.Substring(wildcardStartLen);
-              var codepart = code.Substring(0, code.Length - wildcardEndLen);
-              if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
-                  continue;
+                for (var i = 0; i < world.Items.Count; i++)
+                {
+                    if (world.Items[i].Code == null || world.Items[i].IsMissing)
+                        continue;
 
-              codes.Add(codepart);
+                    if (WildcardUtil.Match(ingred.Code, world.Items[i].Code))
+                    {
+                        var code = world.Items[i].Code.Path.Substring(wildcardStartLen);
+                        var codepart = code.Substring(0, code.Length - wildcardEndLen);
+                        if (ingred.AllowedVariants != null && !ingred.AllowedVariants.Contains(codepart))
+                            continue;
+
+                        codes.Add(codepart);
+                    }
+                }
             }
-          }
+
+            mappings[ingred.Name] = codes.ToArray();
         }
 
-        mappings[ingred.Name] = codes.ToArray();
-      }
-
-      return mappings;
+        return mappings;
     }
 
     public bool Resolve(IWorldAccessor world, string sourceForErrorLogging)
     {
-      var ok = true;
+        var ok = true;
 
-      for (var i = 0; i < Ingredients.Length; i++)
-      {
-        ok &= Ingredients[i].Resolve(world, sourceForErrorLogging);
-      }
+        for (var i = 0; i < Ingredients.Length; i++)
+        {
+            ok &= Ingredients[i].Resolve(world, sourceForErrorLogging);
+        }
 
-      ok &= Output.Resolve(world, sourceForErrorLogging);
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            ok &= Outputs[i].Resolve(world, sourceForErrorLogging);
+        }
 
-      return ok;
+        return ok;
     }
 
     public void FromBytes(BinaryReader reader, IWorldAccessor resolver)
     {
-      Code = reader.ReadString();
-      Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
+        Code = reader.ReadString();
 
-      for (var i = 0; i < Ingredients.Length; i++)
-      {
-        Ingredients[i] = new CraftingRecipeIngredient();
-        Ingredients[i].FromBytes(reader, resolver);
-        Ingredients[i].Resolve(resolver, "Centrifuge Recipe (FromBytes)");
-      }
+        Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
+        for (var i = 0; i < Ingredients.Length; i++)
+        {
+            Ingredients[i] = new CraftingRecipeIngredient();
+            Ingredients[i].FromBytes(reader, resolver);
+            Ingredients[i].Resolve(resolver, "Centrifuge Recipe (FromBytes)");
+        }
 
-      Output = new JsonItemStack();
-      Output.FromBytes(reader, resolver.ClassRegistry);
-      Output.Resolve(resolver, "Centrifuge Recipe (FromBytes)");
+        Outputs = new RecipeOutput[reader.ReadInt32()];
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            Outputs[i] = new RecipeOutput();
+            Outputs[i].FromBytes(reader, resolver.ClassRegistry);
+            Outputs[i].Resolve(resolver, "Centrifuge Recipe Output (FromBytes)");
+        }
 
-      EnergyOperation = reader.ReadDouble();
+        EnergyOperation = reader.ReadDouble();
     }
 
     public void ToBytes(BinaryWriter writer)
     {
-      writer.Write(Code);
-      writer.Write(Ingredients.Length);
-      for (var i = 0; i < Ingredients.Length; i++)
-      {
-        Ingredients[i].ToBytes(writer);
-      }
+        writer.Write(Code);
 
-      Output.ToBytes(writer);
+        writer.Write(Ingredients.Length);
+        for (var i = 0; i < Ingredients.Length; i++)
+        {
+            Ingredients[i].ToBytes(writer);
+        }
 
-      writer.Write(EnergyOperation);
+        writer.Write(Outputs.Length);
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            Outputs[i].ToBytes(writer);
+        }
+
+        writer.Write(EnergyOperation);
     }
 
     public bool Matches(ItemSlot[] inputSlots, out int outputStackSize)
     {
-      outputStackSize = 0;
+        outputStackSize = 0;
 
-      var matched = PairInput(inputSlots);
-      if (matched == null) return false;
+        var matched = PairInput(inputSlots);
+        if (matched == null) return false;
 
-      outputStackSize = Output.StackSize;
+        outputStackSize = Outputs.Length > 0 ? Outputs[0].StackSize : 1;
 
-      return outputStackSize >= 0;
+        return outputStackSize >= 0;
     }
 
     List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> PairInput(ItemSlot[] inputStacks)
     {
-      List<CraftingRecipeIngredient> ingredientList = [..Ingredients];
+        List<CraftingRecipeIngredient> ingredientList = [.. Ingredients];
 
-      Queue<ItemSlot> inputSlotsList = new();
-      foreach (var val in inputStacks)
-      {
-        if (!val.Empty)
+        Queue<ItemSlot> inputSlotsList = new();
+        foreach (var val in inputStacks)
         {
-          inputSlotsList.Enqueue(val);
-        }
-      }
-
-      if (inputSlotsList.Count != Ingredients.Length)
-      {
-        return null;
-      }
-
-      List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> matched = [];
-
-      while (inputSlotsList.Count > 0)
-      {
-        var inputSlot = inputSlotsList.Dequeue();
-        var found = false;
-
-        for (var i = 0; i < ingredientList.Count; i++)
-        {
-          var ingred = ingredientList[i];
-
-          if (ingred.SatisfiesAsIngredient(inputSlot.Itemstack))
-          {
-            matched.Add(new KeyValuePair<ItemSlot, CraftingRecipeIngredient>(inputSlot, ingred));
-            found = true;
-            ingredientList.RemoveAt(i);
-            break;
-          }
+            if (!val.Empty)
+            {
+                inputSlotsList.Enqueue(val);
+            }
         }
 
-        if (!found) return null;
-      }
+        if (inputSlotsList.Count != Ingredients.Length)
+        {
+            return null;
+        }
 
-      // We're missing ingredients
-      if (ingredientList.Count > 0)
-      {
-        return null;
-      }
+        List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> matched = [];
 
-      return matched;
+        while (inputSlotsList.Count > 0)
+        {
+            var inputSlot = inputSlotsList.Dequeue();
+            var found = false;
+
+            for (var i = 0; i < ingredientList.Count; i++)
+            {
+                var ingred = ingredientList[i];
+
+                if (ingred.SatisfiesAsIngredient(inputSlot.Itemstack))
+                {
+                    matched.Add(new KeyValuePair<ItemSlot, CraftingRecipeIngredient>(inputSlot, ingred));
+                    found = true;
+                    ingredientList.RemoveAt(i);
+                    break;
+                }
+            }
+
+            if (!found) return null;
+        }
+
+        if (ingredientList.Count > 0)
+        {
+            return null;
+        }
+
+        return matched;
     }
-  }
+}

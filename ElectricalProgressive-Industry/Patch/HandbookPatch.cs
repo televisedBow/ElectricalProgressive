@@ -61,8 +61,6 @@ public class HandbookPatch
                 capi.Logger.Error($"Handbook error: {ex}");
             }
         }
-        
-
 
         private static void CheckAndAddRecipes(
             List<RichTextComponentBase> components,
@@ -71,12 +69,9 @@ public class HandbookPatch
             ActionConsumable<string> openDetailPageFor,
             ref bool haveText)
         {
-            // Добавляем проверки на null
-            if (stack == null ||
-                stack.Collectible == null)
+            if (stack == null || stack.Collectible == null)
                 return;
 
-            // мало ли машин нет
             if (ElectricalProgressiveRecipeManager.machines == null)
                 return;
 
@@ -153,16 +148,6 @@ public class HandbookPatch
             }
         }
 
-
-
-
-        /// <summary>
-        /// Добавление рецептов с поддержкой слайд-шоу 
-        /// </summary>
-        /// <param name="components"></param>
-        /// <param name="capi"></param>
-        /// <param name="recipes"></param>
-        /// <param name="openDetailPageFor"></param>
         private static void AddRecipes(
             List<RichTextComponentBase> components,
             ICoreClientAPI capi,
@@ -171,7 +156,6 @@ public class HandbookPatch
         {
             components.Add(new ClearFloatTextComponent(capi, SmallPadding));
 
-            // Группируем рецепты по Code
             var groupedRecipes = recipes
                 .Select(r => (dynamic)r)
                 .GroupBy(r => (string)r.Code)
@@ -185,21 +169,17 @@ public class HandbookPatch
 
                 components.Add(new ClearFloatTextComponent(capi, RecipeSpacing));
 
-                // Для групп с одним рецептом отображаем обычным образом
                 if (recipeList.Count == 1)
                 {
                     AddSingleRecipe(components, capi, recipeList[0], openDetailPageFor);
                     continue;
                 }
 
-                var groupKey = group.Key; // уникальный код рецепта
+                var groupKey = group.Key;
 
-                // Для групп с несколькими рецептами создаем слайд-шоу
                 // Собираем все ингредиенты и выходы для слайд-шоу
                 var allIngredients = new List<List<ItemStack>>();
-                var outputStacks = new List<ItemStack>();
-                var secondaryOutputStacks = new List<ItemStack>();
-
+                var allOutputs = new List<List<ItemStack>>();
 
                 foreach (var recipe in recipeList)
                 {
@@ -210,7 +190,6 @@ public class HandbookPatch
                         var resolved = GetOrCreateStack((AssetLocation)ing.Code, (int)ing.Quantity, capi.World);
                         if (resolved != null)
                         {
-                            // Добавляем в соответствующий слот
                             if (ingIndex >= allIngredients.Count)
                             {
                                 allIngredients.Add([]);
@@ -220,28 +199,19 @@ public class HandbookPatch
                         }
                     }
 
-                    // Обрабатываем выход(ы)
-                    var outputStack1 = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
-                    if (outputStack1 != null)
+                    // Обрабатываем выходы
+                    var outputIndex = 0;
+                    foreach (var output in recipe.Outputs)
                     {
-                        outputStacks.Add(outputStack1);
-                    }
-
-                    // только у молота и пресса есть второй выход
-                    if (recipe is HammerRecipe || recipe is PressRecipe)
-                    {
-                        // второй выход может отсутствовать
-                        if (recipe.SecondaryOutput == null)
+                        var outputStack = GetOrCreateStack((AssetLocation)output.Code, output.StackSize, capi.World);
+                        if (outputStack != null)
                         {
-                            secondaryOutputStacks.Add(new ItemStack());
-                        }
-                        else
-                        {
-                            var outputStack2 = GetOrCreateStack((AssetLocation)recipe.SecondaryOutput.Code, (int)recipe.SecondaryOutput.Quantity, capi.World);
-                            if (outputStack2 != null)
+                            if (outputIndex >= allOutputs.Count)
                             {
-                                secondaryOutputStacks.Add(outputStack2);
+                                allOutputs.Add([]);
                             }
+                            allOutputs[outputIndex].Add(outputStack);
+                            outputIndex++;
                         }
                     }
                 }
@@ -252,7 +222,6 @@ public class HandbookPatch
                 {
                     if (!firstIngredient)
                     {
-                        // Плюсик между ингредиентами
                         var plus = new RichTextComponent(capi, "+ ",
                             CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
                         {
@@ -286,43 +255,26 @@ public class HandbookPatch
                 };
                 components.Add(arrow);
 
-                // Выход с слайд-шоу
-                var outputSlideShow = new SyncedSlideshowItemstackTextComponent(
-                    capi,
-                    outputStacks.ToArray(),
-                    40.0,
-                    EnumFloat.Inline,
-                    (Action<ItemStack>)(cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs))),
-                    groupKey
-                )
+                // Отображаем выходы с слайд-шоу и шансами
+                var firstOutput = true;
+                for (int i = 0; i < allOutputs.Count; i++)
                 {
-                    ShowStackSize = true,
-                    VerticalAlign = EnumVerticalAlign.Middle
-                };
-                
-                components.Add(outputSlideShow);
-
-                if (recipeList[0] is HammerRecipe || recipeList[0] is PressRecipe)
-                {
-                    // Плюсик между ингредиентами
-                    var plus = new RichTextComponent(capi, " + ",
-                        CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+                    if (!firstOutput)
                     {
-                        VerticalAlign = EnumVerticalAlign.Middle
-                    };
-                    components.Add(plus);
+                        var plus = new RichTextComponent(capi, " + ",
+                            CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+                        {
+                            VerticalAlign = EnumVerticalAlign.Middle
+                        };
+                        components.Add(plus);
+                    }
 
-                    // Второй выход 
-                    var outputSlideShow2 = new SyncedSlideshowItemstackTextComponent(
+                    var outputSlideShow = new SyncedSlideshowItemstackTextComponent(
                         capi,
-                        secondaryOutputStacks.ToArray(),
+                        allOutputs[i].ToArray(),
                         40.0,
                         EnumFloat.Inline,
-                        (Action<ItemStack>)(cs =>
-                        {
-                            if (cs!=null && cs.Id!=0)
-                                openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs));
-                        }),
+                        (Action<ItemStack>)(cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs))),
                         groupKey
                     )
                     {
@@ -330,29 +282,28 @@ public class HandbookPatch
                         VerticalAlign = EnumVerticalAlign.Middle
                     };
 
-                    components.Add(outputSlideShow2);
+                    components.Add(outputSlideShow);
 
-                    // выводим шанс после стака с вторым выходом
-                    components.Add(new RichTextComponent(capi,
-                        $" ({GetCachedTranslation("electricalprogressive:chance")}: {(int)(recipeList[0].SecondaryOutputChance * 100)} %)",
-                        CairoFont.WhiteSmallText()) { VerticalAlign = EnumVerticalAlign.Middle });
+                    // Добавляем шанс если он меньше 100%
+                    var chance = recipeList[0].Outputs[i].Chance;
+                    if (chance < 1.0f)
+                    {
+                        components.Add(new RichTextComponent(capi,
+                            $" ({GetCachedTranslation("electricalprogressive:chance")}: {(int)(chance * 100)}%)",
+                            CairoFont.WhiteSmallText())
+                        { VerticalAlign = EnumVerticalAlign.Middle });
+                    }
+
+                    firstOutput = false;
                 }
 
-                // Добавляем информацию об энергии (берем из первого рецепта в группе)
+                // Добавляем информацию об энергии
                 components.Add(new RichTextComponent(capi,
                     $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipeList[0].EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}",
                     CairoFont.WhiteSmallText()));
             }
         }
 
-
-        /// <summary>
-        /// Добавляем рецепт, когда он один
-        /// </summary>
-        /// <param name="components"></param>
-        /// <param name="capi"></param>
-        /// <param name="recipe"></param>
-        /// <param name="openDetailPageFor"></param>
         private static void AddSingleRecipe(
             List<RichTextComponentBase> components,
             ICoreClientAPI capi,
@@ -361,6 +312,7 @@ public class HandbookPatch
         {
             components.Add(new ClearFloatTextComponent(capi, RecipeSpacing));
 
+            // Отображаем ингредиенты
             var firstIngredient = true;
             foreach (var ing in recipe.Ingredients)
             {
@@ -390,49 +342,44 @@ public class HandbookPatch
             };
             components.Add(arrow);
 
-
-
-            // Обрабатываем выход(ы)
-            var outputStack1 = GetOrCreateStack((AssetLocation)recipe.Output.Code, (int)recipe.Output.Quantity, capi.World);
-            if (outputStack1 != null)
+            // Отображаем выходы с шансами
+            var firstOutput = true;
+            foreach (var output in recipe.Outputs)
             {
-                components.Add(CreateItemStackComponent(capi, outputStack1, openDetailPageFor));
-            }
-
-            if (recipe is HammerRecipe || recipe is PressRecipe)
-            {
-                // Второй выход +
-                var plus = new RichTextComponent(capi, "+ ",
-                    CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+                if (!firstOutput)
                 {
-                    VerticalAlign = EnumVerticalAlign.Middle
-                };
-                components.Add(plus);
-
-                var outputStack2 = GetOrCreateStack((AssetLocation)recipe.SecondaryOutput.Code,
-                    (int)recipe.SecondaryOutput.Quantity, capi.World);
-                if (outputStack1 != null)
-                {
-                    components.Add(CreateItemStackComponent(capi, outputStack2, openDetailPageFor));
+                    var plus = new RichTextComponent(capi, "+ ",
+                        CairoFont.WhiteMediumText().WithWeight(FontWeight.Bold))
+                    {
+                        VerticalAlign = EnumVerticalAlign.Middle
+                    };
+                    components.Add(plus);
                 }
 
-                // выводим шанс после стака с вторым выходом
-                components.Add(new RichTextComponent(capi,
-                    $"({GetCachedTranslation("electricalprogressive:chance")}: {(int)(recipe.SecondaryOutputChance*100)} %)",
-                    CairoFont.WhiteSmallText())
+                var outputStack = GetOrCreateStack((AssetLocation)output.Code, output.StackSize, capi.World);
+                if (outputStack != null)
                 {
-                    VerticalAlign = EnumVerticalAlign.Middle
-                });
-                
+                    components.Add(CreateItemStackComponent(capi, outputStack, openDetailPageFor));
+                }
+
+                // Добавляем шанс если он меньше 100%
+                if (output.Chance < 1.0f)
+                {
+                    components.Add(new RichTextComponent(capi,
+                        $"({GetCachedTranslation("electricalprogressive:chance")}: {(int)(output.Chance * 100)}%)",
+                        CairoFont.WhiteSmallText())
+                    {
+                        VerticalAlign = EnumVerticalAlign.Middle
+                    });
+                }
+
+                firstOutput = false;
             }
 
-            
             components.Add(new RichTextComponent(capi,
                 $"\n{GetCachedTranslation("electricalprogressive:energy-required")}: {recipe.EnergyOperation} {GetCachedTranslation("electricalprogressive:energy-unit")}",
                 CairoFont.WhiteSmallText()));
         }
-
-
 
         private static ItemstackTextComponent CreateItemStackComponent(
             ICoreClientAPI capi,
@@ -488,9 +435,10 @@ public class HandbookPatch
 
         private static bool IsItemInRecipe(ItemStack stack, dynamic recipe)
         {
-            if (stack == null || stack.Collectible == null ||  recipe == null)
+            if (stack == null || stack.Collectible == null || recipe == null)
                 return false;
 
+            // Проверяем ингредиенты
             foreach (var ing in recipe.Ingredients)
             {
                 var resolved = GetOrCreateStack(ing.Code, (int)ing.Quantity, _capi.World);
@@ -498,20 +446,18 @@ public class HandbookPatch
                     return true;
             }
 
-            var outputStack = GetOrCreateStack(recipe.Output.Code, (int)recipe.Output.Quantity, _capi.World);
-            return outputStack != null && outputStack.Collectible!=null &&  outputStack.Collectible.Code == stack.Collectible.Code;
+            // Проверяем все выходы
+            foreach (var output in recipe.Outputs)
+            {
+                var outputStack = GetOrCreateStack(output.Code, output.StackSize, _capi.World);
+                if (outputStack != null && outputStack.Collectible != null && outputStack.Collectible.Code == stack.Collectible.Code)
+                    return true;
+            }
+
+            return false;
         }
-
-
-       
     }
 
-
-
-
-    /// <summary>
-    /// Класс для синхронизированного слайд-шоу
-    /// </summary>
     public class SyncedSlideshowItemstackTextComponent : SlideshowItemstackTextComponent
     {
         private int CurItemIndex;
@@ -520,7 +466,7 @@ public class HandbookPatch
         {
             public int Index = 0;
             public double LastSwitchTime = 0;
-            public int HoverCount = 0; // Количество наведённых элементов в группе
+            public int HoverCount = 0;
         }
 
         private static readonly Dictionary<string, GroupState> groups = new();
@@ -548,12 +494,10 @@ public class HandbookPatch
             var state = groups[groupKey];
             var rect = this.BoundsPerLine[0];
 
-            // Проверяем наведение для текущего элемента
             var x = (int)(this.api.Input.MouseX - renderX + this.renderOffset.X);
             var y = (int)(this.api.Input.MouseY - renderY + this.renderOffset.Y);
             var nowHovered = rect.PointInside(x, y);
 
-            // Обновляем счётчик наведения
             if (nowHovered && !isHovered)
             {
                 state.HoverCount++;
@@ -565,16 +509,14 @@ public class HandbookPatch
                 isHovered = false;
             }
 
-            // Листаем только если ни один элемент группы не под мышкой
             if (state.HoverCount == 0 && api.World.ElapsedMilliseconds - state.LastSwitchTime > 1000)
             {
                 state.Index++;
                 state.LastSwitchTime = api.World.ElapsedMilliseconds;
             }
 
-            CurItemIndex = state.Index % (this.Itemstacks.Length==0 ? 1: this.Itemstacks.Length);
+            CurItemIndex = state.Index % (this.Itemstacks.Length == 0 ? 1 : this.Itemstacks.Length);
 
-            // Остальной код рендера...
             var itemStack = this.Itemstacks[CurItemIndex];
             if (this.overrideCurrentItemStack != null)
                 itemStack = this.overrideCurrentItemStack();
@@ -594,7 +536,7 @@ public class HandbookPatch
 
             this.api.Render.PushScissor(bounds, true);
 
-            if (this.slot.Itemstack != null && this.slot.Itemstack.Collectible != null && slot.Itemstack.Id!=0)
+            if (this.slot.Itemstack != null && this.slot.Itemstack.Collectible != null && slot.Itemstack.Id != 0)
             {
                 this.api.Render.RenderItemstackToGui(
                     this.slot,
@@ -609,13 +551,12 @@ public class HandbookPatch
 
             this.api.Render.PopScissor();
 
-            if (nowHovered && this.ShowTooltip && this.slot!=null && this.slot.Itemstack != null && this.slot.Itemstack.Id!=0) 
+            if (nowHovered && this.ShowTooltip && this.slot != null && this.slot.Itemstack != null && this.slot.Itemstack.Id != 0)
             {
                 this.RenderItemstackTooltip(this.slot, renderX + x, renderY + y, deltaTime);
             }
         }
 
-        // Добавляем метод для очистки при уничтожении компонента (важно)
         public override void Dispose()
         {
             groups.Clear();
@@ -623,9 +564,4 @@ public class HandbookPatch
             base.Dispose();
         }
     }
-
-
-
-
-
 }

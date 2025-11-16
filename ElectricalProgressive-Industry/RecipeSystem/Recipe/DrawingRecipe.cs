@@ -5,26 +5,18 @@ using Vintagestory.API.Util;
 
 namespace ElectricalProgressive.RecipeSystem.Recipe;
 
-public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
+public class DrawingRecipe : IByteSerializable, IRecipeMulty<DrawingRecipe>
 {
     public string Code;
-
     public double EnergyOperation;
-
     public AssetLocation Name { get; set; }
-
     public bool Enabled { get; set; } = true;
 
-    IRecipeIngredient[] IRecipeBase<DrawingRecipe>.Ingredients => Ingredients;
-
-    IRecipeOutput IRecipeBase<DrawingRecipe>.Output => Output;
+    IRecipeIngredient[] IRecipeMulty<DrawingRecipe>.Ingredients => Ingredients;
+    IRecipeOutput[] IRecipeMulty<DrawingRecipe>.Outputs => Outputs;
 
     public CraftingRecipeIngredient[] Ingredients;
-
-    public JsonItemStack Output;
-
-   
-
+    public RecipeOutput[] Outputs;
 
     public DrawingRecipe Clone()
     {
@@ -34,10 +26,16 @@ public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
             ingredients[i] = Ingredients[i].Clone();
         }
 
+        var outputs = new RecipeOutput[Outputs.Length];
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            outputs[i] = Outputs[i].Clone();
+        }
+
         return new DrawingRecipe()
         {
             EnergyOperation = EnergyOperation,
-            Output = Output.Clone(),
+            Outputs = outputs,
             Code = Code,
             Enabled = Enabled,
             Name = Name,
@@ -77,7 +75,6 @@ public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
                             continue;
 
                         codes.Add(codepart);
-
                     }
                 }
             }
@@ -115,7 +112,10 @@ public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
             ok &= Ingredients[i].Resolve(world, sourceForErrorLogging);
         }
 
-        ok &= Output.Resolve(world, sourceForErrorLogging);
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            ok &= Outputs[i].Resolve(world, sourceForErrorLogging);
+        }
 
         return ok;
     }
@@ -123,18 +123,22 @@ public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
     public void FromBytes(BinaryReader reader, IWorldAccessor resolver)
     {
         Code = reader.ReadString();
-        Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
 
+        Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
         for (var i = 0; i < Ingredients.Length; i++)
         {
             Ingredients[i] = new CraftingRecipeIngredient();
             Ingredients[i].FromBytes(reader, resolver);
-            Ingredients[i].Resolve(resolver, "Press Recipe (FromBytes)");
+            Ingredients[i].Resolve(resolver, "Drawing Recipe (FromBytes)");
         }
 
-        Output = new JsonItemStack();
-        Output.FromBytes(reader, resolver.ClassRegistry);
-        Output.Resolve(resolver, "Press Recipe (FromBytes)");
+        Outputs = new RecipeOutput[reader.ReadInt32()];
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            Outputs[i] = new RecipeOutput();
+            Outputs[i].FromBytes(reader, resolver.ClassRegistry);
+            Outputs[i].Resolve(resolver, "Drawing Recipe Output (FromBytes)");
+        }
 
         EnergyOperation = reader.ReadDouble();
     }
@@ -142,13 +146,18 @@ public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
     public void ToBytes(BinaryWriter writer)
     {
         writer.Write(Code);
+
         writer.Write(Ingredients.Length);
         for (var i = 0; i < Ingredients.Length; i++)
         {
             Ingredients[i].ToBytes(writer);
         }
 
-        Output.ToBytes(writer);
+        writer.Write(Outputs.Length);
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            Outputs[i].ToBytes(writer);
+        }
 
         writer.Write(EnergyOperation);
     }
@@ -161,14 +170,14 @@ public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
         if (matched == null)
             return false;
 
-        outputStackSize = Output.StackSize;
+        outputStackSize = Outputs.Length > 0 ? Outputs[0].StackSize : 1;
 
         return outputStackSize >= 0;
     }
 
     List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> PairInput(ItemSlot[] inputStacks)
     {
-        List<CraftingRecipeIngredient> ingredientList = [..Ingredients];
+        List<CraftingRecipeIngredient> ingredientList = [.. Ingredients];
 
         Queue<ItemSlot> inputSlotsList = new();
         foreach (var val in inputStacks)
@@ -207,7 +216,6 @@ public class DrawingRecipe : IByteSerializable, IRecipeBase<DrawingRecipe>
             if (!found) return null;
         }
 
-        // We're missing ingredients
         if (ingredientList.Count > 0)
         {
             return null;

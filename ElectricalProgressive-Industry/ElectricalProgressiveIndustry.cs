@@ -8,6 +8,7 @@ using ElectricalProgressive.Content.Block.PressForm;
 using ElectricalProgressive.Patch;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Server;
 
 
 [assembly: ModDependency("game", "1.21.0")]
@@ -30,7 +31,6 @@ namespace ElectricalProgressive;
 
 public class ElectricalProgressiveIndustry : ModSystem
 {
-
     private ICoreAPI api = null!;
     private ICoreClientAPI capi = null!;
 

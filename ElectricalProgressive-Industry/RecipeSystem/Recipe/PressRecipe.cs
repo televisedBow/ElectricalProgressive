@@ -5,28 +5,18 @@ using Vintagestory.API.Util;
 
 namespace ElectricalProgressive.RecipeSystem.Recipe;
 
-public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
+public class PressRecipe : IByteSerializable, IRecipeMulty<PressRecipe>
 {
     public string Code;
-
     public double EnergyOperation;
-
     public AssetLocation Name { get; set; }
-
     public bool Enabled { get; set; } = true;
 
-    IRecipeIngredient[] IRecipeBase<PressRecipe>.Ingredients => Ingredients;
-
-    IRecipeOutput IRecipeBase<PressRecipe>.Output => Output;
+    IRecipeIngredient[] IRecipeMulty<PressRecipe>.Ingredients => Ingredients;
+    IRecipeOutput[] IRecipeMulty<PressRecipe>.Outputs => Outputs;
 
     public CraftingRecipeIngredient[] Ingredients;
-
-    public JsonItemStack Output;
-
-    // Новые поля для второго выхода
-    public JsonItemStack SecondaryOutput;
-    public float SecondaryOutputChance = 0f; // Шанс в диапазоне 0-1 (0-100%)
-
+    public RecipeOutput[] Outputs;
 
     public PressRecipe Clone()
     {
@@ -36,12 +26,16 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
             ingredients[i] = Ingredients[i].Clone();
         }
 
+        var outputs = new RecipeOutput[Outputs.Length];
+        for (var i = 0; i < Outputs.Length; i++)
+        {
+            outputs[i] = Outputs[i].Clone();
+        }
+
         return new PressRecipe()
         {
             EnergyOperation = EnergyOperation,
-            Output = Output.Clone(),
-            SecondaryOutput = SecondaryOutput?.Clone(),
-            SecondaryOutputChance = SecondaryOutputChance,
+            Outputs = outputs,
             Code = Code,
             Enabled = Enabled,
             Name = Name,
@@ -81,7 +75,6 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
                             continue;
 
                         codes.Add(codepart);
-
                     }
                 }
             }
@@ -119,11 +112,9 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
             ok &= Ingredients[i].Resolve(world, sourceForErrorLogging);
         }
 
-        ok &= Output.Resolve(world, sourceForErrorLogging);
-
-        if (SecondaryOutput != null)
+        for (var i = 0; i < Outputs.Length; i++)
         {
-            ok &= SecondaryOutput.Resolve(world, sourceForErrorLogging);
+            ok &= Outputs[i].Resolve(world, sourceForErrorLogging);
         }
 
         return ok;
@@ -132,8 +123,8 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
     public void FromBytes(BinaryReader reader, IWorldAccessor resolver)
     {
         Code = reader.ReadString();
-        Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
 
+        Ingredients = new CraftingRecipeIngredient[reader.ReadInt32()];
         for (var i = 0; i < Ingredients.Length; i++)
         {
             Ingredients[i] = new CraftingRecipeIngredient();
@@ -141,18 +132,12 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
             Ingredients[i].Resolve(resolver, "Press Recipe (FromBytes)");
         }
 
-        Output = new JsonItemStack();
-        Output.FromBytes(reader, resolver.ClassRegistry);
-        Output.Resolve(resolver, "Press Recipe (FromBytes)");
-
-        // Чтение дополнительного выхода
-        var hasSecondaryOutput = reader.ReadBoolean();
-        if (hasSecondaryOutput)
+        Outputs = new RecipeOutput[reader.ReadInt32()];
+        for (var i = 0; i < Outputs.Length; i++)
         {
-            SecondaryOutput = new JsonItemStack();
-            SecondaryOutput.FromBytes(reader, resolver.ClassRegistry);
-            SecondaryOutput.Resolve(resolver, "Press Recipe Secondary Output (FromBytes)");
-            SecondaryOutputChance = reader.ReadSingle();
+            Outputs[i] = new RecipeOutput();
+            Outputs[i].FromBytes(reader, resolver.ClassRegistry);
+            Outputs[i].Resolve(resolver, "Press Recipe Output (FromBytes)");
         }
 
         EnergyOperation = reader.ReadDouble();
@@ -161,20 +146,17 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
     public void ToBytes(BinaryWriter writer)
     {
         writer.Write(Code);
+
         writer.Write(Ingredients.Length);
         for (var i = 0; i < Ingredients.Length; i++)
         {
             Ingredients[i].ToBytes(writer);
         }
 
-        Output.ToBytes(writer);
-
-        // Запись дополнительного выхода
-        writer.Write(SecondaryOutput != null);
-        if (SecondaryOutput != null)
+        writer.Write(Outputs.Length);
+        for (var i = 0; i < Outputs.Length; i++)
         {
-            SecondaryOutput.ToBytes(writer);
-            writer.Write(SecondaryOutputChance);
+            Outputs[i].ToBytes(writer);
         }
 
         writer.Write(EnergyOperation);
@@ -188,14 +170,14 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
         if (matched == null)
             return false;
 
-        outputStackSize = Output.StackSize;
+        outputStackSize = Outputs.Length > 0 ? Outputs[0].StackSize : 1;
 
         return outputStackSize >= 0;
     }
 
     List<KeyValuePair<ItemSlot, CraftingRecipeIngredient>> PairInput(ItemSlot[] inputStacks)
     {
-        List<CraftingRecipeIngredient> ingredientList = [..Ingredients];
+        List<CraftingRecipeIngredient> ingredientList = [.. Ingredients];
 
         Queue<ItemSlot> inputSlotsList = new();
         foreach (var val in inputStacks)
@@ -234,7 +216,6 @@ public class PressRecipe : IByteSerializable, IRecipeBase<PressRecipe>
             if (!found) return null;
         }
 
-        // We're missing ingredients
         if (ingredientList.Count > 0)
         {
             return null;

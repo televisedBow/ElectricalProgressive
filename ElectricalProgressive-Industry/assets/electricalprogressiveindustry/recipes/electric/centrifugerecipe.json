@@ -10,11 +10,13 @@
         "quantity": 64
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:compost",
-      "stackSize": 1
-    }
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:compost",
+        "stackSize": 1
+      }
+    ]
   },
   {
     "code": "compost2",
@@ -27,11 +29,13 @@
         "quantity": 32
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:compost",
-      "stackSize": 1
-    }
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:compost",
+        "stackSize": 1
+      }
+    ]
   },
   {
     "code": "compost3",
@@ -44,11 +48,13 @@
         "quantity": 32
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:compost",
-      "stackSize": 1
-    }
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:compost",
+        "stackSize": 1
+      }
+    ]
   },
   {
     "code": "compost4",
@@ -61,11 +67,13 @@
         "quantity": 64
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:compost",
-      "stackSize": 1
-    }
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:compost",
+        "stackSize": 1
+      }
+    ]
   },
   {
     "code": "compost5",
@@ -78,11 +86,13 @@
         "quantity": 64
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:compost",
-      "stackSize": 1
-    }
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:compost",
+        "stackSize": 1
+      }
+    ]
   },
   {
     "code": "default_perish",
@@ -94,10 +104,12 @@
         "code": "game:air"
       }
     ],
-    "output": {
-      "type": "item",
-      "code": "game:compost",
-      "stackSize": 1
-    }
+    "outputs": [
+      {
+        "type": "item",
+        "code": "game:compost",
+        "stackSize": 1
+      }
+    ]
   }
 ]
