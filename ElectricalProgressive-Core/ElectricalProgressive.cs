@@ -1934,7 +1934,7 @@ namespace ElectricalProgressive
     /// </summary>
     public class ElectricityConfig
     {
-        public int SpeedOfElectricity = 4;
+        public int SpeedOfElectricity = 8;
         public int TimeBeforeBurnout = 30;
         public int MultiThreading = 4;
         public int CacheTimeoutCleanupMinutes = 2;

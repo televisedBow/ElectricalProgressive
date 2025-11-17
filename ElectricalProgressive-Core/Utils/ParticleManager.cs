@@ -90,6 +90,7 @@ namespace ElectricalProgressive.Utils
             template.GravityEffect.var = 0f;
             template.Bounciness= 1f;
 
+            // свечение bloom
             template.VertexFlags= 128;
 
             // Визуальные свойства
@@ -352,6 +353,8 @@ namespace ElectricalProgressive.Utils
             manager.Spawn(particles);
         }
 
+
+
         // Перегрузки для удобства (без variationPos)
         public static void SpawnWindVerticalAsync(IAsyncParticleManager manager, Vec3d pos)
         {
@@ -387,6 +390,13 @@ namespace ElectricalProgressive.Utils
         }
 
 
+
+        /// <summary>
+        /// Метод для спавна частиц по типу
+        /// </summary>
+        /// <param name="manager"></param>
+        /// <param name="pos"></param>
+        /// <param name="type"></param>
         public static void SpawnParticlesAsync(IAsyncParticleManager manager, Vec3d pos, int type)
         {
             if (type == 0)
@@ -403,13 +413,21 @@ namespace ElectricalProgressive.Utils
                 SpawnWindVerticalAsync(manager, pos);
 
         }
-        
 
 
 
 
+        /// <summary>
+        /// Генератор случайных чисел 
+        /// </summary>
         private static readonly Random rand = new Random();
 
+        /// <summary>
+        /// Генерирует случайную позицию в пределах вариации от заданной позиции
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="variation"></param>
+        /// <returns></returns>
         public static Vec3d RandomBlockPos(Vec3d pos, Vec3d variation)
         {
             return new Vec3d(

@@ -254,13 +254,13 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
                 // Обработка prepareBurnout
                 if (prepareBurnout)
                 {
-                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), 0);
+                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos).Add(0.5d,0d,0.5d), 0);
                 }
                 
                 // Обработка burnout
                 if (hasBurnout)
                 {
-                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), 1);
+                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos).Add(0.5d, 0d, 0.5d), 1);
                 }
                 
                 // частицы собственные для блока
@@ -777,19 +777,6 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         }
 
 
-
-        // Проверяем, изменились ли данные
-        /*
-        if (connection == this.connection &&
-            interruption == this.interruption &&
-            isLoaded == this.isLoaded
-            //&&
-            //AllEparamss!.SequenceEqual(allEparams!)
-            )
-        {
-            return;
-        }
-        */
 
 
         this.interruption = interruption;
