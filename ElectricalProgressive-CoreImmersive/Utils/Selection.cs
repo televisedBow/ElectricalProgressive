@@ -2,7 +2,7 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
-namespace ElectricalProgressiveImmersive.Utils;
+namespace EPImmersive.Utils;
 
 public class Selection
 {

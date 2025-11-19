@@ -1,4 +1,4 @@
-﻿namespace ElectricalProgressiveImmersive.Utils;
+﻿namespace EPImmersive.Utils;
 
 public static class FloatHelper
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     public class Store
     {

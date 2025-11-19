@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Vintagestory.API.MathTools;
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     public class Simulation
     {

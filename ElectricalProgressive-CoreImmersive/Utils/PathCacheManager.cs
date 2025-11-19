@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using Vintagestory.API.MathTools;
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     /// <summary>
     /// Глобальный кэш путей с быстрым ulong-ключом и очисткой по TTL.

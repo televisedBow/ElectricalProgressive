@@ -1,15 +1,15 @@
-﻿using ElectricalProgressiveImmersive.Interface;
-using ElectricalProgressiveImmersive.Utils;
+﻿using EPImmersive.Interface;
+using EPImmersive.Utils;
 using Vintagestory.API.MathTools;
 
-public class VirtualConductor : IElectricConductor
+public class IEImmersiveVConductor : VirtualConductor
 {
-    public BlockPos Pos { get; }
-
-    public VirtualConductor(BlockPos pos)
+    public IEImmersiveVConductor(BlockPos pos) : base(pos)
     {
         this.Pos = pos;
     }
+
+    public BlockPos Pos { get; }
 
     public void Update() { }
 }

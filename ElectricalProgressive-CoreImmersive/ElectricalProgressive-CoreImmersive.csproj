@@ -35,16 +35,17 @@
             <HintPath>$(VINTAGE_STORY)/Lib/0Harmony.dll</HintPath>
             <Private>False</Private>
         </Reference>
+      <Reference Include="ElectricalProgressive-Core">
+        <HintPath>..\Releases\electricalprogressivecore\ElectricalProgressive-Core.dll</HintPath>
+        <Private>False</Private>
+      </Reference>
     </ItemGroup>
     <ItemGroup>
         <Content Include="assets\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Compile Remove="Content\**" />
         <Compile Remove="Releases\**" />
-        <EmbeddedResource Remove="Content\**" />
         <EmbeddedResource Remove="Releases\**" />
-        <None Remove="Content\**" />
         <None Remove="Releases\**" />
         <Compile Remove="Utils\ParallelHelper.cs" />
         <Content Include="modinfo.json">

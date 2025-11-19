@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     public class Customer
     {

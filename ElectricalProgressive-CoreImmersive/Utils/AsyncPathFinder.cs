@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Vintagestory.API.MathTools;
 
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     public class AsyncPathFinder
     {

@@ -1,6 +1,6 @@
 ﻿using ElectricalProgressive.Utils;
-using ElectricalProgressiveImmersive.Interface;
-using ElectricalProgressiveImmersive.Utils;
+using EPImmersive.Interface;
+using EPImmersive.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
-using static ElectricalProgressiveImmersive.ElectricalProgressiveImmersive;
+using static EPImmersive.ElectricalProgressiveImmersive;
 
 
 [assembly: ModDependency("game", "1.21.0")]
@@ -27,7 +27,7 @@ using static ElectricalProgressiveImmersive.ElectricalProgressiveImmersive;
 
 
 
-namespace ElectricalProgressiveImmersive
+namespace EPImmersive
 {
     public class ElectricalProgressiveImmersive : ModSystem
     {

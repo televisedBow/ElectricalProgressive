@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using Vintagestory.API.MathTools;
-using ElectricalProgressiveImmersive.Interface;
+using EPImmersive.Interface;
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     /// <summary>
     /// Сеть

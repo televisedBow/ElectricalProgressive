@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
 
-namespace ElectricalProgressiveImmersive.Utils;
+namespace EPImmersive.Utils;
 
 public struct FastPosKeyByteComparer : IEqualityComparer<(FastPosKey key, byte face)>
 {

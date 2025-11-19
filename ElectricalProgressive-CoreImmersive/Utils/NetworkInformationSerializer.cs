@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     public static class NetworkInformationSerializer
     {

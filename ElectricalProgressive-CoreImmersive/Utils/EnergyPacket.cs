@@ -1,6 +1,6 @@
 ﻿using Vintagestory.API.MathTools;
 
-namespace ElectricalProgressiveImmersive.Utils
+namespace EPImmersive.Utils
 {
     /// <summary>
     /// Сам пакет с энергией

@@ -1,7 +1,7 @@
 ﻿using System;
 using Vintagestory.API.Common;
 
-namespace ElectricalProgressiveImmersive.Utils;
+namespace EPImmersive.Utils;
 
 public static class MyMiniLib
 {
