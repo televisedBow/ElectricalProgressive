@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using ElectricalProgressive.Utils;
+using System.IO;
 using System.Text;
 
 namespace EPImmersive.Utils
 {
-    public static class NetworkInformationSerializer
+    public static class ImmersiveNetworkInformationSerializer
     {
-        public static byte[] Serialize(NetworkInformation info)
+        public static byte[] Serialize(ImmersiveNetworkInformation info)
         {
             using var ms = new MemoryStream();
             using (var writer = new BinaryWriter(ms, Encoding.UTF8))
@@ -15,7 +16,6 @@ namespace EPImmersive.Utils
                 writer.Write(info.MaxCapacity);
                 writer.Write(info.Production);
                 writer.Write(info.Request);
-                writer.Write((int)info.Facing);
                 writer.Write(info.NumberOfAccumulators);
                 writer.Write(info.NumberOfBlocks);
                 writer.Write(info.NumberOfConsumers);
@@ -41,16 +41,15 @@ namespace EPImmersive.Utils
             return ms.ToArray();
         }
 
-        public static NetworkInformation Deserialize(byte[] data)
+        public static ImmersiveNetworkInformation Deserialize(byte[] data)
         {
             using var ms = new MemoryStream(data);
             using var reader = new BinaryReader(ms, Encoding.UTF8);
-            var info = new NetworkInformation
+            var info = new ImmersiveNetworkInformation
             {
                 Consumption = reader.ReadSingle(), Capacity = reader.ReadSingle(), MaxCapacity = reader.ReadSingle(),
                 Production = reader.ReadSingle(),
                 Request = reader.ReadSingle(),
-                Facing = (Facing)reader.ReadInt32(),
                 NumberOfAccumulators = reader.ReadInt32(),
                 NumberOfBlocks = reader.ReadInt32(),
                 NumberOfConsumers = reader.ReadInt32(),

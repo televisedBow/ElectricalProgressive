@@ -3,7 +3,7 @@ using Vintagestory.API.MathTools;
 
 namespace EPImmersive.Interface;
 
-public interface IEImmersiveConsumer
+public interface IEImmersiveConsumer: IElectricConsumer
 {
  
 

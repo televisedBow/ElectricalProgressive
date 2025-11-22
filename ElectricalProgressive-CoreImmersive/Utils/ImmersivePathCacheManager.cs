@@ -5,29 +5,25 @@ using Vintagestory.API.MathTools;
 namespace EPImmersive.Utils
 {
     /// <summary>
-    /// Глобальный кэш путей с быстрым ulong-ключом и очисткой по TTL.
+    /// Глобальный кэш путей для иммерсивных проводов
     /// </summary>
-    public static class PathCacheManager
+    public static class ImmersivePathCacheManager
     {
         private class Entry
         {
             public BlockPos[]? Path;
-            public byte[]? FacingFrom;
-            public bool[][]? NowProcessedFaces;
-            public Facing[]? UsedConnections;
+            public byte[]? NodeIndices; // Индексы узлов для каждого блока в пути
             public DateTime LastAccessed;
             public int Version;
             public int Voltage;
         }
 
-        private static readonly TimeSpan EntryTtl = TimeSpan.FromMinutes(ElectricalProgressiveImmersive.cacheTimeoutCleanupMinutes);
+        private static readonly TimeSpan EntryTtl = TimeSpan.FromMinutes(ElectricalProgressive.ElectricalProgressive.cacheTimeoutCleanupMinutes);
 
-        // Заменили (BlockPos, BlockPos) на ulong
         private static readonly ConcurrentDictionary<ulong, Entry> Cache = new();
 
         /// <summary>
-        /// Быстрый хэш для пары позиций.
-        /// Учитывает X, Y, Z и Dimension для обеих точек.
+        /// Быстрый хэш для пары позиций
         /// </summary>
         private static ulong HashPair(BlockPos a, BlockPos b)
         {
@@ -35,7 +31,7 @@ namespace EPImmersive.Utils
             {
                 var ha = HashBlockPos(a);
                 var hb = HashBlockPos(b);
-                return ha ^ (hb * 0x9E3779B97F4A7C15UL); // перемешивание золотым сечением
+                return ha ^ (hb * 0x9E3779B97F4A7C15UL);
             }
         }
 
@@ -43,30 +39,23 @@ namespace EPImmersive.Utils
         {
             unchecked
             {
-                // Сдвиги для устранения отрицательных значений
-                var dim = (ulong)(uint)pos.dimension & 0xFUL;          // 4 бита
-                var x = (ulong)(uint)(pos.X + 8388608) & 0xFFFFFFUL;   // 24 бита
-                var y = (ulong)(uint)(pos.Y + 2048) & 0xFFFUL;         // 12 бит
-                var z = (ulong)(uint)(pos.Z + 8388608) & 0xFFFFFFUL;   // 24 бита
+                var dim = (ulong)(uint)pos.dimension & 0xFUL;
+                var x = (ulong)(uint)(pos.X + 8388608) & 0xFFFFFFUL;
+                var y = (ulong)(uint)(pos.Y + 2048) & 0xFFFUL;
+                var z = (ulong)(uint)(pos.Z + 8388608) & 0xFFFFFFUL;
 
-                // Формируем 64-битный ключ: [DIM(4)][X(24)][Y(12)][Z(24)]
                 return (dim << 60) ^ (x << 36) ^ (y << 24) ^ z;
             }
         }
 
-
-
-
         /// <summary>
-        /// Попытаться получить путь из кэша.
+        /// Попытаться получить путь из кэша
         /// </summary>
         public static bool TryGet(
             BlockPos start,
             BlockPos end,
             out BlockPos[] path,
-            out byte[] facingFrom,
-            out bool[][] nowProcessed,
-            out Facing[] usedConnections,
+            out byte[] nodeIndices,
             out int version,
             out int voltage)
         {
@@ -75,34 +64,28 @@ namespace EPImmersive.Utils
             {
                 entry.LastAccessed = DateTime.UtcNow;
                 path = entry.Path!;
-                facingFrom = entry.FacingFrom!;
-                nowProcessed = entry.NowProcessedFaces!;
-                usedConnections = entry.UsedConnections!;
+                nodeIndices = entry.NodeIndices!;
                 version = entry.Version;
-                voltage= entry.Voltage;
+                voltage = entry.Voltage;
                 return true;
             }
 
             path = null!;
-            facingFrom = null!;
-            nowProcessed = null!;
-            usedConnections = null!;
+            nodeIndices = null!;
             version = 0;
-            voltage= 0;
+            voltage = 0;
             return false;
         }
 
         /// <summary>
-        /// Сохранить в кэше новый путь или обновить существующий.
+        /// Сохранить в кэше новый путь или обновить существующий
         /// </summary>
         public static void AddOrUpdate(
             BlockPos start,
             BlockPos end,
             int currentVersion,
             BlockPos[] path,
-            byte[] facingFrom,
-            bool[][] nowProcessedFaces,
-            Facing[] usedConnections,
+            byte[] nodeIndices,
             int voltage)
         {
             var key = HashPair(start, end);
@@ -111,9 +94,7 @@ namespace EPImmersive.Utils
                 _ => new Entry
                 {
                     Path = path,
-                    FacingFrom = facingFrom,
-                    NowProcessedFaces = nowProcessedFaces,
-                    UsedConnections = usedConnections,
+                    NodeIndices = nodeIndices,
                     LastAccessed = DateTime.UtcNow,
                     Version = currentVersion,
                     Voltage = voltage
@@ -121,9 +102,8 @@ namespace EPImmersive.Utils
                 (_, existing) =>
                 {
                     existing.Path = path;
-                    existing.FacingFrom = facingFrom;
-                    existing.NowProcessedFaces = nowProcessedFaces;
-                    existing.UsedConnections = usedConnections;
+                    existing.NodeIndices = nodeIndices;
+                    existing.LastAccessed = DateTime.UtcNow;
                     existing.Version = currentVersion;
                     existing.Voltage = voltage;
                     return existing;
@@ -131,7 +111,7 @@ namespace EPImmersive.Utils
         }
 
         /// <summary>
-        /// Очистка старых записей, не использовавшихся дольше TTL.
+        /// Очистка старых записей, не использовавшихся дольше TTL
         /// </summary>
         public static void Cleanup()
         {
@@ -144,9 +124,9 @@ namespace EPImmersive.Utils
                 }
             }
         }
-        
+
         /// <summary>
-        /// Удалить все записи для указанных позиций.
+        /// Удалить все записи для указанных позиций
         /// </summary>
         public static void RemoveAll(BlockPos start, BlockPos end)
         {
@@ -161,6 +141,5 @@ namespace EPImmersive.Utils
         {
             Cache.Clear();
         }
-
     }
 }

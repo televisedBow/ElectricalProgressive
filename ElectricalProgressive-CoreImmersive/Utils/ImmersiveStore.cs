@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace EPImmersive.Utils
 {
-    public class Store
+    public class ImmersiveStore
     {
         /// <summary>
         /// Уникальный идентификатор магазина.
@@ -31,11 +30,11 @@ namespace EPImmersive.Utils
         public float TotalRequest;
 
         /// <summary>
-        /// Инициализирует новый экземпляр класса Store.
+        /// Инициализирует новый экземпляр класса ImmersiveStore.
         /// </summary>
         /// <param name="id"></param>
         /// <param name="stock"></param>
-        public Store(int id, float stock)
+        public ImmersiveStore(int id, float stock)
         {
             Id = id;
             Stock = stock;
@@ -50,14 +49,11 @@ namespace EPImmersive.Utils
             CurrentRequests.Clear();
         }
 
-
-
-
         /// <summary>
         /// Обрабатывает запросы от клиентов и распределяет товар по запросам.
         /// </summary>
         /// <param name="customers"></param>
-        public void ProcessRequests(Customer[] customers)
+        public void ProcessRequests(ImmersiveCustomer[] customers)
         {
             float totalRequested = 0;
             foreach (var req in CurrentRequests.Values)

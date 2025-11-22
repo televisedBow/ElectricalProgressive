@@ -1,7 +1,7 @@
 ﻿using ElectricalProgressive.Interface;
 using Vintagestory.API.MathTools;
 
-namespace ElectricalProgressiveImmersive.Interface;
+namespace EPImmersive.Interface;
 
 public interface IEImmersiveAccumulator: IElectricAccumulator
 {

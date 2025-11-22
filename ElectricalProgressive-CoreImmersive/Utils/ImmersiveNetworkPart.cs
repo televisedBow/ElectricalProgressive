@@ -1,0 +1,46 @@
+﻿using ElectricalProgressive.Utils;
+using EPImmersive.Content.Block;
+using EPImmersive.Interface;
+using System.Collections.Generic;
+using Vintagestory.API.MathTools;
+
+namespace EPImmersive.Utils
+{
+    /// <summary>
+    /// Часть сети для иммерсивных проводов
+    /// </summary>
+    public class ImmersiveNetworkPart
+    {
+        // Новая система для иммерсивных проводов
+        public List<WireNode> WireNodes = new List<WireNode>();
+        public List<ConnectionData> Connections = new List<ConnectionData>();
+        public EParams MainEparams = new EParams(); // Основные параметры устройства
+        public ImmersiveNetwork Network;
+
+        public readonly BlockPos Position;
+        public IEImmersiveAccumulator? Accumulator;
+        public IEImmersiveConsumer? Consumer;
+        public IEImmersiveConductor? Conductor;
+        public IEImmersiveProducer? Producer;
+        public IEImmersiveTransformator? Transformator;
+        public bool IsLoaded = false;
+        public List<ImmersiveEnergyPacket> Packets = [];
+
+        public ImmersiveNetworkPart(BlockPos position)
+        {
+            Position = position;
+        }
+    }
+
+    /// <summary>
+    /// Иммерсивное соединение в сети
+    /// </summary>
+    public class NetworkImmersiveConnection
+    {
+        public BlockPos LocalPos { get; set; }
+        public byte LocalNodeIndex { get; set; }
+        public BlockPos NeighborPos { get; set; }
+        public byte NeighborNodeIndex { get; set; }
+        public EParams Parameters { get; set; } = new EParams();
+    }
+}

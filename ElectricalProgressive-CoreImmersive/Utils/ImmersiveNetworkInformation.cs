@@ -1,16 +1,17 @@
-﻿namespace EPImmersive.Utils
+﻿using ElectricalProgressive.Utils;
+
+namespace EPImmersive.Utils
 {
     /// <summary>
     /// Сборщик информации о сети
     /// </summary>
-    public class NetworkInformation
+    public class ImmersiveNetworkInformation
     {
         public float Consumption;
         public float Capacity;    //Емкость батарей
         public float MaxCapacity; //Максимальная емкость батарей
         public float Production;
         public float Request;
-        public Facing Facing = Facing.None;
         public int NumberOfAccumulators;
         public int NumberOfBlocks;
         public int NumberOfConsumers;
@@ -29,7 +30,6 @@
             MaxCapacity = 0f;
             Production = 0f;
             Request = 0f;
-            Facing = Facing.None;
             NumberOfAccumulators = 0;
             NumberOfBlocks = 0;
             NumberOfConsumers = 0;

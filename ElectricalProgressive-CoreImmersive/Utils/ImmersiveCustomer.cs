@@ -2,7 +2,7 @@
 
 namespace EPImmersive.Utils
 {
-    public class Customer
+    public class ImmersiveCustomer
     {
         /// <summary>
         /// Уникальный идентификатор клиента.
@@ -44,12 +44,12 @@ namespace EPImmersive.Utils
         private int[] _radixSortCount;
 
         /// <summary>
-        /// Инициализирует новый экземпляр класса Customer.
+        /// Инициализирует новый экземпляр класса ImmersiveCustomer.
         /// </summary>
         /// <param name="id"></param>
         /// <param name="required"></param>
         /// <param name="storeDistances"></param>
-        public Customer(int id, float required, int[] storeDistances)
+        public ImmersiveCustomer(int id, float required, int[] storeDistances)
         {
             Id = id;
             Required = required;

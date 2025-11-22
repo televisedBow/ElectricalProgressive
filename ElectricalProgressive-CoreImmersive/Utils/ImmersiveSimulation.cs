@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using Vintagestory.API.MathTools;
+﻿using Vintagestory.API.MathTools;
 
 namespace EPImmersive.Utils
 {
-    public class Simulation
+    public class ImmersiveSimulation
     {
         public BlockPos[][] Path = new BlockPos[100][];
-        public byte[][]? FacingFrom = new byte[100][];
-        public bool[][][]? NowProcessedFaces= new bool[100][][];
-        public Facing[][]? UsedConnection = new Facing[100][];
+        public byte[][] NodeIndices = new byte[100][]; // Индексы узлов для каждого пути
         public int[] Voltage = new int[100];
-
-
-
 
         public int CountWorkingStores;
         public int CountWorkingCustomers;
@@ -21,18 +14,15 @@ namespace EPImmersive.Utils
         // Массив для хранения всех расстояний между клиентами и магазинами
         public int[] Distances = new int[100];
 
-
-
-
         /// <summary>
         /// Список клиентов, участвующих в симуляции.
         /// </summary>
-        public Customer[] Customers = new Customer[100];
+        public ImmersiveCustomer[] Customers = new ImmersiveCustomer[100];
 
         /// <summary>
         /// Список магазинов, участвующих в симуляции.
         /// </summary>
-        public Store[] Stores = new Store[100];
+        public ImmersiveStore[] Stores = new ImmersiveStore[100];
 
         /// <summary>
         /// Запускает симуляцию распределения товара между клиентами и магазинами.
@@ -102,32 +92,22 @@ namespace EPImmersive.Utils
         /// <summary>
         /// Обрабатывает массив идентификаторов магазинов для клиента, распределяя оставшееся количество товара между магазинами.
         /// </summary>
-        /// <param name="customer"></param>
+        /// <param name="immersiveCustomer"></param>
         /// <param name="remaining"></param>
         /// <param name="storeIds"></param>
-        private void ProcessStoresArray(Customer customer, float remaining, int[] storeIds)
+        private void ProcessStoresArray(ImmersiveCustomer immersiveCustomer, float remaining, int[] storeIds)
         {
-            while (customer.HasMoreStores() && remaining > 0.001f)
+            while (immersiveCustomer.HasMoreStores() && remaining > 0.001f)
             {
-                var s = customer.GetNextStoreIndex();
+                var s = immersiveCustomer.GetNextStoreIndex();
                 var store = Stores![storeIds[s]];
                 if (store.Stock <= 0.001f && store.ImNull)
                     continue;
 
                 var requested = remaining;
-                store.CurrentRequests[customer.Id] = requested;
+                store.CurrentRequests[immersiveCustomer.Id] = requested;
                 remaining -= requested;
             }
         }
-
-        /*
-        /// <summary>
-        /// Сбрасывает состояние симуляции, очищая списки клиентов и магазинов.
-        /// </summary>
-        public void Reset()
-        {
-   
-        }
-        */
     }
 }

@@ -1,0 +1,122 @@
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Vintagestory.API.MathTools;
+
+namespace EPImmersive.Utils
+{
+    public class ImmersiveAsyncPathFinder
+    {
+        private readonly ConcurrentQueue<PathRequest> _requestQueue = new();
+        private volatile bool _isRunning = true;
+        private bool _busy = false;
+        private readonly int _maxConcurrentTasks;
+        private readonly Dictionary<BlockPos, ImmersiveNetworkPart> _parts;
+        private readonly int _sizeOfQueue;
+        private readonly int _sizeOfNotBusy;
+
+        public ImmersiveAsyncPathFinder(Dictionary<BlockPos, ImmersiveNetworkPart> parts, int maxConcurrentTasks)
+        {
+            this._parts = parts;
+            this._maxConcurrentTasks = maxConcurrentTasks;
+            this._sizeOfQueue = 1000 * maxConcurrentTasks;
+            this._sizeOfNotBusy = 200 * maxConcurrentTasks;
+
+            for (var i = 0; i < maxConcurrentTasks; i++)
+            {
+                Task.Factory.StartNew(() => ProcessRequests(), TaskCreationOptions.LongRunning)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        public void EnqueueRequest(BlockPos start, BlockPos end, ImmersiveNetwork immersiveNetwork)
+        {
+            if (_requestQueue.Count < _sizeOfNotBusy)
+                _busy = false;
+
+            if (_requestQueue.Count < _sizeOfQueue && !_busy)
+            {
+                _requestQueue.Enqueue(new PathRequest(start, end, immersiveNetwork));
+            }
+            else
+            {
+                _busy = true;
+            }
+        }
+
+        private void ProcessRequests()
+        {
+            var pathFinder = new ImmersivePathFinder();
+
+            while (_isRunning)
+            {
+                if (_requestQueue.Count == 0)
+                {
+                    pathFinder.Clear();
+                    Thread.Sleep(50);
+                }
+
+                if (_requestQueue.TryDequeue(out var request))
+                {
+                    try
+                    {
+                        var (path, nodeIndices) = pathFinder.FindShortestPath(
+                            request.Start, request.End, request.ImmersiveNetwork, _parts);
+
+                        if (path != null)
+                        {
+                            var copiedStart = request.Start.Copy();
+                            var copiedEnd = request.End.Copy();
+
+                            // Получаем напряжение из параметров соединения конечного узла
+                            var endPart = _parts[copiedEnd];
+                            var voltage = 0;
+                            if (nodeIndices.Length > 0)
+                            {
+                                var endNodeIndex = nodeIndices[nodeIndices.Length - 1];
+                                var connection = endPart.Connections
+                                    .FirstOrDefault(c => c.LocalNodeIndex == endNodeIndex);
+                                voltage = connection?.Parameters.voltage ?? endPart.MainEparams.voltage;
+                            }
+
+                            ImmersivePathCacheManager.AddOrUpdate(
+                                copiedStart,
+                                copiedEnd,
+                                request.ImmersiveNetwork.version,
+                                path,
+                                nodeIndices,
+                                voltage);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Логирование ошибки
+                    }
+                }
+            }
+        }
+
+        public void Stop()
+        {
+            _isRunning = false;
+            while (_requestQueue.TryDequeue(out _)) { }
+        }
+    }
+
+    public class PathRequest
+    {
+        public BlockPos Start { get; }
+        public BlockPos End { get; }
+        public ImmersiveNetwork ImmersiveNetwork { get; }
+
+        public PathRequest(BlockPos start, BlockPos end, ImmersiveNetwork immersiveNetwork)
+        {
+            Start = start;
+            End = end;
+            ImmersiveNetwork = immersiveNetwork;
+        }
+    }
+}

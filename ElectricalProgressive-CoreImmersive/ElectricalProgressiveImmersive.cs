@@ -1,4 +1,6 @@
-﻿using ElectricalProgressive.Utils;
+﻿using ElectricalProgressive;
+using ElectricalProgressive.Utils;
+using EPImmersive.Content.Block;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
 using System;
@@ -31,40 +33,29 @@ namespace EPImmersive
 {
     public class ElectricalProgressiveImmersive : ModSystem
     {
-        public readonly HashSet<Network> Networks = [];
-        public readonly Dictionary<BlockPos, NetworkPart> Parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
+        public readonly HashSet<ImmersiveNetwork> Networks = [];
+        public readonly Dictionary<BlockPos, ImmersiveNetworkPart> Parts = new(new BlockPosComparer()); // Хранит все элементы всех цепей
 
         private Dictionary<BlockPos, List<EnergyPacket>> _packetsByPosition = new(new BlockPosComparer()); //Словарь для хранения пакетов по позициям
 
+        private readonly List<ImmersiveEnergyPacket> _globalEnergyPackets = []; // Глобальный список пакетов энергии
 
-        private readonly List<EnergyPacket> _globalEnergyPackets = []; // Глобальный список пакетов энергии
+        private ImmersiveAsyncPathFinder _immersiveAsyncPathFinder = null!;
 
-        private AsyncPathFinder _asyncPathFinder = null!;
-
-
+        private ImmersiveNetworkInformation _result = new();
 
         private Dictionary<BlockPos, float> _sumEnergy = new();
-
-
-
+        
         public ICoreAPI Api = null!;
         public ICoreClientAPI _capi = null!;
         private ICoreServerAPI _sapi = null!;
-        private ElectricityConfig? _config;
-        //public static DamageManager? damageManager;
-        public static WeatherSystemServer? WeatherSystemServer;
+        
 
 
-        private Network _localNetwork = new();
+
+        private ImmersiveNetwork _localNetwork = new();
 
 
-        public static int speedOfElectricity; // Скорость электричества в проводах (блоков в тик)
-        public static int timeBeforeBurnout; // Время до сгорания проводника в секундах
-        public static int multiThreading; // сколько потоков использовать
-        public static int cacheTimeoutCleanupMinutes; // Время очистки кэша путей в минутах
-        public static int maxDistanceForFinding; // Максимальное расстояние для поиска пути
-        public static float energyLossFactor; // Коэффициент потерь энергии на проводах
-        public static bool enableLossCompensation; // Включить компенсацию потерь энергии на проводах
 
 
         public static AssetLocation soundElectricShok;
@@ -77,7 +68,7 @@ namespace EPImmersive
         private long _listenerId1;
         //private long listenerId2;
 
-        private NetworkInformation _result = new();
+        //private ImmersiveNetworkInformation _result = new();
 
         /// <summary>
         /// Запуск модификации
@@ -91,9 +82,7 @@ namespace EPImmersive
 
             soundElectricShok = new AssetLocation("electricalprogressivecore:sounds/electric-shock.ogg");
         }
-
-
-
+        
 
         /// <summary>
         /// Освобождение ресурсов
@@ -106,13 +95,11 @@ namespace EPImmersive
             if (_sapi != null)
             {
                 _sapi.Event.UnregisterGameTickListener(_listenerId1);
-                _asyncPathFinder.Stop();
-                _asyncPathFinder = null;
+                _immersiveAsyncPathFinder.Stop();
+                _immersiveAsyncPathFinder = null;
             }
-
-
+            
             _globalEnergyPackets.Clear();
-
 
             _sumEnergy.Clear();
             _packetsByPosition.Clear();
@@ -121,47 +108,23 @@ namespace EPImmersive
             Api = null!;
             _capi = null!;
             _sapi = null!;
-            //damageManager = null;
-            WeatherSystemServer = null;
+         
+           
 
 
             Networks.Clear();
             Parts.Clear();
-
-
-            PathCacheManager.Dispose();
-
-
+            
+            ImmersivePathCacheManager.Dispose();
         }
-
-
-
-
+        
         /// <summary>
         /// Загрузка конфигурации и начальная инициализация
         /// </summary>
         /// <param name="api"></param>
         public override void StartPre(ICoreAPI api)
         {
-            // грузим конфиг
-            // если конфиг с ошибкой или не найден, то генерируется стандартный
-            _config = api.LoadModConfig<ElectricityConfig>("ElectricityConfig.json") ?? new ElectricityConfig();
-            api.StoreModConfig(_config, "ElectricityConfig.json");
-
-            // проверяем, что конфиг валиден, и обрезаются значения
-            speedOfElectricity = Math.Clamp(_config.SpeedOfElectricity, 1, 16);
-            timeBeforeBurnout = Math.Clamp(_config.TimeBeforeBurnout, 1, 600);
-            multiThreading = Math.Clamp(_config.MultiThreading, 2, 32);
-            cacheTimeoutCleanupMinutes = Math.Clamp(_config.CacheTimeoutCleanupMinutes, 1, 60);
-            maxDistanceForFinding = Math.Clamp(_config.MaxDistanceForFinding, 8, 1000);
-            energyLossFactor = Math.Clamp(_config.EnergyLossFactor, 0.0f, 2.0f);
-            enableLossCompensation = _config.EnableLossCompensation;
-
-            // устанавливаем время между тиками
-            TickTimeMs = 1000 / speedOfElectricity;
         }
-
-
 
         /// <summary>
         /// Запуск клиентской стороны
@@ -173,14 +136,8 @@ namespace EPImmersive
             this._capi = api;
             RegisterAltKeys();
 
-
-            //listenerId2 = capi.Event.RegisterGameTickListener(this.OnGameTickClient, tickTimeMs);
         }
-
-
-
-
-
+        
 
         /// <summary>
         /// Регистрация клавиш Alt
@@ -189,8 +146,7 @@ namespace EPImmersive
         {
             _capi.Input.RegisterHotKey("AltPressForNetwork", Lang.Get("AltPressForNetworkName"), GlKeys.LAlt);
         }
-
-
+        
         /// <summary>
         /// Серверная сторона
         /// </summary>
@@ -201,56 +157,201 @@ namespace EPImmersive
 
             this._sapi = api;
 
-            WeatherSystemServer = _sapi.ModLoader.GetModSystem<WeatherSystemServer>();
+            
 
             //инициализируем обработчик уронов
             //damageManager = new DamageManager(api);
 
             _listenerId1 = _sapi.Event.RegisterGameTickListener(this.OnGameTickServer, TickTimeMs);
 
-            _asyncPathFinder = new AsyncPathFinder(Parts, ElectricalProgressiveImmersive.multiThreading); // вычислитель параллельных задач поиска путей
+            _immersiveAsyncPathFinder = new ImmersiveAsyncPathFinder(Parts, ElectricalProgressive.ElectricalProgressive.multiThreading); // вычислитель параллельных задач поиска путей
         }
 
+        /// <summary>
+        /// Обновление электрической сети для иммерсивных проводов
+        /// </summary>
+        /// <param name="position">Позиция блока</param>
+        /// <param name="wireNodes">Точки подключения</param>
+        /// <param name="connections">Соединения</param>
+        /// <param name="mainEparam">Основные параметры блока</param>
+        /// <param name="currentEparam">Параметры текущего подключения</param>
+        /// <param name="isLoaded">Загружен ли блок</param>
+        /// <returns>Успешно ли обновлено</returns>
+        public bool Update(BlockPos position, List<WireNode> wireNodes, ref List<ConnectionData> connections,
+            EParams mainEparam, (EParams param, byte index) currentEparam, bool isLoaded)
+        {
+            if (!Parts.TryGetValue(position, out var part))
+            {
+                part = Parts[position] = new ImmersiveNetworkPart(position);
+            }
+
+            // Обновляем точки подключения
+            part.WireNodes.Clear();
+            part.WireNodes.AddRange(wireNodes);
+
+            // Обновляем соединения
+            part.Connections.Clear();
+            part.Connections.AddRange(connections);
+
+            part.IsLoaded = isLoaded;
+
+            // Если установлены основные параметры блока, применяем их
+            if (!mainEparam.Equals(new EParams()))
+            {
+                part.MainEparams = mainEparam;
+            }
+
+            // Если установлены параметры конкретного подключения, обновляем соответствующее соединение
+            if (!currentEparam.param.Equals(new EParams()))
+            {
+                // Находим соединение с указанным индексом
+                var connectionToUpdate = part.Connections.FirstOrDefault(c => c.LocalNodeIndex == currentEparam.index);
+                if (connectionToUpdate != null)
+                {
+                    // Обновляем параметры существующего соединения
+                    connectionToUpdate.Parameters = currentEparam.param;
+                }
+                else
+                {
+                    // Если соединение не найдено, создаем новое
+                    var newConnection = new ConnectionData
+                    {
+                        LocalNodeIndex = currentEparam.index,
+                        Parameters = currentEparam.param
+                        // NeighborPos и NeighborNodeIndex должны быть установлены вызывающим кодом
+                    };
+                    part.Connections.Add(newConnection);
+                }
+            }
+
+            // Обновляем соединения в сети
+            UpdateImmersiveConnections(ref part);
+
+            // Возвращаем обновленный список соединений
+            connections = part.Connections;
+            return true;
+        }
 
 
 
 
         /// <summary>
-        /// Обновление электрической сети
+        /// Обновление иммерсивных соединений в сети
         /// </summary>
-        /// <param name="position"></param>
-        /// <param name="facing"></param>
-        /// <param name="setEparams"></param>
-        /// <param name="eparams"></param>
-        /// <returns></returns>
-        public bool Update(BlockPos position, Facing facing, (EParams, int) setEparams, ref EParams[] eparams, bool isLoaded)
+        private void UpdateImmersiveConnections(ref ImmersiveNetworkPart part)
         {
-            if (!Parts.TryGetValue(position, out var part))
+            // Создаем временную сеть для этого блока если её нет
+            var network = GetOrCreateNetworkForPart(part);
+
+            // Добавляем/обновляем соединения
+            foreach (var connection in part.Connections)
             {
-                if (facing == Facing.None)
-                    return false;
-                part = Parts[position] = new NetworkPart(position);
+                AddImmersiveConnection(part, connection, network);
             }
 
-            var addedConnections = ~part.Connection & facing;
-            var removedConnections = part.Connection & ~facing;
+            // Удаляем устаревшие соединения
+            RemoveStaleImmersiveConnections(part, network);
+        }
+        
 
-            part.IsLoaded = isLoaded;
-            part.eparams = eparams;
-            part.Connection = facing;
+        /// <summary>
+        /// Получает или создает сеть для части
+        /// </summary>
+        private ImmersiveNetwork GetOrCreateNetworkForPart(ImmersiveNetworkPart part)
+        {
+            // Ищем существующую сеть для этого блока
+            foreach (var network in Networks)
+            {
+                if (network.PartPositions.Contains(part.Position))
+                    return network;
+            }
 
-            AddConnections(ref part, addedConnections, setEparams);
-            RemoveConnections(ref part, removedConnections);
+            // Создаем новую сеть если не нашли
+            var newNetwork = CreateNetwork();
+            newNetwork.PartPositions.Add(part.Position);
 
-            if (part.Connection == Facing.None)
-                Parts.Remove(position);
+            // Добавляем компоненты в сеть
+            if (part.Conductor is { } conductor) newNetwork.Conductors.Add(conductor);
+            if (part.Consumer is { } consumer) newNetwork.Consumers.Add(consumer);
+            if (part.Producer is { } producer) newNetwork.Producers.Add(producer);
+            if (part.Accumulator is { } accumulator) newNetwork.Accumulators.Add(accumulator);
+            if (part.Transformator is { } transformator) newNetwork.Transformators.Add(transformator);
 
-            //Cleaner();
-            eparams = part.eparams;
-            return true;
+            return newNetwork;
+        }
+        
+        /// <summary>
+        /// Добавляет иммерсивное соединение в сеть
+        /// </summary>
+        private void AddImmersiveConnection(ImmersiveNetworkPart part, ConnectionData connection, ImmersiveNetwork network)
+        {
+            // Проверяем, есть ли уже такое соединение
+            var existingConnection = network.ImmersiveConnections
+                .FirstOrDefault(c =>
+                    c.LocalPos.Equals(part.Position) &&
+                    c.LocalNodeIndex == connection.LocalNodeIndex &&
+                    c.NeighborPos.Equals(connection.NeighborPos) &&
+                    c.NeighborNodeIndex == connection.NeighborNodeIndex);
+
+            if (existingConnection == null)
+            {
+                // Создаем новое сетевое соединение
+                var networkConnection = new NetworkImmersiveConnection
+                {
+                    LocalPos = part.Position,
+                    LocalNodeIndex = connection.LocalNodeIndex,
+                    NeighborPos = connection.NeighborPos,
+                    NeighborNodeIndex = connection.NeighborNodeIndex,
+                    Parameters = connection.Parameters
+                };
+                network.ImmersiveConnections.Add(networkConnection);
+                network.version++;
+            }
+            else
+            {
+                // Обновляем параметры существующего соединения
+                existingConnection.Parameters = connection.Parameters;
+            }
+
+            // Добавляем соседа в сеть если его там нет
+            if (!network.PartPositions.Contains(connection.NeighborPos))
+            {
+                if (Parts.TryGetValue(connection.NeighborPos, out var neighborPart))
+                {
+                    network.PartPositions.Add(connection.NeighborPos);
+
+                    // Добавляем компоненты соседа в сеть
+                    if (neighborPart.Conductor is { } conductor) network.Conductors.Add(conductor);
+                    if (neighborPart.Consumer is { } consumer) network.Consumers.Add(consumer);
+                    if (neighborPart.Producer is { } producer) network.Producers.Add(producer);
+                    if (neighborPart.Accumulator is { } accumulator) network.Accumulators.Add(accumulator);
+                    if (neighborPart.Transformator is { } transformator) network.Transformators.Add(transformator);
+                }
+            }
         }
 
+        /// <summary>
+        /// Удаляет устаревшие иммерсивные соединения
+        /// </summary>
+        private void RemoveStaleImmersiveConnections(ImmersiveNetworkPart part, ImmersiveNetwork network)
+        {
+            // Находим соединения которые больше не актуальны
+            var staleConnections = network.ImmersiveConnections
+                .Where(c => c.LocalPos.Equals(part.Position) &&
+                           !part.Connections.Any(pc =>
+                               pc.LocalNodeIndex == c.LocalNodeIndex &&
+                               pc.NeighborPos.Equals(c.NeighborPos) &&
+                               pc.NeighborNodeIndex == c.NeighborNodeIndex))
+                .ToList();
 
+            // Удаляем устаревшие соединения
+            foreach (var staleConnection in staleConnections)
+            {
+                network.ImmersiveConnections.Remove(staleConnection);
+                network.version++;
+            }
+        }
+        
         /// <summary>
         /// Удаляем соединения
         /// </summary>
@@ -260,13 +361,27 @@ namespace EPImmersive
             if (Parts.TryGetValue(position, out var part))
             {
                 Parts.Remove(position);
-                RemoveConnections(ref part, part.Connection);
+
+                // Удаляем из всех сетей
+                foreach (var network in Networks.Where(n => n.PartPositions.Contains(position)).ToList())
+                {
+                    network.PartPositions.Remove(position);
+
+                    // Удаляем соединения связанные с этой позицией
+                    network.ImmersiveConnections.RemoveAll(c =>
+                        c.LocalPos.Equals(position) || c.NeighborPos.Equals(position));
+
+                    network.version++;
+
+                    // Если сеть пустая, удаляем её
+                    if (network.PartPositions.Count == 0)
+                    {
+                        Networks.Remove(network);
+                    }
+                }
             }
         }
-
-
-
-
+        
         /// <summary>
         /// Чистка всего и вся
         /// </summary>
@@ -276,27 +391,22 @@ namespace EPImmersive
             {
 
                 // подчищаем списки пакетов, но не в ноль
-                part.Value.packets?.Clear();
+                part.Value.Packets?.Clear();
 
-                //не трогать тут ничего 
-                if (part.Value.eparams != null && part.Value.eparams.Length == 6) // если проводник существует и имеет 6 проводников
+                // Обработка параметров для иммерсивных проводов
+                foreach (var connection in part.Value.Connections)
                 {
-                    for (var i = 0; i < 6; i++)
+                    if (!connection.Parameters.burnout && connection.Parameters.ticksBeforeBurnout > 0 && part.Value.Conductor is not VirtualConductor)
                     {
-                        if (!part.Value.eparams[i].burnout && part.Value.eparams[i].ticksBeforeBurnout > 0 && part.Value.Conductor is not VirtualConductor) // если проводник не сгорел и есть тики до сгорания
-                            part.Value.eparams[i].ticksBeforeBurnout--;                               // уменьшаем тики до сгорания
+                        connection.Parameters.ticksBeforeBurnout--;
                     }
-
                 }
-                else
+
+                // Обработка основных параметров
+                if (!part.Value.MainEparams.burnout && part.Value.MainEparams.ticksBeforeBurnout > 0 && part.Value.Conductor is not VirtualConductor)
                 {
-                    part.Value.eparams =
-                    [
-                        new EParams(), new EParams(), new EParams(),
-                            new EParams(), new EParams(), new EParams()
-                    ];
+                    part.Value.MainEparams.ticksBeforeBurnout--;
                 }
-
 
                 //заполняем нулями токи и выданные энергии с пакетов
                 if (!_sumEnergy.TryAdd(part.Key, 0F))
@@ -304,33 +414,26 @@ namespace EPImmersive
                     _sumEnergy[part.Key] = 0F;
                 }
 
-                part.Value.eparams[0].current = 0f;       //обнуляем токи
-                part.Value.eparams[1].current = 0f;       //обнуляем токи
-                part.Value.eparams[2].current = 0f;       //обнуляем токи
-                part.Value.eparams[3].current = 0f;       //обнуляем токи
-                part.Value.eparams[4].current = 0f;       //обнуляем токи
-                part.Value.eparams[5].current = 0f;       //обнуляем токи
+                // Обнуляем токи в соединениях
+                foreach (var connection in part.Value.Connections)
+                {
+                    connection.Parameters.current = 0f;
+                }
+
+                // Обнуляем основной ток
+                part.Value.MainEparams.current = 0f;
             }
         }
-
-
-
-
+        
         /// <summary>
-        /// Логистическая задача
+        /// Логистическая задача для иммерсивных проводов
         /// </summary>
-        /// <param name="network"></param>
-        /// <param name="consumerPositions"></param>
-        /// <param name="consumerRequests"></param>
-        /// <param name="producerPositions"></param>
-        /// <param name="producerGive"></param>
-        /// <param name="sim"></param>
-        private void LogisticalTask(Network network,
+        private void LogisticalTask(ImmersiveNetwork network,
             List<BlockPos> consumerPositions,
             List<float> consumerRequests,
             List<BlockPos> producerPositions,
             List<float> producerGive,
-            Simulation sim)
+            ImmersiveSimulation sim)
         {
             var cP = sim.CountWorkingCustomers = consumerPositions.Count; // Количество потребителей
             var pP = sim.CountWorkingStores = producerPositions.Count; // Количество производителей
@@ -344,20 +447,16 @@ namespace EPImmersive
             {
                 Array.Resize(ref sim.Distances, cP * pP);
                 Array.Resize(ref sim.Path, cP * pP);
-                Array.Resize(ref sim.FacingFrom, cP * pP);
-                Array.Resize(ref sim.NowProcessedFaces, cP * pP);
-                Array.Resize(ref sim.UsedConnection, cP * pP);
+                Array.Resize(ref sim.NodeIndices, cP * pP);
                 Array.Resize(ref sim.Voltage, cP * pP);
             }
 
             if (sim.Stores == null || sim.Stores.Length < pP)
-                sim.Stores = new Store[pP];
+                sim.Stores = new ImmersiveStore[pP];
 
             if (sim.Customers == null || sim.Customers.Length < cP)
-                sim.Customers = new Customer[cP];
-
-
-
+                sim.Customers = new ImmersiveCustomer[cP];
+            
 
             for (var i = 0; i < cP; i++)
             {
@@ -366,33 +465,28 @@ namespace EPImmersive
                     start = consumerPositions[i];
                     end = producerPositions[j];
 
-                    if (PathFinder.Heuristic(start, end) < ElectricalProgressiveImmersive.maxDistanceForFinding)
+                    if (ImmersivePathFinder.Heuristic(start, end) <ElectricalProgressive.ElectricalProgressive.maxDistanceForFinding)
                     {
-                        if (PathCacheManager.TryGet(start, end, out var cachedPath, out var facingFrom,
-                                out var nowProcessed, out var usedConnections, out var version, out var voltage))
+                        if (ImmersivePathCacheManager.TryGet(start, end, out var cachedPath, out var nodeIndices, out var version, out var voltage))
                         {
                             sim.Distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
                             if (version != network
                                     .version) // Если версия сети не совпадает, то добавляем запрос в очередь
                             {
-                                _asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
+                                _immersiveAsyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
                             }
 
                             sim.Path[i * pP + j] = cachedPath;
-                            sim.FacingFrom[i * pP + j] = facingFrom;
-                            sim.NowProcessedFaces[i * pP + j] = nowProcessed;
-                            sim.UsedConnection[i * pP + j] = usedConnections;
+                            sim.NodeIndices[i * pP + j] = nodeIndices;
                             sim.Voltage[i * pP + j] = voltage;
                         }
                         else
                         {
-                            _asyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
+                            _immersiveAsyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
                             sim.Distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
 
                             sim.Path[i * pP + j] = null;
-                            sim.FacingFrom[i * pP + j] = null;
-                            sim.NowProcessedFaces[i * pP + j] = null;
-                            sim.UsedConnection[i * pP + j] = null;
+                            sim.NodeIndices[i * pP + j] = null;
                             sim.Voltage[i * pP + j] = 0;
                         }
                     }
@@ -400,9 +494,7 @@ namespace EPImmersive
                     {
                         sim.Distances[i * pP + j] = int.MaxValue;
                         sim.Path[i * pP + j] = null;
-                        sim.FacingFrom[i * pP + j] = null;
-                        sim.NowProcessedFaces[i * pP + j] = null;
-                        sim.UsedConnection[i * pP + j] = null;
+                        sim.NodeIndices[i * pP + j] = null;
                         sim.Voltage[i * pP + j] = 0;
                     }
                 }
@@ -415,13 +507,11 @@ namespace EPImmersive
             {
                 var store = sim.Stores[j];
                 if (store == null)
-                    sim.Stores[j] = store = new Store(j, producerGive[j]);
+                    sim.Stores[j] = store = new ImmersiveStore(j, producerGive[j]);
                 store.Update(j, producerGive[j]);
             }
 
-
-
-
+            
             // инициализируем клиентов
             for (var i = 0; i < cP; i++)
             {
@@ -434,21 +524,15 @@ namespace EPImmersive
 
                 var cust = sim.Customers[i];
                 if (cust == null)
-                    sim.Customers[i] = cust = new Customer(i, consumerRequests[i], distBuffer);
+                    sim.Customers[i] = cust = new ImmersiveCustomer(i, consumerRequests[i], distBuffer);
                 else
                     cust.Update(i, consumerRequests[i], distBuffer);
             }
 
 
             sim.Run(); // Запускаем симуляцию для распределения энергии между потребителями и производителями
-
-
         }
-
-
-
-
-
+        
 
         /// <summary>
         /// Обновление электрических сетей
@@ -494,22 +578,7 @@ namespace EPImmersive
                 _elapsedMs = 0f; // сбросить накопленное время
             }
         }
-
-
-
-
-        /*
-        /// <summary>
-        /// Тикаем клиент
-        /// </summary>
-        /// <param name="deltaTime"></param>
-        private void OnGameTickClient(float deltaTime)
-        {
-
-
-
-        }
-        */
+        
 
 
         // Добавляем класс для пула контекстов обработки
@@ -518,7 +587,7 @@ namespace EPImmersive
             public List<Consumer> LocalConsumers { get; } = [];
             public List<Producer> LocalProducers { get; } = [];
             public List<Accumulator> LocalAccums { get; } = [];
-            public List<EnergyPacket> LocalPackets { get; } = [];
+            public List<ImmersiveEnergyPacket> LocalPackets { get; } = [];
 
             public List<BlockPos> ConsumerPositions { get; } = [];
             public List<float> ConsumerRequests { get; } = [];
@@ -529,8 +598,8 @@ namespace EPImmersive
             public List<BlockPos> Producer2Positions { get; } = [];
             public List<float> Producer2Give { get; } = [];
 
-            public Simulation Sim { get; } = new();
-            public Simulation Sim2 { get; } = new();
+            public ImmersiveSimulation Sim { get; } = new();
+            public ImmersiveSimulation Sim2 { get; } = new();
 
             public void Clear()
             {
@@ -571,7 +640,7 @@ namespace EPImmersive
 
 
 
-        private void ProcessNetwork(Network network, NetworkProcessingContext context)
+        private void ProcessNetwork(ImmersiveNetwork network, NetworkProcessingContext context)
         {
             // Этап 1: Очищаем локальные переменные цикла ----------------------------------------------------------------------------
 
@@ -591,7 +660,7 @@ namespace EPImmersive
                     context.LocalConsumers.Add(new Consumer(electricConsumer));
 
                     // Если включена компенсация потерь
-                    if (enableLossCompensation)
+                    if (ElectricalProgressive.ElectricalProgressive.enableLossCompensation)
                     {
                         var received = electricConsumer.getPowerReceive();
                         var requested = electricConsumer.Consume_request();
@@ -673,7 +742,7 @@ namespace EPImmersive
 
 
 
-            EnergyPacket packet;   // Временная переменная для пакета энергии
+            ImmersiveEnergyPacket packet;   // Временная переменная для пакета энергии
             BlockPos posStore; // Позиция магазина в мире
             BlockPos posCustomer; // Позиция потребителя в мире
             var customCount = context.ConsumerPositions.Count; // Количество клиентов в симуляции
@@ -692,14 +761,12 @@ namespace EPImmersive
                             continue;
 
                         // создаём пакет, не копируя ничего
-                        packet = new EnergyPacket(
+                        packet = new ImmersiveEnergyPacket(
                             value,
                             context.Sim.Voltage[i * storeCount + k],
                             context.Sim.Path[i * storeCount + k].Length - 1,
                             context.Sim.Path[i * storeCount + k],
-                            context.Sim.FacingFrom[i * storeCount + k],
-                            context.Sim.NowProcessedFaces[i * storeCount + k],
-                            context.Sim.UsedConnection[i * storeCount + k]
+                            context.Sim.NodeIndices[i * storeCount + k]
                         );
 
 
@@ -713,20 +780,15 @@ namespace EPImmersive
                 }
             }
 
-
-
-
-
-
-
+            
             // Этап 5: Забираем у аккумуляторов выданное----------------------------------------------------------------------------
             var consIter = 0; // Итератор
             foreach (var accum in context.LocalAccums)
             {
-                if (context.Sim.Stores![consIter + context.LocalProducers.Count].Stock < accum.ElectricAccum.canRelease())
+                if (context.Sim.Stores![consIter + context.LocalProducers.Count].Stock < accum.ImmersiveAccum.canRelease())
                 {
-                    accum.ElectricAccum.Release(accum.ElectricAccum.canRelease() -
-                                                context.Sim.Stores[consIter + context.LocalProducers.Count].Stock);
+                    accum.ImmersiveAccum.Release(accum.ImmersiveAccum.canRelease() -
+                                                 context.Sim.Stores[consIter + context.LocalProducers.Count].Stock);
                 }
 
                 consIter++;
@@ -754,7 +816,6 @@ namespace EPImmersive
 
 
 
-
             // Этап 7: Остатки генераторов  ----------------------------------------------------------------------------
             prod = context.LocalProducers.Count; // Количество производителей в сети
             var prodIter = 0; // Итератор для производителей
@@ -763,7 +824,7 @@ namespace EPImmersive
             foreach (var producer in context.LocalProducers)
             {
                 giveEnergy = context.Sim.Stores![prodIter].Stock;
-                context.Producer2Positions.Add(producer.ElectricProducer.Pos);
+                context.Producer2Positions.Add(producer.ImmersiveProducer.Pos);
                 context.Producer2Give.Add(giveEnergy);
                 prodIter++;
             }
@@ -788,14 +849,12 @@ namespace EPImmersive
                             continue;
 
                         // создаём пакет, не копируя ничего
-                        packet = new EnergyPacket(
+                        packet = new ImmersiveEnergyPacket(
                             value,
                             context.Sim2.Voltage[i * storeCount + k],
-                            context.Sim2.Path[i * storeCount + k].Length - 1,
+                            context.Sim.Path[i * storeCount + k].Length - 1,
                             context.Sim2.Path[i * storeCount + k],
-                            context.Sim2.FacingFrom[i * storeCount + k],
-                            context.Sim2.NowProcessedFaces[i * storeCount + k],
-                            context.Sim2.UsedConnection[i * storeCount + k]
+                            context.Sim2.NodeIndices[i * storeCount + k]
                         );
 
 
@@ -806,17 +865,14 @@ namespace EPImmersive
                     }
                 }
             }
-
-
-
-
+            
 
             // Этап 9: Сообщение генераторам о нагрузке ----------------------------------------------------------------------------
             var j = 0;
             foreach (var producer in context.LocalProducers)
             {
                 var totalOrder = context.Sim.Stores![j].TotalRequest + context.Sim2.Stores![j].TotalRequest;
-                producer.ElectricProducer.Produce_order(totalOrder);
+                producer.ImmersiveProducer.Produce_order(totalOrder);
                 j++;
             }
 
@@ -824,12 +880,9 @@ namespace EPImmersive
 
             // Обновляем инфу об электрических цепях
             UpdateNetworkInfo(network);
-
-
         }
 
-
-
+        
 
         /// <summary>
         /// Тикаем сервер
@@ -852,12 +905,12 @@ namespace EPImmersive
 
 
             // Потокобезопасный контейнер для сбора пакетов
-            var packetsBag = new ConcurrentBag<List<EnergyPacket>>();
+            var packetsBag = new ConcurrentBag<List<ImmersiveEnergyPacket>>();
 
             // Обрабатываем сети параллельно с использованием пула контекстов
             Parallel.ForEach(Networks, new ParallelOptions
             {
-                MaxDegreeOfParallelism = multiThreading
+                MaxDegreeOfParallelism = ElectricalProgressive.ElectricalProgressive.multiThreading
             }, network =>
             {
                 var context = GetContext();
@@ -869,7 +922,7 @@ namespace EPImmersive
                     if (context.LocalPackets.Count > 0)
                     {
                         // Создаем копию только если есть пакеты
-                        var packetsCopy = new List<EnergyPacket>(context.LocalPackets);
+                        var packetsCopy = new List<ImmersiveEnergyPacket>(context.LocalPackets);
                         packetsBag.Add(packetsCopy);
                     }
                 }
@@ -886,20 +939,15 @@ namespace EPImmersive
 
 
 
-
             // Обновление электрических компонентов в сети, если прошло достаточно времени около 0.5 секунд
             _elapsedMs += deltaTime;
             UpdateNetworkComponents();
-
-
-
+            
 
             // Этап 11: Потребление энергии пакетами и Этап 12: Перемещение пакетов-----------------------------------------------
             ConsumeAndMovePackets();
 
-
-
-
+            
             foreach (var pair in _sumEnergy)
             {
                 if (Parts.TryGetValue(pair.Key, out var parta))
@@ -922,7 +970,7 @@ namespace EPImmersive
 
             var bAccessor = _sapi!.World.BlockAccessor; // аксессор для блоков
             BlockPos partPos;                        // Временная переменная для позиции части сети
-            NetworkPart part;                        // Временная переменная для части сети
+            ImmersiveNetworkPart part;                        // Временная переменная для части сети
             bool updated;                            // Флаг обновления части сети от повреждения
             EParams faceParams;                      // Параметры грани сети
             int lastFaceIndex;                       // Индекс последней грани в пакете
@@ -938,22 +986,21 @@ namespace EPImmersive
                 //обновляем каждый блок сети
                 updated = kons % 20 == _envUpdater &&
                           part.IsLoaded && false         // блок загружен?
-                          //(damageManager?.DamageByEnvironment(this._sapi, ref part, ref bAccessor) ?? false)
+                                                         //(damageManager?.DamageByEnvironment(this._sapi, ref part, ref bAccessor) ?? false)
                           ;
                 kons++;
 
 
                 if (updated)
                 {
-                    for (var faceIndex = 0; faceIndex < 6; faceIndex++)
+                    // Проверяем сгорание для иммерсивных соединений
+                    foreach (var connection in part.Connections)
                     {
-                        faceParams = part.eparams[faceIndex];
-                        if (faceParams.voltage == 0 || !faceParams.burnout)
+                        if (connection.Parameters.voltage == 0 || !connection.Parameters.burnout)
                             continue;
 
                         ResetComponents(ref part); // сброс компонентов сети
                     }
-
                 }
 
 
@@ -965,7 +1012,7 @@ namespace EPImmersive
                     totalEnergy = 0f;
                     totalCurrent = 0f;
 
-                    foreach (var packet2 in part.packets)
+                    foreach (var packet2 in part.Packets)
                     {
 
                         totalEnergy += packet2.energy;
@@ -980,57 +1027,43 @@ namespace EPImmersive
                     }
 
 
-                    var transformatorFaceIndex =
-                        FacingHelper.GetFaceIndex(
-                            FacingHelper.FromFace(FacingHelper.Faces(part.Connection)
-                                .First())); // Индекс грани трансформатора!
-
-                    part.eparams[transformatorFaceIndex].current = totalCurrent;
-
+                    part.MainEparams.current = totalCurrent;
                     bufPartTrans.setPower(totalEnergy);
 
                 }
 
 
-                // Проверка на превышение напряжения
-                foreach (var packet2 in part.packets)
+                // Проверка на превышение напряжения для иммерсивных соединений
+                foreach (var packet2 in part.Packets)
                 {
-                    lastFaceIndex = packet2.facingFrom[packet2.currentIndex];
-
-                    faceParams = part.eparams[lastFaceIndex];
-                    if (faceParams.voltage != 0 && packet2.voltage > faceParams.voltage)
+                    foreach (var connection in part.Connections)
                     {
-                        part.eparams[lastFaceIndex].prepareForBurnout(2);
+                        if (connection.Parameters.voltage != 0 && packet2.voltage > connection.Parameters.voltage)
+                        {
+                            connection.Parameters.prepareForBurnout(2);
 
-                        if (packet2.path[packet2.currentIndex] == partPos)
-                            packet2.shouldBeRemoved = true;
+                            if (packet2.path[packet2.currentIndex] == partPos)
+                                packet2.shouldBeRemoved = true;
 
-
-                        ResetComponents(ref part);
-                        //break;
+                            ResetComponents(ref part);
+                        }
                     }
                 }
 
-
-
-
-
-                // Проверка на превышение тока
-                for (var faceIndex = 0; faceIndex < 6; faceIndex++)
+                
+                // Проверка на превышение тока для иммерсивных соединений
+                foreach (var connection in part.Connections)
                 {
-
-                    faceParams = part.eparams[faceIndex];
-                    if (faceParams.voltage == 0 ||
-                        Math.Abs(faceParams.current) <= faceParams.maxCurrent * faceParams.lines)
+                    if (connection.Parameters.voltage == 0 ||
+                        Math.Abs(connection.Parameters.current) <= connection.Parameters.maxCurrent * connection.Parameters.lines)
                         continue;
 
-                    part.eparams[faceIndex].prepareForBurnout(1);
-
+                    connection.Parameters.prepareForBurnout(1);
 
                     foreach (var p in _globalEnergyPackets)
                     {
-                        if (p.path[p.currentIndex] == partPos &&
-                            p.nowProcessedFaces.LastOrDefault()?[faceIndex] == true)
+                        // Здесь нужно добавить логику проверки для иммерсивных соединений
+                        if (p.path[p.currentIndex] == partPos)
                         {
                             p.shouldBeRemoved = true;
                         }
@@ -1053,9 +1086,7 @@ namespace EPImmersive
 
         }
 
-
-
-
+        
         /// <summary>
         /// Потребление и перемещение пакетов энергии
         /// </summary>
@@ -1065,7 +1096,7 @@ namespace EPImmersive
             float resistance, current, lossEnergy;  // Переменные для расчета сопротивления, тока и потерь энергии                    
             int curIndex, currentFacingFrom;        // текущий индекс и направление в пакете
             BlockPos currentPos;           // текущая и следующая позиции в пути пакета
-            NetworkPart currentPart;      // Временные переменные для частей сети
+            ImmersiveNetworkPart currentPart;      // Временные переменные для частей сети
 
 
 
@@ -1075,16 +1106,16 @@ namespace EPImmersive
                 pos = packet.path[packet.currentIndex];
                 if (Parts.TryGetValue(pos, out var partValue))
                 {
-                    if (partValue.packets == null)
-                        partValue.packets = [];
+                    if (partValue.Packets == null)
+                        partValue.Packets = [];
                     else
                     {
-                        partValue.packets.Add(packet);
+                        partValue.Packets.Add(packet);
                     }
                 }
                 else // чтобы не застревали в частях сети, которые перестали существовать
                 {
-                    packet.shouldBeRemoved = true; 
+                    packet.shouldBeRemoved = true;
                 }
 
             }
@@ -1093,12 +1124,12 @@ namespace EPImmersive
             foreach (var partValue in Parts.Values)
             {
                 // если пакетов нет тут, то пропускаем
-                if (partValue.packets == null || partValue.packets.Count == 0)
+                if (partValue.Packets == null || partValue.Packets.Count == 0)
                     continue;
 
                 int deltaX, deltaY, deltaZ;
 
-                foreach (var packet in partValue.packets)
+                foreach (var packet in partValue.Packets)
                 {
                     curIndex = packet.currentIndex; //текущий индекс в пакете
 
@@ -1109,16 +1140,24 @@ namespace EPImmersive
                         if (Parts.TryGetValue(pos, out var part2))
                         {
                             var isValid = false;
-                            // Ручная проверка условий 
-                            foreach (var s in part2.eparams)
+                            // Проверяем иммерсивные соединения
+                            foreach (var connection in part2.Connections)
                             {
-                                if (s.voltage > 0
-                                    && !s.burnout
-                                    && packet.voltage >= s.voltage)
+                                if (connection.Parameters.voltage > 0
+                                    && !connection.Parameters.burnout
+                                    && packet.voltage >= connection.Parameters.voltage)
                                 {
                                     isValid = true;
                                     break;
                                 }
+                            }
+
+                            // Также проверяем основные параметры
+                            if (!isValid && part2.MainEparams.voltage > 0
+                                && !part2.MainEparams.burnout
+                                && packet.voltage >= part2.MainEparams.voltage)
+                            {
+                                isValid = true;
                             }
 
                             if (isValid)
@@ -1139,81 +1178,42 @@ namespace EPImmersive
                     else
                     {
                         currentPos = packet.path[curIndex]; // текущая позиция в пути пакета
-                        currentFacingFrom = packet.facingFrom[curIndex]; // текущая грань, с которой пришел пакет
 
-                        if (!partValue.eparams[packet.facingFrom[curIndex]].burnout) //проверяем не сгорела ли грань в след блоке
+                        // Для иммерсивных проводов используем упрощенную логику
+                        if (!partValue.Connections.Any(c => !c.Parameters.burnout)) //проверяем не сгорели ли соединения
                         {
-                            if ((partValue.Connection & packet.usedConnections[curIndex]) == packet.usedConnections[curIndex]) // проверяем совпадает ли путь в пакете с путем в части сети
+                            // считаем сопротивление (используем основные параметры как fallback)
+                            resistance = ElectricalProgressive.ElectricalProgressive.energyLossFactor *
+                                         partValue.MainEparams.resistivity /
+                                         (partValue.MainEparams.lines *
+                                          partValue.MainEparams.crossArea);
+
+                            // Провод в изоляции теряет меньше энергии
+                            if (partValue.MainEparams.isolated)
+                                resistance /= 2.0f;
+
+                            // считаем ток по закону Ома
+                            current = packet.energy / packet.voltage;
+
+                            // считаем потерю энергии по закону Джоуля
+                            lossEnergy = current * current * resistance;
+                            packet.energy = Math.Max(packet.energy - lossEnergy, 0);
+
+                            // пересчитаем ток уже с учетом потерь
+                            current = packet.energy / packet.voltage;
+
+                            // Учитываем ток в основных параметрах
+                            partValue.MainEparams.current += current;
+
+                            // 3) Если энергия пакета почти нулевая — удаляем пакет
+                            if (packet.energy <= 0.001f)
                             {
-                                // считаем сопротивление
-                                resistance = ElectricalProgressiveImmersive.energyLossFactor *
-                                    partValue.eparams[currentFacingFrom].resistivity /
-                                             (partValue.eparams[currentFacingFrom].lines *
-                                              partValue.eparams[currentFacingFrom].crossArea);
-
-                                // Провод в изоляции теряет меньше энергии
-                                if (partValue.eparams[currentFacingFrom].isolated)
-                                    resistance /= 2.0f;
-
-                                // считаем ток по закону Ома
-                                current = packet.energy / packet.voltage;
-
-                                // считаем потерю энергии по закону Джоуля
-                                lossEnergy = current * current * resistance;
-                                packet.energy = Math.Max(packet.energy - lossEnergy, 0);
-
-                                // пересчитаем ток уже с учетом потерь
-                                current = packet.energy / packet.voltage;
-
-
-
-                                // далее учитываем правило алгебраического сложения встречных токов
-                                // 1) Определяем вектор движения
-                                var nextPos = packet.path[curIndex - 1];
-
-                                var sign = true;
-
-                                deltaX = nextPos.X - currentPos.X;
-                                deltaY = nextPos.InternalY - currentPos.InternalY;
-                                deltaZ = nextPos.Z - currentPos.Z;
-
-
-                                if (deltaX < 0) sign = !sign;
-                                if (deltaY < 0) sign = !sign;
-                                if (deltaZ < 0) sign = !sign;
-
-                                // 2) Прописываем токи на нужные грани
-                                var j = 0;
-                                foreach (var face in packet.nowProcessedFaces[packet.currentIndex])
-                                {
-                                    if (face)
-                                    {
-                                        if (sign)
-                                            partValue.eparams[j].current += current; // добавляем ток в следующую часть сети
-                                        else
-                                            partValue.eparams[j].current -= current; // добавляем ток в следующую часть сети
-                                    }
-
-                                    j++;
-                                }
-
-                                // 3) Если энергия пакета почти нулевая — удаляем пакет
-                                if (packet.energy <= 0.001f)
-                                {
-                                    packet.shouldBeRemoved = true;
-                                }
-
-                                // переходим к следующему блоку в пути
-                                packet.currentIndex--;
-
-                            }
-                            else
-                            {
-                                // если все же путь не совпадает с путем в пакете, то чистим кэши
-                                PathCacheManager.RemoveAll(packet.path[0], packet.path.Last());
                                 packet.shouldBeRemoved = true;
-
                             }
+
+                            // переходим к следующему блоку в пути
+                            packet.currentIndex--;
+
                         }
                         else
                         {
@@ -1229,16 +1229,13 @@ namespace EPImmersive
             _globalEnergyPackets.RemoveAll(p => p.shouldBeRemoved);
 
         }
-
-
-
-
+        
 
         /// <summary>
         /// Обновление информации о сети
         /// </summary>
         /// <param name="network"></param>
-        private void UpdateNetworkInfo(Network network)
+        private void UpdateNetworkInfo(ImmersiveNetwork network)
         {
             // расчет емкости
             var capacity = 0f; // Суммарная емкость сети
@@ -1306,30 +1303,24 @@ namespace EPImmersive
 
             network.Consumption = consumption;
         }
-
-
-
-
+        
         // Вынесенный метод сброса компонентов
-        private static void ResetComponents(ref NetworkPart part)
+        private static void ResetComponents(ref ImmersiveNetworkPart part)
         {
             part.Consumer?.Consume_receive(0f);
             part.Producer?.Produce_order(0f);
             part.Accumulator?.SetCapacity(0f);
             part.Transformator?.setPower(0f);
         }
-
-
-
-
+        
         /// <summary>
         /// Объединение цепей
         /// </summary>
         /// <param name="networks"></param>
         /// <returns></returns>
-        private Network MergeNetworks(HashSet<Network> networks)
+        private ImmersiveNetwork MergeNetworks(HashSet<ImmersiveNetwork> networks)
         {
-            Network? outNetwork = null;
+            ImmersiveNetwork? outNetwork = null;
 
             foreach (var network in networks)
             {
@@ -1351,13 +1342,8 @@ namespace EPImmersive
                     foreach (var position in network.PartPositions)
                     {
                         var part = this.Parts[position];
-                        foreach (var face in BlockFacing.ALLFACES)
-                        {
-                            if (part.Networks[face.Index] == network)
-                            {
-                                part.Networks[face.Index] = outNetwork;
-                            }
-                        }
+                        // Для иммерсивных проводов обновляем сеть
+                        part.Network = outNetwork;
 
                         if (part.Conductor is { } conductor) outNetwork.Conductors.Add(conductor);
                         if (part.Consumer is { } consumer) outNetwork.Consumers.Add(consumer);
@@ -1368,7 +1354,11 @@ namespace EPImmersive
                         outNetwork.PartPositions.Add(position);
                     }
 
+                    // Переносим иммерсивные соединения
+                    outNetwork.ImmersiveConnections.AddRange(network.ImmersiveConnections);
+
                     network.PartPositions.Clear();
+                    network.ImmersiveConnections.Clear();
                     this.Networks.Remove(network);
                 }
             }
@@ -1377,14 +1367,12 @@ namespace EPImmersive
 
             return outNetwork;
         }
-
-
-
+        
         /// <summary>
         /// Удаляем сеть
         /// </summary>
         /// <param name="network"></param>
-        private void RemoveNetwork(ref Network network)
+        private void RemoveNetwork(ref ImmersiveNetwork network)
         {
             var partPositions = new BlockPos[network.PartPositions.Count];
             network.PartPositions.CopyTo(partPositions);
@@ -1395,320 +1383,78 @@ namespace EPImmersive
             {
                 if (this.Parts.TryGetValue(position, out var part))         //есть такое соединение?
                 {
-                    foreach (var face in BlockFacing.ALLFACES)              //перебираем по всем 6 направлениям
-                    {
-                        if (part.Networks[face.Index] == network)           //если нашли привязку к этой цепи
-                        {
-                            part.Networks[face.Index] = null;               //обнуляем ее
-                        }
-                    }
+                    part.Network = null;                                    //обнуляем сеть
                 }
             }
 
+            // Для иммерсивных проводов создаем новые сети для оставшихся частей
             foreach (var position in partPositions)                                 //перебираем по всем бывшим элементам этой цепи
             {
                 if (this.Parts.TryGetValue(position, out var part))                 //есть такое соединение?
                 {
-                    this.AddConnections(ref part, part.Connection, (new EParams(), 0));     //добавляем соединения???
+                    UpdateImmersiveConnections(ref part);                           //обновляем соединения
                 }
             }
         }
-
-
+        
         /// <summary>
         /// Создаем новую цепь
         /// </summary>
         /// <returns></returns>
-        private Network CreateNetwork()
+        private ImmersiveNetwork CreateNetwork()
         {
-            var network = new Network();
+            var network = new ImmersiveNetwork();
             this.Networks.Add(network);
 
             return network;
         }
-
-
-        /// <summary>
-        /// Добавляем соединения
-        /// </summary>
-        /// <param name="part"></param>
-        /// <param name="addedConnections"></param>
-        /// <param name="setEparams"></param>
-        /// <exception cref="Exception"></exception>
-        private void AddConnections(ref NetworkPart part, Facing addedConnections, (EParams, int) setEparams)
-        {
-            var networksByFace = new[]
-            {
-                [], [], [], [], [],
-            new HashSet<Network>()
-            };
-
-            foreach (var face in FacingHelper.Faces(part.Connection))           //ищет к каким сетям эти провода могут относиться
-            {
-                networksByFace[face.Index].Add(part.Networks[face.Index] ?? this.CreateNetwork());
-            }
-
-
-            //поиск соседей по граням
-            foreach (var direction in FacingHelper.Directions(addedConnections))
-            {
-                var directionFilter = FacingHelper.FromDirection(direction);
-                var neighborPosition = part.Position.AddCopy(direction);
-
-                if (this.Parts.TryGetValue(neighborPosition, out var neighborPart))         //проверяет, если в той стороне сосед
-                {
-                    foreach (var face in FacingHelper.Faces(addedConnections & directionFilter))
-                    {
-                        // 1) Соединение своей грани face с противоположной гранью соседа
-                        if ((neighborPart.Connection & FacingHelper.From(face, direction.Opposite)) != 0)
-                        {
-                            if (neighborPart.Networks[face.Index] is { } network)
-                            {
-                                networksByFace[face.Index].Add(network);
-                            }
-                        }
-
-                        // 2) Тоже, но наоборот
-                        if ((neighborPart.Connection & FacingHelper.From(direction.Opposite, face)) != 0)
-                        {
-                            if (neighborPart.Networks[direction.Opposite.Index] is { } network)
-                            {
-                                networksByFace[face.Index].Add(network);
-                            }
-                        }
-                    }
-                }
-
-                //поиск соседей по ребрам
-                directionFilter = FacingHelper.FromDirection(direction);
-
-                foreach (var face in FacingHelper.Faces(addedConnections & directionFilter))
-                {
-                    neighborPosition = part.Position.AddCopy(direction).AddCopy(face);
-
-                    if (this.Parts.TryGetValue(neighborPosition, out neighborPart))
-                    {
-                        // 1) Проверяем соединение через ребро direction–face
-                        if ((neighborPart.Connection & FacingHelper.From(direction.Opposite, face.Opposite)) != 0)
-                        {
-                            if (neighborPart.Networks[direction.Opposite.Index] is { } network)
-                            {
-                                networksByFace[face.Index].Add(network);
-                            }
-                        }
-
-                        // 2) Тоже, но наоборот
-                        if ((neighborPart.Connection & FacingHelper.From(face.Opposite, direction.Opposite)) != 0)
-                        {
-                            if (neighborPart.Networks[face.Opposite.Index] is { } network)
-                            {
-                                networksByFace[face.Index].Add(network);
-                            }
-                        }
-                    }
-                }
-
-
-                // ищем соседей по перпендикулярной грани
-                directionFilter = FacingHelper.FromDirection(direction);
-
-                foreach (var face in FacingHelper.Faces(addedConnections & directionFilter))
-                {
-                    neighborPosition = part.Position.AddCopy(face);
-
-                    if (this.Parts.TryGetValue(neighborPosition, out neighborPart))
-                    {
-                        // 1) Проверяем перпендикулярную грань соседа
-                        if ((neighborPart.Connection & FacingHelper.From(direction, face.Opposite)) != 0)
-                        {
-                            if (neighborPart.Networks[direction.Index] is { } network)
-                            {
-                                networksByFace[face.Index].Add(network);
-                            }
-                        }
-
-                        // 2) Тоже, но наоборот
-                        if ((neighborPart.Connection & FacingHelper.From(face.Opposite, direction)) != 0)
-                        {
-                            if (neighborPart.Networks[face.Opposite.Index] is { } network)
-                            {
-                                networksByFace[face.Index].Add(network);
-                            }
-                        }
-
-                    }
-                }
-            }
-
-
-
-
-
-
-
-
-            foreach (var face in FacingHelper.Faces(part.Connection))
-            {
-                var network = this.MergeNetworks(networksByFace[face.Index]);
-
-                if (part.Conductor is { } conductor)
-                {
-                    network.Conductors.Add(conductor);
-                }
-
-                if (part.Consumer is { } consumer)
-                {
-                    network.Consumers.Add(consumer);
-                }
-
-                if (part.Producer is { } producer)
-                {
-                    network.Producers.Add(producer);
-                }
-
-                if (part.Accumulator is { } accumulator)
-                {
-                    network.Accumulators.Add(accumulator);
-                }
-
-                if (part.Transformator is { } transformator)
-                {
-                    network.Transformators.Add(transformator);
-                }
-
-                network.PartPositions.Add(part.Position);
-                network.version++; // Увеличиваем версию сети 
-
-                part.Networks[face.Index] = network;            //присваиваем в этой точке эту цепь
-
-                var i = 0;
-                if (part.eparams == null)
-                {
-                    part.eparams =
-                    [
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams(),
-                        new EParams()
-                    ];
-                }
-
-                foreach (var ams in part.eparams)
-                {
-                    if (ams.Equals(new EParams()))
-                        part.eparams[i] = new EParams();
-                    i++;
-                }
-
-                if (!setEparams.Item1.Equals(new EParams()) && part.eparams[face.Index].maxCurrent == 0)
-                    part.eparams[face.Index] = setEparams.Item1;      //аналогично с параметрами электричества
-            }
-
-
-
-
-
-            foreach (var direction in FacingHelper.Directions(part.Connection))
-            {
-                var directionFilter = FacingHelper.FromDirection(direction);
-
-                foreach (var face in FacingHelper.Faces(part.Connection & directionFilter))
-                {
-                    if ((part.Connection & FacingHelper.From(direction, face)) != 0)
-                    {
-                        if (part.Networks[face.Index] is { } network1 && part.Networks[direction.Index] is { } network2)
-                        {
-                            var networks = new HashSet<Network>
-                        {
-                            network1, network2
-                        };
-
-                            this.MergeNetworks(networks);
-                        }
-                        else
-                        {
-                            throw new Exception();
-                        }
-                    }
-                }
-            }
-
-
-        }
-
-
-
-        /// <summary>
-        /// Удаляем соединения
-        /// </summary>
-        /// <param name="part"></param>
-        /// <param name="removedConnections"></param>
-        private void RemoveConnections(ref NetworkPart part, Facing removedConnections)
-        {
-            foreach (var blockFacing in FacingHelper.Faces(removedConnections))
-            {
-                if (part.Networks[blockFacing.Index] is { } network)
-                {
-                    this.RemoveNetwork(ref network);
-                    network.version++; // Увеличиваем версию сети после удаления
-                }
-            }
-        }
-
-
-
+        
         /// <summary>
         /// Задать проводник
         /// </summary>
         /// <param name="position"></param>
         /// <param name="conductor"></param>
-        public void SetConductor(BlockPos position, IElectricConductor? conductor) =>
+        public void SetConductor(BlockPos position, IEImmersiveConductor? conductor) =>
         SetComponent(
             position,
             conductor,
             part => part.Conductor,
             (part, c) => part.Conductor = c,
             network => network.Conductors);
-
-
-
+        
 
         /// <summary>
         /// Задать потребителя
         /// </summary>
         /// <param name="position"></param>
         /// <param name="consumer"></param>
-        public void SetConsumer(BlockPos position, IElectricConsumer? consumer) =>
+        public void SetConsumer(BlockPos position, IEImmersiveConsumer? consumer) =>
         SetComponent(
             position,
             consumer,
             part => part.Consumer,
             (part, c) => part.Consumer = c,
             network => network.Consumers);
-
-
+        
         /// <summary>
         /// Задать генератор
         /// </summary>
         /// <param name="position"></param>
         /// <param name="producer"></param>
-        public void SetProducer(BlockPos position, IElectricProducer? producer) =>
+        public void SetProducer(BlockPos position, IEImmersiveProducer? producer) =>
             SetComponent(
                 position,
                 producer,
                 part => part.Producer,
                 (part, p) => part.Producer = p,
                 network => network.Producers);
-
-
+        
         /// <summary>
         /// Задать аккумулятор
         /// </summary>
         /// <param name="position"></param>
         /// <param name="accumulator"></param>
-        public void SetAccumulator(BlockPos position, IElectricAccumulator? accumulator) =>
+        public void SetAccumulator(BlockPos position, IEImmersiveAccumulator? accumulator) =>
             SetComponent(
                 position,
                 accumulator,
@@ -1716,13 +1462,12 @@ namespace EPImmersive
                 (part, a) => part.Accumulator = a,
                 network => network.Accumulators);
 
-
         /// <summary>
         /// Задать трансформатор
         /// </summary>
         /// <param name="position"></param>
         /// <param name="transformator"></param>
-        public void SetTransformator(BlockPos position, IElectricTransformator? transformator) =>
+        public void SetTransformator(BlockPos position, IEImmersiveTransformator? transformator) =>
             SetComponent(
                 position,
                 transformator,
@@ -1743,9 +1488,9 @@ namespace EPImmersive
         private void SetComponent<T>(
             BlockPos position,
             T? newComponent,
-            System.Func<NetworkPart, T?> getComponent,
-            Action<NetworkPart, T?> setComponent,
-            System.Func<Network, ICollection<T>> getCollection)
+            System.Func<ImmersiveNetworkPart, T?> getComponent,
+            Action<ImmersiveNetworkPart, T?> setComponent,
+            System.Func<ImmersiveNetwork, ICollection<T>> getCollection)
             where T : class
         {
             if (!this.Parts.TryGetValue(position, out var part))
@@ -1755,16 +1500,17 @@ namespace EPImmersive
                     return;
                 }
 
-                part = this.Parts[position] = new NetworkPart(position);
+                part = this.Parts[position] = new ImmersiveNetworkPart(position);
             }
 
             var oldComponent = getComponent(part);
             if (oldComponent != newComponent)
             {
-                foreach (var network in part.Networks)
-                {
-                    if (network is null) continue;
+                // Находим сети, к которым принадлежит эта часть
+                var networks = Networks.Where(n => n.PartPositions.Contains(position)).ToList();
 
+                foreach (var network in networks)
+                {
                     var collection = getCollection(network);
 
                     if (oldComponent != null)
@@ -1781,89 +1527,56 @@ namespace EPImmersive
                 setComponent(part, newComponent);
             }
         }
-
-
-
-
+        
 
         /// <summary>
-        /// Cобирает информацию по цепи
+        /// Cобирает информацию по цепи для иммерсивных проводов
         /// </summary>
-        /// <param name="position"></param>
-        /// <param name="facing"></param>
-        /// <param name="method">Метод вывода с какой грани "thisFace"- эту грань, "firstFace"- информация о первой грани из многих, "currentFace" - информация о грани, в которой ток больше 0</param>
-        /// <returns></returns>
-        public NetworkInformation GetNetworks(BlockPos position, Facing facing, string method = "thisFace")
+        /// <param name="position">Позиция блока</param>
+        /// <param name="nodeIndex">Индекс точки подключения</param>
+        /// <returns>Информация о сети</returns>
+        public ImmersiveNetworkInformation GetNetworkForImmersiveWire(BlockPos position, byte nodeIndex)
         {
             _result.Reset(); // сбрасываем значения
 
-            // такое редко, но может произойти, поэтому сбрасываем и выходим
-            if (facing == Facing.None)
-                return _result;
-
             if (this.Parts.TryGetValue(position, out var part))
             {
-                if (method == "thisFace" || method == "firstFace") // пока так, возможно потом по-разному будет обработка
+                // Ищем сеть для этой части
+                var immersiveNetwork = Networks.FirstOrDefault(n => n.PartPositions.Contains(position));
+                if (immersiveNetwork != null)
                 {
-                    var blockFacing = FacingHelper.Faces(facing).First();
+                    _localNetwork = immersiveNetwork;
 
-                    if (part.Networks[blockFacing.Index] is { } net)
+                    // Находим соединение для этой точки подключения
+                    var connection = part.Connections.FirstOrDefault(c => c.LocalNodeIndex == nodeIndex);
+                    if (connection != null)
                     {
-                        _localNetwork = net;                                              //выдаем найденную цепь
-                        _result.Facing |= FacingHelper.FromFace(blockFacing);            //выдаем ее направления
-                        _result.eParamsInNetwork = part.eparams[blockFacing.Index];      //выдаем ее текущие параметры
-                        _result.current = part.eparams[blockFacing.Index].current;           //выдаем текущий ток в этой грани
+                        _result.eParamsInNetwork = connection.Parameters;
+                        _result.current = connection.Parameters.current;
                     }
                     else
-                        return _result;
-                }
-                else if (method == "currentFace") // если ток больше нуля, то выдаем информацию о грани, в которой ток больше нуля
-                {
-                    var searchIndex = 0;
-                    BlockFacing blockFacing = null!;
-
-                    foreach (var blockFacing2 in FacingHelper.Faces(facing))
                     {
-                        if (part.Networks[blockFacing2.Index] is not null &&
-                            Math.Abs(part.eparams[blockFacing2.Index].current) > 0.0F)
-                        {
-                            blockFacing = blockFacing2;
-                            searchIndex = blockFacing2.Index;
-                        }
+                        _result.eParamsInNetwork = part.MainEparams;
+                        _result.current = part.MainEparams.current;
                     }
 
-                    if (part.Networks[searchIndex] is { } net)
-                    {
-                        _localNetwork = net;                                              //выдаем найденную цепь
-                        _result.Facing |= FacingHelper.FromFace(blockFacing);        //выдаем ее направления
-                        _result.eParamsInNetwork = part.eparams[searchIndex];  //выдаем ее текущие параметры
-                        _result.current = part.eparams[searchIndex].current;           //выдаем текущий ток в этой грани
-                    }
-                    else
-                        return _result;
+                    // Заполняем информацию о сети
+                    _result.NumberOfBlocks = _localNetwork.PartPositions.Count;
+                    _result.NumberOfConsumers = _localNetwork.Consumers.Count;
+                    _result.NumberOfProducers = _localNetwork.Producers.Count;
+                    _result.NumberOfAccumulators = _localNetwork.Accumulators.Count;
+                    _result.NumberOfTransformators = _localNetwork.Transformators.Count;
+                    _result.Production = _localNetwork.Production;
+                    _result.Consumption = _localNetwork.Consumption;
+                    _result.Capacity = _localNetwork.Capacity;
+                    _result.MaxCapacity = _localNetwork.MaxCapacity;
+                    _result.Request = _localNetwork.Request;
                 }
-
-
-
-
-                // Если нашли сеть, то заполняем информацию о ней
-                _result.NumberOfBlocks = _localNetwork.PartPositions.Count;
-                _result.NumberOfConsumers = _localNetwork.Consumers.Count;
-                _result.NumberOfProducers = _localNetwork.Producers.Count;
-                _result.NumberOfAccumulators = _localNetwork.Accumulators.Count;
-                _result.NumberOfTransformators = _localNetwork.Transformators.Count;
-                _result.Production = _localNetwork.Production;
-                _result.Consumption = _localNetwork.Consumption;
-                _result.Capacity = _localNetwork.Capacity;
-                _result.MaxCapacity = _localNetwork.MaxCapacity;
-                _result.Request = _localNetwork.Request;
-
             }
 
             return _result;
         }
-
-
+        
         /// <summary>
         /// Вычисление экспоненциального скользящего среднего (EMA) на лету
         /// </summary>
@@ -1884,28 +1597,26 @@ namespace EPImmersive
     /// </summary>
     internal class Conductor
     {
-        public readonly IElectricConductor ElectricConductor;
-        public Conductor(IElectricConductor electricConductor) => ElectricConductor = electricConductor;
+        public readonly IEImmersiveConductor ImmersiveConductor;
+        public Conductor(IEImmersiveConductor immersiveConductor) => ImmersiveConductor = immersiveConductor;
     }
-
-
+    
     /// <summary>
     /// Потребитель
     /// </summary>
     internal class Consumer
     {
-        public readonly IElectricConsumer ElectricConsumer;
-        public Consumer(IElectricConsumer electricConsumer) => ElectricConsumer = electricConsumer;
+        public readonly IEImmersiveConsumer ImmersiveConsumer;
+        public Consumer(IEImmersiveConsumer immersiveConsumer) => ImmersiveConsumer = immersiveConsumer;
     }
-
-
+    
     /// <summary>
     /// Трансформатор
     /// </summary>
     internal class Transformator
     {
-        public readonly IElectricTransformator ElectricTransformator;
-        public Transformator(IElectricTransformator electricTransformator) => ElectricTransformator = electricTransformator;
+        public readonly IEImmersiveTransformator ImmersiveTransformator;
+        public Transformator(IEImmersiveTransformator immersiveTransformator) => ImmersiveTransformator = immersiveTransformator;
     }
 
 
@@ -1914,8 +1625,8 @@ namespace EPImmersive
     /// </summary>
     internal class Producer
     {
-        public readonly IElectricProducer ElectricProducer;
-        public Producer(IElectricProducer electricProducer) => ElectricProducer = electricProducer;
+        public readonly IEImmersiveProducer ImmersiveProducer;
+        public Producer(IEImmersiveProducer immersiveProducer) => ImmersiveProducer = immersiveProducer;
     }
 
 
@@ -1924,58 +1635,11 @@ namespace EPImmersive
     /// </summary>
     internal class Accumulator
     {
-        public readonly IElectricAccumulator ElectricAccum;
-        public Accumulator(IElectricAccumulator electricAccum) => ElectricAccum = electricAccum;
+        public readonly IEImmersiveAccumulator ImmersiveAccum;
+        public Accumulator(IEImmersiveAccumulator immersiveAccum) => ImmersiveAccum = immersiveAccum;
     }
+    
 
+    
 
-
-
-    /// <summary>
-    /// Конфигуратор сети
-    /// </summary>
-    public class ElectricityConfig
-    {
-        public int SpeedOfElectricity = 4;
-        public int TimeBeforeBurnout = 30;
-        public int MultiThreading = 4;
-        public int CacheTimeoutCleanupMinutes = 2;
-        public int MaxDistanceForFinding = 200;
-        public float EnergyLossFactor = 1.0f;
-        public bool EnableLossCompensation = false;
-    }
-
-    /// <summary>
-    /// Кэш путей
-    /// </summary>
-    public struct PathCacheEntry
-    {
-        public BlockPos[]? Path;
-        public int[]? FacingFrom;
-        public bool[][]? NowProcessedFaces;
-        public Facing[]? usedConnections;
-        public int Version;
-    }
-
-
-
-    public class BlockPosComparer : IEqualityComparer<BlockPos>
-    {
-        public bool Equals(BlockPos a1, BlockPos a2)
-        {
-            return a1.X == a2.X && a1.Y == a2.Y && a1.Z == a2.Z && a1.dimension == a2.dimension;
-        }
-
-        public int GetHashCode(BlockPos pos)
-        {
-            unchecked
-            {
-                // Быстрая версия с битовыми операциями и минимальным количеством операций
-                var hash = pos.X;
-                hash = (hash << 9) ^ (hash >> 23) ^ pos.Y;  // Сдвиги и XOR вместо умножения
-                hash = (hash << 9) ^ (hash >> 23) ^ pos.Z;
-                return hash ^ (pos.dimension * 269023);
-            }
-        }
-    }
 }
