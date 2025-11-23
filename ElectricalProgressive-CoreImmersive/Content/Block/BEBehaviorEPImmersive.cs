@@ -1,19 +1,13 @@
-﻿using ElectricalProgressive.Interface;
-using ElectricalProgressive.Utils;
+﻿using ElectricalProgressive.Utils;
 using EPImmersive.Interface;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace EPImmersive.Content.Block;
@@ -79,9 +73,23 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     private bool _paramsSet = false;
     private (EParams param, byte index) _eparams;
     private bool _isLoaded;
+
     private EParams _mainEpar;
 
+
+
+
     /// <summary>
+    /// Получает список точек подключения этого блока
+    /// </summary>
+    public EParams MainEparams()
+    {
+        return _mainEpar;
+    }
+
+
+
+/// <summary>
     /// Получает список точек подключения этого блока
     /// </summary>
     public List<WireNode> GetWireNodes()
@@ -195,10 +203,11 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     /// </summary>
     public void RemoveConnection(byte localIndex, BlockPos neighborPos, byte neighborIndex)
     {
-        var connection = FindConnection(localIndex, neighborPos, neighborIndex);
-        if (connection != null)
+        var connectionHere = FindConnection(localIndex, neighborPos, neighborIndex);
+        if (connectionHere != null)
         {
-            _connections.Remove(connection);
+            _connections.Remove(connectionHere);
+            this._eparams = (new EParams(),0);
             this._dirty = true;
             this.Update();
         }
@@ -208,7 +217,14 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     {
         base.Initialize(api, properties);
 
+        // Обновляем меши при загрузке
+        if (api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
+        {
+            wireBlock.UpdateWireMeshes(Pos);
+        }
+
         GetParticles();
+
         LoadWireNodes(); // Загружаем точки подключения из JSON
 
         AnimUtil = Blockentity.GetBehavior<BEBehaviorAnimatable>()?.animUtil!;
@@ -366,6 +382,12 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                 this.Blockentity.MarkDirty(true);
             }
             catch { }
+
+            // Обновляем меши
+            if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
+            {
+                wireBlock.UpdateWireMeshes(Pos);
+            }
         }
     }
 
@@ -373,8 +395,78 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     {
         base.OnBlockRemoved();
         this._isLoaded = false;
+
+
+
+        RemoveConnAndDrop();
+
+
         this.System?.Remove(this.Blockentity.Pos);
         AnimUtil?.Dispose();
+    }
+
+
+    private void RemoveConnAndDrop()
+    {
+        // При удалении блока разрываем все соединения и возвращаем кабели
+
+        if (this != null)
+        {
+            List<ConnectionData> connections = this.GetImmersiveConnections();
+            foreach (ConnectionData connection in connections)
+            {
+                // Рассчитываем длину провода
+                WireNode startNode = this.GetWireNode(connection.LocalNodeIndex);
+                WireNode endNode = null;
+
+                BlockEntity neighborEntity = Api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
+                BEBehaviorEPImmersive neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
+                if (neighborBehavior != null)
+                {
+                    endNode = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
+                }
+
+                if (Api.World.Side == EnumAppSide.Server)
+                {
+                    int cableLength = 1; // минимальная длина
+                    if (startNode != null && endNode != null)
+                    {
+                        Vec3d startWorldPos = new Vec3d(
+                            Pos.X + startNode.Position.X,
+                            Pos.Y + startNode.Position.Y,
+                            Pos.Z + startNode.Position.Z
+                        );
+
+                        Vec3d endWorldPos = new Vec3d(
+                            connection.NeighborPos.X + endNode.Position.X,
+                            connection.NeighborPos.Y + endNode.Position.Y,
+                            connection.NeighborPos.Z + endNode.Position.Z
+                        );
+
+                        double distance = startWorldPos.DistanceTo(endWorldPos);
+                        cableLength = (int)Math.Ceiling(distance);
+                    }
+
+                    // Создаем и выбрасываем кабель
+                    ItemStack cableStack = ImmersiveWireBlock.CreateCableStack(Api,connection.Parameters);
+                    cableStack.StackSize = cableLength;
+                    Api.World.SpawnItemEntity(cableStack, Pos.ToVec3d());
+
+
+                }
+
+
+                // Удаляем соединение с соседней стороны
+                neighborBehavior?.RemoveConnection(
+                    connection.NeighborNodeIndex,
+                    Pos,
+                    connection.LocalNodeIndex
+                );
+
+
+
+            }
+        }
     }
 
     public override void OnBlockUnloaded()
@@ -382,6 +474,8 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         base.OnBlockUnloaded();
         this._isLoaded = false;
         this._dirty = true;
+        
+        
         this.Update();
         AnimUtil?.Dispose();
     }

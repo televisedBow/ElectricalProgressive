@@ -25,7 +25,6 @@ public class BlockGauge : Vintagestory.API.Common.Block
     public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
     {
         return true;
-
     }
 
 

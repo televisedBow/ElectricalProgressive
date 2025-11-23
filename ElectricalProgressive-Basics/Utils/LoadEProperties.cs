@@ -1,5 +1,4 @@
-﻿
-using ElectricalProgressive.Content.Block;
+﻿using ElectricalProgressive.Content.Block;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;

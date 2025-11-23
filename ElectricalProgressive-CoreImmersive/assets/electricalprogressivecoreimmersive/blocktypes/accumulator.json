@@ -1,10 +1,10 @@
 ﻿{
   "code": "accumulator1",
-  "class": "BlockEAccumulator",
-  "entityClass": "BlockEntityEAccumulator",
+  "class": "BlockEIAccumulator",
+  "entityClass": "BlockEntityEIAccumulator",
   "entityBehaviors": [
     {
-      "name": "BEBehaviorEAccumulator"
+      "name": "BEBehaviorEIAccumulator"
     },
     {
       "name": "ElectricalProgressiveImmersive"
@@ -133,7 +133,7 @@
 
   "resistance": 1,
 
-  "drawType": "JSON",
+
   "lightAbsorption": 0.0,
   "faceCullMode": "NeverCull",
   "renderPass": "OpaqueNoCull",

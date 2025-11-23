@@ -39,19 +39,22 @@
         <HintPath>..\Releases\electricalprogressivecore\ElectricalProgressive-Core.dll</HintPath>
         <Private>False</Private>
       </Reference>
+      <Reference Include="ElectricalProgressive-Basics">
+        <HintPath>..\Releases\electricalprogressivebasics\ElectricalProgressive-Basics.dll</HintPath>
+        <Private>False</Private>
+      </Reference>
     </ItemGroup>
-    <ItemGroup>
-        <Content Include="assets\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Compile Remove="Releases\**" />
-        <EmbeddedResource Remove="Releases\**" />
-        <None Remove="Releases\**" />
-        <Compile Remove="Utils\ParallelHelper.cs" />
-        <Content Include="modinfo.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
+  <ItemGroup>
+    <Content Include="assets\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Compile Remove="Releases\**" />
+    <EmbeddedResource Remove="Releases\**" />
+    <None Remove="Releases\**" />
+    <Content Include="modinfo.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
     <ItemGroup>
       <Compile Update="Properties\Resources.Designer.cs">
         <DesignTime>True</DesignTime>

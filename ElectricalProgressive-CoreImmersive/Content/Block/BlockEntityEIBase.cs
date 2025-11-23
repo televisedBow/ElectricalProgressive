@@ -1,10 +1,8 @@
-﻿using ElectricalProgressive.Utils;
-using EPImmersive.Content.Block;
-using Vintagestory.API.Common;
+﻿using Vintagestory.API.Common;
 
-namespace ElectricalProgressive.Content.Block;
+namespace EPImmersive.Content.Block;
 
-public abstract class BlockEntityEBase : BlockEntity
+public abstract class BlockEntityEIBase : BlockEntity
 {
     public BEBehaviorEPImmersive? EPImmersive => GetBehavior<BEBehaviorEPImmersive>();
 

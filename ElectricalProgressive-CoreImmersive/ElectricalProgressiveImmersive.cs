@@ -1,6 +1,7 @@
 ﻿using ElectricalProgressive;
 using ElectricalProgressive.Utils;
 using EPImmersive.Content.Block;
+using EPImmersive.Content.Block.EAccumulator;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
 using System;
@@ -81,6 +82,13 @@ namespace EPImmersive
             this.Api = api;
 
             soundElectricShok = new AssetLocation("electricalprogressivecore:sounds/electric-shock.ogg");
+
+
+            api.RegisterBlockClass("BlockEIAccumulator", typeof(BlockEIAccumulator));
+            api.RegisterBlockEntityClass("BlockEntityEIAccumulator", typeof(BlockEntityEIAccumulator));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorEIAccumulator", typeof(BEBehaviorEIAccumulator));
+
+            api.RegisterBlockEntityBehaviorClass("ElectricalProgressiveImmersive", typeof(BEBehaviorEPImmersive));
         }
         
 
@@ -204,8 +212,12 @@ namespace EPImmersive
             // Если установлены параметры конкретного подключения, обновляем соответствующее соединение
             if (!currentEparam.param.Equals(new EParams()))
             {
+                ConnectionData? connectionToUpdate = null;
+
                 // Находим соединение с указанным индексом
-                var connectionToUpdate = part.Connections.FirstOrDefault(c => c.LocalNodeIndex == currentEparam.index);
+                if (currentEparam.index < part.Connections.Count)
+                    connectionToUpdate = part.Connections[currentEparam.index];
+
                 if (connectionToUpdate != null)
                 {
                     // Обновляем параметры существующего соединения
@@ -228,7 +240,7 @@ namespace EPImmersive
             UpdateImmersiveConnections(ref part);
 
             // Возвращаем обновленный список соединений
-            connections = part.Connections;
+            connections = new(part.Connections);
             return true;
         }
 

@@ -1,0 +1,18 @@
+﻿using EPImmersive.Utils;
+using Vintagestory.API.Common;
+
+namespace EPImmersive.Content.Block.EAccumulator;
+
+public class BlockEntityEIAccumulator : BlockEntityEIBase
+{
+    public override void OnBlockPlaced(ItemStack? byItemStack = null)
+    {
+        base.OnBlockPlaced(byItemStack);
+
+        if (this.EPImmersive == null || byItemStack == null)
+            return;
+
+        //задаем электрические параметры блока/проводника
+        LoadImmersiveEProperties.Load(this.Block, this);
+    }
+}
