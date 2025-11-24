@@ -12,7 +12,9 @@ namespace EPImmersive.Utils
         public int RenderRange => 99;
 
         private ICoreClientAPI capi;
-        private Dictionary<BlockPos, MeshRef> wireMeshRefs = new Dictionary<BlockPos, MeshRef>();
+
+        private Dictionary<BlockPos, List<WireMeshData>> wireMeshData = new Dictionary<BlockPos, List<WireMeshData>>();
+
         private Matrixf modelMat = new Matrixf();
 
         public ImmersiveWireRenderer(ICoreClientAPI api)
@@ -23,7 +25,7 @@ namespace EPImmersive.Utils
         public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
         {
             if (stage != EnumRenderStage.Opaque) return;
-            if (wireMeshRefs.Count == 0) return;
+            if (wireMeshData.Count == 0) return;
 
             IRenderAPI rpi = capi.Render;
             Vec3d camPos = capi.World.Player.Entity.CameraPos;
@@ -34,76 +36,112 @@ namespace EPImmersive.Utils
             IStandardShaderProgram prog = rpi.PreparedStandardShader(
                 (int)camPos.X, (int)camPos.Y, (int)camPos.Z);
 
-
-
             prog.ProjectionMatrix = rpi.CurrentProjectionMatrix;
             prog.ViewMatrix = rpi.CameraMatrixOriginf;
 
-            foreach (var kvp in wireMeshRefs)
+            foreach (var kvp in wireMeshData)
             {
                 BlockPos pos = kvp.Key;
-                MeshRef meshRef = kvp.Value;
+                List<WireMeshData> meshDataList = kvp.Value;
 
-                if (meshRef != null)
+                foreach (var meshData in meshDataList)
                 {
-                    prog.ModelMatrix = modelMat
-                        .Identity()
-                        .Translate(pos.X - camPos.X, pos.Y - camPos.Y, pos.Z - camPos.Z)
-                        .Values;
+                    if (meshData.MeshRef != null)
+                    {
+                        prog.ModelMatrix = modelMat
+                            .Identity()
+                            .Translate(pos.X - camPos.X, pos.Y - camPos.Y, pos.Z - camPos.Z)
+                            .Values;
 
-                    //AssetLocation wiretexture = new AssetLocation(capi.World.GetBlock(con.BlockId).Attributes["texture"].ToString());
-                    AssetLocation wiretexture = new AssetLocation("game:block/metal/plate/copper.png");
-                
-                    int textureid = rpi.GetOrLoadTexture(wiretexture);
-                    rpi.BindTexture2d(textureid);
+                        // Используем текстуру соответствующего материала
+                        AssetLocation wiretexture = new AssetLocation($"game:block/metal/plate/{meshData.Material}.png");
+                        int textureid = rpi.GetOrLoadTexture(wiretexture);
+                        rpi.BindTexture2d(textureid);
 
-                    rpi.RenderMesh(meshRef);
+                        rpi.RenderMesh(meshData.MeshRef);
+                    }
                 }
             }
 
             prog.Stop();
-
-
-        }
-
-
-
-        public void UpdateWireMesh(BlockPos pos, MeshData mesh)
-        {
-            // Удаляем старый меш если существует
-            if (wireMeshRefs.TryGetValue(pos, out MeshRef oldMeshRef))
-            {
-                oldMeshRef?.Dispose();
-            }
-
-            if (mesh != null && mesh.VerticesCount > 0)
-            {
-                // Загружаем новый меш в GPU
-                MeshRef newMeshRef = capi.Render.UploadMesh(mesh);
-                wireMeshRefs[pos] = newMeshRef;
-            }
-            else
-            {
-                wireMeshRefs.Remove(pos);
-            }
         }
 
         public void RemoveWireMesh(BlockPos pos)
         {
-            if (wireMeshRefs.TryGetValue(pos, out MeshRef meshRef))
+            if (wireMeshData.TryGetValue(pos, out List<WireMeshData> meshDataList))
             {
-                meshRef?.Dispose();
-                wireMeshRefs.Remove(pos);
+                foreach (var meshData in meshDataList)
+                {
+                    meshData.MeshRef?.Dispose();
+                }
+                wireMeshData.Remove(pos);
             }
         }
 
+
+
+
+
+        public void UpdateWireMesh(BlockPos pos, List<WireMeshData> meshDataList)
+        {
+            // Удаляем старые меши если существуют
+            if (wireMeshData.TryGetValue(pos, out List<WireMeshData> oldMeshData))
+            {
+                foreach (var meshData in oldMeshData)
+                {
+                    meshData.MeshRef?.Dispose();
+                }
+            }
+
+            if (meshDataList != null && meshDataList.Count > 0)
+            {
+                // Загружаем новые меши в GPU
+                var newMeshData = new List<WireMeshData>();
+                foreach (var meshData in meshDataList)
+                {
+                    if (meshData.Mesh != null && meshData.Mesh.VerticesCount > 0)
+                    {
+                        MeshRef newMeshRef = capi.Render.UploadMesh(meshData.Mesh);
+                        newMeshData.Add(new WireMeshData
+                        {
+                            MeshRef = newMeshRef,
+                            Material = meshData.Material
+                        });
+                    }
+                }
+                wireMeshData[pos] = newMeshData;
+            }
+            else
+            {
+                wireMeshData.Remove(pos);
+            }
+        }
+
+
+
+
+
         public void Dispose()
         {
-            foreach (var meshRef in wireMeshRefs.Values)
+            foreach (var meshRef in wireMeshData.Values)
             {
-                meshRef?.Dispose();
+                foreach (var data in meshRef)
+                {
+                    data.Mesh?.Dispose();
+                    data.MeshRef?.Dispose();
+                }
+               
             }
-            wireMeshRefs.Clear();
+            wireMeshData.Clear();
+        }
+
+
+        // Структура для хранения меша с материалом
+        public struct WireMeshData
+        {
+            public MeshRef MeshRef;
+            public string Material;
+            public MeshData Mesh; // Для временного хранения при создании
         }
     }
 }

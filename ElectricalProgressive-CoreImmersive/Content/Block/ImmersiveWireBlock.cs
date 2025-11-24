@@ -187,31 +187,9 @@ namespace EPImmersive.Content.Block
         }
 
         // Добавляем метод для обновления меша проводов
-        public void UpdateWireMeshes(BlockPos pos)
+        private List<ImmersiveWireRenderer.WireMeshData> GenerateWireMesh(BlockPos blockPos, BEBehaviorEPImmersive behavior, List<ConnectionData> connections)
         {
-            if (api.Side != EnumAppSide.Client || wireRenderer == null) return;
-
-            BEBehaviorEPImmersive behavior = api.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BEBehaviorEPImmersive>();
-            if (behavior == null) return;
-
-            List<ConnectionData> connections = behavior.GetImmersiveConnections();
-            if (connections.Count == 0)
-            {
-                wireRenderer.RemoveWireMesh(pos);
-                return;
-            }
-
-            // Генерируем меш для всех соединений этого блока
-            MeshData wireMesh = GenerateWireMesh(pos, behavior, connections);
-            wireRenderer.UpdateWireMesh(pos, wireMesh);
-        }
-
-      
-
-        private MeshData GenerateWireMesh(BlockPos blockPos, BEBehaviorEPImmersive behavior, List<ConnectionData> connections)
-        {
-            MeshData combinedMesh = new MeshData(4 * connections.Count, 6 * connections.Count, false, true, true, true);
-            combinedMesh.SetMode(EnumDrawMode.Triangles);
+            var meshDataList = new List<ImmersiveWireRenderer.WireMeshData>();
 
             foreach (ConnectionData connection in connections)
             {
@@ -245,11 +223,41 @@ namespace EPImmersive.Content.Block
 
                 if (connectionMesh != null && connectionMesh.VerticesCount > 0)
                 {
-                    combinedMesh.AddMeshData(connectionMesh);
+                    // Получаем материал из параметров кабеля
+                    string material = (connection.Parameters.material=="")? "copper": connection.Parameters.material;
+                    // Если кабель изолирован
+                    if (connection.Parameters.isolated)
+                        material = "liquid/dye/gray";
+
+                    meshDataList.Add(new ImmersiveWireRenderer.WireMeshData
+                    {
+                        Mesh = connectionMesh,
+                        Material = material
+                    });
                 }
             }
 
-            return combinedMesh;
+            return meshDataList;
+        }
+
+        // Обновляем вызов в UpdateWireMeshes
+        public void UpdateWireMeshes(BlockPos pos)
+        {
+            if (api.Side != EnumAppSide.Client || wireRenderer == null) return;
+
+            BEBehaviorEPImmersive behavior = api.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BEBehaviorEPImmersive>();
+            if (behavior == null) return;
+
+            List<ConnectionData> connections = behavior.GetImmersiveConnections();
+            if (connections.Count == 0)
+            {
+                wireRenderer.RemoveWireMesh(pos);
+                return;
+            }
+
+            // Генерируем список мешей для всех соединений этого блока
+            List<ImmersiveWireRenderer.WireMeshData> wireMeshes = GenerateWireMesh(pos, behavior, connections);
+            wireRenderer.UpdateWireMesh(pos, wireMeshes);
         }
 
 
