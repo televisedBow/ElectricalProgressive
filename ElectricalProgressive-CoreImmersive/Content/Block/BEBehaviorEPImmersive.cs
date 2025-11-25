@@ -191,6 +191,22 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     }
 
     /// <summary>
+    /// Находит соединения по текущему ноду
+    /// </summary>
+    public List<ConnectionData> FindConnection(byte localIndex)
+    {
+        return _connections.Where(c => c.LocalNodeIndex == localIndex).ToList();
+    }
+
+    /// <summary>
+    /// Находит соединения по соседскому ноду
+    /// </summary>
+    public List<ConnectionData> FindConnection(BlockPos neighborPos, byte neighborIndex)
+    {
+        return _connections.Where(c => c.NeighborPos.Equals(neighborPos) && c.NeighborNodeIndex == neighborIndex).ToList();
+    }
+
+    /// <summary>
     /// Получает все соединения с указанным соседом
     /// </summary>
     public List<ConnectionData> GetConnectionsToNeighbor(BlockPos neighborPos)
@@ -217,15 +233,24 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     {
         base.Initialize(api, properties);
 
-        // Обновляем меши при загрузке
-        if (api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
+        // не двигать, должно грузиться до UpdateWireNodes
+        // Загружаем точки подключения из JSON
+        LoadWireNodes(); 
+
+        // иммерсивная система?
+        if (Block is ImmersiveWireBlock wireBlock)
         {
-            wireBlock.UpdateWireMeshes(Pos);
+            // Обновляем точки крепления
+            wireBlock.UpdateWireNodes(_wireNodes);
+
+            // Обновляем меши при загрузке
+            if (api.Side == EnumAppSide.Client)
+                wireBlock.UpdateWireMeshes(Pos);
         }
 
         GetParticles();
 
-        LoadWireNodes(); // Загружаем точки подключения из JSON
+        
 
         AnimUtil = Blockentity.GetBehavior<BEBehaviorAnimatable>()?.animUtil!;
 

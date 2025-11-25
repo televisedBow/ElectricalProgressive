@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -17,52 +18,46 @@ namespace EPImmersive.Content.Block
 {
     public class ImmersiveWireBlock : Vintagestory.API.Common.Block
     {
-        protected WireNode[] wireAnchors;
-        private WireConnectionData currentConnectionData;
-        private ImmersiveWireRenderer wireRenderer;
+        protected List<WireNode> _wireNodes; // точки крепления
 
+        private WireConnectionData _currentConnectionData; // временные данные для текущих подключений
+
+        private ImmersiveWireRenderer _wireRenderer; // рендерер проводов
+
+
+        public override void OnEntityCollide(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, Vec3d collideSpeed,
+            bool isImpact)
+        {
+            base.OnEntityCollide(world, entity, pos, facing, collideSpeed, isImpact);
+
+            //if(world.Api is ICoreClientAPI capi)
+            //    capi.ShowChatMessage("Collide!");
+        }
+
+
+        /// <summary>
+        /// Загрузка блока
+        /// </summary>
+        /// <param name="api"></param>
         public override void OnLoaded(ICoreAPI api)
         {
             base.OnLoaded(api);
-            LoadWireNodes(api);
 
             // Инициализируем рендерер на клиенте
             if (api.Side == EnumAppSide.Client)
             {
-                wireRenderer = new ImmersiveWireRenderer((ICoreClientAPI)api);
-                ((ICoreClientAPI)api).Event.RegisterRenderer(wireRenderer, EnumRenderStage.Opaque);
+                _wireRenderer = new ImmersiveWireRenderer((ICoreClientAPI)api);
+                ((ICoreClientAPI)api).Event.RegisterRenderer(_wireRenderer, EnumRenderStage.Opaque);
             }
         }
+        
 
-
-
-        private void LoadWireNodes(ICoreAPI api)
-        {
-            JsonObject[] wireNodesArray = Attributes?["wireNodes"]?.AsArray();
-            if (wireNodesArray != null)
-            {
-                wireAnchors = new WireNode[wireNodesArray.Length];
-                for (int i = 0; i < wireNodesArray.Length; i++)
-                {
-                    wireAnchors[i] = new WireNode
-                    {
-                        Index = (byte)(wireNodesArray[i]["index"]?.AsInt() ?? 0),
-                        Voltage = wireNodesArray[i]["voltage"]?.AsInt() ?? 0,
-                        Position = new Vec3d(
-                            wireNodesArray[i]["x"]?.AsDouble() ?? 0,
-                            wireNodesArray[i]["y"]?.AsDouble() ?? 0,
-                            wireNodesArray[i]["z"]?.AsDouble() ?? 0
-                        ),
-                        Radius = wireNodesArray[i]["dxdydz"]?.AsFloat() ?? 0.1f
-                    };
-                }
-            }
-            else
-            {
-                wireAnchors = new WireNode[0];
-            }
-        }
-
+        /// <summary>
+        /// Выделение
+        /// </summary>
+        /// <param name="blockAccessor"></param>
+        /// <param name="pos"></param>
+        /// <returns></returns>
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
             List<Cuboidf> boxes = new List<Cuboidf>();
@@ -74,7 +69,7 @@ namespace EPImmersive.Content.Block
                 // Показываем точки подключения когда игрок держит провод
                 if (IsHoldingWireTool(capi.World.Player) || IsHoldingWrench(capi.World.Player))
                 {
-                    boxes.AddRange(GetWireSelectionBoxes(blockAccessor, pos));
+                    boxes.AddRange(GetNodeSelectionBoxes(blockAccessor, pos));
                     return boxes.ToArray();
                 }
             }
@@ -86,6 +81,14 @@ namespace EPImmersive.Content.Block
             return boxes.ToArray();
         }
 
+
+
+        /// <summary>
+        /// Коллизии
+        /// </summary>
+        /// <param name="blockAccessor"></param>
+        /// <param name="pos"></param>
+        /// <returns></returns>
         public override Cuboidf[] GetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
             List<Cuboidf> boxes = new List<Cuboidf>();
@@ -94,72 +97,98 @@ namespace EPImmersive.Content.Block
             return boxes.ToArray();
         }
 
-        public virtual Cuboidf[] GetWireSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
+
+
+
+        /// <summary>
+        /// Выделение нода при наведении
+        /// </summary>
+        /// <param name="blockAccessor"></param>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        public virtual Cuboidf[] GetNodeSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            List<Cuboidf> boxes = new List<Cuboidf>();
-            for (int i = 0; i < wireAnchors.Length; i++)
+            var boxes = new List<Cuboidf>();
+            for (int i = 0; i < _wireNodes.Count; i++)
             {
-                Cuboidf box = new Cuboidf(
-                    (float)(wireAnchors[i].Position.X - wireAnchors[i].Radius),
-                    (float)(wireAnchors[i].Position.Y - wireAnchors[i].Radius),
-                    (float)(wireAnchors[i].Position.Z - wireAnchors[i].Radius),
-                    (float)(wireAnchors[i].Position.X + wireAnchors[i].Radius),
-                    (float)(wireAnchors[i].Position.Y + wireAnchors[i].Radius),
-                    (float)(wireAnchors[i].Position.Z + wireAnchors[i].Radius)
+                var box = new Cuboidf(
+                    (float)(_wireNodes[i].Position.X - _wireNodes[i].Radius),
+                    (float)(_wireNodes[i].Position.Y - _wireNodes[i].Radius),
+                    (float)(_wireNodes[i].Position.Z - _wireNodes[i].Radius),
+                    (float)(_wireNodes[i].Position.X + _wireNodes[i].Radius),
+                    (float)(_wireNodes[i].Position.Y + _wireNodes[i].Radius),
+                    (float)(_wireNodes[i].Position.Z + _wireNodes[i].Radius)
                 );
                 boxes.Add(box);
             }
+
+
             return boxes.ToArray();
         }
 
+        /// <summary>
+        /// Считает простые коллизии проводам
+        /// </summary>
+        /// <param name="blockAccessor"></param>
+        /// <param name="pos"></param>
+        /// <returns></returns>
         public virtual Cuboidf[] GetWireCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            List<Cuboidf> boxes = new List<Cuboidf>();
+            var boxes = new List<Cuboidf>();
 
-            BEBehaviorEPImmersive behavior = blockAccessor.GetBlockEntity(pos)?.GetBehavior<BEBehaviorEPImmersive>();
+            var behavior = blockAccessor.GetBlockEntity(pos)?.GetBehavior<BEBehaviorEPImmersive>();
             if (behavior == null) return boxes.ToArray();
 
-            List<ConnectionData> connections = behavior.GetImmersiveConnections();
-            if (connections.Count == 0) return boxes.ToArray();
+            var connections = behavior.GetImmersiveConnections();
+            if (connections.Count == 0)
+                return boxes.ToArray();
 
             foreach (ConnectionData connection in connections)
             {
-                WireNode nodeHere = behavior.GetWireNode(connection.LocalNodeIndex);
+                var nodeHere = behavior.GetWireNode(connection.LocalNodeIndex);
                 if (nodeHere == null) continue;
 
-                BlockEntity neighborEntity = blockAccessor.GetBlockEntity(connection.NeighborPos);
+                var neighborEntity = blockAccessor.GetBlockEntity(connection.NeighborPos);
                 if (neighborEntity == null) continue;
 
-                BEBehaviorEPImmersive neighborBehavior = neighborEntity.GetBehavior<BEBehaviorEPImmersive>();
+                var neighborBehavior = neighborEntity.GetBehavior<BEBehaviorEPImmersive>();
                 if (neighborBehavior == null) continue;
 
-                WireNode nodeNeighbor = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
+                var nodeNeighbor = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
                 if (nodeNeighbor == null) continue;
 
                 // Создаем упрощенный коллайдер для провода
-                Vec3d start = new Vec3d(
-                    pos.X + nodeHere.Position.X,
-                    pos.Y + nodeHere.Position.Y,
-                    pos.Z + nodeHere.Position.Z
+                var start = new Vec3d(
+                    nodeHere.Position.X,
+                    nodeHere.Position.Y,
+                    nodeHere.Position.Z
                 );
 
-                Vec3d end = new Vec3d(
-                    connection.NeighborPos.X + nodeNeighbor.Position.X,
-                    connection.NeighborPos.Y + nodeNeighbor.Position.Y,
-                    connection.NeighborPos.Z + nodeNeighbor.Position.Z
+                var end = new Vec3d(
+                    connection.NeighborPos.X - pos.X + nodeNeighbor.Position.X,
+                    connection.NeighborPos.Y - pos.Y + nodeNeighbor.Position.Y,
+                    connection.NeighborPos.Z - pos.Z + nodeNeighbor.Position.Z
                 );
 
                 // Простой кубоид вдоль провода
-                Cuboidf wireBox = CreateWireCollisionBox(start, end, 0.02f);
+                var wireBox = CreateWireCollisionBox(start, end, 0.2f);
                 boxes.Add(wireBox);
             }
 
             return boxes.ToArray();
         }
 
+
+        /// <summary>
+        /// Рисует собственно кубики коллизии большие
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <param name="thickness"></param>
+        /// <returns></returns>
         private Cuboidf CreateWireCollisionBox(Vec3d start, Vec3d end, float thickness)
         {
-            Vec3d mid = new Vec3d(
+            var mid = new Vec3d(
                 (start.X + end.X) / 2,
                 (start.Y + end.Y) / 2,
                 (start.Z + end.Z) / 2
@@ -179,12 +208,7 @@ namespace EPImmersive.Content.Block
             );
         }
 
-        public override void OnJsonTesselation(ref MeshData sourceMesh, ref int[] lightRgbsByCorner, BlockPos position, Vintagestory.API.Common.Block[] chunkExtBlocks, int extIndex3d)
-        {
-            base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, position, chunkExtBlocks, extIndex3d);
 
-            // Не добавляем провода здесь - они будут рендериться отдельно
-        }
 
         // Добавляем метод для обновления меша проводов
         private List<ImmersiveWireRenderer.WireMeshData> GenerateWireMesh(BlockPos blockPos, BEBehaviorEPImmersive behavior, List<ConnectionData> connections)
@@ -193,26 +217,30 @@ namespace EPImmersive.Content.Block
 
             foreach (ConnectionData connection in connections)
             {
-                WireNode nodeHere = behavior.GetWireNode(connection.LocalNodeIndex);
-                if (nodeHere == null) continue;
+                var nodeHere = behavior.GetWireNode(connection.LocalNodeIndex);
+                if (nodeHere == null)
+                    continue;
 
-                BlockEntity neighborEntity = api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
-                if (neighborEntity == null) continue;
+                var neighborEntity = api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
+                if (neighborEntity == null)
+                    continue;
 
-                BEBehaviorEPImmersive neighborBehavior = neighborEntity.GetBehavior<BEBehaviorEPImmersive>();
-                if (neighborBehavior == null) continue;
+                var neighborBehavior = neighborEntity.GetBehavior<BEBehaviorEPImmersive>();
+                if (neighborBehavior == null)
+                    continue;
 
-                WireNode nodeNeighbor = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
-                if (nodeNeighbor == null) continue;
+                var nodeNeighbor = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
+                if (nodeNeighbor == null)
+                    continue;
 
                 // Используем мировые координаты
-                Vec3f startPos = new Vec3f(
+                var startPos = new Vec3f(
                     (float)(nodeHere.Position.X),
                     (float)(nodeHere.Position.Y),
                     (float)(nodeHere.Position.Z)
                 );
 
-                Vec3f endPos = new Vec3f(
+                var endPos = new Vec3f(
                     (float)(connection.NeighborPos.X - blockPos.X + nodeNeighbor.Position.X),
                     (float)(connection.NeighborPos.Y - blockPos.Y + nodeNeighbor.Position.Y),
                     (float)(connection.NeighborPos.Z - blockPos.Z + nodeNeighbor.Position.Z)
@@ -240,34 +268,70 @@ namespace EPImmersive.Content.Block
             return meshDataList;
         }
 
-        // Обновляем вызов в UpdateWireMeshes
+        
+
+        /// <summary>
+        /// Обновление точек крепления
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="nodes"></param>
+        public void UpdateWireNodes(List<WireNode> nodes)
+        {
+            // обновляем точки крепления
+            _wireNodes= nodes;
+        }
+
+
+        /// <summary>
+        /// Обновляем мэши
+        /// </summary>
+        /// <param name="pos"></param>
         public void UpdateWireMeshes(BlockPos pos)
         {
-            if (api.Side != EnumAppSide.Client || wireRenderer == null) return;
+            if (api.Side != EnumAppSide.Client || _wireRenderer == null)
+                return;
 
-            BEBehaviorEPImmersive behavior = api.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BEBehaviorEPImmersive>();
-            if (behavior == null) return;
+            var behavior = api.World.BlockAccessor.GetBlockEntity(pos)?.GetBehavior<BEBehaviorEPImmersive>();
+            if (behavior == null)
+                return;
 
-            List<ConnectionData> connections = behavior.GetImmersiveConnections();
+            var connections = behavior.GetImmersiveConnections();
             if (connections.Count == 0)
             {
-                wireRenderer.RemoveWireMesh(pos);
+                _wireRenderer.RemoveWireMesh(pos);
                 return;
             }
 
             // Генерируем список мешей для всех соединений этого блока
             List<ImmersiveWireRenderer.WireMeshData> wireMeshes = GenerateWireMesh(pos, behavior, connections);
-            wireRenderer.UpdateWireMesh(pos, wireMeshes);
+            _wireRenderer.UpdateWireMesh(pos, wireMeshes);
         }
 
 
 
 
+
+        /// <summary>
+        /// Начато взаимодействие с нодом
+        /// </summary>
+        /// <param name="world"></param>
+        /// <param name="byPlayer"></param>
+        /// <param name="blockSel"></param>
+        /// <returns></returns>
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
             return true;
         }
 
+
+
+        /// <summary>
+        /// Окончание взаимодействия с блоком
+        /// </summary>
+        /// <param name="secondsUsed"></param>
+        /// <param name="world"></param>
+        /// <param name="byPlayer"></param>
+        /// <param name="blockSel"></param>
         public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
             base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
@@ -278,7 +342,7 @@ namespace EPImmersive.Content.Block
                  capi = (ICoreClientAPI)api;
 
             // Если уже в процессе подключения - обрабатываем как вторую точку
-            if (currentConnectionData != null)
+            if (_currentConnectionData != null)
             {
                 HandleSecondPointSelection(capi, byPlayer, blockSel);
                 return;
@@ -290,7 +354,7 @@ namespace EPImmersive.Content.Block
             if (IsHoldingWireTool(byPlayer))
             {
                 var behavior = world.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorEPImmersive>();
-                if (behavior != null && blockSel.SelectionBoxIndex < wireAnchors.Length)
+                if (behavior != null && blockSel.SelectionBoxIndex < _wireNodes.Count)
                 {
                     // Начинаем процесс подключения провода
                     HandleWireConnection(capi, byPlayer, blockSel, behavior);
@@ -311,24 +375,57 @@ namespace EPImmersive.Content.Block
         }
 
 
+        /// <summary>
+        /// Игрок держит кабель?
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
         private bool IsHoldingWireTool(IPlayer player)
         {
             ItemSlot activeSlot = player.InventoryManager.ActiveHotbarSlot;
             return activeSlot?.Itemstack?.Block is BlockECable;
         }
 
+
+        /// <summary>
+        /// Игрок держит ключ?
+        /// </summary>
+        /// <param name="player"></param>
+        /// <returns></returns>
         private bool IsHoldingWrench(IPlayer player)
         {
             ItemSlot activeSlot = player.InventoryManager.ActiveHotbarSlot;
             return activeSlot?.Itemstack?.Item?.Tool == EnumTool.Wrench;
         }
 
+
+
+        /// <summary>
+        /// Обработка первой точки для прокладки провода
+        /// </summary>
+        /// <param name="capi"></param>
+        /// <param name="byPlayer"></param>
+        /// <param name="blockSel"></param>
+        /// <param name="behavior"></param>
         private void HandleWireConnection(ICoreClientAPI capi, IPlayer byPlayer, BlockSelection blockSel, BEBehaviorEPImmersive behavior)
         {
             byte nodeIndex = (byte)blockSel.SelectionBoxIndex;
 
+
+            // не позволяем к первой точке подключить более 8 проводов
+            if (behavior.FindConnection(nodeIndex).Count >= 8)
+            {
+                if (capi != null)
+                {
+                    capi.ShowChatMessage("You cannot connect more than 8 wires to this point.");
+                }
+
+                return;
+            }
+            
+
             // Сохраняем информацию о первой точке подключения
-            currentConnectionData = new WireConnectionData
+            _currentConnectionData = new WireConnectionData
             {
                 StartPos = blockSel.Position,
                 StartNodeIndex = nodeIndex,
@@ -339,79 +436,115 @@ namespace EPImmersive.Content.Block
 
             if (capi != null)
             {
+                // выберите вторую точку
                 capi.ShowChatMessage("Select second connection point. Right-click to cancel.");
 
                 // Устанавливаем таймаут для отмены операции
                 capi.Event.RegisterCallback((dt) =>
                 {
-                    if (currentConnectionData != null)
+                    if (_currentConnectionData != null)
                     {
                         capi.ShowChatMessage("Wire connection cancelled.");
-                        currentConnectionData = null;
+                        _currentConnectionData = null;
                     }
-                }, 30000); // 30 секунд таймаут
+                }, 30000); // 30 секунд таймаут выбора второй точки
             }
         }
 
+
+
+        /// <summary>
+        /// Обработка второй точки для подключения
+        /// </summary>
+        /// <param name="capi"></param>
+        /// <param name="byPlayer"></param>
+        /// <param name="blockSel"></param>
         private void HandleSecondPointSelection(ICoreClientAPI capi, IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (currentConnectionData == null)
+            if (_currentConnectionData == null)
                 return;
 
             // Проверяем что в руках все еще тот же кабель
-            if (!IsHoldingWireTool(byPlayer) || !byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Equals(api.World, currentConnectionData.CableStack, GlobalConstants.IgnoredStackAttributes))
+            if (!IsHoldingWireTool(byPlayer) || !byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Equals(api.World, _currentConnectionData.CableStack, GlobalConstants.IgnoredStackAttributes))
             {
                 if (capi!=null)
                     capi.ShowChatMessage("You must hold the same cable to complete connection");
-                currentConnectionData = null;
+                _currentConnectionData = null;
                 return;
             }
 
             // Проверяем что вторая точка на другом блоке
-            if (blockSel.Position.Equals(currentConnectionData.StartPos))
+            if (blockSel.Position.Equals(_currentConnectionData.StartPos))
             {
                 if (capi != null)
                     capi.ShowChatMessage("Cannot connect wire to the same block");
-                currentConnectionData = null;
+                _currentConnectionData = null;
                 return;
             }
 
             var endBehavior = api.World.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorEPImmersive>();
+
+            // что-то не так со вторым подключением
             if (endBehavior == null || blockSel.SelectionBoxIndex >= endBehavior.GetWireNodes().Count)
             {
                 if (capi != null)
                     capi.ShowChatMessage("Invalid connection point");
-                currentConnectionData = null;
+                _currentConnectionData = null;
                 return;
             }
 
-            if (currentConnectionData.StartBehavior.FindConnection(currentConnectionData.StartNodeIndex,
+            // Такое подключение уже существует?
+            if (_currentConnectionData.StartBehavior.FindConnection(_currentConnectionData.StartNodeIndex,
                     blockSel.Position, (byte)blockSel.SelectionBoxIndex) != null)
             {
                 if (capi != null)
                     capi.ShowChatMessage("Such a connection already exists.");
-                currentConnectionData = null;
+                _currentConnectionData = null;
                 return;
             }
 
+
+            // У второго нода подключений слишком много
+            if (endBehavior.FindConnection((byte)blockSel.SelectionBoxIndex).Count>=8)
+            {
+                if (capi != null)
+                    capi.ShowChatMessage("You cannot connect more than 8 wires to this point.");
+                _currentConnectionData = null;
+                return;
+            }
+
+
+
             // Рассчитываем длину провода
-            WireNode startNode = currentConnectionData.StartBehavior.GetWireNode(currentConnectionData.StartNodeIndex);
+            WireNode startNode = _currentConnectionData.StartBehavior.GetWireNode(_currentConnectionData.StartNodeIndex);
             WireNode endNode = endBehavior.GetWireNode((byte)blockSel.SelectionBoxIndex);
 
-            Vec3d startWorldPos = new Vec3d(
-                currentConnectionData.StartPos.X + startNode.Position.X,
-                currentConnectionData.StartPos.Y + startNode.Position.Y,
-                currentConnectionData.StartPos.Z + startNode.Position.Z
+            var startWorldPos = new Vec3d(
+                _currentConnectionData.StartPos.X + startNode.Position.X,
+                _currentConnectionData.StartPos.Y + startNode.Position.Y,
+                _currentConnectionData.StartPos.Z + startNode.Position.Z
             );
 
-            Vec3d endWorldPos = new Vec3d(
+            var endWorldPos = new Vec3d(
                 blockSel.Position.X + endNode.Position.X,
                 blockSel.Position.Y + endNode.Position.Y,
                 blockSel.Position.Z + endNode.Position.Z
             );
 
             double distance = startWorldPos.DistanceTo(endWorldPos);
+
+            // округляем длину в большую сторону до целого
             int cableLength = (int)Math.Ceiling(distance);
+
+
+            // ограничиваем максимальную длину провода
+            if (cableLength > 32)
+            {
+                if (capi != null)
+                    capi.ShowChatMessage("The maximum wire length cannot be more than 32 blocks.");
+                _currentConnectionData = null;
+                return;
+            }
 
             // Проверяем достаточно ли кабеля у игрока
             ItemSlot activeSlot = byPlayer.InventoryManager.ActiveHotbarSlot;
@@ -419,7 +552,7 @@ namespace EPImmersive.Content.Block
             {
                 if (capi != null)
                     capi.ShowChatMessage($"Not enough cable. Need {cableLength} blocks, but only have {activeSlot.StackSize}");
-                currentConnectionData = null;
+                _currentConnectionData = null;
                 return;
             }
 
@@ -431,21 +564,21 @@ namespace EPImmersive.Content.Block
             }
 
             // Создаем электрические параметры кабеля
-            EParams cableParams = CreateCableParams(currentConnectionData.CableStack.Block);
+            EParams cableParams = CreateCableParams(_currentConnectionData.CableStack.Block);
 
             // Создаем соединение с параметрами кабеля
-            currentConnectionData.StartBehavior.AddImmersiveConnection(
-                currentConnectionData.StartNodeIndex,
+            _currentConnectionData.StartBehavior.AddImmersiveConnection(
+                _currentConnectionData.StartNodeIndex,
                 blockSel.Position,
                 (byte)blockSel.SelectionBoxIndex
             );
 
-            currentConnectionData.StartBehavior.AddEparamsAt(cableParams, (byte)(currentConnectionData.StartBehavior.GetImmersiveConnections().Count-1));
+            _currentConnectionData.StartBehavior.AddEparamsAt(cableParams, (byte)(_currentConnectionData.StartBehavior.GetImmersiveConnections().Count-1));
 
             endBehavior.AddImmersiveConnection(
                 (byte)blockSel.SelectionBoxIndex,
-                currentConnectionData.StartPos,
-                currentConnectionData.StartNodeIndex
+                _currentConnectionData.StartPos,
+                _currentConnectionData.StartNodeIndex
             );
 
             endBehavior.AddEparamsAt(cableParams, (byte)(endBehavior.GetImmersiveConnections().Count - 1));
@@ -454,13 +587,13 @@ namespace EPImmersive.Content.Block
 
 
             // После создания соединения обновляем меши
-            UpdateWireMeshes(currentConnectionData.StartPos);
+            UpdateWireMeshes(_currentConnectionData.StartPos);
             UpdateWireMeshes(blockSel.Position);
 
             if (capi != null)
                 capi.ShowChatMessage($"Wire connected successfully. Used {cableLength} blocks of cable.");
 
-            currentConnectionData = null;
+            _currentConnectionData = null;
         }
 
 
@@ -487,7 +620,7 @@ namespace EPImmersive.Content.Block
             // Находим провод под курсором и удаляем его
             List<ConnectionData> connections = behavior.GetImmersiveConnections();
 
-            if (connections.Count > 0 && blockSel.SelectionBoxIndex < wireAnchors.Length)
+            if (connections.Count > 0 && blockSel.SelectionBoxIndex < _wireNodes.Count)
             {
                 byte nodeIndex = (byte)blockSel.SelectionBoxIndex;
                 var connectionToRemove = connections.FirstOrDefault(c => c.LocalNodeIndex == nodeIndex);
@@ -596,10 +729,10 @@ namespace EPImmersive.Content.Block
         // Добавляем очистку рендерера
         public override void OnUnloaded(ICoreAPI api)
         {
-            if (api.Side == EnumAppSide.Client && wireRenderer != null)
+            if (api.Side == EnumAppSide.Client && _wireRenderer != null)
             {
-                wireRenderer.Dispose();
-                wireRenderer = null;
+                _wireRenderer.Dispose();
+                _wireRenderer = null;
             }
             base.OnUnloaded(api);
         }
@@ -610,12 +743,16 @@ namespace EPImmersive.Content.Block
             base.OnBlockRemoved(world, pos);
 
             // Удаляем меш при удалении блока
-            if (world.Side == EnumAppSide.Client && wireRenderer != null)
+            if (world.Side == EnumAppSide.Client && _wireRenderer != null)
             {
-                wireRenderer.RemoveWireMesh(pos);
+                _wireRenderer.RemoveWireMesh(pos);
             }
 
         }
+
+
+        
+
 
         // Структура для временного хранения данных о подключении
         private class WireConnectionData
