@@ -408,7 +408,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             }
             catch { }
 
-            // Обновляем меши
+            // Обновляем меши проводоа
             if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
             {
                 wireBlock.UpdateWireMeshes(Pos);
@@ -416,53 +416,61 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         }
     }
 
+    /// <summary>
+    /// При удалении блока
+    /// </summary>
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
         this._isLoaded = false;
-
-
-
+        
+        // рвем все соединения
         RemoveConnAndDrop();
 
-
+        // удаляем подключение в системе
         this.System?.Remove(this.Blockentity.Pos);
+
         AnimUtil?.Dispose();
     }
 
-
+    /// <summary>
+    /// Разрываем все подключения в этой точке
+    /// </summary>
     private void RemoveConnAndDrop()
     {
         // При удалении блока разрываем все соединения и возвращаем кабели
 
         if (this != null)
         {
-            List<ConnectionData> connections = this.GetImmersiveConnections();
+            var connections = this.GetImmersiveConnections();
             foreach (ConnectionData connection in connections)
             {
                 // Рассчитываем длину провода
-                WireNode startNode = this.GetWireNode(connection.LocalNodeIndex);
+                var startNode = this.GetWireNode(connection.LocalNodeIndex);
                 WireNode endNode = null;
 
-                BlockEntity neighborEntity = Api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
-                BEBehaviorEPImmersive neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
+                var neighborEntity = Api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
+                var neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
                 if (neighborBehavior != null)
                 {
                     endNode = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
                 }
 
+                // роняем провода только на сервере
                 if (Api.World.Side == EnumAppSide.Server)
                 {
                     int cableLength = 1; // минимальная длина
                     if (startNode != null && endNode != null)
                     {
-                        Vec3d startWorldPos = new Vec3d(
+                        // начальная точка крепления
+                        var startWorldPos = new Vec3d(
                             Pos.X + startNode.Position.X,
                             Pos.Y + startNode.Position.Y,
                             Pos.Z + startNode.Position.Z
                         );
 
-                        Vec3d endWorldPos = new Vec3d(
+                        // конечная точка крепления
+                        var endWorldPos = new Vec3d(
                             connection.NeighborPos.X + endNode.Position.X,
                             connection.NeighborPos.Y + endNode.Position.Y,
                             connection.NeighborPos.Z + endNode.Position.Z
@@ -494,6 +502,10 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         }
     }
 
+
+    /// <summary>
+    /// При выгрузке блока очищаем анимации и обновляем сеть
+    /// </summary>
     public override void OnBlockUnloaded()
     {
         base.OnBlockUnloaded();
@@ -505,6 +517,11 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         AnimUtil?.Dispose();
     }
 
+
+    /// <summary>
+    /// Сохраняем текущие важные параметры в сейв
+    /// </summary>
+    /// <param name="tree"></param>
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
@@ -547,6 +564,13 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         }
     }
 
+
+
+    /// <summary>
+    /// Грузим из сейва текущие важные параметры
+    /// </summary>
+    /// <param name="tree"></param>
+    /// <param name="worldAccessForResolve"></param>
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
     {
         base.FromTreeAttributes(tree, worldAccessForResolve);

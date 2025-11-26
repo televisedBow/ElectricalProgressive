@@ -76,7 +76,7 @@ namespace EPImmersive.Content.Block
 
             // Добавляем провода к выделению
             boxes.AddRange(base.GetSelectionBoxes(blockAccessor, pos));
-            boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
+           // boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
 
             return boxes.ToArray();
         }
@@ -93,7 +93,7 @@ namespace EPImmersive.Content.Block
         {
             List<Cuboidf> boxes = new List<Cuboidf>();
             boxes.AddRange(base.GetCollisionBoxes(blockAccessor, pos));
-            boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
+            //boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
             return boxes.ToArray();
         }
 
@@ -597,7 +597,11 @@ namespace EPImmersive.Content.Block
         }
 
 
-
+        /// <summary>
+        /// Считываем параметры с кабеля в руках игрока
+        /// </summary>
+        /// <param name="cableBlock"></param>
+        /// <returns></returns>
         private EParams CreateCableParams(Vintagestory.API.Common.Block cableBlock)
         {
             // Загружаем параметры кабеля из JSON атрибутов
@@ -614,11 +618,16 @@ namespace EPImmersive.Content.Block
 
 
 
-
+        /// <summary>
+        /// Обработка отключения выбранного соединения
+        /// </summary>
+        /// <param name="byPlayer"></param>
+        /// <param name="blockSel"></param>
+        /// <param name="behavior"></param>
         private void HandleWireDisconnection(IPlayer byPlayer, BlockSelection blockSel, BEBehaviorEPImmersive behavior)
         {
             // Находим провод под курсором и удаляем его
-            List<ConnectionData> connections = behavior.GetImmersiveConnections();
+            var connections = behavior.GetImmersiveConnections();
 
             if (connections.Count > 0 && blockSel.SelectionBoxIndex < _wireNodes.Count)
             {
@@ -631,8 +640,8 @@ namespace EPImmersive.Content.Block
                     WireNode startNode = behavior.GetWireNode(connectionToRemove.LocalNodeIndex);
                     WireNode endNode = null;
 
-                    BlockEntity neighborEntity = api.World.BlockAccessor.GetBlockEntity(connectionToRemove.NeighborPos);
-                    BEBehaviorEPImmersive neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
+                    var neighborEntity = api.World.BlockAccessor.GetBlockEntity(connectionToRemove.NeighborPos);
+                    var neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
                     if (neighborBehavior != null)
                     {
                         endNode = neighborBehavior.GetWireNode(connectionToRemove.NeighborNodeIndex);
@@ -640,13 +649,15 @@ namespace EPImmersive.Content.Block
 
                     int cableLength = 1; // минимальная длина
                     if (startNode != null && endNode != null)
-                    {
+                    {   
+                        // стартовая позиция
                         var startWorldPos = new Vec3d(
                             blockSel.Position.X + startNode.Position.X,
                             blockSel.Position.Y + startNode.Position.Y,
                             blockSel.Position.Z + startNode.Position.Z
                         );
 
+                        // конечная позиция
                         var endWorldPos = new Vec3d(
                             connectionToRemove.NeighborPos.X + endNode.Position.X,
                             connectionToRemove.NeighborPos.Y + endNode.Position.Y,
@@ -657,6 +668,7 @@ namespace EPImmersive.Content.Block
                         cableLength = (int)Math.Ceiling(distance);
                     }
 
+                    // только на сервере
                     if (api is ICoreServerAPI)
                     {
                         // Возвращаем кабель игроку
@@ -688,6 +700,7 @@ namespace EPImmersive.Content.Block
                         connectionToRemove.LocalNodeIndex
                     );
 
+                    // вывод сообщения о количестве выданных кабелей
                     if (api is ICoreClientAPI)
                         ((ICoreClientAPI)api).ShowChatMessage($"Wire disconnected. Returned {cableLength} blocks of cable.");
 
@@ -700,19 +713,20 @@ namespace EPImmersive.Content.Block
         }
 
 
-
+        /// <summary>
+        /// Создаем ItemStack кабеля на основе параметров
+        /// </summary>
+        /// <param name="api"></param>
+        /// <param name="cableParams"></param>
+        /// <returns></returns>
         public static ItemStack CreateCableStack(ICoreAPI api, EParams cableParams)
         {
-            // Создаем ItemStack кабеля на основе параметров
-            // Здесь нужно создать соответствующий BlockECable на основе параметров
-            // Это упрощенная реализация - в реальности нужно маппить параметры на конкретный блок кабеля
-
             string voltage = cableParams.voltage == 32 ? "32v" : "128v";
             string material = cableParams.material;
             string isolation = cableParams.isolated ? "isolated" : "part";
 
-            AssetLocation cableCode = new AssetLocation($"electricalprogressivebasics:ecable-{voltage}-{material}-single-{isolation}");
-            Vintagestory.API.Common.Block cableBlock = api.World.GetBlock(cableCode);
+            var cableCode = new AssetLocation($"electricalprogressivebasics:ecable-{voltage}-{material}-single-{isolation}");
+            var cableBlock = api.World.GetBlock(cableCode);
 
             if (cableBlock == null)
             {
@@ -726,7 +740,10 @@ namespace EPImmersive.Content.Block
 
 
 
-        // Добавляем очистку рендерера
+        /// <summary>
+        /// Добавляем очистку рендерера
+        /// </summary>
+        /// <param name="api"></param>
         public override void OnUnloaded(ICoreAPI api)
         {
             if (api.Side == EnumAppSide.Client && _wireRenderer != null)
@@ -738,6 +755,11 @@ namespace EPImmersive.Content.Block
         }
 
 
+        /// <summary>
+        /// При удалении блока
+        /// </summary>
+        /// <param name="world"></param>
+        /// <param name="pos"></param>
         public override void OnBlockRemoved(IWorldAccessor world, BlockPos pos)
         {
             base.OnBlockRemoved(world, pos);
@@ -754,7 +776,9 @@ namespace EPImmersive.Content.Block
         
 
 
-        // Структура для временного хранения данных о подключении
+        /// <summary>
+        /// Структура для временного хранения данных о подключении
+        /// </summary>
         private class WireConnectionData
         {
             public BlockPos StartPos { get; set; }
@@ -763,7 +787,12 @@ namespace EPImmersive.Content.Block
             public ItemStack CableStack { get; set; }
         }
 
-        // Структура для ключа кэша мешей
+
+
+
+        /// <summary>
+        /// Структура для ключа кэша мешей
+        /// </summary>
         public struct CacheDataKey : IEquatable<CacheDataKey>
         {
             public BlockPos Position;
