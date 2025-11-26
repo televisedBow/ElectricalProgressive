@@ -245,7 +245,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
             // Обновляем меши при загрузке
             if (api.Side == EnumAppSide.Client)
-                wireBlock.UpdateWireMeshes(Pos);
+                ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
         }
 
         GetParticles();
@@ -411,7 +411,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             // Обновляем меши проводоа
             if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
             {
-                wireBlock.UpdateWireMeshes(Pos);
+                ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
             }
         }
     }
@@ -431,6 +431,12 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         this.System?.Remove(this.Blockentity.Pos);
 
         AnimUtil?.Dispose();
+
+        // Обновляем меши проводоа
+        if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
+        {
+            ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
+        }
     }
 
     /// <summary>
@@ -515,6 +521,12 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         
         this.Update();
         AnimUtil?.Dispose();
+
+        // Обновляем меши проводоа
+        if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
+        {
+            ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
+        }
     }
 
 
@@ -635,5 +647,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         this._dirty = true;
         this.Update();
+
+
     }
 }

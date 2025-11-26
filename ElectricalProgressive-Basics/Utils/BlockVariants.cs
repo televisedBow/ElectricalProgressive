@@ -23,7 +23,6 @@ public class BlockVariants
     public BlockVariants(ICoreAPI api, CollectibleObject baseBlock, int indexVoltage, string material, int indexQuantity, int indexType)
     {
 
-
         var t = new string[4];
         var v = new string[4];
 
@@ -45,6 +44,26 @@ public class BlockVariants
 
         this.CollisionBoxes = block.CollisionBoxes;
         this.SelectionBoxes = block.SelectionBoxes;
+
+        // Используем полученный блок для тесселяции, а не baseBlock!
+        if (api is ICoreClientAPI clientApi)
+        {
+            var cachedShape = clientApi.TesselatorManager.GetCachedShape(block.Shape.Base);
+            clientApi.Tesselator.TesselateShape(block, cachedShape, out this.MeshData);
+            clientApi.TesselatorManager.ThreadDispose();  //обязательно!!
+        }
+    }
+
+
+
+    public BlockVariants(ICoreAPI api, CollectibleObject baseBlock)
+    {
+        
+        if (baseBlock == null)
+            return;
+
+        var block = api.World.GetBlock(baseBlock.Id);
+
 
         // Используем полученный блок для тесселяции, а не baseBlock!
         if (api is ICoreClientAPI clientApi)

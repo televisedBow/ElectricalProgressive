@@ -2,6 +2,7 @@
 using ElectricalProgressive.Utils;
 using EPImmersive.Content.Block;
 using EPImmersive.Content.Block.EAccumulator;
+using EPImmersive.Content.Block.ECable1;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
 using System;
@@ -87,6 +88,10 @@ namespace EPImmersive
             api.RegisterBlockClass("BlockEIAccumulator", typeof(BlockEIAccumulator));
             api.RegisterBlockEntityClass("BlockEntityEIAccumulator", typeof(BlockEntityEIAccumulator));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorEIAccumulator", typeof(BEBehaviorEIAccumulator));
+
+            api.RegisterBlockClass("BlockECable1", typeof(BlockECable1));
+            api.RegisterBlockEntityClass("BlockEntityECable1", typeof(BlockEntityECable1));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorECable1", typeof(BEBehaviorECable1));
 
             api.RegisterBlockEntityBehaviorClass("ElectricalProgressiveImmersive", typeof(BEBehaviorEPImmersive));
         }

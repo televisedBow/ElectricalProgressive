@@ -1,10 +1,10 @@
 ﻿{
   "code": "ecable1",
-  "class": "BlockECable",
-  "entityClass": "BlockEntityECable",
+  "class": "BlockECable1",
+  "entityClass": "BlockEntityECable1",
   "entityBehaviors": [
     {
-      "name": "BEBehaviorECable"
+      "name": "BEBehaviorECable1"
     },
     {
       "name": "ElectricalProgressive"
@@ -361,7 +361,7 @@
   "attributes": {
     "particlesOffsetPos": [ [ 0.1, 0.0, 0.1 ] ],
     "handbook": {
-      "groupBy": [ "ecable-*" ],
+      "groupBy": [ "ecable1-*" ],
       "extraSections": [
         {
           "title": "electricalprogressivebasics:block-handbooktitle-ecable",

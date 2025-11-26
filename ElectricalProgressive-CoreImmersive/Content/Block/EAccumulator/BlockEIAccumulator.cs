@@ -1,10 +1,13 @@
 ﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
+using EPImmersive.Utils;
 using System;
+using System.Collections.Generic;
 using System.Text;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
-using Vintagestory.API.MathTools; 
+using Vintagestory.API.MathTools;
 
 namespace EPImmersive.Content.Block.EAccumulator;
 
@@ -12,6 +15,8 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
 {
     public int maxcapacity;
     int consume;
+
+
 
     public override void OnLoaded(ICoreAPI api)
     {
@@ -21,20 +26,15 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
         consume = MyMiniLib.GetAttributeInt(this, "consume", 64);
     }
 
-
     /// <summary>
     /// Зарядка
     /// </summary>
-    /// <param name="itemstack"></param>
-    /// <param name="maxReceive"></param>
-    /// <returns></returns>
     public int receiveEnergy(ItemStack itemstack, int maxReceive)
     {
-        var energy = itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        var maxEnergy = itemstack.Collectible.GetMaxDurability(itemstack) * consume;       //максимальная энергия
+        var energy = itemstack.Attributes.GetInt("durability") * consume;
+        var maxEnergy = itemstack.Collectible.GetMaxDurability(itemstack) * consume;
 
         var received = Math.Min(maxEnergy - energy, maxReceive);
-
         energy += received;
 
         var durab = Math.Max(1, energy / consume);
@@ -45,7 +45,6 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
     public override bool TryPlaceBlock(IWorldAccessor world, IPlayer byPlayer, ItemStack itemstack,
         BlockSelection blockSel, ref string failureCode)
     {
-        //неваляжка - только вертикально
         return world.BlockAccessor
                    .GetBlock(blockSel.Position.AddCopy(BlockFacing.DOWN))
                    .SideSolid[BlockFacing.indexUP]
@@ -56,12 +55,9 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
     {
         base.OnNeighbourBlockChange(world, pos, neibpos);
 
-        //проверяем только блок под нами
-        if (
-            !world.BlockAccessor
+        if (!world.BlockAccessor
                 .GetBlock(pos.AddCopy(BlockFacing.DOWN))
-                .SideSolid[BlockFacing.indexUP]
-        )
+                .SideSolid[BlockFacing.indexUP])
         {
             world.BlockAccessor.BreakBlock(pos, null);
         }
@@ -70,16 +66,12 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
     /// <summary>
     /// Получение информации о предмете в инвентаре
     /// </summary>
-    /// <param name="inSlot"></param>
-    /// <param name="dsc"></param>
-    /// <param name="world"></param>
-    /// <param name="withDebugInfo"></param>
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
 
-        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume; //текущая энергия
-        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;       //максимальная энергия
+        var energy = inSlot.Itemstack.Attributes.GetInt("durability") * consume;
+        var maxEnergy = inSlot.Itemstack.Collectible.GetMaxDurability(inSlot.Itemstack) * consume;
 
         dsc.AppendLine(Lang.Get("Storage") + ": " + energy + "/" + maxEnergy + " " + Lang.Get("J"));
         dsc.AppendLine(Lang.Get("Voltage") + ": " + MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "voltage", 0) + " " + Lang.Get("V"));
@@ -92,12 +84,10 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
         var be = world.BlockAccessor.GetBlockEntity(pos) as BlockEntityEIAccumulator;
         ItemStack item = new(world.BlockAccessor.GetBlock(pos));
 
-
         if (be != null)
         {
-            var maxDurability = item.Collectible.GetMaxDurability(item); //максимальная прочность
-            var maxEnergy = maxDurability * consume;       //максимальная энергия
-
+            var maxDurability = item.Collectible.GetMaxDurability(item);
+            var maxEnergy = maxDurability * consume;
 
             item.Attributes.SetInt("durability", (int)(maxDurability * be.GetBehavior<BEBehaviorEIAccumulator>().GetCapacity() / maxEnergy));
         }
@@ -110,12 +100,10 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
         var be = world.BlockAccessor.GetBlockEntity(pos) as BlockEntityEIAccumulator;
         ItemStack item = new(world.BlockAccessor.GetBlock(pos));
 
-
         if (be != null)
         {
-            var maxDurability = item.Collectible.GetMaxDurability(item); //максимальная прочность
-            var maxEnergy = maxDurability * consume;       //максимальная энергия
-
+            var maxDurability = item.Collectible.GetMaxDurability(item);
+            var maxEnergy = maxDurability * consume;
 
             item.Attributes.SetInt("durability", (int)(maxDurability * be.GetBehavior<BEBehaviorEIAccumulator>().GetCapacity() / maxEnergy));
         }
@@ -126,9 +114,6 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
     /// <summary>
     /// Вызывается при установке блока, чтобы задать начальные параметры
     /// </summary>
-    /// <param name="world"></param>
-    /// <param name="blockPos"></param>
-    /// <param name="byItemStack"></param>
     public override void OnBlockPlaced(IWorldAccessor world, BlockPos blockPos, ItemStack byItemStack = null!)
     {
         base.OnBlockPlaced(world, blockPos, byItemStack);
@@ -136,13 +121,28 @@ public class BlockEIAccumulator : ImmersiveWireBlock, IEnergyStorageItem
         {
             var be = world.BlockAccessor.GetBlockEntity(blockPos) as BlockEntityEIAccumulator;
 
-            var maxDurability = byItemStack.Collectible.GetMaxDurability(byItemStack); //максимальная прочность
-            var standartDurability = byItemStack.Collectible.Durability;       //стандартная прочность
+            var maxDurability = byItemStack.Collectible.GetMaxDurability(byItemStack);
+            var standartDurability = byItemStack.Collectible.Durability;
 
-            var durability = byItemStack.Attributes.GetInt("durability", 1);  //текущая прочность
-            var energy = durability * consume;       //максимальная энергия
+            var durability = byItemStack.Attributes.GetInt("durability", 1);
+            var energy = durability * consume;
 
             be!.GetBehavior<BEBehaviorEIAccumulator>().SetCapacity(energy, maxDurability * 1.0F / standartDurability);
         }
     }
+
+
+
+    /// <summary>
+    /// Очистка кэша при выгрузке
+    /// </summary>
+    public override void OnUnloaded(ICoreAPI api)
+    {
+        base.OnUnloaded(api);
+
+    }
+
+
+
+    
 }
