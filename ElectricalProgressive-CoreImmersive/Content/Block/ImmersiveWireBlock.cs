@@ -1033,6 +1033,7 @@ namespace EPImmersive.Content.Block
             return new ItemStack(cableBlock);
         }
 
+         
 
         /// <summary>
         /// Создаем Asset кабеля на основе параметров
