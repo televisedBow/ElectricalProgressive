@@ -722,7 +722,8 @@ namespace EPImmersive.Content.Block
                                 wireConnection.EndPos,
                                 wireConnection.Thickness,
                                 wireConnection.Asset,
-                                wireConnection.SagFactor
+                                wireConnection.SagFactor,
+                                wireConnection.IsReverse
                             );
 
                             if (wireMesh != null)
@@ -812,9 +813,9 @@ namespace EPImmersive.Content.Block
 
 
         /// <summary>
-        /// Создает меш сегмента провода между двумя точками
+        /// Создает меш сегмента провода между двумя точками с синхронизированной ориентацией
         /// </summary>
-        private MeshData? CreateWireSegmentMesh(Vec3f startPos, Vec3f endPos, float thickness, AssetLocation asset, float sagFactor)
+        private MeshData? CreateWireSegmentMesh(Vec3f startPos, Vec3f endPos, float thickness, AssetLocation asset, float sagFactor, bool isReverse = false)
         {
             float dist = startPos.DistanceTo(endPos);
             if (dist < 0.001f)
@@ -824,7 +825,6 @@ namespace EPImmersive.Content.Block
             startPos = startPos.AddCopy(-0.5f, -0.5f, -0.5f);
             endPos = endPos.AddCopy(-0.5f, -0.5f, -0.5f);
 
-            
             // Количество сегментов - зависит от длины провода
             int segments = Math.Max(4, (int)(dist * 4f));
 
@@ -832,13 +832,12 @@ namespace EPImmersive.Content.Block
             if (wireVariant?.MeshData == null)
                 return null;
 
-
             var center = new Vec3f(0.5f, 0.5f, 0.5f);
             float segmentLength = dist * 1.2f / segments;
             float scaleZ = segmentLength * 2f; // базовый меш имеет длину 0.5
 
             MeshData? mesh = null;
-
+            
             for (int i = 0; i < (segments / 2) + 1; i++)
             {
                 float progress = (float)i / segments;
@@ -861,10 +860,18 @@ namespace EPImmersive.Content.Block
                 var segmentMesh = wireVariant.MeshData.Clone();
 
                 // Масштабируем по длине
-                segmentMesh.Scale(center, 1f, 1f, scaleZ);
+                if (isReverse && i>=(segments / 2)-2)
+                    segmentMesh.Scale(center, 0.99f, 0.99f, scaleZ); // стык посередине чуть меньше
+                else
+                {
+                    segmentMesh.Scale(center, 1f, 1f, scaleZ);
+                }
+
+                // Используем общее направление провода для единообразного поворота
+                Vec3f rotationDirection = isReverse ? -1 * segmentDir : segmentDir;
 
                 // Используем кватернион для правильного поворота
-                float[] quat = CalculateSegmentRotation(segmentDir);
+                float[] quat = CalculateSegmentRotation(rotationDirection);
                 float[] rotationMatrix = QuaternionToMatrix4x4(quat);
 
                 // Применяем поворот через матрицу
@@ -1067,13 +1074,12 @@ namespace EPImmersive.Content.Block
 
 
         /// <summary>
-        /// Возвращает список подключенных проводов
+        /// Возвращает список подключенных проводов с указанием направления
         /// </summary>
         public List<WireConnection> GetConnectedWires(BlockPos pos, BEBehaviorEPImmersive beh)
         {
             var conn = new List<WireConnection>();
 
-            // Здесь логика получения подключенных проводов из энергетической системы
             var connections = beh.GetImmersiveConnections();
 
             foreach (var connection in connections)
@@ -1107,6 +1113,9 @@ namespace EPImmersive.Content.Block
                     (float)(connection.NeighborPos.Z - pos.Z + nodeNeighbor.Position.Z)
                 );
 
+                // Определяем, является ли этот блок "источником" для направления провода
+                // Используем хеш позиции для детерминированного выбора
+                bool isSource = pos.GetHashCode() < connection.NeighborPos.GetHashCode();
 
                 conn.Add(new WireConnection
                 {
@@ -1114,7 +1123,8 @@ namespace EPImmersive.Content.Block
                     EndPos = endPos,
                     Thickness = 0.015f,
                     Asset = CreateCableAsset(api, connection.Parameters),
-                    SagFactor = 0.05f
+                    SagFactor = 0.05f,
+                    IsReverse = !isSource // Для обратного направления используем обратную ориентацию
                 });
             }
 
@@ -1148,6 +1158,7 @@ namespace EPImmersive.Content.Block
             public float Thickness;
             public AssetLocation Asset;
             public float SagFactor;
+            public bool IsReverse;
         }
 
         /// <summary>
