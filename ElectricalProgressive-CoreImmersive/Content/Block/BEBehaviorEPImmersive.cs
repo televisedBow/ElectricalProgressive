@@ -89,7 +89,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
 
 
-/// <summary>
+    /// <summary>
     /// Получает список точек подключения этого блока
     /// </summary>
     public List<WireNode> GetWireNodes()
@@ -166,7 +166,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     /// </summary>
     public void AddMainEparams(EParams param)
     {
-        _mainEpar= param;
+        _mainEpar = param;
 
         this._dirty = true;
         this._paramsSet = false;
@@ -223,7 +223,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         if (connectionHere != null)
         {
             _connections.Remove(connectionHere);
-            this._eparams = (new EParams(),0);
+            this._eparams = (new EParams(), 0);
             this._dirty = true;
             this.Update();
         }
@@ -235,7 +235,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         // не двигать, должно грузиться до UpdateWireNodes
         // Загружаем точки подключения из JSON
-        LoadWireNodes(); 
+        LoadWireNodes();
 
         // иммерсивная система?
         if (Block is ImmersiveWireBlock wireBlock)
@@ -245,12 +245,15 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
             // Обновляем меши при загрузке
             if (api.Side == EnumAppSide.Client)
+            {
                 ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
+
+            }
         }
 
         GetParticles();
 
-        
+
 
         AnimUtil = Blockentity.GetBehavior<BEBehaviorAnimatable>()?.animUtil!;
 
@@ -303,6 +306,8 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             // Сортируем по индексу для удобства
             _wireNodes = _wireNodes.OrderBy(node => node.Index).ToList();
         }
+
+
     }
 
     private void GetParticles()
@@ -412,6 +417,11 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
             {
                 ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
+
+                foreach (var data in _connections)
+                {
+                    ImmersiveWireBlock.InvalidateBlockMeshCache(data.NeighborPos);
+                }
             }
         }
     }
@@ -423,7 +433,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     {
         base.OnBlockRemoved();
         this._isLoaded = false;
-        
+
         // рвем все соединения
         RemoveConnAndDrop();
 
@@ -487,7 +497,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                     }
 
                     // Создаем и выбрасываем кабель
-                    ItemStack cableStack = ImmersiveWireBlock.CreateCableStack(Api,connection.Parameters);
+                    ItemStack cableStack = ImmersiveWireBlock.CreateCableStack(Api, connection.Parameters);
                     cableStack.StackSize = cableLength;
                     Api.World.SpawnItemEntity(cableStack, Pos.ToVec3d());
 
@@ -517,8 +527,8 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         base.OnBlockUnloaded();
         this._isLoaded = false;
         this._dirty = true;
-        
-        
+
+
         this.Update();
         AnimUtil?.Dispose();
 
@@ -553,9 +563,19 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             tree.SetBytes($"Conn_{i}_Params", EParamsSerializer.SerializeSingle(conn.Parameters));
         }
 
-        
+        // Сохраняем узлы подключения
+        tree.SetInt("WireNodesCount", _wireNodes.Count);
+        for (int i = 0; i < _wireNodes.Count; i++)
+        {
+            var node = _wireNodes[i];
+            tree.SetInt($"WireNode_{i}_Index", node.Index);
+            tree.SetInt($"WireNode_{i}_Voltage", node.Voltage);
+            tree.SetDouble($"WireNode_{i}_X", node.Position.X);
+            tree.SetDouble($"WireNode_{i}_Y", node.Position.Y);
+            tree.SetDouble($"WireNode_{i}_Z", node.Position.Z);
+            tree.SetFloat($"WireNode_{i}_Radius", node.Radius);
+        }
 
-        tree.SetBool(IsLoadedKey, this._isLoaded);
 
         // Сохраняем параметры частиц
         tree.SetInt("ParticlesType", ParticlesType);
@@ -575,7 +595,6 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             tree.SetInt($"ParticlesFramesAnimMax_{i}", ParticlesFramesAnim[i][1]);
         }
     }
-
 
 
     /// <summary>
@@ -619,9 +638,31 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             _connections.Add(connection);
         }
 
+        // Загружаем узлы подключения (приоритет у сохраненных данных)
+        int wireNodesCount = tree.GetInt("WireNodesCount", -1);
+
+        _wireNodes.Clear();
+        for (int i = 0; i < wireNodesCount; i++)
+        {
+            var index = tree.GetInt($"WireNode_{i}_Index", 0);
+            var voltage = tree.GetInt($"WireNode_{i}_Voltage", 0);
+            var x = tree.GetDouble($"WireNode_{i}_X", 0);
+            var y = tree.GetDouble($"WireNode_{i}_Y", 0);
+            var z = tree.GetDouble($"WireNode_{i}_Z", 0);
+            var radius = tree.GetFloat($"WireNode_{i}_Radius", 0.1f);
+
+            _wireNodes.Add(new WireNode
+            {
+                Index = (byte)index,
+                Voltage = voltage,
+                Position = new Vec3d(x, y, z),
+                Radius = radius
+            });
+        }
+        // Сортируем по индексу для удобства
+        _wireNodes = _wireNodes.OrderBy(node => node.Index).ToList();
 
 
-        this._isLoaded = tree.GetBool(IsLoadedKey, false);
 
         // Загрузка параметров частиц
         ParticlesType = tree.GetInt("ParticlesType", 0);
@@ -648,6 +689,9 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         this._dirty = true;
         this.Update();
 
+
+
+        
 
     }
 }

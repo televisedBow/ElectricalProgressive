@@ -96,13 +96,13 @@
       "coke": { "base": "block/coke" },
       "material": { "base": "block/{material}" },
       "fix": { "base": "block/rubber" },
-      "isolation": { "base": "block/liquid/dye/gray" }
+      "isolation": { "base": "block/liquid/dye/black" }
     },
     "*-128v-*": {
       "coke": { "base": "block/coke" },
       "material": { "base": "block/{material}" },
       "fix": { "base": "block/rubber" },
-      "isolation": { "base": "block/liquid/dye/gray" }
+      "isolation": { "base": "block/liquid/dye/black" }
     }
   },
 

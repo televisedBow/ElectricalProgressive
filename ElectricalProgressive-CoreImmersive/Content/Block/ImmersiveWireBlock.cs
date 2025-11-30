@@ -23,7 +23,8 @@ namespace EPImmersive.Content.Block
 
         private WireConnectionData _currentConnectionData; // временные данные для текущих подключений
 
-        
+        // Кэш для полных мешей блоков со всеми подключениями
+        private static readonly Dictionary<WireMeshCacheKey, MeshData> WireMeshesCache = new();
 
 
 
@@ -615,63 +616,9 @@ namespace EPImmersive.Content.Block
             }
         }
 
-        /// <summary>
-        /// Ключ для кэширования мешей блока со всеми подключениями
-        /// </summary>
-        private struct WireMeshCacheKey : IEquatable<WireMeshCacheKey>
-        {
-            public readonly BlockPos Position;
-            public readonly int ConnectionsHash;
 
-            public WireMeshCacheKey(BlockPos position, List<ConnectionData> connections)
-            {
-                Position = position;
-                ConnectionsHash = ComputeConnectionsHash(connections);
-            }
 
-            private static int ComputeConnectionsHash(List<ConnectionData> connections)
-            {
-                if (connections == null || connections.Count == 0)
-                    return 0;
 
-                int hash = 17;
-                foreach (var conn in connections.OrderBy(c => c.LocalNodeIndex).ThenBy(c => c.NeighborPos.GetHashCode()))
-                {
-                    hash = hash * 31 + conn.LocalNodeIndex;
-                    hash = hash * 31 + conn.NeighborPos.GetHashCode();
-                    hash = hash * 31 + conn.NeighborNodeIndex;
-                    // Также добавляем хеш параметров кабеля
-
-                    hash = hash * 31 + conn.Parameters.voltage.GetHashCode();
-                    hash = hash * 31 + conn.Parameters.maxCurrent.GetHashCode();
-                    hash = hash * 31 + (conn.Parameters.material?.GetHashCode() ?? 0);
-                    hash = hash * 31 + conn.Parameters.isolated.GetHashCode();
-                    
-                }
-                return hash;
-            }
-
-            public bool Equals(WireMeshCacheKey other)
-            {
-                return Position.Equals(other.Position) && ConnectionsHash == other.ConnectionsHash;
-            }
-
-            public override bool Equals(object obj)
-            {
-                return obj is WireMeshCacheKey other && Equals(other);
-            }
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    return (Position.GetHashCode() * 397) ^ ConnectionsHash;
-                }
-            }
-        }
-
-        // Кэш для полных мешей блоков со всеми подключениями
-        private static readonly Dictionary<WireMeshCacheKey, MeshData> WireMeshesCache = new();
 
         /// <summary>
         /// Основной метод тесселяции - с кэшированием только мешей проводов
@@ -688,6 +635,7 @@ namespace EPImmersive.Content.Block
 
             // Получаем подключенные провода
             var connections = beh.GetImmersiveConnections();
+
 
             // Создаем ключ для кэша проводов
             var cacheKey = new WireMeshCacheKey(position, connections);
@@ -734,12 +682,12 @@ namespace EPImmersive.Content.Block
                     }
                 }
 
-                // Сохраняем в кэш (даже если wiresMesh = null - это значит проводов нет)
-                WireMeshesCache[cacheKey] = wiresMesh;
+                
 
                 // Добавляем провода к финальному мешу
                 if (wiresMesh != null)
                 {
+                    WireMeshesCache[cacheKey] = wiresMesh;
                     finalMesh.AddMeshData(wiresMesh);
                 }
             }
@@ -836,6 +784,8 @@ namespace EPImmersive.Content.Block
             float segmentLength = dist * 1.2f / segments;
             float scaleZ = segmentLength * 2f; // базовый меш имеет длину 0.5
 
+            Random rnd = new Random();
+
             MeshData? mesh = null;
             
             for (int i = 0; i < (segments / 2) + 1; i++)
@@ -864,7 +814,8 @@ namespace EPImmersive.Content.Block
                     segmentMesh.Scale(center, 0.99f, 0.99f, scaleZ); // стык посередине чуть меньше
                 else
                 {
-                    segmentMesh.Scale(center, 1f, 1f, scaleZ);
+                    float buf = (float)(rnd.NextDouble()/1000d);
+                    segmentMesh.Scale(center, 1f+buf, 1f+buf, scaleZ);
                 }
 
                 // Используем общее направление провода для единообразного поворота
@@ -880,6 +831,8 @@ namespace EPImmersive.Content.Block
                 // Позиционируем в центр сегмента
                 Vec3f segmentCenter = segmentStartPos + segmentDir * (segmentDist / 2f);
                 segmentMesh.Translate(segmentCenter.X, segmentCenter.Y, segmentCenter.Z);
+
+
 
                 AddMeshData(ref mesh, segmentMesh);
             }
@@ -980,7 +933,11 @@ namespace EPImmersive.Content.Block
 
 
 
-
+        /// <summary>
+        /// Складываем мэши
+        /// </summary>
+        /// <param name="sourceMesh"></param>
+        /// <param name="meshData"></param>
         private static void AddMeshData(ref MeshData? sourceMesh, MeshData? meshData)
         {
             if (meshData != null)
@@ -1113,6 +1070,11 @@ namespace EPImmersive.Content.Block
                     (float)(connection.NeighborPos.Z - pos.Z + nodeNeighbor.Position.Z)
                 );
 
+
+                // обязательная штука
+                neighborEntity.MarkDirty(true);
+
+
                 // Определяем, является ли этот блок "источником" для направления провода
                 // Используем хеш позиции для детерминированного выбора
                 bool isSource = pos.GetHashCode() < connection.NeighborPos.GetHashCode();
@@ -1133,7 +1095,66 @@ namespace EPImmersive.Content.Block
 
 
 
+        /// <summary>
+        /// Ключ для кэширования мешей блока со всеми подключениями
+        /// </summary>
+        private struct WireMeshCacheKey : IEquatable<WireMeshCacheKey>
+        {
+            public readonly BlockPos Position;
+            public readonly int ConnectionsHash;
+            
 
+            public WireMeshCacheKey(BlockPos position, List<ConnectionData> connections)
+            {
+                Position = position;
+                ConnectionsHash = ComputeConnectionsHash(connections);
+               
+            }
+
+            private static int ComputeConnectionsHash(List<ConnectionData> connections)
+            {
+                if (connections == null || connections.Count == 0)
+                    return 0;
+
+                int hash = 17;
+                foreach (var conn in connections.OrderBy(c => c.LocalNodeIndex).ThenBy(c => c.NeighborPos.GetHashCode()))
+                {
+                    hash = hash * 31 + conn.LocalNodeIndex;
+                    hash = hash * 31 + conn.NeighborPos.GetHashCode();
+                    hash = hash * 31 + conn.NeighborNodeIndex;
+                    // Также добавляем хеш параметров кабеля
+                    hash = hash * 31 + conn.Parameters.voltage.GetHashCode();
+                    hash = hash * 31 + conn.Parameters.maxCurrent.GetHashCode();
+                    hash = hash * 31 + (conn.Parameters.material?.GetHashCode() ?? 0);
+                    hash = hash * 31 + conn.Parameters.isolated.GetHashCode();
+                }
+                return hash;
+            }
+
+           
+
+            public bool Equals(WireMeshCacheKey other)
+            {
+                return Position.Equals(other.Position)
+                       && ConnectionsHash == other.ConnectionsHash;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is WireMeshCacheKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hash = 17;
+                    hash = hash * 31 + Position.GetHashCode();
+                    hash = hash * 31 + ConnectionsHash;
+                    return hash;
+                }
+            }
+        }
 
 
         /// <summary>
