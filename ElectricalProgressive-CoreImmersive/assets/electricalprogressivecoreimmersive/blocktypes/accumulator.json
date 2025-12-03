@@ -1,10 +1,10 @@
 ﻿{
   "code": "accumulator1",
-  "class": "BlockEIAccumulator",
-  "entityClass": "BlockEntityEIAccumulator",
+  "class": "BlockEIAccumulator1",
+  "entityClass": "BlockEntityEIAccumulator1",
   "entityBehaviors": [
     {
-      "name": "BEBehaviorEIAccumulator"
+      "name": "BEBehaviorEIAccumulator1"
     },
     {
       "name": "ElectricalProgressiveImmersive"

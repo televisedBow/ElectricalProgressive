@@ -21,12 +21,84 @@ namespace EPImmersive.Content.Block
     {
         protected List<WireNode> _wireNodes; // точки крепления
 
-        private WireConnectionData _currentConnectionData; // временные данные для текущих подключений
-
+        public MeshData? _MeshData;
         // Кэш для полных мешей блоков со всеми подключениями
         private static readonly Dictionary<WireMeshCacheKey, MeshData> WireMeshesCache = new();
 
+        // Ключи для атрибутов
+        private const string WIRE_CONNECTION_PREFIX = "epImmersiveWireConnection_";
 
+        /// <summary>
+        /// Сохраняет данные подключения в атрибуты игрока
+        /// </summary>
+        private void SaveConnectionToAttributes(IPlayer player, WireConnectionData data)
+        {
+            var attributes = player.Entity.Attributes;
+
+            attributes.SetBlockPos($"{WIRE_CONNECTION_PREFIX}startPos", data.StartPos);
+            attributes.SetInt($"{WIRE_CONNECTION_PREFIX}startNodeIndex", data.StartNodeIndex);
+            attributes.SetString($"{WIRE_CONNECTION_PREFIX}asset", data.Asset.ToString());
+
+
+            player.Entity.Attributes.MarkAllDirty();
+        }
+
+        /// <summary>
+        /// Загружает данные подключения из атрибутов игрока
+        /// </summary>
+        private WireConnectionData LoadConnectionFromAttributes(IPlayer player)
+        {
+            var attributes = player.Entity.Attributes;
+
+            if (!attributes.HasAttribute($"{WIRE_CONNECTION_PREFIX}startPosX"))
+                return null;
+
+            var startPos = attributes.GetBlockPos($"{WIRE_CONNECTION_PREFIX}startPos");
+            var startNodeIndex = (byte)attributes.GetInt($"{WIRE_CONNECTION_PREFIX}startNodeIndex");
+            var asset = new AssetLocation(attributes.GetString($"{WIRE_CONNECTION_PREFIX}asset")?? "game:air");
+
+            // Восстанавливаем StartBehavior из мира
+            var startBlockEntity = api.World.BlockAccessor.GetBlockEntity(startPos);
+            var startBehavior = startBlockEntity?.GetBehavior<BEBehaviorEPImmersive>();
+
+            if (startBehavior == null)
+            {
+                ClearConnectionAttributes(player);
+                return null;
+            }
+
+            return new WireConnectionData
+            {
+                StartPos = startPos,
+                StartNodeIndex = startNodeIndex,
+                StartBehavior = startBehavior,
+                Asset = asset
+            };
+        }
+
+        /// <summary>
+        /// Очищает атрибуты подключения
+        /// </summary>
+        private void ClearConnectionAttributes(IPlayer player)
+        {
+            var attributes = player.Entity.Attributes;
+
+            attributes.RemoveAttribute($"{WIRE_CONNECTION_PREFIX}startPosX");
+            attributes.RemoveAttribute($"{WIRE_CONNECTION_PREFIX}startPosY");
+            attributes.RemoveAttribute($"{WIRE_CONNECTION_PREFIX}startPosZ");
+            attributes.RemoveAttribute($"{WIRE_CONNECTION_PREFIX}startNodeIndex");
+            attributes.RemoveAttribute($"{WIRE_CONNECTION_PREFIX}asset");
+
+            player.Entity.Attributes.MarkAllDirty();
+        }
+
+        /// <summary>
+        /// Проверяет, есть ли активное подключение у игрока
+        /// </summary>
+        private bool HasActiveConnection(IPlayer player)
+        {
+            return player.Entity.Attributes.HasAttribute($"{WIRE_CONNECTION_PREFIX}startPosX");
+        }
 
 
         /// <summary>
@@ -233,17 +305,15 @@ namespace EPImmersive.Content.Block
             base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
 
             ICoreClientAPI capi = null;
-
             if (api is ICoreClientAPI)
                 capi = (ICoreClientAPI)api;
 
-            // Если уже в процессе подключения - обрабатываем как вторую точку
-            if (_currentConnectionData != null)
+            // Проверяем через атрибуты игрока
+            if (HasActiveConnection(byPlayer))
             {
                 HandleSecondPointSelection(capi, byPlayer, blockSel);
                 return;
             }
-
 
 
             // Если игрок держит кабель для подключения проводов
@@ -261,7 +331,7 @@ namespace EPImmersive.Content.Block
             // Если игрок держит гаечный ключ для отключения
             if (IsHoldingWrench(byPlayer))
             {
-                BEBehaviorEPImmersive behavior = world.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorEPImmersive>();
+                var behavior = world.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorEPImmersive>();
                 if (behavior != null)
                 {
                     HandleWireDisconnection(byPlayer, blockSel, behavior);
@@ -307,43 +377,39 @@ namespace EPImmersive.Content.Block
         {
             byte nodeIndex = (byte)blockSel.SelectionBoxIndex;
 
-
-            // не позволяем к первой точке подключить более 8 проводов
             if (behavior.FindConnection(nodeIndex).Count >= 8)
             {
                 if (capi != null)
                 {
                     capi.ShowChatMessage("You cannot connect more than 8 wires to this point.");
                 }
-
                 return;
             }
 
-
-            // Сохраняем информацию о первой точке подключения
-            _currentConnectionData = new WireConnectionData
+            // Сохраняем в атрибуты игрока
+            var connectionData = new WireConnectionData
             {
                 StartPos = blockSel.Position,
                 StartNodeIndex = nodeIndex,
                 StartBehavior = behavior,
-                CableStack = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Clone()
+                Asset = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Block.Code.ToString()
             };
 
+            SaveConnectionToAttributes(byPlayer, connectionData);
 
             if (capi != null)
             {
-                // выберите вторую точку
                 capi.ShowChatMessage("Select second connection point. Right-click to cancel.");
 
-                // Устанавливаем таймаут для отмены операции
+                // Таймаут - очищаем атрибуты через 30 секунд
                 capi.Event.RegisterCallback((dt) =>
                 {
-                    if (_currentConnectionData != null)
+                    if (HasActiveConnection(byPlayer))
                     {
                         capi.ShowChatMessage("Wire connection cancelled.");
-                        _currentConnectionData = null;
+                        ClearConnectionAttributes(byPlayer);
                     }
-                }, 30000); // 30 секунд таймаут выбора второй точки
+                }, 30000);
             }
         }
 
@@ -357,68 +423,68 @@ namespace EPImmersive.Content.Block
         /// <param name="blockSel"></param>
         private void HandleSecondPointSelection(ICoreClientAPI capi, IPlayer byPlayer, BlockSelection blockSel)
         {
-            if (_currentConnectionData == null)
+            // Загружаем из атрибутов игрока
+            var connectionData = LoadConnectionFromAttributes(byPlayer);
+            if (connectionData == null)
                 return;
 
             // Проверяем что в руках все еще тот же кабель
-            if (!IsHoldingWireTool(byPlayer) || !byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Equals(api.World, _currentConnectionData.CableStack, GlobalConstants.IgnoredStackAttributes))
+            if (!IsHoldingWireTool(byPlayer) || !byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Block.Code.ToString().Equals(connectionData.Asset))
             {
                 if (capi != null)
                     capi.ShowChatMessage("You must hold the same cable to complete connection");
-                _currentConnectionData = null;
+                ClearConnectionAttributes(byPlayer);
                 return;
             }
 
             // Проверяем что вторая точка на другом блоке
-            if (blockSel.Position.Equals(_currentConnectionData.StartPos))
+            if (blockSel.Position.Equals(connectionData.StartPos))
             {
                 if (capi != null)
                     capi.ShowChatMessage("Cannot connect wire to the same block");
-                _currentConnectionData = null;
+                ClearConnectionAttributes(byPlayer);
                 return;
             }
 
             var endBehavior = api.World.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorEPImmersive>();
 
-            // что-то не так со вторым подключением
             if (endBehavior == null || blockSel.SelectionBoxIndex >= endBehavior.GetWireNodes().Count)
             {
                 if (capi != null)
                     capi.ShowChatMessage("Invalid connection point");
-                _currentConnectionData = null;
+                ClearConnectionAttributes(byPlayer);
                 return;
             }
 
-            // Такое подключение уже существует?
-            if (_currentConnectionData.StartBehavior.FindConnection(_currentConnectionData.StartNodeIndex,
+            // Проверяем существующее подключение
+            if (connectionData.StartBehavior.FindConnection(connectionData.StartNodeIndex,
                     blockSel.Position, (byte)blockSel.SelectionBoxIndex) != null)
             {
                 if (capi != null)
                     capi.ShowChatMessage("Such a connection already exists.");
-                _currentConnectionData = null;
+                ClearConnectionAttributes(byPlayer);
                 return;
             }
 
-
-            // У второго нода подключений слишком много
+            // Проверяем ограничение на 8 подключений у второго нода
             if (endBehavior.FindConnection((byte)blockSel.SelectionBoxIndex).Count >= 8)
             {
                 if (capi != null)
                     capi.ShowChatMessage("You cannot connect more than 8 wires to this point.");
-                _currentConnectionData = null;
+                ClearConnectionAttributes(byPlayer);
                 return;
             }
 
-
+            var currentConnectionData = LoadConnectionFromAttributes(byPlayer);
 
             // Рассчитываем длину провода
-            WireNode startNode = _currentConnectionData.StartBehavior.GetWireNode(_currentConnectionData.StartNodeIndex);
+            WireNode startNode = currentConnectionData.StartBehavior.GetWireNode(currentConnectionData.StartNodeIndex);
             WireNode endNode = endBehavior.GetWireNode((byte)blockSel.SelectionBoxIndex);
 
             var startWorldPos = new Vec3d(
-                _currentConnectionData.StartPos.X + startNode.Position.X,
-                _currentConnectionData.StartPos.Y + startNode.Position.Y,
-                _currentConnectionData.StartPos.Z + startNode.Position.Z
+                currentConnectionData.StartPos.X + startNode.Position.X,
+                currentConnectionData.StartPos.Y + startNode.Position.Y,
+                currentConnectionData.StartPos.Z + startNode.Position.Z
             );
 
             var endWorldPos = new Vec3d(
@@ -438,7 +504,7 @@ namespace EPImmersive.Content.Block
             {
                 if (capi != null)
                     capi.ShowChatMessage("The maximum wire length cannot be more than 32 blocks.");
-                _currentConnectionData = null;
+                ClearConnectionAttributes(byPlayer);
                 return;
             }
 
@@ -448,7 +514,7 @@ namespace EPImmersive.Content.Block
             {
                 if (capi != null)
                     capi.ShowChatMessage($"Not enough cable. Need {cableLength} blocks, but only have {activeSlot.StackSize}");
-                _currentConnectionData = null;
+                ClearConnectionAttributes(byPlayer);
                 return;
             }
 
@@ -460,21 +526,21 @@ namespace EPImmersive.Content.Block
             }
 
             // Создаем электрические параметры кабеля
-            EParams cableParams = CreateCableParams(_currentConnectionData.CableStack.Block);
+            EParams cableParams = CreateCableParams(api.World.GetBlock(currentConnectionData.Asset));
 
             // Создаем соединение с параметрами кабеля
-            _currentConnectionData.StartBehavior.AddImmersiveConnection(
-                _currentConnectionData.StartNodeIndex,
+            currentConnectionData.StartBehavior.AddImmersiveConnection(
+                currentConnectionData.StartNodeIndex,
                 blockSel.Position,
                 (byte)blockSel.SelectionBoxIndex
             );
 
-            _currentConnectionData.StartBehavior.AddEparamsAt(cableParams, (byte)(_currentConnectionData.StartBehavior.GetImmersiveConnections().Count - 1));
+            currentConnectionData.StartBehavior.AddEparamsAt(cableParams, (byte)(currentConnectionData.StartBehavior.GetImmersiveConnections().Count - 1));
 
             endBehavior.AddImmersiveConnection(
                 (byte)blockSel.SelectionBoxIndex,
-                _currentConnectionData.StartPos,
-                _currentConnectionData.StartNodeIndex
+                currentConnectionData.StartPos,
+                currentConnectionData.StartNodeIndex
             );
 
             endBehavior.AddEparamsAt(cableParams, (byte)(endBehavior.GetImmersiveConnections().Count - 1));
@@ -485,7 +551,7 @@ namespace EPImmersive.Content.Block
             // После создания соединения обновляем меши
             if (api.Side == EnumAppSide.Client)
             {
-                ImmersiveWireBlock.InvalidateBlockMeshCache(_currentConnectionData.StartPos);
+                ImmersiveWireBlock.InvalidateBlockMeshCache(currentConnectionData.StartPos);
                 ImmersiveWireBlock.InvalidateBlockMeshCache(blockSel.Position);
             }
 
@@ -493,7 +559,7 @@ namespace EPImmersive.Content.Block
             if (capi != null)
                 capi.ShowChatMessage($"Wire connected successfully. Used {cableLength} blocks of cable.");
 
-            _currentConnectionData = null;
+            ClearConnectionAttributes(byPlayer);
         }
 
 
@@ -641,7 +707,14 @@ namespace EPImmersive.Content.Block
             var cacheKey = new WireMeshCacheKey(position, connections);
 
             // Получаем базовый меш (генерируется каждый раз, но это дешево)
-            MeshData baseMeshData = GetBaseMesh();
+            MeshData baseMeshData=null;
+            if(_MeshData==null)
+                baseMeshData = GetBaseMesh();
+            else
+            {
+                baseMeshData = _MeshData;
+            }
+
             MeshData finalMesh = baseMeshData?.Clone() ?? new MeshData();
 
             // Пытаемся получить меши проводов из кэша
@@ -775,10 +848,28 @@ namespace EPImmersive.Content.Block
 
             // Количество сегментов - зависит от длины провода
             int segments = Math.Max(4, (int)(dist * 4f));
+            int segmentCount = (segments / 2) + 1;
 
             var wireVariant = GetWireVariant(asset, thickness);
             if (wireVariant?.MeshData == null)
                 return null;
+
+            // Получаем шаблонный меш для расчета размеров
+            var templateMesh = wireVariant.MeshData;
+
+            // Вычисляем общее количество вершин и индексов
+            int totalVertices = segmentCount * templateMesh.VerticesCount;
+            int totalIndices = segmentCount * templateMesh.IndicesCount;
+
+            // Создаем меш с заранее рассчитанным размером
+            MeshData mesh = new MeshData(
+                totalVertices,
+                totalIndices,
+                withNormals: templateMesh.Normals != null,
+                withUv: templateMesh.Uv != null,
+                withRgba: templateMesh.Rgba != null,
+                withFlags: templateMesh.Flags != null
+            );
 
             var center = new Vec3f(0.5f, 0.5f, 0.5f);
             float segmentLength = dist * 1.2f / segments;
@@ -786,9 +877,7 @@ namespace EPImmersive.Content.Block
 
             Random rnd = new Random();
 
-            MeshData? mesh = null;
-            
-            for (int i = 0; i < (segments / 2) + 1; i++)
+            for (int i = 0; i < segmentCount; i++)
             {
                 float progress = (float)i / segments;
                 float nextProgress = (float)(i + 1) / segments;
@@ -807,15 +896,15 @@ namespace EPImmersive.Content.Block
 
                 segmentDir.Normalize();
 
-                var segmentMesh = wireVariant.MeshData.Clone();
+                var segmentMesh = templateMesh.Clone();
 
                 // Масштабируем по длине
-                if (isReverse && i>=(segments / 2)-2)
+                if (isReverse && i >= (segments / 2) - 2)
                     segmentMesh.Scale(center, 0.99f, 0.99f, scaleZ); // стык посередине чуть меньше
                 else
                 {
-                    float buf = (float)(rnd.NextDouble()/1000d);
-                    segmentMesh.Scale(center, 1f+buf, 1f+buf, scaleZ);
+                    float buf = (float)(rnd.NextDouble() / 1000d);
+                    segmentMesh.Scale(center, 1f + buf, 1f + buf, scaleZ);
                 }
 
                 // Используем общее направление провода для единообразного поворота
@@ -832,14 +921,15 @@ namespace EPImmersive.Content.Block
                 Vec3f segmentCenter = segmentStartPos + segmentDir * (segmentDist / 2f);
                 segmentMesh.Translate(segmentCenter.X, segmentCenter.Y, segmentCenter.Z);
 
+                // Добавляем к основному мешу
+                mesh.AddMeshData(segmentMesh);
 
-
-                AddMeshData(ref mesh, segmentMesh);
+                // Освобождаем временный меш
+                segmentMesh.Dispose();
             }
 
             return mesh;
         }
-
 
 
 
@@ -1016,11 +1106,11 @@ namespace EPImmersive.Content.Block
             if (material == null || material == "")
             {
                 // Fallback на базовый кабель
-                cable = new AssetLocation("electricalprogressivecoreimmersive:ecable1-32v-copper-single-part");
+                cable = new AssetLocation("electricalprogressivecoreimmersive:ecable1-32v-copper-part");
             }
             else
             {
-                cable = new AssetLocation($"electricalprogressivecoreimmersive:ecable1-{voltage}-{material}-single-{isolation}");
+                cable = new AssetLocation($"electricalprogressivecoreimmersive:ecable1-{voltage}-{material}-{isolation}");
             }
 
             return cable;
@@ -1165,7 +1255,7 @@ namespace EPImmersive.Content.Block
             public BlockPos StartPos { get; set; }
             public byte StartNodeIndex { get; set; }
             public BEBehaviorEPImmersive StartBehavior { get; set; }
-            public ItemStack CableStack { get; set; }
+            public AssetLocation Asset { get; set; }
         }
 
 

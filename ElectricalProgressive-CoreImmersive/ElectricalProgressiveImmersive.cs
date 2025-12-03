@@ -3,6 +3,8 @@ using ElectricalProgressive.Utils;
 using EPImmersive.Content.Block;
 using EPImmersive.Content.Block.EAccumulator;
 using EPImmersive.Content.Block.ECable1;
+using EPImmersive.Content.Block.EGenerator;
+using EPImmersive.Content.Block.EMotor;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
 using System;
@@ -47,11 +49,11 @@ namespace EPImmersive
         private ImmersiveNetworkInformation _result = new();
 
         private Dictionary<BlockPos, float> _sumEnergy = new();
-        
+
         public ICoreAPI Api = null!;
         public ICoreClientAPI _capi = null!;
         private ICoreServerAPI _sapi = null!;
-        
+
 
 
 
@@ -85,17 +87,26 @@ namespace EPImmersive
             soundElectricShok = new AssetLocation("electricalprogressivecore:sounds/electric-shock.ogg");
 
 
-            api.RegisterBlockClass("BlockEIAccumulator", typeof(BlockEIAccumulator));
-            api.RegisterBlockEntityClass("BlockEntityEIAccumulator", typeof(BlockEntityEIAccumulator));
-            api.RegisterBlockEntityBehaviorClass("BEBehaviorEIAccumulator", typeof(BEBehaviorEIAccumulator));
+            api.RegisterBlockClass("BlockEIAccumulator1", typeof(BlockEIAccumulator1));
+            api.RegisterBlockEntityClass("BlockEntityEIAccumulator1", typeof(BlockEntityEIAccumulator1));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorEIAccumulator1", typeof(BEBehaviorEIAccumulator1));
 
             api.RegisterBlockClass("BlockECable1", typeof(BlockECable1));
             api.RegisterBlockEntityClass("BlockEntityECable1", typeof(BlockEntityECable1));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorECable1", typeof(BEBehaviorECable1));
 
+            api.RegisterBlockClass("BlockEMotor1", typeof(BlockEMotor1));
+            api.RegisterBlockEntityClass("BlockEntityEMotor1", typeof(BlockEntityEMotor1));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorEMotor1", typeof(BEBehaviorEMotor1));
+
+
+            api.RegisterBlockClass("BlockEGenerator1", typeof(BlockEGenerator1));
+            api.RegisterBlockEntityClass("BlockEntityEGenerator1", typeof(BlockEntityEGenerator1));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorEGenerator1", typeof(BEBehaviorEGenerator1));
+
             api.RegisterBlockEntityBehaviorClass("ElectricalProgressiveImmersive", typeof(BEBehaviorEPImmersive));
         }
-        
+
 
         /// <summary>
         /// Освобождение ресурсов
@@ -111,7 +122,7 @@ namespace EPImmersive
                 _immersiveAsyncPathFinder.Stop();
                 _immersiveAsyncPathFinder = null;
             }
-            
+
             _globalEnergyPackets.Clear();
 
             _sumEnergy.Clear();
@@ -121,16 +132,16 @@ namespace EPImmersive
             Api = null!;
             _capi = null!;
             _sapi = null!;
-         
-           
+
+
 
 
             Networks.Clear();
             Parts.Clear();
-            
+
             ImmersivePathCacheManager.Dispose();
         }
-        
+
         /// <summary>
         /// Загрузка конфигурации и начальная инициализация
         /// </summary>
@@ -150,7 +161,7 @@ namespace EPImmersive
             RegisterAltKeys();
 
         }
-        
+
 
         /// <summary>
         /// Регистрация клавиш Alt
@@ -159,7 +170,7 @@ namespace EPImmersive
         {
             _capi.Input.RegisterHotKey("AltPressForNetwork", Lang.Get("AltPressForNetworkName"), GlKeys.LAlt);
         }
-        
+
         /// <summary>
         /// Серверная сторона
         /// </summary>
@@ -170,7 +181,7 @@ namespace EPImmersive
 
             this._sapi = api;
 
-            
+
 
             //инициализируем обработчик уронов
             //damageManager = new DamageManager(api);
@@ -269,7 +280,7 @@ namespace EPImmersive
             // Удаляем устаревшие соединения
             RemoveStaleImmersiveConnections(part, network);
         }
-        
+
 
         /// <summary>
         /// Получает или создает сеть для части
@@ -296,7 +307,7 @@ namespace EPImmersive
 
             return newNetwork;
         }
-        
+
         /// <summary>
         /// Добавляет иммерсивное соединение в сеть
         /// </summary>
@@ -368,7 +379,7 @@ namespace EPImmersive
                 network.version++;
             }
         }
-        
+
         /// <summary>
         /// Удаляем соединения
         /// </summary>
@@ -398,7 +409,7 @@ namespace EPImmersive
                 }
             }
         }
-        
+
         /// <summary>
         /// Чистка всего и вся
         /// </summary>
@@ -441,7 +452,7 @@ namespace EPImmersive
                 part.Value.MainEparams.current = 0f;
             }
         }
-        
+
         /// <summary>
         /// Логистическая задача для иммерсивных проводов
         /// </summary>
@@ -473,7 +484,7 @@ namespace EPImmersive
 
             if (sim.Customers == null || sim.Customers.Length < cP)
                 sim.Customers = new ImmersiveCustomer[cP];
-            
+
 
             for (var i = 0; i < cP; i++)
             {
@@ -482,7 +493,7 @@ namespace EPImmersive
                     start = consumerPositions[i];
                     end = producerPositions[j];
 
-                    if (ImmersivePathFinder.Heuristic(start, end) <ElectricalProgressive.ElectricalProgressive.maxDistanceForFinding)
+                    if (ImmersivePathFinder.Heuristic(start, end) < ElectricalProgressive.ElectricalProgressive.maxDistanceForFinding)
                     {
                         if (ImmersivePathCacheManager.TryGet(start, end, out var cachedPath, out var nodeIndices, out var version, out var voltage))
                         {
@@ -528,7 +539,7 @@ namespace EPImmersive
                 store.Update(j, producerGive[j]);
             }
 
-            
+
             // инициализируем клиентов
             for (var i = 0; i < cP; i++)
             {
@@ -549,7 +560,7 @@ namespace EPImmersive
 
             sim.Run(); // Запускаем симуляцию для распределения энергии между потребителями и производителями
         }
-        
+
 
         /// <summary>
         /// Обновление электрических сетей
@@ -595,7 +606,7 @@ namespace EPImmersive
                 _elapsedMs = 0f; // сбросить накопленное время
             }
         }
-        
+
 
 
         // Добавляем класс для пула контекстов обработки
@@ -797,7 +808,7 @@ namespace EPImmersive
                 }
             }
 
-            
+
             // Этап 5: Забираем у аккумуляторов выданное----------------------------------------------------------------------------
             var consIter = 0; // Итератор
             foreach (var accum in context.LocalAccums)
@@ -869,7 +880,7 @@ namespace EPImmersive
                         packet = new ImmersiveEnergyPacket(
                             value,
                             context.Sim2.Voltage[i * storeCount + k],
-                            context.Sim.Path[i * storeCount + k].Length - 1,
+                            context.Sim2.Path[i * storeCount + k].Length - 1,
                             context.Sim2.Path[i * storeCount + k],
                             context.Sim2.NodeIndices[i * storeCount + k]
                         );
@@ -882,7 +893,7 @@ namespace EPImmersive
                     }
                 }
             }
-            
+
 
             // Этап 9: Сообщение генераторам о нагрузке ----------------------------------------------------------------------------
             var j = 0;
@@ -899,7 +910,7 @@ namespace EPImmersive
             UpdateNetworkInfo(network);
         }
 
-        
+
 
         /// <summary>
         /// Тикаем сервер
@@ -959,12 +970,12 @@ namespace EPImmersive
             // Обновление электрических компонентов в сети, если прошло достаточно времени около 0.5 секунд
             _elapsedMs += deltaTime;
             UpdateNetworkComponents();
-            
+
 
             // Этап 11: Потребление энергии пакетами и Этап 12: Перемещение пакетов-----------------------------------------------
             ConsumeAndMovePackets();
 
-            
+
             foreach (var pair in _sumEnergy)
             {
                 if (Parts.TryGetValue(pair.Key, out var parta))
@@ -1067,7 +1078,7 @@ namespace EPImmersive
                     }
                 }
 
-                
+
                 // Проверка на превышение тока для иммерсивных соединений
                 foreach (var connection in part.Connections)
                 {
@@ -1103,7 +1114,7 @@ namespace EPImmersive
 
         }
 
-        
+
         /// <summary>
         /// Потребление и перемещение пакетов энергии
         /// </summary>
@@ -1137,76 +1148,67 @@ namespace EPImmersive
 
             }
 
-
+            // перебираем все части
             foreach (var partValue in Parts.Values)
             {
                 // если пакетов нет тут, то пропускаем
                 if (partValue.Packets == null || partValue.Packets.Count == 0)
                     continue;
 
-                int deltaX, deltaY, deltaZ;
+                //int deltaX, deltaY, deltaZ;
 
+                // перебираем все пакеты, которые могут находиться в этой части
                 foreach (var packet in partValue.Packets)
                 {
                     curIndex = packet.currentIndex; //текущий индекс в пакете
 
-                    if (curIndex == 0)
+                    if (curIndex > 0)
                     {
-                        pos = packet.path[0];
-
-                        if (Parts.TryGetValue(pos, out var part2))
+                        // ищем провода которые ведут на слежующий блок в пути
+                        // по-хорошему номера проводов надо сохранять в вместе с блоками, где они крепятся
+                        var connections =
+                            partValue.Connections.Where(c => c.NeighborPos.Equals(packet.path[curIndex - 1]));
+                        if (connections == null)
                         {
-                            var isValid = false;
-                            // Проверяем иммерсивные соединения
-                            foreach (var connection in part2.Connections)
-                            {
-                                if (connection.Parameters.voltage > 0
-                                    && !connection.Parameters.burnout
-                                    && packet.voltage >= connection.Parameters.voltage)
-                                {
-                                    isValid = true;
-                                    break;
-                                }
-                            }
-
-                            // Также проверяем основные параметры
-                            if (!isValid && part2.MainEparams.voltage > 0
-                                && !part2.MainEparams.burnout
-                                && packet.voltage >= part2.MainEparams.voltage)
-                            {
-                                isValid = true;
-                            }
-
-                            if (isValid)
-                            {
-                                if (_sumEnergy.ContainsKey(pos))
-                                {
-                                    _sumEnergy[pos] += packet.energy;
-                                }
-                                else
-                                {
-                                    _sumEnergy.Add(pos, packet.energy);
-                                }
-                            }
+                            packet.shouldBeRemoved = true;
+                            continue;
                         }
 
-                        packet.shouldBeRemoved = true;
-                    }
-                    else
-                    {
-                        currentPos = packet.path[curIndex]; // текущая позиция в пути пакета
-
-                        // Для иммерсивных проводов используем упрощенную логику
-                        if (!partValue.Connections.Any(c => !c.Parameters.burnout)) //проверяем не сгорели ли соединения
+                        // Проверяем иммерсивные провода
+                        if (!partValue.Connections.Any(c => c.Parameters.burnout) //проверяем не сгорели ли соединения
+                            && connections.Count() > 0) //а есть ли такой провод?
                         {
-                            // считаем сопротивление (используем основные параметры как fallback)
+                            ConnectionData buf = null;
+                            foreach (var conn in connections)
+                            {
+
+                                // проверяем может ли пакет тут пройти
+                                if (conn.Parameters.voltage > 0
+                                    && !conn.Parameters.burnout
+                                    && packet.voltage <= conn.Parameters.voltage)
+                                {
+                                    buf = conn;
+                                    break; // может пройти - значит выходим из цикла
+                                }
+
+                            }
+
+                            // если вдруг параметры у провода кривые 
+                            if (buf == null || buf.Parameters.voltage == 0)
+                            {
+                                packet.shouldBeRemoved = true;
+                                continue;
+                            }
+
+                            // считаем сопротивление для основного блока (используем основные параметры как fallback)
                             resistance = ElectricalProgressive.ElectricalProgressive.energyLossFactor *
-                                         partValue.MainEparams.resistivity /
-                                         (partValue.MainEparams.lines *
-                                          partValue.MainEparams.crossArea);
+                                         buf.WireLength*
+                                         buf.Parameters.resistivity /
+                                         (buf.Parameters.lines *
+                                          buf.Parameters.crossArea);
 
                             // Провод в изоляции теряет меньше энергии
-                            if (partValue.MainEparams.isolated)
+                            if (buf.Parameters.isolated)
                                 resistance /= 2.0f;
 
                             // считаем ток по закону Ома
@@ -1220,7 +1222,7 @@ namespace EPImmersive
                             current = packet.energy / packet.voltage;
 
                             // Учитываем ток в основных параметрах
-                            partValue.MainEparams.current += current;
+                            buf.Parameters.current += current;
 
                             // 3) Если энергия пакета почти нулевая — удаляем пакет
                             if (packet.energy <= 0.001f)
@@ -1228,14 +1230,99 @@ namespace EPImmersive
                                 packet.shouldBeRemoved = true;
                             }
 
-                            // переходим к следующему блоку в пути
-                            packet.currentIndex--;
+
 
                         }
                         else
                         {
+                            packet.shouldBeRemoved = true; // этот пакет удаляем
+                        }
+
+                    }
+
+
+                    // последний блок?
+                    if (curIndex == 0)
+                    {
+                        pos = packet.path[0];
+
+                        if (Parts.TryGetValue(pos, out var part2))
+                        {
+                            // ReSharper disable once ReplaceWithSingleAssignment.False
+                            bool isValid = false;
+
+
+                            // Также проверяем основные параметры
+                            if (!isValid
+                                && part2.MainEparams.voltage > 0
+                                && !part2.MainEparams.burnout
+                                && packet.voltage == part2.MainEparams.voltage)
+                            {
+                                isValid = true;
+                            }
+
+                            // если все ок, то продолжаем
+                            if (isValid)
+                            {
+                                if (_sumEnergy.ContainsKey(pos))
+                                {
+                                    _sumEnergy[pos] += packet.energy;
+                                }
+                                else
+                                {
+                                    _sumEnergy.Add(pos, packet.energy);
+                                }
+                            }
+                        }
+
+                        packet.shouldBeRemoved = true; // этот пакет удаляем
+                    }
+                    else
+                    {
+                        // первый блок пропускаем из расчета
+                        if (curIndex == packet.path.Length - 1)
+                        {
+                            packet.currentIndex--;
+                            continue;
+                        }
+
+                        //currentPos = packet.path[curIndex]; // текущая позиция в пути пакета
+
+
+                        // считаем сопротивление для основного блока (используем основные параметры как fallback)
+                        resistance = ElectricalProgressive.ElectricalProgressive.energyLossFactor *
+                                     partValue.MainEparams.resistivity /
+                                     (partValue.MainEparams.lines *
+                                      partValue.MainEparams.crossArea);
+
+                        // Провод в изоляции теряет меньше энергии
+                        if (partValue.MainEparams.isolated)
+                            resistance /= 2.0f;
+
+                        // считаем ток по закону Ома
+                        current = packet.energy / packet.voltage;
+
+                        // считаем потерю энергии по закону Джоуля
+                        lossEnergy = current * current * resistance;
+                        packet.energy = Math.Max(packet.energy - lossEnergy, 0);
+
+                        // пересчитаем ток уже с учетом потерь
+                        current = packet.energy / packet.voltage;
+
+                        // Учитываем ток в основных параметрах
+                        partValue.MainEparams.current += current;
+
+                        // 3) Если энергия пакета почти нулевая — удаляем пакет
+                        if (packet.energy <= 0.001f)
+                        {
                             packet.shouldBeRemoved = true;
                         }
+
+                        // переходим к следующему блоку в пути
+                        packet.currentIndex--;
+
+
+
 
                     }
                 }
@@ -1246,7 +1333,7 @@ namespace EPImmersive
             _globalEnergyPackets.RemoveAll(p => p.shouldBeRemoved);
 
         }
-        
+
 
         /// <summary>
         /// Обновление информации о сети
@@ -1320,7 +1407,7 @@ namespace EPImmersive
 
             network.Consumption = consumption;
         }
-        
+
         // Вынесенный метод сброса компонентов
         private static void ResetComponents(ref ImmersiveNetworkPart part)
         {
@@ -1329,7 +1416,7 @@ namespace EPImmersive
             part.Accumulator?.SetCapacity(0f);
             part.Transformator?.setPower(0f);
         }
-        
+
         /// <summary>
         /// Объединение цепей
         /// </summary>
@@ -1384,7 +1471,7 @@ namespace EPImmersive
 
             return outNetwork;
         }
-        
+
         /// <summary>
         /// Удаляем сеть
         /// </summary>
@@ -1413,7 +1500,7 @@ namespace EPImmersive
                 }
             }
         }
-        
+
         /// <summary>
         /// Создаем новую цепь
         /// </summary>
@@ -1425,7 +1512,7 @@ namespace EPImmersive
 
             return network;
         }
-        
+
         /// <summary>
         /// Задать проводник
         /// </summary>
@@ -1438,7 +1525,7 @@ namespace EPImmersive
             part => part.Conductor,
             (part, c) => part.Conductor = c,
             network => network.Conductors);
-        
+
 
         /// <summary>
         /// Задать потребителя
@@ -1452,7 +1539,7 @@ namespace EPImmersive
             part => part.Consumer,
             (part, c) => part.Consumer = c,
             network => network.Consumers);
-        
+
         /// <summary>
         /// Задать генератор
         /// </summary>
@@ -1465,7 +1552,7 @@ namespace EPImmersive
                 part => part.Producer,
                 (part, p) => part.Producer = p,
                 network => network.Producers);
-        
+
         /// <summary>
         /// Задать аккумулятор
         /// </summary>
@@ -1544,7 +1631,7 @@ namespace EPImmersive
                 setComponent(part, newComponent);
             }
         }
-        
+
 
         /// <summary>
         /// Cобирает информацию по цепи для иммерсивных проводов
@@ -1593,7 +1680,7 @@ namespace EPImmersive
 
             return _result;
         }
-        
+
         /// <summary>
         /// Вычисление экспоненциального скользящего среднего (EMA) на лету
         /// </summary>
@@ -1617,7 +1704,7 @@ namespace EPImmersive
         public readonly IEImmersiveConductor ImmersiveConductor;
         public Conductor(IEImmersiveConductor immersiveConductor) => ImmersiveConductor = immersiveConductor;
     }
-    
+
     /// <summary>
     /// Потребитель
     /// </summary>
@@ -1626,7 +1713,7 @@ namespace EPImmersive
         public readonly IEImmersiveConsumer ImmersiveConsumer;
         public Consumer(IEImmersiveConsumer immersiveConsumer) => ImmersiveConsumer = immersiveConsumer;
     }
-    
+
     /// <summary>
     /// Трансформатор
     /// </summary>
@@ -1655,8 +1742,8 @@ namespace EPImmersive
         public readonly IEImmersiveAccumulator ImmersiveAccum;
         public Accumulator(IEImmersiveAccumulator immersiveAccum) => ImmersiveAccum = immersiveAccum;
     }
-    
 
-    
+
+
 
 }

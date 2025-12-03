@@ -79,7 +79,7 @@ namespace EPImmersive.Utils
                                 var endNodeIndex = nodeIndices[nodeIndices.Length - 1];
                                 var connection = endPart.Connections
                                     .FirstOrDefault(c => c.LocalNodeIndex == endNodeIndex);
-                                voltage = connection?.Parameters.voltage ?? endPart.MainEparams.voltage;
+                                voltage = endPart.MainEparams.voltage;
                             }
 
                             ImmersivePathCacheManager.AddOrUpdate(

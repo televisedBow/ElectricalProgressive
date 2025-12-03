@@ -3,14 +3,19 @@ using EPImmersive.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
+using JsonObject = System.Text.Json.Nodes.JsonObject;
 
 namespace EPImmersive.Content.Block;
+
+
+
 
 public class WireNode
 {
@@ -22,12 +27,17 @@ public class WireNode
 
 
 
+
+
 public class ConnectionData
 {
     public byte LocalNodeIndex { get; set; }      // Индекс точки подключения на ТЕКУЩЕМ устройстве
     public BlockPos NeighborPos { get; set; }     // Позиция СОСЕДНЕГО устройства
     public byte NeighborNodeIndex { get; set; }   // Индекс точки подключения на СОСЕДНЕМ устройстве
-    public EParams Parameters;                      // Параметры этого конкретного соединения
+
+    public EParams Parameters;                    // Параметры этого конкретного соединения
+
+    public float WireLength;
 }
 
 
@@ -110,15 +120,44 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     /// </summary>
     public void AddImmersiveConnection(byte indexHere, BlockPos neighborPos, byte indexNeighbor)
     {
+        // начальная точка крепления
+        var startWorldPos = new Vec3d(
+            Pos.X + _wireNodes[indexHere].Position.X,
+            Pos.Y + _wireNodes[indexHere].Position.Y,
+            Pos.Z + _wireNodes[indexHere].Position.Z
+        );
+        
+        // Получаем нод конца
+        WireNode endNode = null;
+        var neighborEntity = Api.World.BlockAccessor.GetBlockEntity(neighborPos);
+        var neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
+        if (neighborBehavior != null)
+        {
+            endNode = neighborBehavior.GetWireNode(indexNeighbor);
+        }
+
+        // конечная точка крепления
+        var endWorldPos = new Vec3d(
+            neighborPos.X + endNode.Position.X,
+            neighborPos.Y + endNode.Position.Y,
+            neighborPos.Z + endNode.Position.Z
+        );
+
+        // точная длина провода
+        float distance = startWorldPos.DistanceTo(endWorldPos);
+        
+        // создаем новое подключение
         var newConnection = new ConnectionData
         {
             LocalNodeIndex = indexHere,
             NeighborPos = neighborPos,
             NeighborNodeIndex = indexNeighbor,
-            Parameters = new EParams() // Параметры по умолчанию
+            Parameters = new EParams(), // Параметры по умолчанию
+            WireLength = distance
         };
 
         _connections.Add(newConnection);
+
         this._dirty = true;
         this._paramsSet = false;
 
@@ -229,7 +268,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         }
     }
 
-    public override void Initialize(ICoreAPI api, JsonObject properties)
+    public override void Initialize(ICoreAPI api, Vintagestory.API.Datastructures.JsonObject properties)
     {
         base.Initialize(api, properties);
 
@@ -276,39 +315,51 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     {
         _wireNodes.Clear();
 
-        var wireNodesArray = this.Block?.Attributes?["wireNodes"]?.AsArray();
-        if (wireNodesArray != null)
+        var wireNodesAttribute = this.Block?.Attributes?["wireNodes"];
+        if (wireNodesAttribute == null) return;
+
+        // Используем существующий метод AsArray(), но оптимизируем обработку
+        var wireNodesArray = wireNodesAttribute.AsArray();
+        if (wireNodesArray == null || wireNodesArray.Length == 0) return;
+
+        // Предварительно выделяем память
+        _wireNodes.Capacity = wireNodesArray.Length;
+
+        // Используем for вместо foreach для немного лучшей производительности
+        for (int i = 0; i < wireNodesArray.Length; i++)
         {
-            foreach (var nodeToken in wireNodesArray)
+            var nodeToken = wireNodesArray[i];
+            if (nodeToken == null) continue;
+
+            try
             {
-                try
+                var wireNode = new WireNode
                 {
-                    var wireNode = new WireNode
-                    {
-                        Index = (byte)(nodeToken["index"]?.AsInt() ?? 0),
-                        Voltage = nodeToken["voltage"]?.AsInt() ?? 0,
-                        Position = new Vec3d(
-                            nodeToken["x"]?.AsDouble() ?? 0,
-                            nodeToken["y"]?.AsDouble() ?? 0,
-                            nodeToken["z"]?.AsDouble() ?? 0
-                        ),
-                        Radius = nodeToken["dxdydz"]?.AsFloat() ?? 0.1f
-                    };
+                    Index = (byte)(nodeToken["index"]?.AsInt(0) ?? 0),
+                    Voltage = nodeToken["voltage"]?.AsInt(0) ?? 0,
+                    Position = new Vec3d(
+                        nodeToken["x"]?.AsDouble(0) ?? 0,
+                        nodeToken["y"]?.AsDouble(0) ?? 0,
+                        nodeToken["z"]?.AsDouble(0) ?? 0
+                    ),
+                    Radius = nodeToken["dxdydz"]?.AsFloat(0.1f) ?? 0.1f
+                };
 
-                    _wireNodes.Add(wireNode);
-                }
-                catch (Exception ex)
-                {
-                    this.Api?.Logger.Warning($"Failed to load wire node for block {Block?.Code} at {Blockentity.Pos}: {ex.Message}");
-                }
+                _wireNodes.Add(wireNode);
             }
-
-            // Сортируем по индексу для удобства
-            _wireNodes = _wireNodes.OrderBy(node => node.Index).ToList();
+            catch (Exception ex)
+            {
+                this.Api?.Logger.Warning($"Failed to load wire node for block {Block?.Code} at {Blockentity.Pos}: {ex.Message}");
+            }
         }
 
-
+        // Сортируем по индексу
+        _wireNodes.Sort((a, b) => a.Index.CompareTo(b.Index));
     }
+
+
+
+
 
     private void GetParticles()
     {
@@ -461,49 +512,25 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             var connections = this.GetImmersiveConnections();
             foreach (ConnectionData connection in connections)
             {
-                // Рассчитываем длину провода
-                var startNode = this.GetWireNode(connection.LocalNodeIndex);
-                WireNode endNode = null;
-
-                var neighborEntity = Api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
-                var neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
-                if (neighborBehavior != null)
-                {
-                    endNode = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
-                }
-
+                
                 // роняем провода только на сервере
                 if (Api.World.Side == EnumAppSide.Server)
                 {
-                    int cableLength = 1; // минимальная длина
-                    if (startNode != null && endNode != null)
-                    {
-                        // начальная точка крепления
-                        var startWorldPos = new Vec3d(
-                            Pos.X + startNode.Position.X,
-                            Pos.Y + startNode.Position.Y,
-                            Pos.Z + startNode.Position.Z
-                        );
-
-                        // конечная точка крепления
-                        var endWorldPos = new Vec3d(
-                            connection.NeighborPos.X + endNode.Position.X,
-                            connection.NeighborPos.Y + endNode.Position.Y,
-                            connection.NeighborPos.Z + endNode.Position.Z
-                        );
-
-                        double distance = startWorldPos.DistanceTo(endWorldPos);
-                        cableLength = (int)Math.Ceiling(distance);
-                    }
+                    int cableLength = (int)Math.Ceiling(connection.WireLength);
+                    
 
                     // Создаем и выбрасываем кабель
-                    ItemStack cableStack = ImmersiveWireBlock.CreateCableStack(Api, connection.Parameters);
+                    var cableStack = ImmersiveWireBlock.CreateCableStack(Api, connection.Parameters);
+
                     cableStack.StackSize = cableLength;
+
                     Api.World.SpawnItemEntity(cableStack, Pos.ToVec3d());
 
 
                 }
 
+                var neighborEntity = Api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
+                var neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
 
                 // Удаляем соединение с соседней стороны
                 neighborBehavior?.RemoveConnection(
@@ -561,7 +588,13 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
             // Сохраняем параметры соединения
             tree.SetBytes($"Conn_{i}_Params", EParamsSerializer.SerializeSingle(conn.Parameters));
+
+            tree.SetFloat($"Conn_{i}_WireLength", conn.WireLength);
         }
+
+
+        // Сохраняем параметры текущего блока
+        tree.SetBytes("MainEpar", EParamsSerializer.SerializeSingle(_mainEpar));
 
         // Сохраняем узлы подключения
         tree.SetInt("WireNodesCount", _wireNodes.Count);
@@ -616,12 +649,14 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             var neighborY = tree.GetInt($"Conn_{i}_NeighborY", 0);
             var neighborZ = tree.GetInt($"Conn_{i}_NeighborZ", 0);
             var neighborIndex = tree.GetInt($"Conn_{i}_NeighborIndex", 0);
+            var wireLength = tree.GetFloat($"Conn_{i}_WireLength", 1);
 
             var connection = new ConnectionData
             {
                 LocalNodeIndex = (byte)localIndex,
                 NeighborPos = new BlockPos(neighborX, neighborY, neighborZ),
-                NeighborNodeIndex = (byte)neighborIndex
+                NeighborNodeIndex = (byte)neighborIndex,
+                WireLength = wireLength
             };
 
             // Загружаем параметры соединения
@@ -635,8 +670,13 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                 connection.Parameters = new EParams();
             }
 
+
             _connections.Add(connection);
         }
+
+        // Загружаем параметры текущего блока
+        _mainEpar=EParamsSerializer.DeserializeSingle(tree.GetBytes("MainEpar"));
+
 
         // Загружаем узлы подключения (приоритет у сохраненных данных)
         int wireNodesCount = tree.GetInt("WireNodesCount", -1);
