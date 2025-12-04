@@ -271,7 +271,10 @@ namespace EPImmersive
             // Создаем временную сеть для этого блока если её нет
             var network = GetOrCreateNetworkForPart(part);
 
-            // Добавляем/обновляем соединения
+            // Собираем все сети, которые нужно объединить
+            //var networksToMerge = new HashSet<ImmersiveNetwork> { network };
+
+            // Добавляем/обновляем соединения и собираем сети для объединения
             foreach (var connection in part.Connections)
             {
                 AddImmersiveConnection(part, connection, network);
@@ -344,16 +347,40 @@ namespace EPImmersive
             // Добавляем соседа в сеть если его там нет
             if (!network.PartPositions.Contains(connection.NeighborPos))
             {
-                if (Parts.TryGetValue(connection.NeighborPos, out var neighborPart))
+                // Ищем сеть, к которой принадлежит сосед
+                ImmersiveNetwork neighborNetwork = null;
+                foreach (var net in Networks)
                 {
-                    network.PartPositions.Add(connection.NeighborPos);
+                    if (net.PartPositions.Contains(connection.NeighborPos))
+                    {
+                        neighborNetwork = net;
+                        break;
+                    }
+                }
 
-                    // Добавляем компоненты соседа в сеть
-                    if (neighborPart.Conductor is { } conductor) network.Conductors.Add(conductor);
-                    if (neighborPart.Consumer is { } consumer) network.Consumers.Add(consumer);
-                    if (neighborPart.Producer is { } producer) network.Producers.Add(producer);
-                    if (neighborPart.Accumulator is { } accumulator) network.Accumulators.Add(accumulator);
-                    if (neighborPart.Transformator is { } transformator) network.Transformators.Add(transformator);
+                if (neighborNetwork != null && neighborNetwork != network)
+                {
+                    // Если сосед уже в другой сети, объединяем сети
+                    var networksToMerge = new HashSet<ImmersiveNetwork> { network, neighborNetwork };
+                    var mergedNetwork = MergeNetworks(networksToMerge);
+
+                    // Обновляем ссылку на сеть
+                    network = mergedNetwork;
+                }
+                else if (neighborNetwork == null)
+                {
+                    // Сосед не в сети, добавляем его
+                    if (Parts.TryGetValue(connection.NeighborPos, out var neighborPart))
+                    {
+                        network.PartPositions.Add(connection.NeighborPos);
+
+                        // Добавляем компоненты соседа в сеть
+                        if (neighborPart.Conductor is { } conductor) network.Conductors.Add(conductor);
+                        if (neighborPart.Consumer is { } consumer) network.Consumers.Add(consumer);
+                        if (neighborPart.Producer is { } producer) network.Producers.Add(producer);
+                        if (neighborPart.Accumulator is { } accumulator) network.Accumulators.Add(accumulator);
+                        if (neighborPart.Transformator is { } transformator) network.Transformators.Add(transformator);
+                    }
                 }
             }
         }

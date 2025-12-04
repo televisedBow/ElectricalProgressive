@@ -2,6 +2,8 @@
 using EPImmersive.Utils;
 using Vintagestory.API.MathTools;
 
+namespace EPImmersive.Interface;
+
 public class IEImmersiveVConductor : VirtualConductor
 {
     public IEImmersiveVConductor(BlockPos pos) : base(pos)

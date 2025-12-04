@@ -525,27 +525,32 @@ namespace EPImmersive.Content.Block
                 activeSlot.MarkDirty();
             }
 
+            
+
             // Создаем электрические параметры кабеля
             EParams cableParams = CreateCableParams(api.World.GetBlock(currentConnectionData.Asset));
 
-            // Создаем соединение с параметрами кабеля
-            currentConnectionData.StartBehavior.AddImmersiveConnection(
-                currentConnectionData.StartNodeIndex,
-                blockSel.Position,
-                (byte)blockSel.SelectionBoxIndex
-            );
+            if (api.Side == EnumAppSide.Server)
+            {
+                // Создаем соединение с параметрами кабеля
+                currentConnectionData.StartBehavior.AddImmersiveConnection(
+                    currentConnectionData.StartNodeIndex,
+                    blockSel.Position,
+                    (byte)blockSel.SelectionBoxIndex
+                );
 
-            currentConnectionData.StartBehavior.AddEparamsAt(cableParams, (byte)(currentConnectionData.StartBehavior.GetImmersiveConnections().Count - 1));
+                currentConnectionData.StartBehavior.AddEparamsAt(cableParams,
+                    (byte)(currentConnectionData.StartBehavior.GetImmersiveConnections().Count - 1));
 
-            endBehavior.AddImmersiveConnection(
-                (byte)blockSel.SelectionBoxIndex,
-                currentConnectionData.StartPos,
-                currentConnectionData.StartNodeIndex
-            );
+                endBehavior.AddImmersiveConnection(
+                    (byte)blockSel.SelectionBoxIndex,
+                    currentConnectionData.StartPos,
+                    currentConnectionData.StartNodeIndex
+                );
 
-            endBehavior.AddEparamsAt(cableParams, (byte)(endBehavior.GetImmersiveConnections().Count - 1));
+                endBehavior.AddEparamsAt(cableParams, (byte)(endBehavior.GetImmersiveConnections().Count - 1));
 
-
+            }
 
 
             // После создания соединения обновляем меши
