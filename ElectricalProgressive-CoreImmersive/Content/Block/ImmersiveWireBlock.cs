@@ -55,7 +55,7 @@ namespace EPImmersive.Content.Block
 
             var startPos = attributes.GetBlockPos($"{WIRE_CONNECTION_PREFIX}startPos");
             var startNodeIndex = (byte)attributes.GetInt($"{WIRE_CONNECTION_PREFIX}startNodeIndex");
-            var asset = new AssetLocation(attributes.GetString($"{WIRE_CONNECTION_PREFIX}asset")?? "game:air");
+            var asset = new AssetLocation(attributes.GetString($"{WIRE_CONNECTION_PREFIX}asset") ?? "game:air");
 
             // Восстанавливаем StartBehavior из мира
             var startBlockEntity = api.World.BlockAccessor.GetBlockEntity(startPos);
@@ -158,7 +158,7 @@ namespace EPImmersive.Content.Block
         public virtual Cuboidf[] GetNodeSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
             var boxes = new List<Cuboidf>();
-            if (_wireNodes==null || _wireNodes.Count==0)
+            if (_wireNodes == null || _wireNodes.Count == 0)
                 return boxes.ToArray();
 
             for (int i = 0; i < _wireNodes.Count; i++)
@@ -525,7 +525,7 @@ namespace EPImmersive.Content.Block
                 activeSlot.MarkDirty();
             }
 
-            
+
 
             // Создаем электрические параметры кабеля
             EParams cableParams = CreateCableParams(api.World.GetBlock(currentConnectionData.Asset));
@@ -613,31 +613,10 @@ namespace EPImmersive.Content.Block
 
                     var neighborEntity = api.World.BlockAccessor.GetBlockEntity(connectionToRemove.NeighborPos);
                     var neighborBehavior = neighborEntity?.GetBehavior<BEBehaviorEPImmersive>();
-                    if (neighborBehavior != null)
-                    {
-                        endNode = neighborBehavior.GetWireNode(connectionToRemove.NeighborNodeIndex);
-                    }
 
-                    int cableLength = 1; // минимальная длина
-                    if (startNode != null && endNode != null)
-                    {
-                        // стартовая позиция
-                        var startWorldPos = new Vec3d(
-                            blockSel.Position.X + startNode.Position.X,
-                            blockSel.Position.Y + startNode.Position.Y,
-                            blockSel.Position.Z + startNode.Position.Z
-                        );
 
-                        // конечная позиция
-                        var endWorldPos = new Vec3d(
-                            connectionToRemove.NeighborPos.X + endNode.Position.X,
-                            connectionToRemove.NeighborPos.Y + endNode.Position.Y,
-                            connectionToRemove.NeighborPos.Z + endNode.Position.Z
-                        );
+                    int cableLength = (int)Math.Ceiling(connectionToRemove.WireLength);
 
-                        double distance = startWorldPos.DistanceTo(endWorldPos);
-                        cableLength = (int)Math.Ceiling(distance);
-                    }
 
                     // только на сервере
                     if (api is ICoreServerAPI)
@@ -654,30 +633,32 @@ namespace EPImmersive.Content.Block
                                 api.World.SpawnItemEntity(cableStack, blockSel.Position.ToVec3d());
                             }
                         }
+
+
+
+                        // Удаляем соединение
+                        behavior.RemoveConnection(
+                            connectionToRemove.LocalNodeIndex,
+                            connectionToRemove.NeighborPos,
+                            connectionToRemove.NeighborNodeIndex
+                        );
+
+                        // Также удаляем соединение с соседней стороны
+                        neighborBehavior?.RemoveConnection(
+                            connectionToRemove.NeighborNodeIndex,
+                            blockSel.Position,
+                            connectionToRemove.LocalNodeIndex
+                        );
                     }
 
 
-                    // Удаляем соединение
-                    behavior.RemoveConnection(
-                        connectionToRemove.LocalNodeIndex,
-                        connectionToRemove.NeighborPos,
-                        connectionToRemove.NeighborNodeIndex
-                    );
-
-                    // Также удаляем соединение с соседней стороны
-                    neighborBehavior?.RemoveConnection(
-                        connectionToRemove.NeighborNodeIndex,
-                        blockSel.Position,
-                        connectionToRemove.LocalNodeIndex
-                    );
-
-                    // вывод сообщения о количестве выданных кабелей
-                    if (api is ICoreClientAPI)
-                        ((ICoreClientAPI)api).ShowChatMessage($"Wire disconnected. Returned {cableLength} blocks of cable.");
 
                     // После разрыва соединения обновляем меши
                     if (api.Side == EnumAppSide.Client)
                     {
+                        // вывод сообщения о количестве выданных кабелей
+                        ((ICoreClientAPI)api).ShowChatMessage($"Wire disconnected. Returned {cableLength} blocks of cable.");
+
                         ImmersiveWireBlock.InvalidateBlockMeshCache(blockSel.Position);
                         ImmersiveWireBlock.InvalidateBlockMeshCache(connectionToRemove.NeighborPos);
                     }
@@ -712,8 +693,8 @@ namespace EPImmersive.Content.Block
             var cacheKey = new WireMeshCacheKey(position, connections);
 
             // Получаем базовый меш (генерируется каждый раз, но это дешево)
-            MeshData baseMeshData=null;
-            if(_MeshData==null)
+            MeshData baseMeshData = null;
+            if (_MeshData == null)
                 baseMeshData = GetBaseMesh();
             else
             {
@@ -760,7 +741,7 @@ namespace EPImmersive.Content.Block
                     }
                 }
 
-                
+
 
                 // Добавляем провода к финальному мешу
                 if (wiresMesh != null)
@@ -1092,7 +1073,7 @@ namespace EPImmersive.Content.Block
             return new ItemStack(cableBlock);
         }
 
-         
+
 
         /// <summary>
         /// Создаем Asset кабеля на основе параметров
@@ -1197,13 +1178,13 @@ namespace EPImmersive.Content.Block
         {
             public readonly BlockPos Position;
             public readonly int ConnectionsHash;
-            
+
 
             public WireMeshCacheKey(BlockPos position, List<ConnectionData> connections)
             {
                 Position = position;
                 ConnectionsHash = ComputeConnectionsHash(connections);
-               
+
             }
 
             private static int ComputeConnectionsHash(List<ConnectionData> connections)
@@ -1226,7 +1207,7 @@ namespace EPImmersive.Content.Block
                 return hash;
             }
 
-           
+
 
             public bool Equals(WireMeshCacheKey other)
             {

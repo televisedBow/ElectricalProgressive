@@ -405,6 +405,11 @@ namespace EPImmersive
                 network.ImmersiveConnections.Remove(staleConnection);
                 network.version++;
             }
+
+            if (staleConnections.Count > 0)
+            {
+                CheckAndSplitNetwork(network);
+            }
         }
 
         /// <summary>
@@ -415,8 +420,7 @@ namespace EPImmersive
         {
             if (Parts.TryGetValue(position, out var part))
             {
-                Parts.Remove(position);
-
+                
                 // Удаляем из всех сетей
                 foreach (var network in Networks.Where(n => n.PartPositions.Contains(position)).ToList())
                 {
@@ -426,6 +430,19 @@ namespace EPImmersive
                     network.ImmersiveConnections.RemoveAll(c =>
                         c.LocalPos.Equals(position) || c.NeighborPos.Equals(position));
 
+                    if (part.Consumer != null)
+                        network.Consumers.Remove(part.Consumer);
+
+                    if (part.Producer != null)
+                        network.Producers.Remove(part.Producer);
+
+                    if (part.Accumulator != null)
+                        network.Accumulators.Remove(part.Accumulator);
+
+                    if (part.Conductor != null)
+                        network.Conductors.Remove(part.Conductor);
+
+
                     network.version++;
 
                     // Если сеть пустая, удаляем её
@@ -434,6 +451,8 @@ namespace EPImmersive
                         Networks.Remove(network);
                     }
                 }
+
+                Parts.Remove(position);
             }
         }
 
@@ -1027,8 +1046,7 @@ namespace EPImmersive
             BlockPos partPos;                        // Временная переменная для позиции части сети
             ImmersiveNetworkPart part;                        // Временная переменная для части сети
             bool updated;                            // Флаг обновления части сети от повреждения
-            EParams faceParams;                      // Параметры грани сети
-            int lastFaceIndex;                       // Индекс последней грани в пакете
+           
             float totalEnergy;                       // Суммарная энергия в трансформаторе
             float totalCurrent;                      // Суммарный ток в трансформаторе
             var kons = 0;
@@ -1195,14 +1213,17 @@ namespace EPImmersive
                         // по-хорошему номера проводов надо сохранять в вместе с блоками, где они крепятся
                         var connections =
                             partValue.Connections.Where(c => c.NeighborPos.Equals(packet.path[curIndex - 1]));
-                        if (connections == null)
+
+                        if (connections == null || connections.Count() == 0)
                         {
+                            // если все же путь не совпадает с путем в пакете, то чистим кэши
+                            ImmersivePathCacheManager.RemoveAll(packet.path[0], packet.path.Last());
                             packet.shouldBeRemoved = true;
                             continue;
                         }
 
                         // Проверяем иммерсивные провода
-                        if (!partValue.Connections.Any(c => c.Parameters.burnout) //проверяем не сгорели ли соединения
+                        if (!connections.Any(c => c.Parameters.burnout) //проверяем не сгорели ли соединения
                             && connections.Count() > 0) //а есть ли такой провод?
                         {
                             ConnectionData buf = null;
@@ -1443,6 +1464,143 @@ namespace EPImmersive
             part.Accumulator?.SetCapacity(0f);
             part.Transformator?.setPower(0f);
         }
+
+
+
+
+        public void CheckAndSplitNetwork(ImmersiveNetwork network)
+        {
+            if (network.PartPositions.Count == 0) return;
+
+            // 1. Найти все компоненты связности в сети
+            var visited = new HashSet<BlockPos>();
+            var components = new List<HashSet<BlockPos>>();
+
+            foreach (var startPos in network.PartPositions)
+            {
+                if (visited.Contains(startPos)) continue;
+
+                // BFS для поиска компоненты связности
+                var component = new HashSet<BlockPos>();
+                var queue = new Queue<BlockPos>();
+                queue.Enqueue(startPos);
+
+                while (queue.Count > 0)
+                {
+                    var current = queue.Dequeue();
+                    if (component.Contains(current)) continue;
+
+                    component.Add(current);
+                    visited.Add(current);
+
+                    // Найти всех соседей через соединения
+                    if (Parts.TryGetValue(current, out var part))
+                    {
+                        foreach (var connection in part.Connections)
+                        {
+                            var neighborPos = connection.NeighborPos;
+                            if (network.PartPositions.Contains(neighborPos) && !component.Contains(neighborPos))
+                            {
+                                queue.Enqueue(neighborPos);
+                            }
+                        }
+                    }
+                }
+
+                components.Add(component);
+            }
+
+            // 2. Если компонент больше одного - нужно разделить сеть
+            if (components.Count > 1)
+            {
+                // Первая компонента остается в исходной сети
+                network.PartPositions.Clear();
+                network.PartPositions.UnionWith(components[0]);
+
+                // Очищаем и перезаполняем коллекции компонентов
+                ClearNetworkComponents(network);
+                RebuildNetworkComponents(network);
+
+                // Для остальных компонент создаем новые сети
+                for (int i = 1; i < components.Count; i++)
+                {
+                    var newNetwork = CreateNetwork();
+                    newNetwork.PartPositions.UnionWith(components[i]);
+
+                    // Перемещаем компоненты в новую сеть
+                    MoveComponentsToNetwork(components[i], newNetwork);
+                    Networks.Add(newNetwork);
+                }
+
+                network.version++;
+            }
+        }
+
+        private void ClearNetworkComponents(ImmersiveNetwork network)
+        {
+            network.Consumers.Clear();
+            network.Producers.Clear();
+            network.Accumulators.Clear();
+            network.Transformators.Clear();
+            network.Conductors.Clear();
+            // Иммерсивные соединения остаются - они фильтруются по PartPositions
+        }
+
+        private void RebuildNetworkComponents(ImmersiveNetwork network)
+        {
+            foreach (var pos in network.PartPositions)
+            {
+                if (Parts.TryGetValue(pos, out var part))
+                {
+                    if (part.Consumer != null) network.Consumers.Add(part.Consumer);
+                    if (part.Producer != null) network.Producers.Add(part.Producer);
+                    if (part.Accumulator != null) network.Accumulators.Add(part.Accumulator);
+                    if (part.Transformator != null) network.Transformators.Add(part.Transformator);
+                    if (part.Conductor != null) network.Conductors.Add(part.Conductor);
+                }
+            }
+
+            // Фильтруем иммерсивные соединения
+            network.ImmersiveConnections.RemoveAll(c =>
+                !network.PartPositions.Contains(c.LocalPos) ||
+                !network.PartPositions.Contains(c.NeighborPos));
+        }
+
+        private void MoveComponentsToNetwork(HashSet<BlockPos> positions, ImmersiveNetwork targetNetwork)
+        {
+            foreach (var pos in positions)
+            {
+                if (Parts.TryGetValue(pos, out var part))
+                {
+                    part.Network = targetNetwork;
+
+                    if (part.Consumer != null) targetNetwork.Consumers.Add(part.Consumer);
+                    if (part.Producer != null) targetNetwork.Producers.Add(part.Producer);
+                    if (part.Accumulator != null) targetNetwork.Accumulators.Add(part.Accumulator);
+                    if (part.Transformator != null) targetNetwork.Transformators.Add(part.Transformator);
+                    if (part.Conductor != null) targetNetwork.Conductors.Add(part.Conductor);
+                }
+            }
+
+            // Переносим соединения
+            foreach (var connection in targetNetwork.ImmersiveConnections.ToList())
+            {
+                if (positions.Contains(connection.LocalPos) && positions.Contains(connection.NeighborPos))
+                {
+                    // Соединение остается в новой сети
+                }
+                else
+                {
+                    targetNetwork.ImmersiveConnections.Remove(connection);
+                }
+            }
+        }
+
+
+
+
+
+
 
         /// <summary>
         /// Объединение цепей

@@ -265,7 +265,16 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             this._eparams = (new EParams(), 0);
             this._dirty = true;
             this.Update();
+
+            // После обновления проверяем разделение сети
+            var network = System.Networks.FirstOrDefault(n => n.PartPositions.Contains(Pos));
+            if (network != null)
+            {
+                System.CheckAndSplitNetwork(network);
+            }
         }
+
+
     }
 
     public override void Initialize(ICoreAPI api, Vintagestory.API.Datastructures.JsonObject properties)
@@ -485,11 +494,20 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         base.OnBlockRemoved();
         this._isLoaded = false;
 
+        // Запоминаем сети, в которых был блок
+        var affectedNetworks = System.Networks.Where(n => n.PartPositions.Contains(Pos)).ToList();
+
         // рвем все соединения
         RemoveConnAndDrop();
 
         // удаляем подключение в системе
         this.System?.Remove(this.Blockentity.Pos);
+
+        // Проверяем разделение для каждой затронутой сети
+        foreach (var network in affectedNetworks)
+        {
+            System.CheckAndSplitNetwork(network);
+        }
 
         AnimUtil?.Dispose();
 
