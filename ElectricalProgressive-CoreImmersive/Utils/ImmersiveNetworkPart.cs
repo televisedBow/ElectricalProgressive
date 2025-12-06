@@ -42,5 +42,7 @@ namespace EPImmersive.Utils
         public BlockPos NeighborPos { get; set; }
         public byte NeighborNodeIndex { get; set; }
         public EParams Parameters { get; set; } = new EParams();
+
+        public float WireLength { get; set; }
     }
 }

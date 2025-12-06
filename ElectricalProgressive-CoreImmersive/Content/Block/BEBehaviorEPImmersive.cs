@@ -599,9 +599,12 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         {
             var conn = _connections[i];
             tree.SetInt($"Conn_{i}_LocalIndex", conn.LocalNodeIndex);
-            tree.SetInt($"Conn_{i}_NeighborX", conn.NeighborPos.X);
-            tree.SetInt($"Conn_{i}_NeighborY", conn.NeighborPos.Y);
-            tree.SetInt($"Conn_{i}_NeighborZ", conn.NeighborPos.Z);
+
+            // Сохраняем ОТНОСИТЕЛЬНЫЕ координаты соседа (относительно текущего блока)
+            tree.SetInt($"Conn_{i}_NeighborX", conn.NeighborPos.X - Pos.X);
+            tree.SetInt($"Conn_{i}_NeighborY", conn.NeighborPos.Y - Pos.Y);
+            tree.SetInt($"Conn_{i}_NeighborZ", conn.NeighborPos.Z - Pos.Z);
+
             tree.SetInt($"Conn_{i}_NeighborIndex", conn.NeighborNodeIndex);
 
             // Сохраняем параметры соединения
@@ -609,7 +612,6 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
             tree.SetFloat($"Conn_{i}_WireLength", conn.WireLength);
         }
-
 
         // Сохраняем параметры текущего блока
         tree.SetBytes("MainEpar", EParamsSerializer.SerializeSingle(_mainEpar));
@@ -626,7 +628,6 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             tree.SetDouble($"WireNode_{i}_Z", node.Position.Z);
             tree.SetFloat($"WireNode_{i}_Radius", node.Radius);
         }
-
 
         // Сохраняем параметры частиц
         tree.SetInt("ParticlesType", ParticlesType);
@@ -647,7 +648,6 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         }
     }
 
-
     /// <summary>
     /// Грузим из сейва текущие важные параметры
     /// </summary>
@@ -663,16 +663,27 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         for (int i = 0; i < connectionsCount; i++)
         {
             var localIndex = tree.GetInt($"Conn_{i}_LocalIndex", 0);
-            var neighborX = tree.GetInt($"Conn_{i}_NeighborX", 0);
-            var neighborY = tree.GetInt($"Conn_{i}_NeighborY", 0);
-            var neighborZ = tree.GetInt($"Conn_{i}_NeighborZ", 0);
+
+            // Загружаем ОТНОСИТЕЛЬНЫЕ координаты соседа
+            var relX = tree.GetInt($"Conn_{i}_NeighborX", 0);
+            var relY = tree.GetInt($"Conn_{i}_NeighborY", 0);
+            var relZ = tree.GetInt($"Conn_{i}_NeighborZ", 0);
+
+            // Преобразуем относительные координаты обратно в абсолютные
+            var neighborPos = new BlockPos(
+                Pos.X + relX,
+                Pos.Y + relY,
+                Pos.Z + relZ,
+                Pos.dimension // Используем ту же размерность, что и у текущего блока
+            );
+
             var neighborIndex = tree.GetInt($"Conn_{i}_NeighborIndex", 0);
             var wireLength = tree.GetFloat($"Conn_{i}_WireLength", 1);
 
             var connection = new ConnectionData
             {
                 LocalNodeIndex = (byte)localIndex,
-                NeighborPos = new BlockPos(neighborX, neighborY, neighborZ),
+                NeighborPos = neighborPos, // Теперь это абсолютные координаты
                 NeighborNodeIndex = (byte)neighborIndex,
                 WireLength = wireLength
             };
@@ -688,13 +699,11 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                 connection.Parameters = new EParams();
             }
 
-
             _connections.Add(connection);
         }
 
         // Загружаем параметры текущего блока
-        _mainEpar=EParamsSerializer.DeserializeSingle(tree.GetBytes("MainEpar"));
-
+        _mainEpar = EParamsSerializer.DeserializeSingle(tree.GetBytes("MainEpar"));
 
         // Загружаем узлы подключения (приоритет у сохраненных данных)
         int wireNodesCount = tree.GetInt("WireNodesCount", -1);
@@ -720,8 +729,6 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         // Сортируем по индексу для удобства
         _wireNodes = _wireNodes.OrderBy(node => node.Index).ToList();
 
-
-
         // Загрузка параметров частиц
         ParticlesType = tree.GetInt("ParticlesType", 0);
 
@@ -746,10 +753,9 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         this._dirty = true;
         this.Update();
-
-
-
-        
-
     }
+
+
+
+
 }

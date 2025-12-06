@@ -333,7 +333,8 @@ namespace EPImmersive
                     LocalNodeIndex = connection.LocalNodeIndex,
                     NeighborPos = connection.NeighborPos,
                     NeighborNodeIndex = connection.NeighborNodeIndex,
-                    Parameters = connection.Parameters
+                    Parameters = connection.Parameters,
+                    WireLength = connection.WireLength
                 };
                 network.ImmersiveConnections.Add(networkConnection);
                 network.version++;

@@ -4,6 +4,9 @@ using Vintagestory.API.MathTools;
 
 namespace EPImmersive.Utils
 {
+    /// <summary>
+    /// Быстрый ключ для позиции блока с кэшированием хэш-кода
+    /// </summary>
     public struct FastPosKey : IEquatable<FastPosKey>
     {
         public int X, Y, Z, Dim;
@@ -35,6 +38,9 @@ namespace EPImmersive.Utils
         }
     }
 
+    /// <summary>
+    /// Состояние узла в поиске пути (позиция + индекс точки подключения)
+    /// </summary>
     public struct NodeState : IEquatable<NodeState>
     {
         public FastPosKey Position;
@@ -60,6 +66,11 @@ namespace EPImmersive.Utils
         }
     }
 
+    /// <summary>
+    /// Поисковик путей для иммерсивной электрической сети
+    /// Использует алгоритм A* для нахождения кратчайшего пути между двумя точками в сети
+    /// Вес пути - длина провода (WireLength), а не фиксированное значение
+    /// </summary>
     public class ImmersivePathFinder
     {
         private PriorityQueue<NodeState, int> _queue = new();
@@ -67,8 +78,12 @@ namespace EPImmersive.Utils
         private Dictionary<NodeState, int> _costSoFar = new();
         private HashSet<NodeState> _visited = new();
 
-        private List<NodeState> _neighborsBuffer = new(10);
+        // Буфер для хранения соседних узлов и весов переходов к ним
+        private List<(NodeState state, int cost)> _neighborsBuffer = new(10);
 
+        /// <summary>
+        /// Очищает все внутренние структуры для нового поиска
+        /// </summary>
         public void Clear()
         {
             _queue.Clear();
@@ -77,9 +92,21 @@ namespace EPImmersive.Utils
             _visited.Clear();
         }
 
+        /// <summary>
+        /// Эвристическая функция для A* (манхэттенское расстояние)
+        /// Используется для оценки оставшегося пути до цели
+        /// </summary>
         public static int Heuristic(BlockPos a, BlockPos b)
             => Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y) + Math.Abs(a.Z - b.Z);
 
+        /// <summary>
+        /// Находит кратчайший путь между двумя позициями в сети
+        /// </summary>
+        /// <param name="start">Начальная позиция</param>
+        /// <param name="end">Конечная позиция</param>
+        /// <param name="immersiveNetwork">Сеть для поиска</param>
+        /// <param name="parts">Словарь частей сети</param>
+        /// <returns>Кортеж (массив позиций пути, массив индексов узлов)</returns>
         public (BlockPos[], byte[]) FindShortestPath(
             BlockPos start, BlockPos end,
             ImmersiveNetwork immersiveNetwork,
@@ -90,11 +117,12 @@ namespace EPImmersive.Utils
             var startKey = new FastPosKey(start.X, start.Y, start.Z, start.dimension, start);
             var endKey = new FastPosKey(end.X, end.Y, end.Z, end.dimension, end);
 
+            // Проверяем, что обе позиции существуют в сети
             if (!parts.TryGetValue(start, out var startPart) ||
                 !parts.TryGetValue(end, out var endPart))
                 return (null, null);
 
-            // Добавляем все стартовые узлы в очередь
+            // Добавляем все стартовые узлы в очередь с нулевой стоимостью
             foreach (var wireNode in startPart.WireNodes)
             {
                 var startState = new NodeState(startKey, wireNode.Index);
@@ -107,6 +135,7 @@ namespace EPImmersive.Utils
             {
                 var current = _queue.Dequeue();
 
+                // Если достигли цели - восстанавливаем путь
                 if (current.Position.Equals(endKey))
                 {
                     return ReconstructPath(current);
@@ -117,40 +146,52 @@ namespace EPImmersive.Utils
 
                 _visited.Add(current);
 
+                // Получаем соседей текущего узла с весами переходов
                 GetNeighbors(current, immersiveNetwork, parts, _neighborsBuffer);
 
                 foreach (var neighbor in _neighborsBuffer)
                 {
-                    if (_visited.Contains(neighbor))
+                    if (_visited.Contains(neighbor.state))
                         continue;
 
-                    var newCost = _costSoFar[current] + 1; // Каждый шаг стоит 1
+                    // Вместо фиксированной стоимости 1 используем длину провода
+                    // Приводим float WireLength к int для совместимости с приоритетной очередью
+                    var newCost = _costSoFar[current] + neighbor.cost;
 
-                    if (!_costSoFar.ContainsKey(neighbor) || newCost < _costSoFar[neighbor])
+                    if (!_costSoFar.ContainsKey(neighbor.state) || newCost < _costSoFar[neighbor.state])
                     {
-                        _costSoFar[neighbor] = newCost;
-                        var priority = newCost + Heuristic(neighbor.Position.Pos, end);
-                        _queue.Enqueue(neighbor, priority);
-                        _cameFrom[neighbor] = current;
+                        _costSoFar[neighbor.state] = newCost;
+                        // Приоритет = стоимость пути + эвристика до цели
+                        var priority = newCost + Heuristic(neighbor.state.Position.Pos, end);
+                        _queue.Enqueue(neighbor.state, priority);
+                        _cameFrom[neighbor.state] = current;
                     }
                 }
 
                 _neighborsBuffer.Clear();
             }
 
+            // Путь не найден
             return (null, null);
         }
 
+        /// <summary>
+        /// Получает всех соседей текущего узла с весами переходов
+        /// </summary>
+        /// <param name="current">Текущий узел</param>
+        /// <param name="network">Сеть</param>
+        /// <param name="parts">Части сети</param>
+        /// <param name="neighbors">Список для заполнения (сосед, стоимость перехода)</param>
         private void GetNeighbors(
             NodeState current,
             ImmersiveNetwork network,
             Dictionary<BlockPos, ImmersiveNetworkPart> parts,
-            List<NodeState> neighbors)
+            List<(NodeState state, int cost)> neighbors)
         {
             if (!parts.TryGetValue(current.Position.Pos, out var currentPart))
                 return;
 
-            // Ищем соединения из текущего узла
+            // Ищем исходящие соединения из текущего узла
             foreach (var connection in currentPart.Connections)
             {
                 if (connection.LocalNodeIndex == current.NodeIndex)
@@ -165,7 +206,10 @@ namespace EPImmersive.Utils
                     // Проверяем, что соседняя позиция находится в сети
                     if (network.PartPositions.Contains(connection.NeighborPos))
                     {
-                        neighbors.Add(neighborState);
+                        // Используем длину провода как стоимость перехода
+                        // Округляем вверх, так как длина провода обычно дробная
+                        int cost = (int)Math.Ceiling(connection.WireLength);
+                        neighbors.Add((neighborState, cost));
                     }
                 }
             }
@@ -185,12 +229,19 @@ namespace EPImmersive.Utils
 
                     if (network.PartPositions.Contains(networkConnection.LocalPos))
                     {
-                        neighbors.Add(neighborState);
+                        // Используем длину провода как стоимость перехода
+                        int cost = (int)Math.Ceiling(networkConnection.WireLength);
+                        neighbors.Add((neighborState, cost));
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Восстанавливает путь от конечного узла к начальному
+        /// </summary>
+        /// <param name="endState">Конечный узел</param>
+        /// <returns>Кортеж (путь позиций, индексы узлов)</returns>
         private (BlockPos[], byte[]) ReconstructPath(NodeState endState)
         {
             var path = new List<BlockPos>();
@@ -198,6 +249,7 @@ namespace EPImmersive.Utils
 
             var current = endState;
 
+            // Проходим по цепочке предков от конца к началу
             while (!current.Equals(new NodeState()))
             {
                 path.Add(current.Position.Pos);
@@ -207,6 +259,7 @@ namespace EPImmersive.Utils
                     break;
             }
 
+            // Переворачиваем, чтобы получить путь от начала к концу
             path.Reverse();
             nodeIndices.Reverse();
 
