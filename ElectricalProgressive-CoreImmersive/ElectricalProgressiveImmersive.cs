@@ -5,6 +5,7 @@ using EPImmersive.Content.Block.EAccumulator;
 using EPImmersive.Content.Block.ECable1;
 using EPImmersive.Content.Block.EGenerator;
 using EPImmersive.Content.Block.EMotor;
+using EPImmersive.Content.Block.HVSFonar;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
 using System;
@@ -104,6 +105,10 @@ namespace EPImmersive
             api.RegisterBlockClass("BlockEGenerator1", typeof(BlockEGenerator1));
             api.RegisterBlockEntityClass("BlockEntityEGenerator1", typeof(BlockEntityEGenerator1));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorEGenerator1", typeof(BEBehaviorEGenerator1));
+
+            api.RegisterBlockClass("BlockHVSFonar", typeof(BlockHVSFonar));
+            api.RegisterBlockEntityClass("BlockEntityHVSFonar", typeof(BlockEntityHVSFonar));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorHVSFonar", typeof(BEBehaviorHVSFonar));
 
             api.RegisterBlockEntityBehaviorClass("ElectricalProgressiveImmersive", typeof(BEBehaviorEPImmersive));
         }

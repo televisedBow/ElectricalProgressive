@@ -14,7 +14,7 @@ namespace ElectricalProgressive.Content.Block.ESFonar
     {
         private readonly static Dictionary<CacheDataKey, MeshData> MeshDataCache = new();
 
-        //private int[] null_HSV = { 0, 0, 0 };   //заглушка нулевого света
+
         public override void OnLoaded(ICoreAPI coreApi)
         {
             base.OnLoaded(coreApi);

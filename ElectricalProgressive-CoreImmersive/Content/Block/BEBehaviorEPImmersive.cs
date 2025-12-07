@@ -484,6 +484,9 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             }
             catch { }
 
+            //if (Block is ImmersiveWireBlock wireBlockk)
+            //    wireBlockk.UpdateWireNodes(_wireNodes);
+
             // Обновляем меши проводов ТОЛЬКО если количество подключений изменилось
             if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
             {
@@ -684,33 +687,35 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             : new EParams();
 
         // Загружаем узлы подключения
-        int wireNodesCount = tree.GetInt("WireNodesCount", -1);
-        _wireNodes.Clear();
+         int wireNodesCount = tree.GetInt("WireNodesCount", -1);
 
-        if (wireNodesCount > 0)
-        {
-            for (int i = 0; i < wireNodesCount; i++)
-            {
-                var index = tree.GetInt($"WireNode_{i}_Index", 0);
-                var voltage = tree.GetInt($"WireNode_{i}_Voltage", 0);
-                var x = tree.GetDouble($"WireNode_{i}_X", 0);
-                var y = tree.GetDouble($"WireNode_{i}_Y", 0);
-                var z = tree.GetDouble($"WireNode_{i}_Z", 0);
-                var radius = tree.GetFloat($"WireNode_{i}_Radius", 0.1f);
+         if (_wireNodes.Count > 0)
+         {
+             _wireNodes.Clear();
 
-                _wireNodes.Add(new WireNode
-                {
-                    Index = (byte)index,
-                    Voltage = voltage,
-                    Position = new Vec3d(x, y, z),
-                    Radius = radius
-                });
-            }
-            // Сортируем по индексу для удобства
-            _wireNodes.Sort((a, b) => a.Index.CompareTo(b.Index));
-        }
+             if (wireNodesCount > 0)
+             {
+                 for (int i = 0; i < wireNodesCount; i++)
+                 {
+                     var index = tree.GetInt($"WireNode_{i}_Index", 0);
+                     var voltage = tree.GetInt($"WireNode_{i}_Voltage", 0);
+                     var x = tree.GetDouble($"WireNode_{i}_X", 0);
+                     var y = tree.GetDouble($"WireNode_{i}_Y", 0);
+                     var z = tree.GetDouble($"WireNode_{i}_Z", 0);
+                     var radius = tree.GetFloat($"WireNode_{i}_Radius", 0.1f);
 
-        // Загрузка параметров частиц
+                     _wireNodes.Add(new WireNode
+                     {
+                         Index = (byte)index, Voltage = voltage, Position = new Vec3d(x, y, z), Radius = radius
+                     });
+                 }
+
+                 // Сортируем по индексу для удобства
+                 _wireNodes.Sort((a, b) => a.Index.CompareTo(b.Index));
+             }
+         }
+
+         // Загрузка параметров частиц
         ParticlesType = tree.GetInt("ParticlesType", 0);
 
         int count = tree.GetInt("ParticlesOffsetPosCount", 0);

@@ -17,7 +17,7 @@ using Vintagestory.GameContent;
 
 namespace EPImmersive.Content.Block
 {
-    public class ImmersiveWireBlock : Vintagestory.API.Common.Block
+    public class ImmersiveWireBlock : Vintagestory.API.Common.Block, IMultiBlockColSelBoxes
     {
         protected List<WireNode> _wireNodes; // точки крепления
 
@@ -130,7 +130,48 @@ namespace EPImmersive.Content.Block
             return boxes.ToArray();
         }
 
+        public Cuboidf[] MBGetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, Vec3i offset)
+        {
+            var boxes = new List<Cuboidf>();
+            boxes.AddRange(base.GetCollisionBoxes(blockAccessor, pos));
+            //boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
+            return boxes.ToArray();
+        }
 
+        public Cuboidf[] MBGetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos, Vec3i offset)
+        {
+            var boxes = new List<Cuboidf>();
+
+            if (api.Side == EnumAppSide.Client)
+            {
+                var capi = (ICoreClientAPI)api;
+
+                // Показываем точки подключения когда игрок держит провод
+                if (IsHoldingWireTool(capi.World.Player) || IsHoldingWrench(capi.World.Player))
+                {
+                    var coll = GetNodeSelectionBoxes(blockAccessor, pos);
+
+                    foreach (var col in coll)
+                    {
+                        col.X1 = col.X1 + offset.X;
+                        col.Y1 = col.Y1 + offset.Y;
+                        col.Z1 = col.Z1 + offset.Z;
+                        col.X2 = col.X2 + offset.X;
+                        col.Y2 = col.Y2 + offset.Y;
+                        col.Z2 = col.Z2 + offset.Z;
+                    }
+
+                    boxes.AddRange(coll);
+                    return boxes.ToArray();
+                }
+            }
+
+            // Добавляем провода к выделению
+            boxes.AddRange(base.GetSelectionBoxes(blockAccessor, pos));
+            // boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
+
+            return boxes.ToArray();
+        }
 
         /// <summary>
         /// Коллизии
@@ -695,7 +736,8 @@ namespace EPImmersive.Content.Block
             // Получаем базовый меш (генерируется каждый раз, но это дешево)
             MeshData baseMeshData = null;
             if (_MeshData == null)
-                baseMeshData = GetBaseMesh();
+                //baseMeshData = GetBaseMesh();
+                baseMeshData = sourceMesh;
             else
             {
                 baseMeshData = _MeshData;

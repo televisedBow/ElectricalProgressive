@@ -12,14 +12,14 @@ using Vintagestory.API.Server;
 
 
 [assembly: ModDependency("game", "1.21.0")]
-[assembly: ModDependency("electricalprogressivecore", "2.6.0")]
+[assembly: ModDependency("electricalprogressivecore", "2.6.2")]
 [assembly: ModDependency("electricalprogressivebasics", "2.6.0")]
 [assembly: ModInfo(
     "Electrical Progressive: Industry",
     "electricalprogressiveindustry",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Additional electrical devices.",
-    Version = "0.5.0",
+    Version = "0.5.1",
     Authors =
     [
         "Tehtelev",
