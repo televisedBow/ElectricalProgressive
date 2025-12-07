@@ -1,7 +1,7 @@
 ﻿{
   "code": "egenerator1",
-  "class": "BlockEGenerator",
-  "entityClass": "BlockEntityEGenerator",
+  "class": "BlockEGenerator1",
+  "entityClass": "BlockEntityEGenerator1",
 
   "variantGroups": [
     {
@@ -25,10 +25,10 @@
 
   "entityBehaviors": [
     {
-      "name": "BEBehaviorEGenerator"
+      "name": "BEBehaviorEGenerator1"
     },
     {
-      "name": "ElectricalProgressive"
+      "name": "ElectricalProgressiveImmersive"
     }
   ],
 
@@ -38,14 +38,24 @@
     "particlesOffsetPos": [ [ 0.1, 0.5, 0.1 ] ],
     "blockEProperties": "main",
     "handbook": {
-      "groupBy": [ "egenerator-*" ],
+      "groupBy": [ "egenerator1-*" ],
       "extraSections": [
         {
           "title": "electricalprogressivebasics:block-handbooktitle-egenerator-{tier}",
           "text": "electricalprogressivebasics:block-handbooktext-egenerator-{tier}"
         }
       ]
-    }
+    },
+    "wireNodes": [
+      {
+        "index": 0,
+        "voltage": "512",
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0,
+        "dxdydz": 0.1
+      }
+    ]
   },
 
 

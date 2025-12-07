@@ -758,22 +758,48 @@ namespace EPImmersive.Content.Block
 
 
         /// <summary>
-        /// Очистка кэша при изменении подключений
+        /// Очистка кэша при изменении подключений (оптимизированная версия)
         /// </summary>
         public static void InvalidateBlockMeshCache(BlockPos position)
         {
+            // Быстрая проверка на пустоту
             if (WireMeshesCache == null || WireMeshesCache.Count == 0)
                 return;
 
             try
             {
-                var keysToRemove = WireMeshesCache.Keys.Where(key => key.Position.Equals(position)).ToList();
-                foreach (var key in keysToRemove)
+                // Используем список с предварительным выделением памяти
+                // Предполагаем, что в среднем у блока не более 8 подключений
+                var keysToRemove = new List<WireMeshCacheKey>(8);
+
+                // Собираем ключи для удаления напрямую из словаря без LINQ
+                foreach (var kvp in WireMeshesCache)
                 {
-                    WireMeshesCache.Remove(key);
+                    // Используем прямое сравнение координат вместо Equals для производительности
+                    var keyPos = kvp.Key.Position;
+                    if (keyPos.X == position.X &&
+                        keyPos.Y == position.Y &&
+                        keyPos.Z == position.Z &&
+                        keyPos.dimension == position.dimension)
+                    {
+                        keysToRemove.Add(kvp.Key);
+                    }
                 }
+
+                // Удаляем собранные ключи
+                int count = keysToRemove.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    WireMeshesCache.Remove(keysToRemove[i]);
+                }
+
+                // Быстрая очистка списка (предотвращает утечку памяти при частых вызовах)
+                keysToRemove.Clear();
             }
-            catch { }
+            catch
+            {
+                // Быстрое подавление исключения без дополнительной нагрузки
+            }
         }
 
 
@@ -1085,10 +1111,16 @@ namespace EPImmersive.Content.Block
         {
             string voltage = cableParams.voltage == 32 ? "32v" : "128v";
             string material = cableParams.material;
-            string isolation = cableParams.isolated ? "isolated" : "part";
+            string type = cableParams.isolated ? "isolated" : "part";
+
+            // если кабель сгорел
+            if (cableParams.burnout)
+                type = "burned";
+
 
             AssetLocation cable;
 
+            // материал неизвестен?
             if (material == null || material == "")
             {
                 // Fallback на базовый кабель
@@ -1096,7 +1128,7 @@ namespace EPImmersive.Content.Block
             }
             else
             {
-                cable = new AssetLocation($"electricalprogressivecoreimmersive:ecable1-{voltage}-{material}-{isolation}");
+                cable = new AssetLocation($"electricalprogressivecoreimmersive:ecable1-{voltage}-{material}-{type}");
             }
 
             return cable;

@@ -76,9 +76,6 @@ namespace EPImmersive.Utils
                             var voltage = 0;
                             if (nodeIndices.Length > 0)
                             {
-                                var endNodeIndex = nodeIndices[nodeIndices.Length - 1];
-                                var connection = endPart.Connections
-                                    .FirstOrDefault(c => c.LocalNodeIndex == endNodeIndex);
                                 voltage = endPart.MainEparams.voltage;
                             }
 
@@ -89,6 +86,18 @@ namespace EPImmersive.Utils
                                 path,
                                 nodeIndices,
                                 voltage);
+                        }
+                        else
+                        {
+                            
+                            ImmersivePathCacheManager.AddOrUpdate(
+                                request.Start.Copy(),
+                                request.End.Copy(),
+                                request.ImmersiveNetwork.version,
+                                path,
+                                nodeIndices,
+                                0);
+                            
                         }
                     }
                     catch (Exception ex)

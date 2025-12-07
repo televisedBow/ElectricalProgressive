@@ -125,8 +125,7 @@ namespace ElectricalProgressive.Utils
                    isolated == other.isolated &&
                    isolatedEnvironment == other.isolatedEnvironment &&
                    causeBurnout == other.causeBurnout &&
-                   ticksBeforeBurnout == other.ticksBeforeBurnout &&
-                   current.Equals(other.current);
+                   ticksBeforeBurnout == other.ticksBeforeBurnout;
 
         }
 

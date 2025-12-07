@@ -232,7 +232,7 @@ public class BEBehaviorEGenerator1 : BEBehaviorMPBase, IEImmersiveProducer
             return;
         }
 
-        entity.MarkDirty();
+        //entity.MarkDirty();
 
         bool anyBurnout = false;
         bool anyPrepareBurnout = false;

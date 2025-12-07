@@ -1,7 +1,7 @@
 ﻿{
   "code": "emotor1",
-  "class": "BlockEMotor",
-  "entityClass": "BlockEntityEMotor",
+  "class": "BlockEMotor1",
+  "entityClass": "BlockEntityEMotor1",
 
   "variantGroups": [
     {
@@ -25,10 +25,10 @@
 
   "entityBehaviors": [
     {
-      "name": "BEBehaviorEMotor"
+      "name": "BEBehaviorEMotor1"
     },
     {
-      "name": "ElectricalProgressive"
+      "name": "ElectricalProgressiveImmersive"
     }
   ],
 
@@ -36,14 +36,24 @@
     "particlesOffsetPos": [ [ 0.1, 0.5, 0.1 ] ],
     "blockEProperties": "main",
     "handbook": {
-      "groupBy": [ "emotor-*" ],
+      "groupBy": [ "emotor1-*" ],
       "extraSections": [
         {
           "title": "electricalprogressivebasics:block-handbooktitle-emotor-{tier}",
           "text": "electricalprogressivebasics:block-handbooktext-emotor-{tier}"
         }
       ]
-    }
+    },
+    "wireNodes": [
+      {
+        "index": 0,
+        "voltage": "512",
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0,
+        "dxdydz": 0.1
+      }
+    ]
   },
 
 

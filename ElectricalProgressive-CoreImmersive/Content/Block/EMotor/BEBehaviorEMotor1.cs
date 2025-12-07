@@ -207,7 +207,7 @@ public class BEBehaviorEMotor1 : BEBehaviorMPBase, IEImmersiveConsumer
             return;
         }
 
-        entity.MarkDirty();
+        //entity.MarkDirty();
 
         bool anyBurnout = false;
         bool anyPrepareBurnout = false;

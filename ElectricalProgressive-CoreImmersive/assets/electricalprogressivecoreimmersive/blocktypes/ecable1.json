@@ -60,7 +60,7 @@
 
   "shapeInventoryByType": {
     "*-isolated": {
-      "base": "block/ecable/ecable-single/ecable-{voltage}-block_isolated"
+      "base": "block/ecable/ecable-{voltage}-block_isolated"
     },
 
     "*": {

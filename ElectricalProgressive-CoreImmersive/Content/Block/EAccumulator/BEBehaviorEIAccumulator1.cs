@@ -120,7 +120,7 @@ public class BEBehaviorEIAccumulator1 : BlockEntityBehavior, IEImmersiveAccumula
             return;
         }
 
-        entity.MarkDirty();
+        //entity.MarkDirty();
 
         bool anyBurnout = false;
         bool anyPrepareBurnout = false;
