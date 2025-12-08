@@ -327,7 +327,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     }
 
     /// <summary>
-    /// Загружает точки подключения из JSON атрибутов блока
+    /// Загружает точки подключения из JSON атрибутов блока с учетом поворота модели
     /// </summary>
     private void LoadWireNodes()
     {
@@ -336,14 +336,27 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         var wireNodesAttribute = this.Block?.Attributes?["wireNodes"];
         if (wireNodesAttribute == null) return;
 
-        // Используем существующий метод AsArray(), но оптимизируем обработку
         var wireNodesArray = wireNodesAttribute.AsArray();
         if (wireNodesArray == null || wireNodesArray.Length == 0) return;
 
-        // Предварительно выделяем память
+        // Получаем угол поворота модели (по умолчанию 0)
+        float rotateY = 0;
+        if (this.Block?.Shape != null)
+        {
+            rotateY = this.Block.Shape.rotateY;
+        }
+
+        // Конвертируем угол поворота в радианы
+        double angleRad = (360-rotateY) * GameMath.DEG2RAD;
+        double cosAngle = Math.Cos(angleRad);
+        double sinAngle = Math.Sin(angleRad);
+
+        // Центр блока для поворота (0.5, 0.5, 0.5 в локальных координатах)
+        double centerX = 0.5;
+        double centerZ = 0.5;
+
         _wireNodes.Capacity = wireNodesArray.Length;
 
-        // Используем for вместо foreach для немного лучшей производительности
         for (int i = 0; i < wireNodesArray.Length; i++)
         {
             var nodeToken = wireNodesArray[i];
@@ -351,15 +364,32 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
             try
             {
+                // Загружаем исходные координаты из JSON
+                double x = nodeToken["x"]?.AsDouble(0) ?? 0;
+                double y = nodeToken["y"]?.AsDouble(0) ?? 0;
+                double z = nodeToken["z"]?.AsDouble(0) ?? 0;
+
+                // Применяем поворот вокруг центра блока
+                if (rotateY != 0)
+                {
+                    // Смещаем координаты относительно центра
+                    double xRel = x - centerX;
+                    double zRel = z - centerZ;
+
+                    // Поворачиваем координаты
+                    double xRotated = xRel * cosAngle - zRel * sinAngle;
+                    double zRotated = xRel * sinAngle + zRel * cosAngle;
+
+                    // Возвращаем обратно в систему координат блока
+                    x = xRotated + centerX;
+                    z = zRotated + centerZ;
+                }
+
                 var wireNode = new WireNode
                 {
                     Index = (byte)(nodeToken["index"]?.AsInt(0) ?? 0),
                     Voltage = nodeToken["voltage"]?.AsInt(0) ?? 0,
-                    Position = new Vec3d(
-                        nodeToken["x"]?.AsDouble(0) ?? 0,
-                        nodeToken["y"]?.AsDouble(0) ?? 0,
-                        nodeToken["z"]?.AsDouble(0) ?? 0
-                    ),
+                    Position = new Vec3d(x, y, z),
                     Radius = nodeToken["dxdydz"]?.AsFloat(0.1f) ?? 0.1f
                 };
 
@@ -629,17 +659,24 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         // Сохраняем параметры текущего блока
         tree.SetBytes("MainEpar", EParamsSerializer.SerializeSingle(_mainEpar));
 
+
+
+
         // Сохраняем узлы подключения
-        tree.SetInt("WireNodesCount", _wireNodes.Count);
-        for (int i = 0; i < _wireNodes.Count; i++)
+
+        if (_wireNodes.Count > 0)
         {
-            var node = _wireNodes[i];
-            tree.SetInt($"WireNode_{i}_Index", node.Index);
-            tree.SetInt($"WireNode_{i}_Voltage", node.Voltage);
-            tree.SetDouble($"WireNode_{i}_X", node.Position.X);
-            tree.SetDouble($"WireNode_{i}_Y", node.Position.Y);
-            tree.SetDouble($"WireNode_{i}_Z", node.Position.Z);
-            tree.SetFloat($"WireNode_{i}_Radius", node.Radius);
+            tree.SetInt("WireNodesCount", _wireNodes.Count);
+            for (int i = 0; i < _wireNodes.Count; i++)
+            {
+                var node = _wireNodes[i];
+                tree.SetInt($"WireNode_{i}_Index", node.Index);
+                tree.SetInt($"WireNode_{i}_Voltage", node.Voltage);
+                tree.SetDouble($"WireNode_{i}_X", node.Position.X);
+                tree.SetDouble($"WireNode_{i}_Y", node.Position.Y);
+                tree.SetDouble($"WireNode_{i}_Z", node.Position.Z);
+                tree.SetFloat($"WireNode_{i}_Radius", node.Radius);
+            }
         }
 
         // Сохраняем параметры частиц

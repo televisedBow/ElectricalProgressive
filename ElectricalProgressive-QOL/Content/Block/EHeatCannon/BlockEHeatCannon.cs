@@ -50,7 +50,7 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
             LoadEProperties.Load(this, entity, selection.Face.Index);
             return true;
         }
-
+        
         public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
         {
             var newState = Variant["state"] switch
@@ -73,6 +73,8 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
         {
             return new[] { OnPickBlock(world, pos) };
         }
+        
+
 
         public override void OnNeighbourBlockChange(IWorldAccessor world, BlockPos pos, BlockPos neibpos)
         {

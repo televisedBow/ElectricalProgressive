@@ -22,6 +22,9 @@ namespace EPImmersive.Content.Block
         protected List<WireNode> _wireNodes; // точки крепления
 
         public MeshData? _MeshData;
+
+        public bool _skipNonCenterCollisions=false;
+
         // Кэш для полных мешей блоков со всеми подключениями
         private static readonly Dictionary<WireMeshCacheKey, MeshData> WireMeshesCache = new();
 
@@ -133,6 +136,10 @@ namespace EPImmersive.Content.Block
         public Cuboidf[] MBGetCollisionBoxes(IBlockAccessor blockAccessor, BlockPos pos, Vec3i offset)
         {
             var boxes = new List<Cuboidf>();
+
+            if (_skipNonCenterCollisions && (Math.Abs(offset.X)>0 || Math.Abs(offset.Z) > 0))
+                return boxes.ToArray();
+
             boxes.AddRange(base.GetCollisionBoxes(blockAccessor, pos));
             //boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
             return boxes.ToArray();
@@ -165,6 +172,9 @@ namespace EPImmersive.Content.Block
                     return boxes.ToArray();
                 }
             }
+
+            if (_skipNonCenterCollisions && (Math.Abs(offset.X) > 0 || Math.Abs(offset.Z) > 0))
+                return boxes.ToArray();
 
             // Добавляем провода к выделению
             boxes.AddRange(base.GetSelectionBoxes(blockAccessor, pos));

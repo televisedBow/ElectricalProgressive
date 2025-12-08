@@ -89,7 +89,7 @@ namespace EPImmersive.Utils
                         }
                         else
                         {
-                            
+                            /*
                             ImmersivePathCacheManager.AddOrUpdate(
                                 request.Start.Copy(),
                                 request.End.Copy(),
@@ -97,7 +97,7 @@ namespace EPImmersive.Utils
                                 path,
                                 nodeIndices,
                                 0);
-                            
+                            */
                         }
                     }
                     catch (Exception ex)

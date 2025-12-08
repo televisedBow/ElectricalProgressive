@@ -9,9 +9,9 @@ using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
 
-namespace EPImmersive.Content.Block.HVSFonar
+namespace EPImmersive.Content.Block.HVTower
 {
-    internal class BlockHVSFonar : ImmersiveWireBlock
+    internal class BlockHVTower : ImmersiveWireBlock
     {
         
 
@@ -19,25 +19,18 @@ namespace EPImmersive.Content.Block.HVSFonar
         {
             base.OnLoaded(coreApi);
 
+            _skipNonCenterCollisions = true;
         }
-        public override void OnUnloaded(ICoreAPI api)
-        {
-            base.OnUnloaded(api);
-        }
-
+        
+        
 
      
         
         public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
         {
-            var newState = this.Variant["state"] switch
-            {
-                "enabled" => "disabled",
-                _ => "disabled"
-            };
+
             var blockCode = CodeWithVariants(new()
             {
-                { "state", newState },
                 { "side", "north" }
             });
 
@@ -78,9 +71,6 @@ namespace EPImmersive.Content.Block.HVSFonar
         {
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
             dsc.AppendLine(Lang.Get("Voltage") + ": " + MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "voltage", 0) + " " + Lang.Get("V"));
-            dsc.AppendLine(Lang.Get("Consumption") + ": " + MyMiniLib.GetAttributeFloat(inSlot.Itemstack.Block, "maxConsumption", 0) + " " + Lang.Get("W"));
-            dsc.AppendLine(Lang.Get("max-light") + ": " + MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "HSV", 0));
-            dsc.AppendLine(Lang.Get("height") + ": " + this.Variant["height"]);
             dsc.AppendLine(Lang.Get("WResistance") + ": " + ((MyMiniLib.GetAttributeBool(inSlot.Itemstack.Block, "isolatedEnvironment", false)) ? Lang.Get("Yes") : Lang.Get("No")));
         }
 
