@@ -1,10 +1,10 @@
 ﻿{
-  "code": "hvstreetlamp",
-  "class": "BlockHVSFonar",
-  "entityClass": "BlockEntityHVSFonar",
+  "code": "hvcabletower",
+  "class": "BlockHVTower",
+  "entityClass": "BlockEntityHVTower",
   "entityBehaviors": [
     {
-      "name": "BEBehaviorHVSFonar"
+      "name": "BEBehaviorHVTower"
     },
     {
       "name": "ElectricalProgressiveImmersive"
@@ -14,16 +14,14 @@
   "attributes": {
     "voltage": 32,
     "maxCurrent": 20.0,
-    "maxConsumption": 32,
-    "HSV": 26,
     "isolated": true,
     "isolatedEnvironment": true,
     "handbook": {
-      "groupBy": [ "hvstreetlamp-*" ],
+      "groupBy": [ "hvcabletower-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveimmersive:block-handbooktitle-hvstreetlamp",
-          "text": "electricalprogressiveimmersive:block-handbooktext-hvstreetlamp"
+          "title": "electricalprogressiveimmersive:block-handbooktitle-hvcabletower",
+          "text": "electricalprogressiveimmersive:block-handbooktext-hvcabletower"
         }
       ]
     },
@@ -31,38 +29,29 @@
       {
         "index": 0,
         "voltage": "512",
-        "x": 0.525,
-        "y": 3.75,
-        "z": 0.075,
+        "x": -0.825,
+        "y": 3.85,
+        "z": 0.5,
+        "dxdydz": 0.1
+      },
+      {
+        "index": 1,
+        "voltage": "512",
+        "x": 1.825,
+        "y": 3.85,
+        "z": 0.5,
         "dxdydz": 0.1
       }
     ]
   },
 
 
-
-
-
-
-  "lightHsvByType": {
-    "*-disabled-*": [ 0, 0, 0 ],
-    "*-enabled-*": [ 10, 5, 26 ]
-  },
-
-
   "creativeinventory": {
-    "general": [ "*-disabled-north" ],
-    "electricity": [ "*-disabled-north" ]
+    "general": [ "*-north" ],
+    "electricity": [ "*-north" ]
   },
 
   "variantgroups": [
-    {
-      "code": "state",
-      "states": [
-        "disabled",
-        "enabled"
-      ]
-    },
     {
       "code": "side",
       "loadFromProperties": "abstract/horizontalorientation"
@@ -79,14 +68,46 @@
     },
     {
       "name": "Multiblock",
-      "properties": {
-        "sizex": 1,
-        "sizey": 4,
-        "sizez": 1,
-        "cposition": {
-          "x": 0,
-          "y": 0,
-          "z": 0
+      "propertiesByType": {
+        "*-north": {
+          "sizex": 3,
+          "sizey": 4,
+          "sizez": 1,
+          "cposition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          }
+        },
+        "*-east": {
+          "sizex": 1,
+          "sizey": 4,
+          "sizez": 3,
+          "cposition": {
+            "x": 0,
+            "y": 0,
+            "z": 1
+          }
+        },
+        "*-south": {
+          "sizex": 3,
+          "sizey": 4,
+          "sizez": 1,
+          "cposition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          }
+        },
+        "*-west": {
+          "sizex": 1,
+          "sizey": 4,
+          "sizez": 3,
+          "cposition": {
+            "x": 0,
+            "y": 0,
+            "z": 1
+          }
         }
       }
     }
@@ -95,19 +116,19 @@
 
   "shapebytype": {
     "*-north": {
-      "base": "block/hvstreetlamp/hvstreetlamp-{state}",
+      "base": "block/hvcabletower",
       "rotateY": 0
     },
     "*-east": {
-      "base": "block/hvstreetlamp/hvstreetlamp-{state}",
+      "base": "block/hvcabletower",
       "rotateY": 270
     },
     "*-south": {
-      "base": "block/hvstreetlamp/hvstreetlamp-{state}",
+      "base": "block/hvcabletower",
       "rotateY": 180
     },
     "*-west": {
-      "base": "block/hvstreetlamp/hvstreetlamp-{state}",
+      "base": "block/hvcabletower",
       "rotateY": 90
     }
   },
@@ -135,10 +156,6 @@
 
 
 
- 
-
-
-
   "collisionBox": {
     "x1": 0.25,
     "y1": 0.0,
@@ -147,8 +164,6 @@
     "y2": 1.0,
     "z2": 0.75
   },
-
-
 
   "selectionBox": {
     "x1": 0.25,
@@ -159,19 +174,18 @@
     "z2": 0.75
   },
 
-
   "guiTransform": {
-      "translation": {
-        "x": 0,
-        "y": 68,
-        "z": 0
-      },
-      "rotation": {
-        "x": -21,
-        "y": -53,
-        "z": 0
-      },
-      "scale": 0.96    
+    "translation": {
+      "x": 0,
+      "y": 68,
+      "z": 0
+    },
+    "rotation": {
+      "x": -21,
+      "y": -53,
+      "z": 0
+    },
+    "scale": 0.96
   },
 
   "groundTransform": {
