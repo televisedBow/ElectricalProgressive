@@ -4,14 +4,11 @@ using EPImmersive.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json.Nodes;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
-using JsonObject = System.Text.Json.Nodes.JsonObject;
 
 namespace EPImmersive.Content.Block;
 
@@ -39,6 +36,8 @@ public class ConnectionData
     public EParams Parameters;                    // Параметры этого конкретного соединения
 
     public float WireLength;
+
+    public Vec3d NeighborNodeLocalPos { get; set; } // хранение локальной позиции соседнего нода
 }
 
 
@@ -129,7 +128,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             Pos.Y + _wireNodes[indexHere].Position.Y,
             Pos.Z + _wireNodes[indexHere].Position.Z
         );
-        
+
         // Получаем нод конца
         WireNode endNode = null;
         var neighborEntity = Api.World.BlockAccessor.GetBlockEntity(neighborPos);
@@ -148,14 +147,18 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         // точная длина провода
         float distance = startWorldPos.DistanceTo(endWorldPos);
-        
-        // создаем новое подключение
+
+        // Сохраняем позицию нода соседа (если не получили, используем нули)
+        var neighborNodeLocalPos = endNode?.Position ?? new Vec3d(0, 0, 0);
+
+        // создаем соединение
         var newConnection = new ConnectionData
         {
             LocalNodeIndex = indexHere,
             NeighborPos = neighborPos,
             NeighborNodeIndex = indexNeighbor,
-            Parameters = new EParams(), // Параметры по умолчанию
+            NeighborNodeLocalPos = neighborNodeLocalPos, // Сохраняем позицию
+            Parameters = new EParams(),
             WireLength = distance
         };
 
@@ -347,7 +350,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         }
 
         // Конвертируем угол поворота в радианы
-        double angleRad = (360-rotateY) * GameMath.DEG2RAD;
+        double angleRad = (360 - rotateY) * GameMath.DEG2RAD;
         double cosAngle = Math.Cos(angleRad);
         double sinAngle = Math.Sin(angleRad);
 
@@ -508,33 +511,34 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         if (system.Update(this.Blockentity.Pos, _wireNodes, ref _connections, _mainEpar, currentEpar, _isLoaded))
         {
+            // ВСЕГДА обновляем меш текущего блока
+            if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock)
+            {
+                // Откладываем обновление меша на следующий кадр
+                Api.Event.EnqueueMainThreadTask(() =>
+                {
+                    ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
+
+                    // Также перерисовываем все соседние блоки, но только те, что уже загружены
+                    // Это нужно для того, чтобы провода отображались с обеих сторон
+                    foreach (var data in _connections)
+                    {
+                            // Быстрая проверка: есть ли блок на этой позиции
+                            var block = Api.World.BlockAccessor.GetBlock(data.NeighborPos);
+                            if (block != null && block is ImmersiveWireBlock)
+                            {
+                                ImmersiveWireBlock.InvalidateBlockMeshCache(data.NeighborPos);
+                            }
+                    }
+                }, "update-wire-meshes");
+            }
+
             try
             {
                 this.Blockentity.MarkDirty(true);
             }
             catch { }
-
-            //if (Block is ImmersiveWireBlock wireBlockk)
-            //    wireBlockk.UpdateWireNodes(_wireNodes);
-
-            // Обновляем меши проводов ТОЛЬКО если количество подключений изменилось
-            if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
-            {
-                {
-                    ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
-
-                    foreach (var data in _connections)
-                    {
-                        ImmersiveWireBlock.InvalidateBlockMeshCache(data.NeighborPos);
-                    }
-
-                }
-            }
-
         }
-
-        
-
     }
 
 
@@ -582,12 +586,12 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             var connections = this.GetImmersiveConnections();
             foreach (ConnectionData connection in connections)
             {
-                
+
                 // роняем провода только на сервере
                 if (Api.World.Side == EnumAppSide.Server)
                 {
                     int cableLength = (int)Math.Ceiling(connection.WireLength);
-                    
+
 
                     // Создаем и выбрасываем кабель
                     var cableStack = ImmersiveWireBlock.CreateCableStack(Api, connection.Parameters);
@@ -715,7 +719,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         {
             _connections = ConnectionDataSerializer.DeserializeConnections(connectionsData, Pos);
         }
- 
+
 
         // Загружаем параметры текущего блока
         var mainEparData = tree.GetBytes("MainEpar");
@@ -724,35 +728,38 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             : new EParams();
 
         // Загружаем узлы подключения
-         int wireNodesCount = tree.GetInt("WireNodesCount", -1);
+        int wireNodesCount = tree.GetInt("WireNodesCount", -1);
 
-         if (_wireNodes.Count > 0)
-         {
-             _wireNodes.Clear();
+        if (_wireNodes.Count > 0)
+        {
+            _wireNodes.Clear();
 
-             if (wireNodesCount > 0)
-             {
-                 for (int i = 0; i < wireNodesCount; i++)
-                 {
-                     var index = tree.GetInt($"WireNode_{i}_Index", 0);
-                     var voltage = tree.GetInt($"WireNode_{i}_Voltage", 0);
-                     var x = tree.GetDouble($"WireNode_{i}_X", 0);
-                     var y = tree.GetDouble($"WireNode_{i}_Y", 0);
-                     var z = tree.GetDouble($"WireNode_{i}_Z", 0);
-                     var radius = tree.GetFloat($"WireNode_{i}_Radius", 0.1f);
+            if (wireNodesCount > 0)
+            {
+                for (int i = 0; i < wireNodesCount; i++)
+                {
+                    var index = tree.GetInt($"WireNode_{i}_Index", 0);
+                    var voltage = tree.GetInt($"WireNode_{i}_Voltage", 0);
+                    var x = tree.GetDouble($"WireNode_{i}_X", 0);
+                    var y = tree.GetDouble($"WireNode_{i}_Y", 0);
+                    var z = tree.GetDouble($"WireNode_{i}_Z", 0);
+                    var radius = tree.GetFloat($"WireNode_{i}_Radius", 0.1f);
 
-                     _wireNodes.Add(new WireNode
-                     {
-                         Index = (byte)index, Voltage = voltage, Position = new Vec3d(x, y, z), Radius = radius
-                     });
-                 }
+                    _wireNodes.Add(new WireNode
+                    {
+                        Index = (byte)index,
+                        Voltage = voltage,
+                        Position = new Vec3d(x, y, z),
+                        Radius = radius
+                    });
+                }
 
-                 // Сортируем по индексу для удобства
-                 _wireNodes.Sort((a, b) => a.Index.CompareTo(b.Index));
-             }
-         }
+                // Сортируем по индексу для удобства
+                _wireNodes.Sort((a, b) => a.Index.CompareTo(b.Index));
+            }
+        }
 
-         // Загрузка параметров частиц
+        // Загрузка параметров частиц
         ParticlesType = tree.GetInt("ParticlesType", 0);
 
         int count = tree.GetInt("ParticlesOffsetPosCount", 0);

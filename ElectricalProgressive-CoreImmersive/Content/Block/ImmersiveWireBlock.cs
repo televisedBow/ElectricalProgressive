@@ -1205,38 +1205,25 @@ namespace EPImmersive.Content.Block
                 if (nodeHere == null)
                     continue;
 
-                var neighborEntity = api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
-                if (neighborEntity == null)
-                    continue;
+                // ВАЖНО: мы больше не пытаемся получить соседний BlockEntity здесь
+                // Вместо этого используем данные из соединения
 
-                var neighborBehavior = neighborEntity.GetBehavior<BEBehaviorEPImmersive>();
-                if (neighborBehavior == null)
-                    continue;
+                // Для расчета позиции конца провода нам нужно знать позицию соседнего нода
+                // Но если соседний блок не загружен, мы не можем получить эту информацию
 
-                var nodeNeighbor = neighborBehavior.GetWireNode(connection.NeighborNodeIndex);
-                if (nodeNeighbor == null)
-                    continue;
+                var endPos = new Vec3f(
+                    (float)(connection.NeighborPos.X - pos.X + connection.NeighborNodeLocalPos.X),
+                    (float)(connection.NeighborPos.Y - pos.Y + connection.NeighborNodeLocalPos.Y),
+                    (float)(connection.NeighborPos.Z - pos.Z + connection.NeighborNodeLocalPos.Z)
+                );
 
-                // Используем относительные координаты
                 var startPos = new Vec3f(
                     (float)(nodeHere.Position.X),
                     (float)(nodeHere.Position.Y),
                     (float)(nodeHere.Position.Z)
                 );
 
-                var endPos = new Vec3f(
-                    (float)(connection.NeighborPos.X - pos.X + nodeNeighbor.Position.X),
-                    (float)(connection.NeighborPos.Y - pos.Y + nodeNeighbor.Position.Y),
-                    (float)(connection.NeighborPos.Z - pos.Z + nodeNeighbor.Position.Z)
-                );
-
-
-                // обязательная штука
-                neighborEntity.MarkDirty(true);
-
-
-                // Определяем, является ли этот блок "источником" для направления провода
-                // Используем хеш позиции для детерминированного выбора
+                // Используем хеш позиции для детерминированного выбора направления
                 bool isSource = pos.GetHashCode() < connection.NeighborPos.GetHashCode();
 
                 conn.Add(new WireConnection
@@ -1246,7 +1233,7 @@ namespace EPImmersive.Content.Block
                     Thickness = 0.015f,
                     Asset = CreateCableAsset(api, connection.Parameters),
                     SagFactor = 0.05f,
-                    IsReverse = !isSource // Для обратного направления используем обратную ориентацию
+                    IsReverse = !isSource
                 });
             }
 

@@ -34,6 +34,11 @@ namespace EPImmersive.Utils
                     // NeighborNodeIndex - byte
                     writer.Write(conn.NeighborNodeIndex);
 
+                    // NeighborNodeLocalPos
+                    writer.Write(conn.NeighborNodeLocalPos.X);
+                    writer.Write(conn.NeighborNodeLocalPos.Y);
+                    writer.Write(conn.NeighborNodeLocalPos.Z);
+
                     // WireLength - float
                     writer.Write(conn.WireLength);
 
@@ -79,6 +84,14 @@ namespace EPImmersive.Utils
 
                 // NeighborNodeIndex - byte
                 conn.NeighborNodeIndex = reader.ReadByte();
+
+                
+                var X = reader.ReadDouble();
+                var Y = reader.ReadDouble();
+                var Z = reader.ReadDouble();
+
+                conn.NeighborNodeLocalPos = new Vec3d(X, Y, Z);
+                
 
                 // WireLength - float
                 conn.WireLength = reader.ReadSingle();
