@@ -1,5 +1,6 @@
 ﻿using ElectricalProgressive.Utils;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -16,6 +17,9 @@ namespace ElectricalProgressive.Content.Block.EStove;
 
 public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPositionSource
 {
+
+    StoveContentsRenderer renderer;  // Кастомный рендерер для динамики котелка
+
     public const float MaxTemperature = 1350f;
 
     protected Shape NowTesselatingShape;
@@ -101,22 +105,35 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         base.Initialize(api);
         inventory.pos = Pos;
         inventory.LateInitialize("smelting-" + Pos.X + "/" + Pos.Y + "/" + Pos.Z, api);
+
         if (api.Side == EnumAppSide.Server)
             _sapi = (api as ICoreServerAPI)!;
         else
             _capi = (api as ICoreClientAPI)!;
 
-        UpdateMeshes();
-        MarkDirty(true);
+        
 
-        _listenerId=RegisterGameTickListener(OnBurnTick, 250);
-        _listenerId2=RegisterGameTickListener(On500msTick, 500);
+        _listenerId = RegisterGameTickListener(OnBurnTick, 250);
+        _listenerId2 = RegisterGameTickListener(On500msTick, 500);
 
         MaxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 150);
+
+        
+        if (api is ICoreClientAPI capi)
+        {
+            // Регистрируем рендерер как в оригинале BEFirepit
+            renderer = new StoveContentsRenderer(capi, Pos);
+            capi.Event.RegisterRenderer(renderer, EnumRenderStage.Opaque, "estove");
+
+            
+        }
+
+        UpdateMeshes();
+        MarkDirty(true);
     }
 
 
-    // Вспомогательный метод (вставьте внутрь класса)
+    // Вспомогательный метод 
     private bool ContainsFood()
     {
         var collectible = this.InputSlot?.Itemstack?.Collectible;
@@ -135,13 +152,75 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
     {
         if (Api == null || Api.Side == EnumAppSide.Server)
             return;
-        if (slotid == 0)
+
+        // 0 слот для топлива, которого у нас нет
+        // слоты 3+ для содержимого емкости
+        if (slotid == 0 || slotid>2)
             return;
+
+        
+        // если тут пусто
         if (inventory[slotid].Empty)
         {
             Meshes[slotid] = null!;
+
+            // чистим рендерер если внутри уже нет емкости
+            if (slotid == 1)
+            {
+                if (inventory[2].Empty || !(inventory[2].Itemstack?.Collectible is IInFirepitRendererSupplier))
+                {
+                    renderer.contentStackRenderer?.Dispose();
+                    renderer.contentStackRenderer = null;
+                }
+            }
+
+            if (slotid == 2)
+            {
+                if (inventory[1].Empty || !(inventory[1].Itemstack?.Collectible is IInFirepitRendererSupplier))
+                {
+                    renderer.contentStackRenderer?.Dispose();
+                    renderer.contentStackRenderer = null;
+                }
+            }
+
+
             return;
         }
+
+        // тут емкость?
+        if (inventory[slotid].Itemstack?.Collectible is IInFirepitRendererSupplier)
+        {
+            Meshes[slotid] = null;  // Не рендерим статично, пусть рендерер handles
+
+            // Обновляем динамический рендерер
+
+            if (slotid == 1)
+                UpdateRenderer(slotid, false);
+            else if (slotid == 2)
+                UpdateRenderer(slotid, true);
+            return;
+        }
+
+        // проверяем, чтобы не рисовались одновременно входные и выходные вещи
+        if (slotid == 1)
+        {
+            if (!inventory[2].Empty)
+            {
+                Meshes[slotid] = null;
+                return;
+            }
+        }
+
+        if (slotid == 2)
+        {
+            if (!inventory[1].Empty)
+            {
+                Meshes[slotid] = null;
+                return;
+            }
+        }
+
+        // генерируем статичный мэш тут
         var meshData = GenMesh(inventory[slotid].Itemstack);
         if (meshData != null)
         {
@@ -153,6 +232,61 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
             Meshes[slotid] = null!;
         }
     }
+
+
+    private void UpdateRenderer(int slotId, bool outt)
+    {
+        if (renderer == null || Api?.Side != EnumAppSide.Client)
+            return;
+
+        ItemStack contentStack = inventory[slotId].Itemstack;
+
+        bool useOldRenderer =
+            renderer.ContentStack != null &&
+            renderer.contentStackRenderer != null &&
+            contentStack != null &&
+            renderer.ContentStack.Equals(Api.World, contentStack, GlobalConstants.IgnoredStackAttributes);
+
+        if (useOldRenderer)
+            return;
+
+        renderer.contentStackRenderer?.Dispose();
+        renderer.contentStackRenderer = null;
+
+        if (contentStack?.Collectible is IInFirepitRendererSupplier)
+        {
+            
+            var be = new BlockEntityFirepit();
+            be.Pos =  new BlockPos(new Vec3i(Pos.X, Pos.Y+1,Pos.Z),Pos.dimension);
+            
+
+            IInFirepitRenderer childrenderer = (contentStack?.Collectible as IInFirepitRendererSupplier).GetRendererWhenInFirepit(contentStack, be, outt);
+            be.Dispose();
+            if (childrenderer != null)
+            {
+                renderer.SetChildRenderer(contentStack, childrenderer);
+                
+                return;
+            }
+            
+        }
+
+        /*
+        // Для остальных предметов используем оригинальную логику
+        if (contentStack?.Collectible is IInFirepitRendererSupplier supplier)
+        {
+            IInFirepitRenderer childRenderer = supplier.GetRendererWhenInFirepit(contentStack, null, false);
+            if (childRenderer != null)
+            {
+                renderer.SetChildRenderer(contentStack, childRenderer);
+                return;
+            }
+        }
+
+        renderer.SetChildRenderer(null, null);
+        */
+    }
+
 
     /// <summary>
     /// Позиционирование меша в зависимости от слота
@@ -325,6 +459,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         {
             UpdateMesh(i);
         }
+        
         MarkDirty(true);
     }
 
@@ -341,6 +476,12 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
 
     private void OnBurnTick(float dt)
     {
+        
+        if (Api is ICoreClientAPI)
+        {
+            renderer?.OnUpdate(InputStackTemp);  // Обновляем для анимации/звуков котелка
+        }
+        
         if (Api is ICoreClientAPI)
             return;
 
@@ -557,7 +698,13 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
                 MarkDirty(true);
             }
             inventory.AfterBlocksLoaded(Api.World);
-            if (Api.Side == EnumAppSide.Client) UpdateMeshes();
+            
+            if (Api.Side == EnumAppSide.Client)
+            {
+                UpdateMeshes();
+                
+            }
+            
         }
     }
 
@@ -633,13 +780,22 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
     /// </summary>
     public override void OnBlockRemoved()
     {
+        
         base.OnBlockRemoved();
+
+
+        renderer?.Dispose();
+        renderer = null;
+
         if (_clientDialog != null)
         {
             _clientDialog?.TryClose();
             _clientDialog?.Dispose();
             _clientDialog = null!;
         }
+
+
+
 
         // Освобождение ссылок на API
         _capi = null;
@@ -663,7 +819,12 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
     /// </summary>
     public override void OnBlockUnloaded()
     {
+        
+
         base.OnBlockUnloaded();
+
+        renderer?.Dispose();
+        renderer = null;
 
         this.ElectricalProgressive?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
 
@@ -677,6 +838,7 @@ public class BlockEntityEStove : BlockEntityContainer, IHeatSource, ITexPosition
         // Отменяем слушателей тика игры
         UnregisterGameTickListener(_listenerId);
         UnregisterGameTickListener(_listenerId2);
+
 
 
         // Освобождение ссылок на API

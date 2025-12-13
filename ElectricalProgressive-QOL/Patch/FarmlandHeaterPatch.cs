@@ -604,7 +604,7 @@ public class FarmlandHeaterPatch
                 {
                     heatersInRoom.Add(heater);
 
-                    float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (heater.TempKoeff*40.0f/ roomVolume);
+                    float heaterBonus = (1.0f * heater.getPowerReceive() / heater.getPowerRequest()) * (heater.TempKoeff*100.0f/ roomVolume);
 
                     totalBonus += heaterBonus;
                 }

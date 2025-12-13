@@ -73,7 +73,7 @@
 
 
   "attributes": {
-    "temp_koeff": 40.0,
+    "temp_koeff": 50.0,
     "blockEProperties": "all_down",
     "facesEProperties": [ "down" ],
     "maxConsumption": 800, //максимальное потребление

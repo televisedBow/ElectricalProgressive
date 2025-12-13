@@ -317,4 +317,9 @@ public abstract class ContainerEFreezer2 : BlockEntityEBase, IBlockEntityContain
     {
 
     }
+
+    public void CheckInventoryClearedMidTick()
+    {
+        
+    }
 }
