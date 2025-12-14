@@ -106,8 +106,8 @@ namespace EPImmersive.Utils
         /// <param name="end">Конечная позиция</param>
         /// <param name="immersiveNetwork">Сеть для поиска</param>
         /// <param name="parts">Словарь частей сети</param>
-        /// <returns>Кортеж (массив позиций пути, массив индексов узлов)</returns>
-        public (BlockPos[], byte[]) FindShortestPath(
+        /// <returns>Кортеж (массив позиций пути, массив индексов узлов, суммарная длина пути)</returns>
+        public (BlockPos[], byte[], float) FindShortestPath(
             BlockPos start, BlockPos end,
             ImmersiveNetwork immersiveNetwork,
             Dictionary<BlockPos, ImmersiveNetworkPart> parts)
@@ -120,7 +120,7 @@ namespace EPImmersive.Utils
             // Проверяем, что обе позиции существуют в сети
             if (!parts.TryGetValue(start, out var startPart) ||
                 !parts.TryGetValue(end, out var endPart))
-                return (null, null);
+                return (null, null, 0f);
 
             // Добавляем все стартовые узлы в очередь с нулевой стоимостью
             foreach (var wireNode in startPart.WireNodes)
@@ -131,6 +131,8 @@ namespace EPImmersive.Utils
                 _costSoFar[startState] = 0;
             }
 
+            float pathLength = 0f;
+
             while (_queue.Count > 0)
             {
                 var current = _queue.Dequeue();
@@ -138,7 +140,10 @@ namespace EPImmersive.Utils
                 // Если достигли цели - восстанавливаем путь
                 if (current.Position.Equals(endKey))
                 {
-                    return ReconstructPath(current);
+                    var (path, nodeIndices) = ReconstructPath(current);
+                    // Рассчитываем фактическую длину пути
+                    pathLength = CalculatePathLength(path, nodeIndices, immersiveNetwork, parts);
+                    return (path, nodeIndices, pathLength);
                 }
 
                 if (_visited.Contains(current))
@@ -154,8 +159,7 @@ namespace EPImmersive.Utils
                     if (_visited.Contains(neighbor.state))
                         continue;
 
-                    // Вместо фиксированной стоимости 1 используем длину провода
-                    // Приводим float WireLength к int для совместимости с приоритетной очередью
+                    // Используем длину провода как стоимость перехода (округляем до int для очереди)
                     var newCost = _costSoFar[current] + neighbor.cost;
 
                     if (!_costSoFar.ContainsKey(neighbor.state) || newCost < _costSoFar[neighbor.state])
@@ -172,7 +176,44 @@ namespace EPImmersive.Utils
             }
 
             // Путь не найден
-            return (null, null);
+            return (null, null, 0f);
+        }
+
+        /// <summary>
+        /// Рассчитывает фактическую длину пути на основе WireLength соединений
+        /// </summary>
+        private float CalculatePathLength(BlockPos[] path, byte[] nodeIndices,
+            ImmersiveNetwork network, Dictionary<BlockPos, ImmersiveNetworkPart> parts)
+        {
+            if (path == null || nodeIndices == null || path.Length <= 1)
+                return 0f;
+
+            float totalLength = 0f;
+
+            for (int i = 0; i < path.Length - 1; i++)
+            {
+                var currentPos = path[i];
+                var nextPos = path[i + 1];
+                var currentNodeIndex = nodeIndices[i];
+                var nextNodeIndex = nodeIndices[i + 1];
+
+                // Ищем соединение между текущим и следующим блоком
+                if (parts.TryGetValue(currentPos, out var currentPart))
+                {
+                    foreach (var connection in currentPart.Connections)
+                    {
+                        if (connection.LocalNodeIndex == currentNodeIndex &&
+                            connection.NeighborPos.Equals(nextPos) &&
+                            connection.NeighborNodeIndex == nextNodeIndex)
+                        {
+                            totalLength += connection.WireLength;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return totalLength;
         }
 
         /// <summary>
@@ -214,27 +255,7 @@ namespace EPImmersive.Utils
                 }
             }
 
-            // Также проверяем входящие соединения (когда текущий узел является NeighborNodeIndex)
-            foreach (var networkConnection in network.ImmersiveConnections)
-            {
-                if (networkConnection.NeighborPos.Equals(current.Position.Pos) &&
-                    networkConnection.NeighborNodeIndex == current.NodeIndex)
-                {
-                    var neighborKey = new FastPosKey(
-                        networkConnection.LocalPos.X, networkConnection.LocalPos.Y,
-                        networkConnection.LocalPos.Z, networkConnection.LocalPos.dimension,
-                        networkConnection.LocalPos);
-
-                    var neighborState = new NodeState(neighborKey, networkConnection.LocalNodeIndex);
-
-                    if (network.PartPositions.Contains(networkConnection.LocalPos))
-                    {
-                        // Используем длину провода как стоимость перехода
-                        int cost = (int)Math.Ceiling(networkConnection.WireLength);
-                        neighbors.Add((neighborState, cost));
-                    }
-                }
-            }
+            
         }
 
         /// <summary>

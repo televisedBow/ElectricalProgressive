@@ -14,6 +14,9 @@ namespace EPImmersive.Utils
         // Массив для хранения всех расстояний между клиентами и магазинами
         public int[] Distances = new int[100];
 
+
+        public float[] PathLengths= new float[100];  // Массив фактических длин путей
+
         /// <summary>
         /// Список клиентов, участвующих в симуляции.
         /// </summary>

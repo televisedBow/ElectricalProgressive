@@ -645,6 +645,10 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     /// Сохраняем текущие важные параметры в сейв
     /// </summary>
     /// <param name="tree"></param>
+    /// <summary>
+    /// Сохраняем текущие важные параметры в сейв
+    /// </summary>
+    /// <param name="tree"></param>
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
@@ -663,25 +667,17 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         // Сохраняем параметры текущего блока
         tree.SetBytes("MainEpar", EParamsSerializer.SerializeSingle(_mainEpar));
 
-
-
-
-        // Сохраняем узлы подключения
-
+        // Сохраняем узлы подключения в новом бинарном формате
         if (_wireNodes.Count > 0)
         {
-            tree.SetInt("WireNodesCount", _wireNodes.Count);
-            for (int i = 0; i < _wireNodes.Count; i++)
-            {
-                var node = _wireNodes[i];
-                tree.SetInt($"WireNode_{i}_Index", node.Index);
-                tree.SetInt($"WireNode_{i}_Voltage", node.Voltage);
-                tree.SetDouble($"WireNode_{i}_X", node.Position.X);
-                tree.SetDouble($"WireNode_{i}_Y", node.Position.Y);
-                tree.SetDouble($"WireNode_{i}_Z", node.Position.Z);
-                tree.SetFloat($"WireNode_{i}_Radius", node.Radius);
-            }
+            var wireNodesData = WireNodeSerializer.SerializeWireNodes(_wireNodes);
+            tree.SetBytes("WireNodesData", wireNodesData);
         }
+        else
+        {
+            tree.RemoveAttribute("WireNodesData");
+        }
+
 
         // Сохраняем параметры частиц
         tree.SetInt("ParticlesType", ParticlesType);
@@ -707,19 +703,22 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     /// </summary>
     /// <param name="tree"></param>
     /// <param name="worldAccessForResolve"></param>
+    /// <summary>
+    /// Грузим из сейва текущие важные параметры
+    /// </summary>
+    /// <param name="tree"></param>
+    /// <param name="worldAccessForResolve"></param>
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
     {
         base.FromTreeAttributes(tree, worldAccessForResolve);
 
         // Загружаем соединения (новый формат)
         _connections.Clear();
-
         var connectionsData = tree.GetBytes("ConnectionsData");
         if (connectionsData != null && connectionsData.Length > 0)
         {
             _connections = ConnectionDataSerializer.DeserializeConnections(connectionsData, Pos);
         }
-
 
         // Загружаем параметры текущего блока
         var mainEparData = tree.GetBytes("MainEpar");
@@ -727,37 +726,25 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             ? EParamsSerializer.DeserializeSingle(mainEparData)
             : new EParams();
 
-        // Загружаем узлы подключения
-        int wireNodesCount = tree.GetInt("WireNodesCount", -1);
-
-        if (_wireNodes.Count > 0)
+        // Загружаем узлы подключения (новый бинарный формат)
+        var wireNodesData = tree.GetBytes("WireNodesData");
+        if (wireNodesData != null && wireNodesData.Length > 0)
         {
-            _wireNodes.Clear();
-
-            if (wireNodesCount > 0)
+            try
             {
-                for (int i = 0; i < wireNodesCount; i++)
+                var loadedNodes = WireNodeSerializer.DeserializeWireNodes(wireNodesData);
+                if (loadedNodes != null && loadedNodes.Count > 0)
                 {
-                    var index = tree.GetInt($"WireNode_{i}_Index", 0);
-                    var voltage = tree.GetInt($"WireNode_{i}_Voltage", 0);
-                    var x = tree.GetDouble($"WireNode_{i}_X", 0);
-                    var y = tree.GetDouble($"WireNode_{i}_Y", 0);
-                    var z = tree.GetDouble($"WireNode_{i}_Z", 0);
-                    var radius = tree.GetFloat($"WireNode_{i}_Radius", 0.1f);
-
-                    _wireNodes.Add(new WireNode
-                    {
-                        Index = (byte)index,
-                        Voltage = voltage,
-                        Position = new Vec3d(x, y, z),
-                        Radius = radius
-                    });
+                    _wireNodes = loadedNodes;
                 }
 
-                // Сортируем по индексу для удобства
-                _wireNodes.Sort((a, b) => a.Index.CompareTo(b.Index));
+            }
+            catch
+            {
+
             }
         }
+
 
         // Загрузка параметров частиц
         ParticlesType = tree.GetInt("ParticlesType", 0);
@@ -784,6 +771,8 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         this._dirty = true;
         this.Update();
     }
+
+   
 
 
 

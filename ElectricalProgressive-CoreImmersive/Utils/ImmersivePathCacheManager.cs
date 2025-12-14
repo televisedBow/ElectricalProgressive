@@ -13,6 +13,7 @@ namespace EPImmersive.Utils
         {
             public BlockPos[]? Path;
             public byte[]? NodeIndices; // Индексы узлов для каждого блока в пути
+            public float PathLength;    // Суммарная длина пути (WireLength)
             public DateTime LastAccessed;
             public int Version;
             public int Voltage;
@@ -56,6 +57,7 @@ namespace EPImmersive.Utils
             BlockPos end,
             out BlockPos[] path,
             out byte[] nodeIndices,
+            out float pathLength,  // Добавляем выходной параметр длины
             out int version,
             out int voltage)
         {
@@ -65,6 +67,7 @@ namespace EPImmersive.Utils
                 entry.LastAccessed = DateTime.UtcNow;
                 path = entry.Path!;
                 nodeIndices = entry.NodeIndices!;
+                pathLength = entry.PathLength;  // Возвращаем длину
                 version = entry.Version;
                 voltage = entry.Voltage;
                 return true;
@@ -72,6 +75,7 @@ namespace EPImmersive.Utils
 
             path = null!;
             nodeIndices = null!;
+            pathLength = 0f;  // Инициализируем
             version = 0;
             voltage = 0;
             return false;
@@ -86,6 +90,7 @@ namespace EPImmersive.Utils
             int currentVersion,
             BlockPos[] path,
             byte[] nodeIndices,
+            float pathLength,  // Добавляем параметр длины
             int voltage)
         {
             var key = HashPair(start, end);
@@ -95,6 +100,7 @@ namespace EPImmersive.Utils
                 {
                     Path = path,
                     NodeIndices = nodeIndices,
+                    PathLength = pathLength,  // Сохраняем длину
                     LastAccessed = DateTime.UtcNow,
                     Version = currentVersion,
                     Voltage = voltage
@@ -103,12 +109,15 @@ namespace EPImmersive.Utils
                 {
                     existing.Path = path;
                     existing.NodeIndices = nodeIndices;
+                    existing.PathLength = pathLength;  // Обновляем длину
                     existing.LastAccessed = DateTime.UtcNow;
                     existing.Version = currentVersion;
                     existing.Voltage = voltage;
                     return existing;
                 });
         }
+
+
 
         /// <summary>
         /// Очистка старых записей, не использовавшихся дольше TTL

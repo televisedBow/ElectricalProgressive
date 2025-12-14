@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Vintagestory.API.MathTools;
@@ -63,7 +62,7 @@ namespace EPImmersive.Utils
                 {
                     try
                     {
-                        var (path, nodeIndices) = pathFinder.FindShortestPath(
+                        var (path, nodeIndices, pathLength) = pathFinder.FindShortestPath(
                             request.Start, request.End, request.ImmersiveNetwork, _parts);
 
                         if (path != null)
@@ -85,6 +84,7 @@ namespace EPImmersive.Utils
                                 request.ImmersiveNetwork.version,
                                 path,
                                 nodeIndices,
+                                pathLength,
                                 voltage);
                         }
                         else

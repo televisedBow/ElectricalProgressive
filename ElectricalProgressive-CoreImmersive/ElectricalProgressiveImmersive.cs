@@ -576,15 +576,14 @@ namespace EPImmersive
         /// Логистическая задача для иммерсивных проводов
         /// </summary>
         private void LogisticalTask(ImmersiveNetwork network,
-            List<BlockPos> consumerPositions,
-            List<float> consumerRequests,
-            List<BlockPos> producerPositions,
-            List<float> producerGive,
-            ImmersiveSimulation sim)
+    List<BlockPos> consumerPositions,
+    List<float> consumerRequests,
+    List<BlockPos> producerPositions,
+    List<float> producerGive,
+    ImmersiveSimulation sim)
         {
-            var cP = sim.CountWorkingCustomers = consumerPositions.Count; // Количество потребителей
-            var pP = sim.CountWorkingStores = producerPositions.Count; // Количество производителей
-
+            var cP = sim.CountWorkingCustomers = consumerPositions.Count;
+            var pP = sim.CountWorkingStores = producerPositions.Count;
 
             BlockPos start;
             BlockPos end;
@@ -596,6 +595,7 @@ namespace EPImmersive
                 Array.Resize(ref sim.Path, cP * pP);
                 Array.Resize(ref sim.NodeIndices, cP * pP);
                 Array.Resize(ref sim.Voltage, cP * pP);
+                Array.Resize(ref sim.PathLengths, cP * pP);  // Добавляем массив длин
             }
 
             if (sim.Stores == null || sim.Stores.Length < pP)
@@ -603,7 +603,6 @@ namespace EPImmersive
 
             if (sim.Customers == null || sim.Customers.Length < cP)
                 sim.Customers = new ImmersiveCustomer[cP];
-
 
             for (var i = 0; i < cP; i++)
             {
@@ -614,26 +613,32 @@ namespace EPImmersive
 
                     if (ImmersivePathFinder.Heuristic(start, end) < ElectricalProgressive.ElectricalProgressive.maxDistanceForFinding * 3)
                     {
-                        if (ImmersivePathCacheManager.TryGet(start, end, out var cachedPath, out var nodeIndices, out var version, out var voltage))
+                        // Изменяем вызов TryGet - добавляем получение длины пути
+                        if (ImmersivePathCacheManager.TryGet(start, end, out var cachedPath,
+                            out var nodeIndices, out var cachedPathLength, out var version, out var voltage))
                         {
-                            sim.Distances[i * pP + j] = cachedPath != null ? cachedPath.Length : int.MaxValue;
-                            if (version != network.version) // Если версия сети не совпадает, то добавляем запрос в очередь
+                            // Используем фактическую длину пути вместо количества блоков
+                            sim.Distances[i * pP + j] = cachedPath != null ?
+                                (int)Math.Ceiling(cachedPathLength) : int.MaxValue;
+
+                            if (version != network.version)
                             {
-                                _immersiveAsyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
+                                _immersiveAsyncPathFinder.EnqueueRequest(start, end, network);
                             }
 
                             sim.Path[i * pP + j] = cachedPath;
                             sim.NodeIndices[i * pP + j] = nodeIndices;
                             sim.Voltage[i * pP + j] = voltage;
+                            sim.PathLengths[i * pP + j] = cachedPathLength;  // Сохраняем длину
                         }
                         else
                         {
-                            _immersiveAsyncPathFinder.EnqueueRequest(start, end, network); // Добавляем запрос в очередь
-                            sim.Distances[i * pP + j] = int.MaxValue; // Пока маршрута нет, ставим максимальное значение
-
+                            _immersiveAsyncPathFinder.EnqueueRequest(start, end, network);
+                            sim.Distances[i * pP + j] = int.MaxValue;
                             sim.Path[i * pP + j] = null;
                             sim.NodeIndices[i * pP + j] = null;
                             sim.Voltage[i * pP + j] = 0;
+                            sim.PathLengths[i * pP + j] = 0f;
                         }
                     }
                     else
@@ -642,6 +647,7 @@ namespace EPImmersive
                         sim.Path[i * pP + j] = null;
                         sim.NodeIndices[i * pP + j] = null;
                         sim.Voltage[i * pP + j] = 0;
+                        sim.PathLengths[i * pP + j] = 0f;
                     }
                 }
             }
