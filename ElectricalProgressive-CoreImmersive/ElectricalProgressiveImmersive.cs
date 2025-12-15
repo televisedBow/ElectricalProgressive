@@ -1,6 +1,7 @@
 ﻿using ElectricalProgressive;
 using ElectricalProgressive.Utils;
 using EPImmersive.Content.Block;
+using EPImmersive.Content.Block.CableDot;
 using EPImmersive.Content.Block.EAccumulator;
 using EPImmersive.Content.Block.ECable1;
 using EPImmersive.Content.Block.EGenerator;
@@ -110,6 +111,11 @@ namespace EPImmersive
             api.RegisterBlockClass("BlockHVSFonar", typeof(BlockHVSFonar));
             api.RegisterBlockEntityClass("BlockEntityHVSFonar", typeof(BlockEntityHVSFonar));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorHVSFonar", typeof(BEBehaviorHVSFonar));
+
+            api.RegisterBlockClass("BlockCableDot", typeof(BlockCableDot));
+            api.RegisterBlockEntityClass("BlockEntityCableDot", typeof(BlockEntityCableDot));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorCableDot", typeof(BEBehaviorCableDot));
+
 
             api.RegisterBlockClass("BlockHVTower", typeof(BlockHVTower));
             api.RegisterBlockEntityClass("BlockEntityHVTower", typeof(BlockEntityHVTower));

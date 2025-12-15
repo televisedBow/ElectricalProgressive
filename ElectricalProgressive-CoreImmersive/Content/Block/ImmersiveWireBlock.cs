@@ -21,7 +21,9 @@ namespace EPImmersive.Content.Block
     {
         protected List<WireNode> _wireNodes; // точки крепления
 
-        public MeshData? _MeshData;
+        public MeshData? _CustomMeshData;
+
+        public Cuboidf[]? _CustomSelBoxes;
 
         public bool _skipNonCenterCollisions=false;
 
@@ -126,8 +128,17 @@ namespace EPImmersive.Content.Block
                 }
             }
 
-            // Добавляем провода к выделению
-            boxes.AddRange(base.GetSelectionBoxes(blockAccessor, pos));
+            // Добавляем выделение самого блока
+            // нет кастомного выделения?
+            if (_CustomSelBoxes == null)
+            {
+                boxes.AddRange(base.GetSelectionBoxes(blockAccessor, pos));
+            }
+            else
+            {
+                boxes.AddRange(_CustomSelBoxes);
+            }
+
             // boxes.AddRange(GetWireCollisionBoxes(blockAccessor, pos));
 
             return boxes.ToArray();
@@ -745,12 +756,12 @@ namespace EPImmersive.Content.Block
 
             // Получаем базовый меш (генерируется каждый раз, но это дешево)
             MeshData baseMeshData = null;
-            if (_MeshData == null)
+            if (_CustomMeshData == null)
                 //baseMeshData = GetBaseMesh();
                 baseMeshData = sourceMesh;
             else
             {
-                baseMeshData = _MeshData;
+                baseMeshData = _CustomMeshData;
             }
 
             MeshData finalMesh = baseMeshData?.Clone() ?? new MeshData();

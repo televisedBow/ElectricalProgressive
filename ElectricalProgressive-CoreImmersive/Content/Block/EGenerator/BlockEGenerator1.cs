@@ -312,7 +312,7 @@ public class BlockEGenerator1 : ImmersiveWireBlock, IMechanicalPowerBlock
                 MeshData.TryAdd((facing, code), meshData);
             }
 
-            _MeshData = meshData;
+            _CustomMeshData = meshData;
         }
 
         base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, pos, chunkExtBlocks, extIndex3d);

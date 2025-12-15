@@ -316,7 +316,7 @@ public class BlockEMotor1 : ImmersiveWireBlock, IMechanicalPowerBlock
                 BlockEMotor1.MeshData.TryAdd((facing, code), meshData);
             }
 
-            _MeshData = meshData;
+            _CustomMeshData = meshData;
         }
 
         base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, pos, chunkExtBlocks, extIndex3d);

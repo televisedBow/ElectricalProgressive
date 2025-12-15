@@ -57,6 +57,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
     }
 
+
     public const int MyPacketIdForServer = 1122334457;
     public const int MyPacketIdForClient = 1122334458;
 
