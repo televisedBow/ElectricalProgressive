@@ -112,7 +112,9 @@ namespace EPImmersive
             api.RegisterBlockEntityClass("BlockEntityHVSFonar", typeof(BlockEntityHVSFonar));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorHVSFonar", typeof(BEBehaviorHVSFonar));
 
-            api.RegisterBlockClass("BlockCableDot", typeof(BlockCableDot));
+            api.RegisterBlockClass("BlockCableDotRoof", typeof(BlockCableDotRoof));
+            api.RegisterBlockClass("BlockCableDotDown", typeof(BlockCableDotDown));
+            api.RegisterBlockClass("BlockCableDotWall", typeof(BlockCableDotWall));
             api.RegisterBlockEntityClass("BlockEntityCableDot", typeof(BlockEntityCableDot));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorCableDot", typeof(BEBehaviorCableDot));
 

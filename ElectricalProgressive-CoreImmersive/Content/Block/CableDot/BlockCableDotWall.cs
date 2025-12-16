@@ -11,7 +11,7 @@ using Vintagestory.API.Config;
 
 namespace EPImmersive.Content.Block.CableDot
 {
-    internal class BlockCableDot : ImmersiveWireBlock
+    internal class BlockCableDotWall : ImmersiveWireBlock
     {
         private static readonly Dictionary<CacheDataKey, MeshData> MeshDataCache = [];
         private static readonly Dictionary<CacheDataKey, Cuboidf[]> SelectionBoxesCache = [];
@@ -55,6 +55,7 @@ namespace EPImmersive.Content.Block.CableDot
         {
             
             var selection = new Selection(blockSel);
+            // только вариации настенные нижние
             var facing = FacingHelper.From(selection.Face, BlockFacing.DOWN);
 
             if (facing == Facing.None ||
@@ -96,7 +97,8 @@ namespace EPImmersive.Content.Block.CableDot
 
         public override Cuboidf[] GetSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
-            _CustomSelBoxes=GetRotatedBoxes(pos, SelectionBoxesCache, SelectionBoxes);
+            // передаем выделения ниже, чтобы ими управлял ImmersiveWireBlock
+            _CustomSelBoxes = GetRotatedBoxes(pos, SelectionBoxesCache, SelectionBoxes);
             return base.GetSelectionBoxes(blockAccessor, pos);
         }
 
@@ -152,6 +154,7 @@ namespace EPImmersive.Content.Block.CableDot
                 MeshDataCache.TryAdd(key, meshData);
             }
 
+            // передаем мэш, чтобы им управлял ImmersiveWireBlock
             _CustomMeshData = meshData;
 
             base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, pos, chunkExtBlocks, extIndex3d);

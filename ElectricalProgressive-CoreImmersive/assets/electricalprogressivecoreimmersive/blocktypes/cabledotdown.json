@@ -1,6 +1,6 @@
 ﻿{
-  "code": "cabledotwall",
-  "class": "BlockCableDotWall",
+  "code": "cabledotdown",
+  "class": "BlockCableDotDown",
   "entityClass": "BlockEntityCableDot",
   "entityBehaviors": [
     {
@@ -19,11 +19,11 @@
     "isolated": true,
     "isolatedEnvironment": true,
     "handbook": {
-      "groupBy": [ "cabledotwall-*" ],
+      "groupBy": [ "cabledotdown-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveqol:block-handbooktitle-cabledotwall",
-          "text": "electricalprogressiveqol:block-handbooktext-cabledotwall"
+          "title": "electricalprogressiveqol:block-handbooktitle-cabledotdown",
+          "text": "electricalprogressiveqol:block-handbooktext-cabledotdown"
         }
       ]
     },
@@ -32,7 +32,7 @@
         "index": 0,
         "voltage": "512",
         "x": 0.5,
-        "y": 0.1,
+        "y": 0.8,
         "z": 0.5,
         "dxdydz": 0.1
       }
@@ -53,7 +53,7 @@
 
 
   "shape": {
-    "base": "block/cabledotwall"
+    "base": "block/cabledotdown"
   },
 
   "resistance": 1,
@@ -78,28 +78,33 @@
     "walk": "game:walk/stone"
   },
   "collisionBox": {
-    "x1": 0.33,
+    "x1": 0.3,
     "y1": 0.0,
-    "z1": 0.0,
-    "x2": 0.66,
+    "z1": 0.3,
+    "x2": 0.7,
     "y2": 1.0,
-    "z2": 0.66
+    "z2": 0.7
   },
   "selectionBox": {
-    "x1": 0.33,
+    "x1": 0.3,
     "y1": 0.0,
-    "z1": 0.0,
-    "x2": 0.66,
+    "z1": 0.3,
+    "x2": 0.7,
     "y2": 1.0,
-    "z2": 0.66
+    "z2": 0.7
   },
   "guiTransform": {
     "rotation": {
       "x": 23,
-      "y": 180,
+      "y": -35,
       "z": 0
     },
-    "scale": 1.6
+    "origin": {
+      "x": 0.5,
+      "y": 0.45,
+      "z": 0.5
+    },
+    "scale": 1.4
   },
   "tpHandTransform": {
     "translation": {
