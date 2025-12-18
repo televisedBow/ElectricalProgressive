@@ -15,6 +15,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -58,6 +59,13 @@ namespace EPImmersive
         public ICoreClientAPI _capi = null!;
         private ICoreServerAPI _sapi = null!;
 
+
+
+        private readonly BlockingCollection<ImmersiveNetwork> _networkProcessingQueue = new();
+        private readonly List<Thread> _networkProcessingThreads = new();
+        private volatile bool _networkProcessingRunning = true;
+        private readonly CountdownEvent _networkProcessingCompleted = new(0);
+        private readonly ConcurrentBag<List<ImmersiveEnergyPacket>> _networkResults = new();
 
 
 
@@ -134,30 +142,42 @@ namespace EPImmersive
         {
             base.Dispose();
 
-            // Удаляем слушатель тиков игры
+            // Останавливаем обработку сетей
+            _networkProcessingRunning = false;
+
+            // Добавляем null-значения в очередь, чтобы разблокировать потоки
+            foreach (var thread in _networkProcessingThreads)
+            {
+                _networkProcessingQueue.Add(null);
+            }
+
+            // Ждем завершения потоков
+            foreach (var thread in _networkProcessingThreads)
+            {
+                thread.Join(1000);
+            }
+
+            // Останавливаем поиск путей
             if (_sapi != null)
             {
                 _sapi.Event.UnregisterGameTickListener(_listenerId1);
-                _immersiveAsyncPathFinder.Stop();
+                _immersiveAsyncPathFinder?.Stop();
                 _immersiveAsyncPathFinder = null;
             }
 
+            // Очистка ресурсов
             _globalEnergyPackets.Clear();
-
             _sumEnergy.Clear();
             _packetsByPosition.Clear();
-
+            _networkProcessingQueue.Dispose();
+            _networkProcessingCompleted.Dispose();
 
             Api = null!;
             _capi = null!;
             _sapi = null!;
 
-
-
-
             Networks.Clear();
             Parts.Clear();
-
             ImmersivePathCacheManager.Dispose();
         }
 
@@ -197,18 +217,65 @@ namespace EPImmersive
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);
-
             this._sapi = api;
-
-
-
-            //инициализируем обработчик уронов
-            //damageManager = new DamageManager(api);
 
             _listenerId1 = _sapi.Event.RegisterGameTickListener(this.OnGameTickServer, TickTimeMs);
 
-            _immersiveAsyncPathFinder = new ImmersiveAsyncPathFinder(Parts, ElectricalProgressive.ElectricalProgressive.multiThreading); // вычислитель параллельных задач поиска путей
+            // Инициализация поиска путей
+            _immersiveAsyncPathFinder = new ImmersiveAsyncPathFinder(Parts, ElectricalProgressive.ElectricalProgressive.multiThreading);
+
+            // Инициализация потоков для обработки сетей
+            int threadCount = ElectricalProgressive.ElectricalProgressive.multiThreading;
+            for (int i = 0; i < threadCount; i++)
+            {
+                var thread = new Thread(() => ProcessNetworksWorker())
+                {
+                    Name = $"NetworkProcessor-{i}",
+                    IsBackground = true
+                };
+                _networkProcessingThreads.Add(thread);
+                thread.Start();
+            }
         }
+
+
+        /// <summary>
+        /// Метод-воркер для обработки сетей
+        /// </summary>
+        private void ProcessNetworksWorker()
+        {
+            while (_networkProcessingRunning)
+            {
+                try
+                {
+                    // Блокируем поток, пока не появится задача
+                    if (_networkProcessingQueue.TryTake(out var network, Timeout.Infinite))
+                    {
+                        var context = GetContext();
+                        try
+                        {
+                            ProcessNetwork(network, context);
+
+                            if (context.LocalPackets.Count > 0)
+                            {
+                                var packetsCopy = new List<ImmersiveEnergyPacket>(context.LocalPackets);
+                                _networkResults.Add(packetsCopy);
+                            }
+                        }
+                        finally
+                        {
+                            ReturnContext(context);
+                            _networkProcessingCompleted.Signal();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Логирование ошибки
+                }
+            }
+        }
+
 
         /// <summary>
         /// Обновление электрической сети для иммерсивных проводов
@@ -572,7 +639,7 @@ namespace EPImmersive
                     _sumEnergy[part.Key] = 0F;
                 }
 
-                
+
 
 
                 // Обнуляем основной ток
@@ -1050,56 +1117,39 @@ namespace EPImmersive
         /// <param name="deltaTime"></param>
         private void OnGameTickServer(float deltaTime)
         {
-            // выходим полюбому, если нет API
             if (_sapi == null)
                 return;
 
-            //Очищаем старые пути
+            // Очистка старых путей
             if (_sapi.World.Rand.NextDouble() < 0.01d)
             {
                 ImmersivePathCacheManager.Cleanup();
             }
 
-            // Если время очистки кэша путей вышло, то очищаем кэш
             Cleaner();
 
+            // Очищаем результаты предыдущего тика
+            _networkResults.Clear();
 
-            // Потокобезопасный контейнер для сбора пакетов
-            var packetsBag = new ConcurrentBag<List<ImmersiveEnergyPacket>>();
+            // Сбрасываем CountdownEvent на количество сетей
+            _networkProcessingCompleted.Reset(Networks.Count);
 
-            // Обрабатываем сети параллельно с использованием пула контекстов
-            Parallel.ForEach(Networks, new ParallelOptions
+            // Добавляем все сети в очередь обработки
+            foreach (var network in Networks)
             {
-                MaxDegreeOfParallelism = ElectricalProgressive.ElectricalProgressive.multiThreading
-            }, network =>
+                _networkProcessingQueue.Add(network);
+            }
+
+            // Ждем завершения обработки всех сетей
+            _networkProcessingCompleted.Wait();
+
+            // Собираем результаты
+            foreach (var packets in _networkResults)
             {
-                var context = GetContext();
-                try
-                {
-                    // Используем контекст вместо локальных переменных
-                    ProcessNetwork(network, context);
-
-                    if (context.LocalPackets.Count > 0)
-                    {
-                        // Создаем копию только если есть пакеты
-                        var packetsCopy = new List<ImmersiveEnergyPacket>(context.LocalPackets);
-                        packetsBag.Add(packetsCopy);
-                    }
-                }
-                finally
-                {
-                    ReturnContext(context);
-                }
-            });
-
-            // Собираем все пакеты
-            foreach (var packets in packetsBag)
                 _globalEnergyPackets.AddRange(packets);
+            }
 
-
-
-
-            // Обновление электрических компонентов в сети, если прошло достаточно времени около 0.5 секунд
+            // Обновление электрических компонентов
             _elapsedMs += deltaTime;
             UpdateNetworkComponents();
 
@@ -1342,7 +1392,7 @@ namespace EPImmersive
                         // Проверяем иммерсивные провода
                         if (!connect.Parameters.burnout) //проверяем не сгорели ли соединения
                         {
-                            
+
                             // проверяем может ли пакет тут пройти
                             if (connect.Parameters.voltage == 0
                                 || connect.Parameters.burnout
@@ -1351,7 +1401,7 @@ namespace EPImmersive
                                 packet.shouldBeRemoved = true;
                                 continue;
                             }
-                            
+
 
                             // считаем сопротивление для основного блока (используем основные параметры как fallback)
                             resistance = ElectricalProgressive.ElectricalProgressive.energyLossFactor *
@@ -2056,3 +2106,4 @@ namespace EPImmersive
 
 
 }
+
