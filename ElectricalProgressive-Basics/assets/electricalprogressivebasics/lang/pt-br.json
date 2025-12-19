@@ -221,8 +221,11 @@
 
   "game:causeCurrent": "Sobrecarga de corrente",
   "game:causeVoltage": "Sobretensão",
-  "game:causeEnvironment": "Exposição a líquido"
+  "game:causeEnvironment": "Exposição a líquido",
 
-
+  "remove_burned_cable": "Remova o cabo queimado primeiro",
+  "cable_same_type": "Os cabos devem ser do mesmo tipo",
+  "not_enough_cables": "Cabos insuficientes para colocar",
+  "enough_lines": "Já há linhas suficientes"
 
 }

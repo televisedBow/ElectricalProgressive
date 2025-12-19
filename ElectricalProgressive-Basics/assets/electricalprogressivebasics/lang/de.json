@@ -216,9 +216,12 @@
 
   "game:causeCurrent": "Stromüberlastung",
   "game:causeVoltage": "Überspannung",
-  "game:causeEnvironment": "Einwirkung von Flüssigkeit"
+  "game:causeEnvironment": "Einwirkung von Flüssigkeit",
 
-
+  "remove_burned_cable": "Entferne zuerst das verbrannte Kabel",
+  "cable_same_type": "Kabel müssen vom gleichen Typ sein",
+  "not_enough_cables": "Nicht genug Kabel zum Platzieren",
+  "enough_lines": "Es sind bereits genug Leitungen vorhanden"
 
 
 }

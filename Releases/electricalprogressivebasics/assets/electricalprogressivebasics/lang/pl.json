@@ -216,8 +216,11 @@
 
   "game:causeCurrent": "Przeciążenie prądowe",
   "game:causeVoltage": "Przekroczenie napięcia",
-  "game:causeEnvironment": "Kontakt z cieczą"
+  "game:causeEnvironment": "Kontakt z cieczą",
 
 
-
+  "remove_burned_cable": "Najpierw usuń przepalony kabel",
+  "cable_same_type": "Kable muszą być tego samego typu",
+  "not_enough_cables": "Za mało kabli do umieszczenia",
+  "enough_lines": "Jest już wystarczająco dużo linii"
 }

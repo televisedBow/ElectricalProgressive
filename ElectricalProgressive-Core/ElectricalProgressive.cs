@@ -21,7 +21,7 @@ using static ElectricalProgressive.ElectricalProgressive;
     "electricalprogressivecore",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Electrical logic library.",
-    Version = "2.6.2",
+    Version = "2.6.3",
     Authors = ["Tehtelev", "Kotl"]
 )]
 
@@ -57,11 +57,11 @@ namespace ElectricalProgressive
 
         private Network _localNetwork = new();
 
-        private readonly BlockingCollection<Network> _networkProcessingQueue = new();
-        private readonly List<Thread> _networkProcessingThreads = new();
-        private volatile bool _networkProcessingRunning = true;
-        private readonly CountdownEvent _networkProcessingCompleted = new(0);
-        private readonly ConcurrentBag<List<EnergyPacket>> _networkResults = new();
+        private readonly BlockingCollection<Network> _networkProcessingQueue = new(); // коллекция для сетей
+        private readonly List<Thread> _networkProcessingThreads = new();                //список потоков работников
+        private volatile bool _networkProcessingRunning = true;                         //сети работают?
+        private readonly CountdownEvent _networkProcessingCompleted = new(0); // ивент для окончания ожидания потоков
+        private readonly ConcurrentBag<List<EnergyPacket>> _networkResults = new();      // список для пакетов в потоках
 
         public static int speedOfElectricity; // Скорость электричества в проводах (блоков в тик)
         public static int timeBeforeBurnout; // Время до сгорания проводника в секундах
@@ -636,7 +636,8 @@ namespace ElectricalProgressive
         {
             // Этап 1: Очищаем локальные переменные цикла ----------------------------------------------------------------------------
 
-
+            if (network == null)
+                return;
 
             // Этап 2: Сбор запросов от потребителей----------------------------------------------------------------------------
             var cons = network.Consumers.Count; // Количество потребителей в сети

@@ -223,8 +223,11 @@
 
   "game:causeCurrent": "Current overload",
   "game:causeVoltage": "Overvoltage",
-  "game:causeEnvironment": "Liquid exposure"
+  "game:causeEnvironment": "Liquid exposure",
 
-
+  "remove_burned_cable": "Remove the burned cable first",
+  "cable_same_type": "Cables must be of the same type",
+  "not_enough_cables": "Not enough cables to place",
+  "enough_lines": "There are already enough lines"
 
 }

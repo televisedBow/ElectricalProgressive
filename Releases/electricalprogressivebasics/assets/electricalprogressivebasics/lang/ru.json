@@ -230,6 +230,11 @@
 
   "game:causeCurrent": "Перегрузка по току",
   "game:causeVoltage": "Превышено напряжение",
-  "game:causeEnvironment": "Воздействие жидкости"
+  "game:causeEnvironment": "Воздействие жидкости",
+
+  "remove_burned_cable": "Уберите сгоревший кабель сначала",
+  "cable_same_type": "Кабеля должны быть того же типа",
+  "not_enough_cables": "Недостаточно кабелей для размещения",
+  "enough_lines": "Линий уже достаточно"
 
 }

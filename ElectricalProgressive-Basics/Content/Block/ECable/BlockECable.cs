@@ -170,7 +170,7 @@ namespace ElectricalProgressive.Content.Block.ECable
                 if ((indexV == 32 && lines == 4) || (indexV == 128 && lines == 2))
                 {
                     if (this.api is ICoreClientAPI apii)
-                        apii.TriggerIngameError((object)this, "cable", "Линий уже достаточно.");
+                        apii.TriggerIngameError((object)this, "cable4", Lang.Get("electricalprogressivebasics:enough_lines"));
 
                     return false;
                 }
@@ -276,19 +276,19 @@ namespace ElectricalProgressive.Content.Block.ECable
 
             if (burnout)
             {
-                clientApi.TriggerIngameError(this, "cable", "Уберите сгоревший кабель сначала.");
+                clientApi.TriggerIngameError(this, "cable1",  Lang.Get("electricalprogressivebasics:remove_burned_cable"));
                 return false;
             }
 
             if (!itemStack.Block.Code.ToString().Contains(requiredCable))
             {
-                clientApi.TriggerIngameError(this, "cable", "Кабеля должны быть того же типа.");
+                clientApi.TriggerIngameError(this, "cable2", Lang.Get("electricalprogressivebasics:cable_same_type"));
                 return false;
             }
 
             if (gameMode != EnumGameMode.Creative && itemStack.StackSize < requiredCount)
             {
-                clientApi.TriggerIngameError(this, "cable", "Недостаточно кабелей для размещения.");
+                clientApi.TriggerIngameError(this, "cable3", Lang.Get("electricalprogressivebasics:not_enough_cables"));
                 return false;
             }
 

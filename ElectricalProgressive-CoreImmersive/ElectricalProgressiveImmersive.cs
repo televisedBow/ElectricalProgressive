@@ -60,12 +60,11 @@ namespace EPImmersive
         private ICoreServerAPI _sapi = null!;
 
 
-
-        private readonly BlockingCollection<ImmersiveNetwork> _networkProcessingQueue = new();
-        private readonly List<Thread> _networkProcessingThreads = new();
-        private volatile bool _networkProcessingRunning = true;
-        private readonly CountdownEvent _networkProcessingCompleted = new(0);
-        private readonly ConcurrentBag<List<ImmersiveEnergyPacket>> _networkResults = new();
+        private readonly BlockingCollection<ImmersiveNetwork> _networkProcessingQueue = new(); // коллекция для сетей
+        private readonly List<Thread> _networkProcessingThreads = new();                //список потоков работников
+        private volatile bool _networkProcessingRunning = true;                         //сети работают?
+        private readonly CountdownEvent _networkProcessingCompleted = new(0); // ивент для окончания ожидания потоков
+        private readonly ConcurrentBag<List<ImmersiveEnergyPacket>> _networkResults = new();      // список для пакетов в потоках
 
 
 
@@ -871,7 +870,8 @@ namespace EPImmersive
         {
             // Этап 1: Очищаем локальные переменные цикла ----------------------------------------------------------------------------
 
-
+            if (network == null)
+                return;
 
             // Этап 2: Сбор запросов от потребителей----------------------------------------------------------------------------
             var cons = network.Consumers.Count; // Количество потребителей в сети

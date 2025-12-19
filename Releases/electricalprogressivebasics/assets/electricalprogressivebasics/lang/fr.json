@@ -220,7 +220,10 @@
 
   "game:causeCurrent": "Surcharge de courant",
   "game:causeVoltage": "Surtension",
-  "game:causeEnvironment": "Exposition à un liquide"
+  "game:causeEnvironment": "Exposition à un liquide",
 
-
+  "remove_burned_cable": "Retirez d'abord le câble brûlé",
+  "cable_same_type": "Les câbles doivent être du même type",
+  "not_enough_cables": "Pas assez de câbles à placer",
+  "enough_lines": "Il y a déjà assez de lignes"
 }

@@ -219,5 +219,10 @@
 
   "game:causeCurrent": "Přetížení proudem",
   "game:causeVoltage": "Přepětí",
-  "game:causeEnvironment": "Vystavení kapalině"
+  "game:causeEnvironment": "Vystavení kapalině",
+
+  "remove_burned_cable": "Nejprve odstraňte spálený kabel",
+  "cable_same_type": "Kabely musí být stejného typu",
+  "not_enough_cables": "Nedostatek kabelů k umístění",
+  "enough_lines": "Už je dostatek linek"
 }

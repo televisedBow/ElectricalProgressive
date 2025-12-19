@@ -216,8 +216,11 @@
 
   "game:causeCurrent": "Перевантаження за струмом",
   "game:causeVoltage": "Перевищення напруги",
-  "game:causeEnvironment": "Вплив рідини"
+  "game:causeEnvironment": "Вплив рідини",
 
-
+  "remove_burned_cable": "Спочатку приберіть обпалений кабель",
+  "cable_same_type": "Кабелі мають бути одного типу",
+  "not_enough_cables": "Недостатньо кабелів для розміщення",
+  "enough_lines": "Ліній уже достатньо"
 
 }
