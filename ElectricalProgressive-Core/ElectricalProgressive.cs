@@ -1015,10 +1015,10 @@ namespace ElectricalProgressive
                         totalCurrent += packet2.energy / packet2.voltage;
 
 
-                        if (packet2.voltage == bufPartTrans.highVoltage)
-                            packet2.voltage = bufPartTrans.lowVoltage;
-                        else if (packet2.voltage == bufPartTrans.lowVoltage)
-                            packet2.voltage = bufPartTrans.highVoltage;
+                        if (packet2.voltage == bufPartTrans.HighVoltage)
+                            packet2.voltage = bufPartTrans.LowVoltage;
+                        else if (packet2.voltage == bufPartTrans.LowVoltage)
+                            packet2.voltage = bufPartTrans.HighVoltage;
 
                     }
 

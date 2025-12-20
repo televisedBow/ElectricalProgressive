@@ -892,7 +892,8 @@ namespace EPImmersive.Content.Block
             base.OnUnloaded(api);
 
             // Очищаем кэш для этого блока
-            WireMeshesCache.Clear();
+      
+            //WireMeshesCache.Clear();
         }
 
         /// <summary>

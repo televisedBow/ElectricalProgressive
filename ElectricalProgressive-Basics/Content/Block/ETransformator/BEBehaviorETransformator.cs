@@ -12,24 +12,25 @@ namespace ElectricalProgressive.Content.Block.ETransformator;
 
 public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransformator
 {
-    float maxCurrent; //максимальный ток
-    float power;      //мощность
+   
+    float _power;      //мощность
 
 
-    public const string PowerKey = "electricalprogressive:power";
-
+    public const string PowerKey = "electricalprogressive:_power";
+    
 
     public BEBehaviorETransformator(BlockEntity blockEntity) : base(blockEntity)
     {
-        maxCurrent = MyMiniLib.GetAttributeFloat(this.Block, "maxCurrent", 5.0F);
+        HighVoltage = MyMiniLib.GetAttributeInt(this.Block, "voltage", 32);
+        LowVoltage = MyMiniLib.GetAttributeInt(this.Block, "lowVoltage", 32);
     }
 
     public bool IsBurned => this.Block.Variant["state"] == "burned";
     public new BlockPos Pos => this.Blockentity.Pos;
 
-    public int highVoltage => MyMiniLib.GetAttributeInt(this.Block, "voltage", 32);
+    public int HighVoltage { get; set; }
 
-    public int lowVoltage => MyMiniLib.GetAttributeInt(this.Block, "lowVoltage", 32);
+    public int LowVoltage { get; set; }
 
 
 
@@ -40,8 +41,7 @@ public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransforma
         //проверяем не сгорел ли прибор
         if (Blockentity is not BlockEntityETransformator entity)
             return;
-
-
+        
 
         if (IsBurned)
             return;
@@ -122,12 +122,12 @@ public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransforma
 
     public float getPower()
     {
-        return this.power;
+        return this._power;
     }
 
     public void setPower(float power)
     {
-        this.power = power;
+        this._power = power;
     }
 
 
@@ -135,12 +135,12 @@ public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransforma
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
-        tree.SetFloat(PowerKey, power);
+        tree.SetFloat(PowerKey, _power);
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
     {
         base.FromTreeAttributes(tree, worldAccessForResolve);
-        power = tree.GetFloat(PowerKey);
+        _power = tree.GetFloat(PowerKey);
     }
 }

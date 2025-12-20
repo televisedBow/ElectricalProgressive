@@ -165,8 +165,6 @@ public class BlockEGenerator1 : ImmersiveWireBlock, IMechanicalPowerBlock
     public override void OnJsonTesselation(ref MeshData sourceMesh, ref int[] lightRgbsByCorner, BlockPos pos,
         Vintagestory.API.Common.Block[] chunkExtBlocks, int extIndex3d)
     {
-        
-
         if (api is ICoreClientAPI clientApi &&
             api.World.BlockAccessor.GetBlockEntity(pos) is BlockEntityEGenerator1 entity &&
             entity.Facing != Facing.None

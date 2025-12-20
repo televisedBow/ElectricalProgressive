@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using Vintagestory.API.Common.Entities;
+using System.Text.Json;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
-using Newtonsoft.Json.Linq;
 using Vintagestory.API.Server;
+using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Utils
 {
@@ -27,7 +28,7 @@ namespace ElectricalProgressive.Utils
         // Ключ для хранения времени удара
         private const string Key = "damageByElectricity";
 
-        public static global::ElectricalProgressive.ElectricalProgressive? System;
+        public static global::ElectricalProgressive.ElectricalProgressive? SystemEP;
 
         private ICoreServerAPI _sapi;
 
@@ -41,7 +42,7 @@ namespace ElectricalProgressive.Utils
             this._sapi = api;
 
             // Получаем ссылку на систему ElectricalProgressive, если она есть
-            System = _sapi!.ModLoader.GetModSystem<global::ElectricalProgressive.ElectricalProgressive>();
+            SystemEP = _sapi!.ModLoader.GetModSystem<global::ElectricalProgressive.ElectricalProgressive>();
         }
 
 
@@ -159,7 +160,7 @@ namespace ElectricalProgressive.Utils
         /// <param name="block"></param>
         public void DamageEntity(IWorldAccessor world, Entity entity, BlockPos pos, BlockFacing facing, EParams[] AllEparams, Block block, float specifiedDamage=0.0f)
         {
-            if (System == null) // Если система ElectricalProgressive не инициализирована, ничего не делаем
+            if (SystemEP == null) // Если система ElectricalProgressive не инициализирована, ничего не делаем
                 return;
 
             var doDamage = false;
@@ -168,7 +169,7 @@ namespace ElectricalProgressive.Utils
 
             for (var i = 0; i <= 5; i++) //перебор всех граней
             {
-                networkInformation = System.GetNetworks(pos, FacingHelper.FromFace(FacingHelper.BlockFacingFromIndex(i)));      //получаем информацию о сети
+                networkInformation = SystemEP.GetNetworks(pos, FacingHelper.FromFace(FacingHelper.BlockFacingFromIndex(i)));      //получаем информацию о сети
 
                 if (networkInformation?.NumberOfProducers > 0 || networkInformation?.NumberOfAccumulators > 0) //если в сети есть генераторы или аккумы
                 {
@@ -261,7 +262,7 @@ namespace ElectricalProgressive.Utils
         public bool DamageByEnvironment(ICoreServerAPI sapi, ref NetworkPart part, ref IBlockAccessor blockAccessor)
         {
             //без api тут точно нечего делать
-            if (sapi == null || System==null)
+            if (sapi == null || SystemEP==null)
                 return false;
 
 
@@ -272,6 +273,7 @@ namespace ElectricalProgressive.Utils
             var updated = false;
 
             // Проверка мультиблока
+            // Проверка мультиблока
             var multiblockBehavior = here.GetBehavior<BlockBehaviorMultiblock>();
             if (multiblockBehavior != null)
             {
@@ -280,8 +282,25 @@ namespace ElectricalProgressive.Utils
                 {
                     try
                     {
-                        var jo = JObject.Parse(properties);
-                        Y = (float)jo["sizey"]! - 1;
+                        // Используем SystemEP.Text.Json для парсинга
+                        // Используем Utf8JsonReader для минимальных аллокаций
+                        var jsonBytes = System.Text.Encoding.UTF8.GetBytes(properties);
+                        var reader = new Utf8JsonReader(jsonBytes);
+
+                        while (reader.Read())
+                        {
+                            if (reader.TokenType == JsonTokenType.PropertyName)
+                            {
+                                if (reader.ValueTextEquals("sizey"))
+                                {
+                                    if (reader.Read() && reader.TokenType == JsonTokenType.Number)
+                                    {
+                                        Y = reader.GetSingle() - 1;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                     catch
                     {
@@ -320,7 +339,7 @@ namespace ElectricalProgressive.Utils
             NetworkInformation networkInformation;
             for (var i = 0; i <= 5; i++) //перебор всех граней
             {
-                networkInformation = System.GetNetworks(pos, FacingHelper.FromFace(FacingHelper.BlockFacingFromIndex(i)));      //получаем информацию о сети
+                networkInformation = SystemEP.GetNetworks(pos, FacingHelper.FromFace(FacingHelper.BlockFacingFromIndex(i)));      //получаем информацию о сети
 
                 if (networkInformation?.Production > 0f || networkInformation?.NumberOfAccumulators > 0) //если в сети активная генерация или есть аккумы
                 {

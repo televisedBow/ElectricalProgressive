@@ -12,12 +12,12 @@ public interface IElectricTransformator
     /// <summary>
     /// Высокое напряжение трансформатора
     /// </summary>
-    public int highVoltage { get; }
+    int HighVoltage { get; set; }
 
     /// <summary>
     /// Низкое напряжение трансформатора
     /// </summary>
-    public int lowVoltage { get; }
+    int LowVoltage { get; set; }
 
     /// <summary>
     /// Сколько мощность сейчас на трансформаторе

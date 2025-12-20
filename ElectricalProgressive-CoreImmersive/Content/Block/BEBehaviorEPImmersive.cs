@@ -1,6 +1,7 @@
 ﻿using ElectricalProgressive.Utils;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -323,7 +324,6 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             capi.Event.RegisterAsyncParticleSpawner(OnAsyncParticles);
         }
 
-        InitMultiblock();
 
         this._isLoaded = true;
         this._dirty = true;
@@ -340,8 +340,10 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         var wireNodesAttribute = this.Block?.Attributes?["wireNodes"];
         if (wireNodesAttribute == null) return;
 
-        var wireNodesArray = wireNodesAttribute.AsArray();
-        if (wireNodesArray == null || wireNodesArray.Length == 0) return;
+        // Вместо использования AsArray() работаем напрямую с JToken
+        var token = wireNodesAttribute.Token;
+        if (!(token is JArray wireNodesArray) || wireNodesArray.Count == 0)
+            return;
 
         // Получаем угол поворота модели (по умолчанию 0)
         float rotateY = 0;
@@ -359,19 +361,21 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         double centerX = 0.5;
         double centerZ = 0.5;
 
-        _wireNodes.Capacity = wireNodesArray.Length;
+        // Используем Capacity для предварительного выделения памяти
+        _wireNodes.Capacity = wireNodesArray.Count;
 
-        for (int i = 0; i < wireNodesArray.Length; i++)
+        // Обходим массив напрямую без создания промежуточного массива
+        foreach (JToken nodeToken in wireNodesArray)
         {
-            var nodeToken = wireNodesArray[i];
-            if (nodeToken == null) continue;
+            if (nodeToken == null)
+                continue;
 
             try
             {
-                // Загружаем исходные координаты из JSON
-                double x = nodeToken["x"]?.AsDouble(0) ?? 0;
-                double y = nodeToken["y"]?.AsDouble(0) ?? 0;
-                double z = nodeToken["z"]?.AsDouble(0) ?? 0;
+                // Загружаем исходные координаты из JSON напрямую из JToken
+                double x = nodeToken["x"]?.Value<double>() ?? 0;
+                double y = nodeToken["y"]?.Value<double>() ?? 0;
+                double z = nodeToken["z"]?.Value<double>() ?? 0;
 
                 // Применяем поворот вокруг центра блока
                 if (rotateY != 0)
@@ -391,17 +395,17 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
                 var wireNode = new WireNode
                 {
-                    Index = (byte)(nodeToken["index"]?.AsInt(0) ?? 0),
-                    Voltage = nodeToken["voltage"]?.AsInt(0) ?? 0,
+                    Index = (byte)(nodeToken["index"]?.Value<int>() ?? 0),
+                    Voltage = nodeToken["voltage"]?.Value<int>() ?? 0,
                     Position = new Vec3d(x, y, z),
-                    Radius = nodeToken["dxdydz"]?.AsFloat(0.1f) ?? 0.1f
+                    Radius = nodeToken["dxdydz"]?.Value<float>() ?? 0.1f
                 };
 
                 _wireNodes.Add(wireNode);
             }
             catch (Exception ex)
             {
-                this.Api?.Logger.Warning($"Failed to load wire node for block {Block?.Code} at {Blockentity.Pos}: {ex.Message}");
+                //this.Api?.Logger.Warning($"Failed to load wire node for block {Block?.Code} at {Blockentity.Pos}: {ex.Message}");
             }
         }
 
@@ -453,11 +457,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         return this._isLoaded;
     }
 
-    private void InitMultiblock()
-    {
-        var blockEProperties = MyMiniLib.GetAttributeString(this.Block, "blockEProperties", "main");
-        // Инициализация мультиблока
-    }
+
 
     public void Update(bool force = false)
     {
@@ -513,9 +513,13 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         if (system.Update(this.Blockentity.Pos, _wireNodes, ref _connections, _mainEpar, currentEpar, _isLoaded))
         {
             // ВСЕГДА обновляем меш текущего блока
-            if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock)
+            if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
             {
-                // Откладываем обновление меша на следующий кадр
+
+                // Обновляем точки крепления
+                wireBlock.UpdateWireNodes(_wireNodes);
+
+                    // Откладываем обновление меша на следующий кадр
                 Api.Event.EnqueueMainThreadTask(() =>
                 {
                     ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);

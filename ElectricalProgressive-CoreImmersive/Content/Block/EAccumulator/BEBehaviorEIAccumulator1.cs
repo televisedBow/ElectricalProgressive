@@ -15,6 +15,9 @@ public class BEBehaviorEIAccumulator1 : BlockEntityBehavior, IEImmersiveAccumula
 {
     public BEBehaviorEIAccumulator1(BlockEntity blockEntity) : base(blockEntity)
     {
+
+        Power = MyMiniLib.GetAttributeFloat(this.Block, "power", 128.0F);
+        MaxCapacity = MyMiniLib.GetAttributeInt(this.Block, "maxcapacity", 16000);
     }
 
     bool hasBurnout = false;
@@ -34,7 +37,7 @@ public class BEBehaviorEIAccumulator1 : BlockEntityBehavior, IEImmersiveAccumula
 
     public const string CapacityKey = "electricalprogressive:capacity";
 
-    public float MaxCapacity => MyMiniLib.GetAttributeInt(this.Block, "maxcapacity", 16000);
+    public float MaxCapacity { get; set; }
 
     float multFromDurab = 1.0F;
 
@@ -43,7 +46,7 @@ public class BEBehaviorEIAccumulator1 : BlockEntityBehavior, IEImmersiveAccumula
     /// <summary>
     /// Мощность батареи!
     /// </summary>
-    public float power => MyMiniLib.GetAttributeFloat(this.Block, "power", 128.0F);
+    public float Power { get; set; }
 
 
 
@@ -72,7 +75,7 @@ public class BEBehaviorEIAccumulator1 : BlockEntityBehavior, IEImmersiveAccumula
 
     public void Store(float amount)
     {
-        var buf = Math.Min(Math.Min(amount, power), GetMaxCapacity() - Capacity);
+        var buf = Math.Min(Math.Min(amount, Power), GetMaxCapacity() - Capacity);
 
         // не позволяем одним пакетом сохранить больше максимального тока.
         // В теории такого превышения и не должно случиться
@@ -83,7 +86,7 @@ public class BEBehaviorEIAccumulator1 : BlockEntityBehavior, IEImmersiveAccumula
 
     public float Release(float amount)
     {
-        var buf = Math.Min(Capacity, Math.Min(amount, power));
+        var buf = Math.Min(Capacity, Math.Min(amount, Power));
 
         // уменьшаем емкость с учетом скорости распространения электричества
         Capacity -= buf * 1.0f / ElectricalProgressive.ElectricalProgressive.speedOfElectricity;
@@ -94,12 +97,12 @@ public class BEBehaviorEIAccumulator1 : BlockEntityBehavior, IEImmersiveAccumula
 
     public float canStore()
     {
-        return Math.Min(power, GetMaxCapacity() - Capacity);
+        return Math.Min(Power, GetMaxCapacity() - Capacity);
     }
 
     public float canRelease()
     {
-        return Math.Min(Capacity, power);
+        return Math.Min(Capacity, Power);
     }
 
 
