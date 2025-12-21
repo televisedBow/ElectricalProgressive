@@ -1,15 +1,5 @@
 ﻿{
   "code": "ecable1",
-  "class": "BlockECable1",
-  "entityClass": "BlockEntityECable1",
-  "entityBehaviors": [
-    {
-      "name": "BEBehaviorECable1"
-    },
-    {
-      "name": "ElectricalProgressiveImmersive"
-    }
-  ],
 
   "variantGroups": [
     {

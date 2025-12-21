@@ -17,8 +17,6 @@ namespace EPImmersive.Content.Block.CableDot
         private static readonly Dictionary<CacheDataKey, Cuboidf[]> SelectionBoxesCache = [];
         private static readonly Dictionary<CacheDataKey, Cuboidf[]> CollisionBoxesCache = [];
 
-        // Кэш для преобразований поворотов
-        private static readonly Dictionary<Facing, RotationData> RotationCache = CreateRotationCache();
 
         public override void OnUnloaded(ICoreAPI api)
         {
@@ -27,6 +25,7 @@ namespace EPImmersive.Content.Block.CableDot
             SelectionBoxesCache.Clear();
             CollisionBoxesCache.Clear();
         }
+
 
         public override bool TryPlaceBlock(IWorldAccessor world, IPlayer byPlayer, ItemStack itemstack, BlockSelection blockSel, ref string failureCode)
         {
@@ -60,12 +59,13 @@ namespace EPImmersive.Content.Block.CableDot
 
             if (facing == Facing.None ||
                 !base.DoPlaceBlock(world, byPlayer, blockSel, byItemStack) ||
-                world.BlockAccessor.GetBlockEntity(blockSel.Position) is not BlockEntityCableDot entity)
+                world.BlockAccessor.GetBlockEntity(blockSel.Position) is not BlockEntityCableDotWall entity)
             {
                 return false;
             }
 
             entity.Facing = facing;
+
 
             LoadImmersiveEProperties.Load(this, entity);
 
@@ -78,7 +78,7 @@ namespace EPImmersive.Content.Block.CableDot
         {
             base.OnNeighbourBlockChange(world, pos, neibpos);
 
-            if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityCableDot entity)
+            if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityCableDotWall entity)
             {
                 var blockFacing = BlockFacing.FromVector(neibpos.X - pos.X, neibpos.Y - pos.Y, neibpos.Z - pos.Z);
                 var selectedFacing = FacingHelper.FromFace(blockFacing);
@@ -104,7 +104,7 @@ namespace EPImmersive.Content.Block.CableDot
 
         private Cuboidf[] GetRotatedBoxes(BlockPos pos, Dictionary<CacheDataKey, Cuboidf[]> cache, Cuboidf[] sourceBoxes)
         {
-            if (api?.World?.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableDot entity ||
+            if (api?.World?.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableDotWall entity ||
                 entity.Facing == Facing.None)
             {
                 return [];
@@ -114,7 +114,7 @@ namespace EPImmersive.Content.Block.CableDot
 
             if (!cache.TryGetValue(key, out var boxes))
             {
-                if (RotationCache.TryGetValue(key.Facing, out var rotation))
+                if (entity.RotationCache.TryGetValue(key.Facing, out var rotation))
                 {
                     var origin = new Vec3d(0.5, 0.5, 0.5);
                     boxes = sourceBoxes.Select(box => box.RotatedCopy(rotation.X, rotation.Y, rotation.Z, origin)).ToArray();
@@ -128,7 +128,7 @@ namespace EPImmersive.Content.Block.CableDot
         public override void OnJsonTesselation(ref MeshData sourceMesh, ref int[] lightRgbsByCorner, BlockPos pos, Vintagestory.API.Common.Block[] chunkExtBlocks, int extIndex3d)
         {
             if (api is not ICoreClientAPI clientApi ||
-                api.World.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableDot entity ||
+                api.World.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableDotWall entity ||
                 entity.Facing == Facing.None)
             {
                 base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, pos, chunkExtBlocks, extIndex3d);
@@ -143,7 +143,7 @@ namespace EPImmersive.Content.Block.CableDot
                 clientApi.Tesselator.TesselateBlock(this, out meshData);
                 clientApi.TesselatorManager.ThreadDispose();
 
-                if (RotationCache.TryGetValue(key.Facing, out var rotation))
+                if (entity.RotationCache.TryGetValue(key.Facing, out var rotation))
                 {
                     meshData.Rotate(origin,
                         rotation.X * GameMath.DEG2RAD,
@@ -172,28 +172,7 @@ namespace EPImmersive.Content.Block.CableDot
                 (MyMiniLib.GetAttributeBool(block, "isolatedEnvironment", false) ? Lang.Get("Yes") : Lang.Get("No")));
         }
 
-        private static Dictionary<Facing, RotationData> CreateRotationCache()
-        {
-            return new Dictionary<Facing, RotationData>
-            {
-                { Facing.NorthEast, new RotationData(0.0f, 0.0f, 0.0f) },
-                { Facing.NorthWest, new RotationData(0.0f, 0.0f, 0.0f) },
-                { Facing.NorthUp, new RotationData(0.0f, 0.0f, 0.0f) },
-                { Facing.NorthDown, new RotationData(0.0f, 0.0f, 0.0f) },
-                { Facing.EastNorth, new RotationData(0.0f, 270.0f, 0.0f) },
-                { Facing.EastSouth, new RotationData(0.0f, 270.0f, 0.0f) },
-                { Facing.EastUp, new RotationData(0.0f, 270.0f, 0.0f) },
-                { Facing.EastDown, new RotationData(0.0f, 270.0f, 0.0f) },
-                { Facing.SouthEast, new RotationData(0.0f, 180.0f, 0.0f) },
-                { Facing.SouthWest, new RotationData(0.0f, 180.0f, 0.0f) },
-                { Facing.SouthUp, new RotationData(0.0f, 180.0f, 0.0f) },
-                { Facing.SouthDown, new RotationData(0.0f, 180.0f, 0.0f) },
-                { Facing.WestNorth, new RotationData(0.0f, 90.0f, 0.0f) },
-                { Facing.WestSouth, new RotationData(0.0f, 90.0f, 0.0f) },
-                { Facing.WestUp, new RotationData(0.0f, 90.0f, 0.0f) },
-                { Facing.WestDown, new RotationData(0.0f, 90.0f, 0.0f) }
-            };
-        }
+        
 
         internal struct CacheDataKey
         {
@@ -206,24 +185,12 @@ namespace EPImmersive.Content.Block.CableDot
                 Code = code;
             }
 
-            public static CacheDataKey FromEntity(BlockEntityCableDot entity)
+            public static CacheDataKey FromEntity(BlockEntityCableDotWall entity)
             {
                 return new CacheDataKey(entity.Facing, entity.Block.Code);
             }
         }
 
-        private readonly struct RotationData
-        {
-            public readonly float X;
-            public readonly float Y;
-            public readonly float Z;
 
-            public RotationData(float x, float y, float z)
-            {
-                X = x;
-                Y = y;
-                Z = z;
-            }
-        }
     }
 }

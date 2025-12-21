@@ -2,8 +2,8 @@
 using ElectricalProgressive.Utils;
 using EPImmersive.Content.Block;
 using EPImmersive.Content.Block.CableDot;
+using EPImmersive.Content.Block.CableSwitch;
 using EPImmersive.Content.Block.EAccumulator;
-using EPImmersive.Content.Block.ECable1;
 using EPImmersive.Content.Block.EGenerator;
 using EPImmersive.Content.Block.EMotor;
 using EPImmersive.Content.Block.HVSFonar;
@@ -14,9 +14,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -102,10 +100,6 @@ namespace EPImmersive
             api.RegisterBlockEntityClass("BlockEntityEIAccumulator1", typeof(BlockEntityEIAccumulator1));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorEIAccumulator1", typeof(BEBehaviorEIAccumulator1));
 
-            api.RegisterBlockClass("BlockECable1", typeof(BlockECable1));
-            api.RegisterBlockEntityClass("BlockEntityECable1", typeof(BlockEntityECable1));
-            api.RegisterBlockEntityBehaviorClass("BEBehaviorECable1", typeof(BEBehaviorECable1));
-
             api.RegisterBlockClass("BlockEMotor1", typeof(BlockEMotor1));
             api.RegisterBlockEntityClass("BlockEntityEMotor1", typeof(BlockEntityEMotor1));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorEMotor1", typeof(BEBehaviorEMotor1));
@@ -122,9 +116,14 @@ namespace EPImmersive
             api.RegisterBlockClass("BlockCableDotRoof", typeof(BlockCableDotRoof));
             api.RegisterBlockClass("BlockCableDotDown", typeof(BlockCableDotDown));
             api.RegisterBlockClass("BlockCableDotWall", typeof(BlockCableDotWall));
-            api.RegisterBlockEntityClass("BlockEntityCableDot", typeof(BlockEntityCableDot));
+            api.RegisterBlockEntityClass("BlockEntityCableDotDown", typeof(BlockEntityCableDotDown));
+            api.RegisterBlockEntityClass("BlockEntityCableDotWall", typeof(BlockEntityCableDotWall));
+            api.RegisterBlockEntityClass("BlockEntityCableDotRoof", typeof(BlockEntityCableDotRoof));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorCableDot", typeof(BEBehaviorCableDot));
 
+            api.RegisterBlockClass("BlockCableSwitchWall", typeof(BlockCableSwitchWall));
+            api.RegisterBlockEntityClass("BlockEntityCableSwitch", typeof(BlockEntityCableSwitch));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorCableSwitch", typeof(BEBehaviorCableSwitch));
 
             api.RegisterBlockClass("BlockHVTower", typeof(BlockHVTower));
             api.RegisterBlockEntityClass("BlockEntityHVTower", typeof(BlockEntityHVTower));
@@ -287,14 +286,20 @@ namespace EPImmersive
         /// <param name="isLoaded">Загружен ли блок</param>
         /// <returns>Успешно ли обновлено</returns>
         public bool Update(BlockPos position, List<WireNode> wireNodes, ref List<ConnectionData> connections,
-    EParams mainEparam, (EParams param, byte index) currentEparam, bool isLoaded)
+    EParams mainEpar, (EParams param, byte index) currentEpar, bool isLoaded)
         {
             bool hasChanges = false;
 
             if (!Parts.TryGetValue(position, out var part))
             {
                 part = Parts[position] = new ImmersiveNetworkPart(position);
-                hasChanges = true; // Новая часть требует обновления
+                hasChanges = true;
+            }
+            else if (!part.IsLoaded && isLoaded)
+            {
+                // Upgrading from stub to full part
+                part.IsLoaded = true;
+                hasChanges = true;
             }
 
             // 1. Проверяем изменения в WireNodes
@@ -321,25 +326,25 @@ namespace EPImmersive
             }
 
             // 4. Проверяем основные параметры блока
-            if (!mainEparam.Equals(new EParams()) && !part.MainEparams.Equals(mainEparam))
+            if (!mainEpar.Equals(new EParams()) && !part.MainEparams.Equals(mainEpar))
             {
-                part.MainEparams = mainEparam;
+                part.MainEparams = mainEpar;
                 hasChanges = true;
             }
 
             // 5. Проверяем параметры конкретного подключения
-            if (!currentEparam.param.Equals(new EParams()))
+            if (!currentEpar.param.Equals(new EParams()))
             {
                 ConnectionData? connectionToUpdate = null;
 
-                if (currentEparam.index < part.Connections.Count)
-                    connectionToUpdate = part.Connections[currentEparam.index];
+                if (currentEpar.index < part.Connections.Count)
+                    connectionToUpdate = part.Connections[currentEpar.index];
 
                 if (connectionToUpdate != null)
                 {
-                    if (!connectionToUpdate.Parameters.Equals(currentEparam.param))
+                    if (!connectionToUpdate.Parameters.Equals(currentEpar.param))
                     {
-                        connectionToUpdate.Parameters = currentEparam.param;
+                        connectionToUpdate.Parameters = currentEpar.param;
                         hasChanges = true;
                     }
                 }
@@ -347,8 +352,8 @@ namespace EPImmersive
                 {
                     var newConnection = new ConnectionData
                     {
-                        LocalNodeIndex = currentEparam.index,
-                        Parameters = currentEparam.param
+                        LocalNodeIndex = currentEpar.index,
+                        Parameters = currentEpar.param
                     };
                     part.Connections.Add(newConnection);
                     hasChanges = true;
@@ -365,6 +370,7 @@ namespace EPImmersive
             connections = new(part.Connections);
             return hasChanges;
         }
+
 
         private bool AreWireNodesEqual(List<WireNode> list1, List<WireNode> list2)
         {
@@ -415,22 +421,77 @@ namespace EPImmersive
         /// </summary>
         private void UpdateImmersiveConnections(ref ImmersiveNetworkPart part)
         {
-            // Создаем временную сеть для этого блока если её нет
             var network = GetOrCreateNetworkForPart(part);
+            var networksToMerge = new HashSet<ImmersiveNetwork> { network };
 
-            // Собираем все сети, которые нужно объединить
-            //var networksToMerge = new HashSet<ImmersiveNetwork> { network };
-
-            // Добавляем/обновляем соединения и собираем сети для объединения
             foreach (var connection in part.Connections)
             {
-                AddImmersiveConnection(part, connection, network);
+                var neighborPos = connection.NeighborPos;
+                if (!Parts.TryGetValue(neighborPos, out var neighborPart))
+                {
+                    // Create stub for unloaded neighbor
+                    neighborPart = new ImmersiveNetworkPart(neighborPos) { IsLoaded = false };
+                    Parts[neighborPos] = neighborPart;
+                    neighborPart.Network = network;
+                    network.PartPositions.Add(neighborPos);
+                }
+
+                // Add/update the connection (normalized)
+                AddOrUpdateImmersiveConnection(network, part.Position, connection.LocalNodeIndex, neighborPos, connection.NeighborNodeIndex, connection.Parameters);
+
+                if (neighborPart.Network != network)
+                {
+                    networksToMerge.Add(neighborPart.Network);
+                }
             }
 
-            // Удаляем устаревшие соединения
-            RemoveStaleImmersiveConnections(part, network);
+            if (networksToMerge.Count > 1)
+            {
+                network = MergeNetworks(networksToMerge);
+                part.Network = network;
+            }
         }
 
+        private void AddOrUpdateImmersiveConnection(ImmersiveNetwork network, BlockPos localPos, byte localIndex, BlockPos neighborPos, byte neighborIndex, EParams parameters)
+        {
+            // Canonicalize order: ensure LocalPos < NeighborPos
+            bool swapped = localPos.Equals(neighborPos);
+            if (swapped)
+            {
+                // Swap positions and indices (parameters remain the same)
+                var tempPos = localPos;
+                localPos = neighborPos;
+                neighborPos = tempPos;
+
+                var tempIndex = localIndex;
+                localIndex = neighborIndex;
+                neighborIndex = tempIndex;
+            }
+
+            // Check for existing connection
+            var existing = network.ImmersiveConnections.FirstOrDefault(c =>
+                c.LocalPos.Equals(localPos) && c.NeighborPos.Equals(neighborPos));
+
+            if (existing != null)
+            {
+                // Update if parameters differ (assume mirror params are identical; if not, log or merge)
+                if (!existing.Parameters.Equals(parameters))
+                {
+                    existing.Parameters = parameters; // Or merge logic if needed
+                }
+                return;
+            }
+
+            // Add new
+            network.ImmersiveConnections.Add(new NetworkImmersiveConnection
+            {
+                LocalPos = localPos,
+                NeighborPos = neighborPos,
+                LocalNodeIndex = localIndex,
+                NeighborNodeIndex = neighborIndex,
+                Parameters = parameters
+            });
+        }
 
         /// <summary>
         /// Получает или создает сеть для части
@@ -1373,7 +1434,8 @@ namespace EPImmersive
                         {
                             connect = partValue.Connections[i];
 
-                            if (connect.NeighborPos.Equals(packet.path[curIndex - 1]) && connect.NeighborNodeIndex == packet.nodeIndices[curIndex - 1])
+                            if (connect.NeighborPos.Equals(packet.path[curIndex - 1]) && 
+                                 ((Parts.TryGetValue(connect.NeighborPos, out var partNeighborValue) && partNeighborValue.Conductor!=null && !partNeighborValue.Conductor.IsOpen) || connect.NeighborNodeIndex == packet.nodeIndices[curIndex - 1]))
                                 break;
 
                             connect = null;
@@ -1625,54 +1687,32 @@ namespace EPImmersive
 
         public void CheckAndSplitNetwork(ImmersiveNetwork network)
         {
-            if (network.PartPositions.Count == 0) return;
-
-            // 1. Создаем граф соединений
-            var graph = new Dictionary<BlockPos, HashSet<BlockPos>>();
-            foreach (var pos in network.PartPositions)
-            {
-                graph[pos] = new HashSet<BlockPos>();
-            }
-
-            // 2. Заполняем граф на основе соединений (учитываем иммерсивные соединения)
-            foreach (var connection in network.ImmersiveConnections)
-            {
-                if (graph.ContainsKey(connection.LocalPos) && graph.ContainsKey(connection.NeighborPos))
-                {
-                    graph[connection.LocalPos].Add(connection.NeighborPos);
-                    graph[connection.NeighborPos].Add(connection.LocalPos);
-                }
-            }
-
-            // 3. Найти все компоненты связности в графе
-            var visited = new HashSet<BlockPos>();
             var components = new List<HashSet<BlockPos>>();
+            var visited = new HashSet<BlockPos>();
 
-            foreach (var startPos in network.PartPositions)
+            foreach (var start in network.PartPositions)
             {
-                if (visited.Contains(startPos)) continue;
+                if (visited.Contains(start)) continue;
 
-                // BFS для поиска компоненты связности
                 var component = new HashSet<BlockPos>();
                 var queue = new Queue<BlockPos>();
-                queue.Enqueue(startPos);
+                queue.Enqueue(start);
+                visited.Add(start);
 
                 while (queue.Count > 0)
                 {
                     var current = queue.Dequeue();
-                    if (visited.Contains(current)) continue;
-
                     component.Add(current);
-                    visited.Add(current);
 
-                    // Добавляем всех соседей из графа
-                    if (graph.TryGetValue(current, out var neighbors))
+                    if (Parts.TryGetValue(current, out var part))
                     {
-                        foreach (var neighbor in neighbors)
+                        foreach (var conn in part.Connections)
                         {
+                            var neighbor = conn.NeighborPos;
                             if (!visited.Contains(neighbor) && network.PartPositions.Contains(neighbor))
                             {
                                 queue.Enqueue(neighbor);
+                                visited.Add(neighbor);
                             }
                         }
                     }
@@ -1684,7 +1724,6 @@ namespace EPImmersive
                 }
             }
 
-            // 4. Если компонент больше одного - нужно разделить сеть
             if (components.Count > 1)
             {
                 // Первая компонента остается в исходной сети
@@ -1787,6 +1826,9 @@ namespace EPImmersive
 
             foreach (var network in networks)
             {
+                if (network == null)
+                    continue;
+
                 if (outNetwork == null || outNetwork.PartPositions.Count < network.PartPositions.Count)
                 {
                     outNetwork = network;
@@ -1797,6 +1839,9 @@ namespace EPImmersive
             {
                 foreach (var network in networks)
                 {
+                    if (network == null)
+                        continue;
+
                     if (outNetwork == network)
                     {
                         continue;
@@ -1827,6 +1872,9 @@ namespace EPImmersive
             }
 
             outNetwork ??= this.CreateNetwork();
+
+            // After merging, rebuild components with loaded filter (similar to above)
+            RebuildNetworkComponents(outNetwork);
 
             return outNetwork;
         }

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using Vintagestory.API.Common;
@@ -282,7 +281,7 @@ namespace ElectricalProgressive.Utils
                 {
                     try
                     {
-                        // Используем SystemEP.Text.Json для парсинга
+                        // Используем System.Text.Json для парсинга
                         // Используем Utf8JsonReader для минимальных аллокаций
                         var jsonBytes = System.Text.Encoding.UTF8.GetBytes(properties);
                         var reader = new Utf8JsonReader(jsonBytes);

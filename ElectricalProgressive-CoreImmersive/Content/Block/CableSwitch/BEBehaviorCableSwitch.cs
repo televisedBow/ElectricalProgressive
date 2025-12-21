@@ -4,9 +4,9 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 
 
-namespace EPImmersive.Content.Block.CableDot
+namespace EPImmersive.Content.Block.CableSwitch
 {
-    public class BEBehaviorCableDot : BlockEntityBehavior, IEImmersiveConductor
+    public class BEBehaviorCableSwitch : BlockEntityBehavior, IEImmersiveConductor
     {
 
         private bool hasBurnout;
@@ -17,7 +17,7 @@ namespace EPImmersive.Content.Block.CableDot
 
         public const string IsOpenKey = "electricalprogressive:isopen";
 
-        public BEBehaviorCableDot(BlockEntity blockEntity) : base(blockEntity)
+        public BEBehaviorCableSwitch(BlockEntity blockEntity) : base(blockEntity)
         {
 
         }
@@ -34,7 +34,7 @@ namespace EPImmersive.Content.Block.CableDot
 
         public void Update()
         {
-            if (Blockentity is not BlockEntityEIBase entity ||
+            if (Blockentity is not BlockEntityCableSwitch entity ||
                 entity.EPImmersive == null)
             {
                 return;

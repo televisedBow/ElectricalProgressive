@@ -47,7 +47,7 @@ class BlockEntityEFreezer2 : ContainerEFreezer2, ITexPositionSource
 
 
     /// <summary>
-    /// Аниматор блока, используется для анимации открывания дверцы генератора
+    /// Аниматор блока, используется для анимации открывания дверцы
     /// </summary>
     public BlockEntityAnimationUtil animUtil
     {

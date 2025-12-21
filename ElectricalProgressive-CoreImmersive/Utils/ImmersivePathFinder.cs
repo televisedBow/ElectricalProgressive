@@ -232,10 +232,16 @@ namespace EPImmersive.Utils
             if (!parts.TryGetValue(current.Position.Pos, out var currentPart))
                 return;
 
-            // Ищем исходящие соединения из текущего узла
+            // Ищем исходящие соединения из текущего положения
+            bool allConn;
             foreach (var connection in currentPart.Connections)
             {
-                if (connection.LocalNodeIndex == current.NodeIndex)
+                allConn = false;
+                // если проводник замкнут
+                if (currentPart.Conductor != null && !currentPart.Conductor.IsOpen)
+                    allConn = true;
+
+                if (allConn || connection.LocalNodeIndex == current.NodeIndex)
                 {
                     var neighborKey = new FastPosKey(
                         connection.NeighborPos.X, connection.NeighborPos.Y,

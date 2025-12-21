@@ -13,11 +13,28 @@ namespace EPImmersive.Content.Block.HVTower
        
         private bool hasBurnout;
         private bool prepareBurnout;
+        public bool IsOpen { get; set; }
+
+
+        public const string IsOpenKey = "electricalprogressive:isopen";
+
 
         public BEBehaviorHVTower(BlockEntity blockEntity) : base(blockEntity)
         {
-          
+            
         }
+
+
+
+        public override void OnBlockPlaced(ItemStack byItemStack = null)
+        {
+            base.OnBlockPlaced(byItemStack);
+
+            IsOpen = MyMiniLib.GetAttributeBool(this.Block, "IsOpen", true);
+        }
+
+
+
 
         public override void Initialize(ICoreAPI api, JsonObject properties)
         {
@@ -86,6 +103,18 @@ namespace EPImmersive.Content.Block.HVTower
             
         }
 
-       
+
+
+        public override void ToTreeAttributes(ITreeAttribute tree)
+        {
+            base.ToTreeAttributes(tree);
+            tree.SetBool(IsOpenKey, IsOpen);
+        }
+
+        public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
+        {
+            base.FromTreeAttributes(tree, worldAccessForResolve);
+            IsOpen = tree.GetBool(IsOpenKey);
+        }
     }
 }

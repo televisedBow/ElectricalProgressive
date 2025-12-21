@@ -9,15 +9,15 @@ using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Config;
 
-namespace EPImmersive.Content.Block.CableDot
+namespace EPImmersive.Content.Block.CableSwitch
 {
-    internal class BlockCableDotRoof : ImmersiveWireBlock
+    internal class BlockCableSwitchWall : ImmersiveWireBlock
     {
         private static readonly Dictionary<CacheDataKey, MeshData> MeshDataCache = [];
         private static readonly Dictionary<CacheDataKey, Cuboidf[]> SelectionBoxesCache = [];
         private static readonly Dictionary<CacheDataKey, Cuboidf[]> CollisionBoxesCache = [];
 
-
+        
 
         public override void OnUnloaded(ICoreAPI api)
         {
@@ -30,13 +30,13 @@ namespace EPImmersive.Content.Block.CableDot
         public override bool TryPlaceBlock(IWorldAccessor world, IPlayer byPlayer, ItemStack itemstack, BlockSelection blockSel, ref string failureCode)
         {
             var selection = new Selection(blockSel);
-            // только вариации верхние
-            var facing = FacingHelper.From(BlockFacing.UP, selection.Direction);
+            var facing = FacingHelper.From(selection.Face, BlockFacing.DOWN);
 
-            //только на потолок
+            //только на стену и смотрит вниз
             if (facing != Facing.None &&
                 FacingHelper.Faces(facing).First() is { } blockFacing &&
-                selection.Face != BlockFacing.UP)
+                selection.Face != BlockFacing.UP &&
+                selection.Face != BlockFacing.DOWN)
             {
                 var neighborBlock = world.BlockAccessor
                     .GetBlock(blockSel.Position.AddCopy(blockFacing));
@@ -54,17 +54,19 @@ namespace EPImmersive.Content.Block.CableDot
         {
             
             var selection = new Selection(blockSel);
-            // только вариации верхние
-            var facing = FacingHelper.From(BlockFacing.UP, selection.Direction);
+            // только вариации настенные нижние
+            var facing = FacingHelper.From(selection.Face, BlockFacing.DOWN);
 
             if (facing == Facing.None ||
                 !base.DoPlaceBlock(world, byPlayer, blockSel, byItemStack) ||
-                world.BlockAccessor.GetBlockEntity(blockSel.Position) is not BlockEntityCableDotRoof entity)
+                world.BlockAccessor.GetBlockEntity(blockSel.Position) is not BlockEntityCableSwitch entity)
             {
                 return false;
             }
 
             entity.Facing = facing;
+
+
 
             LoadImmersiveEProperties.Load(this, entity);
 
@@ -77,7 +79,7 @@ namespace EPImmersive.Content.Block.CableDot
         {
             base.OnNeighbourBlockChange(world, pos, neibpos);
 
-            if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityCableDotRoof entity)
+            if (world.BlockAccessor.GetBlockEntity(pos) is BlockEntityCableSwitch entity)
             {
                 var blockFacing = BlockFacing.FromVector(neibpos.X - pos.X, neibpos.Y - pos.Y, neibpos.Z - pos.Z);
                 var selectedFacing = FacingHelper.FromFace(blockFacing);
@@ -103,7 +105,7 @@ namespace EPImmersive.Content.Block.CableDot
 
         private Cuboidf[] GetRotatedBoxes(BlockPos pos, Dictionary<CacheDataKey, Cuboidf[]> cache, Cuboidf[] sourceBoxes)
         {
-            if (api?.World?.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableDotRoof entity ||
+            if (api?.World?.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableSwitch entity ||
                 entity.Facing == Facing.None)
             {
                 return [];
@@ -127,7 +129,7 @@ namespace EPImmersive.Content.Block.CableDot
         public override void OnJsonTesselation(ref MeshData sourceMesh, ref int[] lightRgbsByCorner, BlockPos pos, Vintagestory.API.Common.Block[] chunkExtBlocks, int extIndex3d)
         {
             if (api is not ICoreClientAPI clientApi ||
-                api.World.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableDotRoof entity ||
+                api.World.BlockAccessor.GetBlockEntity(pos) is not BlockEntityCableSwitch entity ||
                 entity.Facing == Facing.None)
             {
                 base.OnJsonTesselation(ref sourceMesh, ref lightRgbsByCorner, pos, chunkExtBlocks, extIndex3d);
@@ -173,6 +175,44 @@ namespace EPImmersive.Content.Block.CableDot
 
 
 
+        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            return true;
+
+        }
+
+
+        public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
+
+            var entity = world.BlockAccessor.GetBlockEntity(blockSel.Position);
+            var beh= entity?.GetBehavior<BEBehaviorCableSwitch>();
+
+            if (beh != null)
+            {
+                beh.IsOpen = !beh.IsOpen;
+
+                // делаем анимацию переключения
+                if (api is ICoreClientAPI)
+                {
+                    if (beh.IsOpen)
+                    {
+                        (entity as BlockEntityCableSwitch).Open();
+                    }
+                    else
+                    {
+                        (entity as BlockEntityCableSwitch).Close();
+                    }
+                }
+            }
+
+        }
+
+
+
+
+
         internal struct CacheDataKey
         {
             public readonly Facing Facing;
@@ -184,12 +224,16 @@ namespace EPImmersive.Content.Block.CableDot
                 Code = code;
             }
 
-            public static CacheDataKey FromEntity(BlockEntityCableDotRoof entity)
+            public static CacheDataKey FromEntity(BlockEntityCableSwitch entity)
             {
                 return new CacheDataKey(entity.Facing, entity.Block.Code);
             }
         }
 
 
+
+
+
+        
     }
 }

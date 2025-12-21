@@ -299,19 +299,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         // Загружаем точки подключения из JSON
         LoadWireNodes();
 
-        // иммерсивная система?
-        if (Block is ImmersiveWireBlock wireBlock)
-        {
-            // Обновляем точки крепления
-            wireBlock.UpdateWireNodes(_wireNodes);
 
-            // Обновляем меши при загрузке
-            if (api.Side == EnumAppSide.Client)
-            {
-                ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
-
-            }
-        }
 
         GetParticles();
 
@@ -330,11 +318,16 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         this.Update();
     }
 
+
+
+
+
     /// <summary>
     /// Загружает точки подключения из JSON атрибутов блока с учетом поворота модели
     /// </summary>
-    private void LoadWireNodes()
+    public void LoadWireNodes()
     {
+        
         _wireNodes.Clear();
 
         var wireNodesAttribute = this.Block?.Attributes?["wireNodes"];
@@ -351,6 +344,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         {
             rotateY = this.Block.Shape.rotateY;
         }
+
 
         // Конвертируем угол поворота в радианы
         double angleRad = (360 - rotateY) * GameMath.DEG2RAD;
@@ -411,6 +405,20 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         // Сортируем по индексу
         _wireNodes.Sort((a, b) => a.Index.CompareTo(b.Index));
+
+        // иммерсивная система?
+        if (Block is ImmersiveWireBlock wireBlock)
+        {
+            // Обновляем точки крепления
+            wireBlock.UpdateWireNodes(_wireNodes);
+
+            // Обновляем меши при загрузке
+            if (Api.Side == EnumAppSide.Client)
+            {
+                ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
+
+            }
+        }
     }
 
 
@@ -519,7 +527,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                 // Обновляем точки крепления
                 wireBlock.UpdateWireNodes(_wireNodes);
 
-                    // Откладываем обновление меша на следующий кадр
+                // Откладываем обновление меша на следующий кадр
                 Api.Event.EnqueueMainThreadTask(() =>
                 {
                     ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
@@ -528,12 +536,12 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                     // Это нужно для того, чтобы провода отображались с обеих сторон
                     foreach (var data in _connections)
                     {
-                            // Быстрая проверка: есть ли блок на этой позиции
-                            var block = Api.World.BlockAccessor.GetBlock(data.NeighborPos);
-                            if (block != null && block is ImmersiveWireBlock)
-                            {
-                                ImmersiveWireBlock.InvalidateBlockMeshCache(data.NeighborPos);
-                            }
+                        // Быстрая проверка: есть ли блок на этой позиции
+                        var block = Api.World.BlockAccessor.GetBlock(data.NeighborPos);
+                        if (block != null && block is ImmersiveWireBlock)
+                        {
+                            ImmersiveWireBlock.InvalidateBlockMeshCache(data.NeighborPos);
+                        }
                     }
                 }, "update-wire-meshes");
             }
@@ -637,6 +645,12 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         this.Update();
         AnimUtil?.Dispose();
+
+        // Optional: If part has no connections and unloaded, remove from Parts (cleanup)
+        if (System.Parts.TryGetValue(Pos, out var part) && part.Connections.Count == 0 && !part.IsLoaded)
+        {
+            System.Parts.Remove(Pos);
+        }
 
         // Обновляем меши проводоа
         if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)

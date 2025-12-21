@@ -1,7 +1,7 @@
 ﻿{
   "code": "cabledotwall",
   "class": "BlockCableDotWall",
-  "entityClass": "BlockEntityCableDot",
+  "entityClass": "BlockEntityCableDotWall",
   "entityBehaviors": [
     {
       "name": "BEBehaviorCableDot"

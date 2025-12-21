@@ -11,7 +11,6 @@ namespace EPImmersive.Utils
     /// </summary>
     public class ImmersiveNetworkPart
     {
-        // Новая система для иммерсивных проводов
         public List<WireNode> WireNodes = new List<WireNode>();
         public List<ConnectionData> Connections = new List<ConnectionData>();
         public EParams MainEparams = new EParams(); // Основные параметры устройства

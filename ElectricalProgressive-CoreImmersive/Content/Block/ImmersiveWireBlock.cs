@@ -1,19 +1,15 @@
 ﻿using ElectricalProgressive.Content.Block.ECable;
 using ElectricalProgressive.Utils;
-using EPImmersive.Content.Block;
-using EPImmersive.Content.Block.EAccumulator;
-using EPImmersive.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
+using static HarmonyLib.Code;
 
 namespace EPImmersive.Content.Block
 {
@@ -22,10 +18,11 @@ namespace EPImmersive.Content.Block
         protected List<WireNode> _wireNodes; // точки крепления
 
         public MeshData? _CustomMeshData;
+        public bool _drawBaseMesh = true;
 
         public Cuboidf[]? _CustomSelBoxes;
 
-        public bool _skipNonCenterCollisions=false;
+        public bool _skipNonCenterCollisions = false;
 
         // Кэш для полных мешей блоков со всеми подключениями
         private static readonly Dictionary<WireMeshCacheKey, MeshData> WireMeshesCache = new();
@@ -148,7 +145,7 @@ namespace EPImmersive.Content.Block
         {
             var boxes = new List<Cuboidf>();
 
-            if (_skipNonCenterCollisions && (Math.Abs(offset.X)>0 || Math.Abs(offset.Z) > 0))
+            if (_skipNonCenterCollisions && (Math.Abs(offset.X) > 0 || Math.Abs(offset.Z) > 0))
                 return boxes.ToArray();
 
             boxes.AddRange(base.GetCollisionBoxes(blockAccessor, pos));
@@ -223,16 +220,34 @@ namespace EPImmersive.Content.Block
             if (_wireNodes == null || _wireNodes.Count == 0)
                 return boxes.ToArray();
 
+            float rotateY = 0;
+
+            var entity = api.World.BlockAccessor.GetBlockEntity(pos) as BlockEntityEIBase;
+            if (entity != null && entity.Facing != Facing.None && entity.RotationCache != null)
+            {
+                if (entity.RotationCache.TryGetValue(entity.Facing, out var rotation))
+                {
+                    rotateY = rotation.Y;
+                }
+            }
+
             for (int i = 0; i < _wireNodes.Count; i++)
             {
+                var x = _wireNodes[i].Position.X;
+                var y = _wireNodes[i].Position.Y;
+                var z = _wireNodes[i].Position.Z;
+
+                (x, y, z) = RotateCoords(rotateY, x, y, z);
+
                 var box = new Cuboidf(
-                    (float)(_wireNodes[i].Position.X - _wireNodes[i].Radius),
-                    (float)(_wireNodes[i].Position.Y - _wireNodes[i].Radius),
-                    (float)(_wireNodes[i].Position.Z - _wireNodes[i].Radius),
-                    (float)(_wireNodes[i].Position.X + _wireNodes[i].Radius),
-                    (float)(_wireNodes[i].Position.Y + _wireNodes[i].Radius),
-                    (float)(_wireNodes[i].Position.Z + _wireNodes[i].Radius)
+                    (float)(x - _wireNodes[i].Radius),
+                    (float)(y - _wireNodes[i].Radius),
+                    (float)(z - _wireNodes[i].Radius),
+                    (float)(x + _wireNodes[i].Radius),
+                    (float)(y + _wireNodes[i].Radius),
+                    (float)(z + _wireNodes[i].Radius)
                 );
+
                 boxes.Add(box);
             }
 
@@ -240,6 +255,40 @@ namespace EPImmersive.Content.Block
             return boxes.ToArray();
         }
 
+
+        private static (double x, double y, double z) RotateCoords(float rotateY, double x, double y, double z)
+        {
+            // Конвертируем угол поворота в радианы
+            double angleRad = (360 - rotateY) * GameMath.DEG2RAD;
+            double cosAngle = Math.Cos(angleRad);
+            double sinAngle = Math.Sin(angleRad);
+
+            // Центр блока для поворота (0.5, 0.5, 0.5 в локальных координатах)
+            double centerX = 0.5;
+            double centerZ = 0.5;
+
+            // Применяем поворот вокруг центра блока
+            if (rotateY != 0)
+            {
+                // Смещаем координаты относительно центра
+                double xRel = x - centerX;
+                double zRel = z - centerZ;
+
+                // Поворачиваем координаты
+                double xRotated = xRel * cosAngle - zRel * sinAngle;
+                double zRotated = xRel * sinAngle + zRel * cosAngle;
+
+                // Возвращаем обратно в систему координат блока
+                x = xRotated + centerX;
+                z = zRotated + centerZ;
+            }
+
+            return (x, y, z);
+        }
+
+
+
+        /*
         /// <summary>
         /// Считает простые коллизии проводам
         /// </summary>
@@ -322,7 +371,7 @@ namespace EPImmersive.Content.Block
             );
         }
 
-
+        */
 
         /// <summary>
         /// Обновление точек крепления
@@ -382,7 +431,7 @@ namespace EPImmersive.Content.Block
             if (IsHoldingWireTool(byPlayer))
             {
                 var behavior = world.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorEPImmersive>();
-                if (behavior != null && blockSel.SelectionBoxIndex < _wireNodes.Count)
+                if (behavior != null && _wireNodes != null && blockSel.SelectionBoxIndex < _wireNodes.Count)
                 {
                     // Начинаем процесс подключения провода
                     HandleWireConnection(capi, byPlayer, blockSel, behavior);
@@ -411,7 +460,7 @@ namespace EPImmersive.Content.Block
         private bool IsHoldingWireTool(IPlayer player)
         {
             ItemSlot activeSlot = player.InventoryManager.ActiveHotbarSlot;
-            return activeSlot?.Itemstack?.Block is BlockECable;
+            return activeSlot?.Itemstack?.Block?.Code.ToString().Contains("cable1")==true;
         }
 
 
@@ -662,7 +711,7 @@ namespace EPImmersive.Content.Block
             // Находим провод под курсором и удаляем его
             var connections = behavior.GetImmersiveConnections();
 
-            if (connections.Count > 0 && blockSel.SelectionBoxIndex < _wireNodes.Count)
+            if (connections.Count > 0 && _wireNodes != null && blockSel.SelectionBoxIndex < _wireNodes.Count)
             {
                 byte nodeIndex = (byte)blockSel.SelectionBoxIndex;
                 var connectionToRemove = connections.FirstOrDefault(c => c.LocalNodeIndex == nodeIndex);
@@ -764,7 +813,11 @@ namespace EPImmersive.Content.Block
                 baseMeshData = _CustomMeshData;
             }
 
-            MeshData finalMesh = baseMeshData?.Clone() ?? new MeshData();
+            if (!_drawBaseMesh)
+                baseMeshData = null;
+
+
+            MeshData finalMesh = baseMeshData?.Clone() ?? new MeshData(4,6);
 
             // Пытаемся получить меши проводов из кэша
             if (WireMeshesCache.TryGetValue(cacheKey, out MeshData cachedWiresMesh))
@@ -865,7 +918,7 @@ namespace EPImmersive.Content.Block
             }
         }
 
-
+        /*
 
         /// <summary>
         /// Получает базовый меш блока
@@ -881,7 +934,7 @@ namespace EPImmersive.Content.Block
             }
             return null;
         }
-
+        */
 
 
         /// <summary>
@@ -892,7 +945,7 @@ namespace EPImmersive.Content.Block
             base.OnUnloaded(api);
 
             // Очищаем кэш для этого блока
-      
+
             //WireMeshesCache.Clear();
         }
 
@@ -1217,22 +1270,57 @@ namespace EPImmersive.Content.Block
                 if (nodeHere == null)
                     continue;
 
-                // ВАЖНО: мы больше не пытаемся получить соседний BlockEntity здесь
-                // Вместо этого используем данные из соединения
+                // далле костыль с поворотом нодов, если они заданы с помощью Facing
+                float rotateY = 0;
 
-                // Для расчета позиции конца провода нам нужно знать позицию соседнего нода
-                // Но если соседний блок не загружен, мы не можем получить эту информацию
+                // берем энтити
+                var entity = beh.Blockentity as BlockEntityEIBase;
+                if (entity != null && entity.Facing != Facing.None && entity.RotationCache != null)
+                {
+                    if (entity.RotationCache.TryGetValue(entity.Facing, out var rotation))
+                    {
+                        rotateY = rotation.Y;
+                    }
+                }
 
-                var endPos = new Vec3f(
-                    (float)(connection.NeighborPos.X - pos.X + connection.NeighborNodeLocalPos.X),
-                    (float)(connection.NeighborPos.Y - pos.Y + connection.NeighborNodeLocalPos.Y),
-                    (float)(connection.NeighborPos.Z - pos.Z + connection.NeighborNodeLocalPos.Z)
-                );
+
+                var x = nodeHere.Position.X;
+                var y = nodeHere.Position.Y;
+                var z = nodeHere.Position.Z;
+
+                (x, y, z) = RotateCoords(rotateY, x, y, z);
+                
 
                 var startPos = new Vec3f(
-                    (float)(nodeHere.Position.X),
-                    (float)(nodeHere.Position.Y),
-                    (float)(nodeHere.Position.Z)
+                    (float)(x),
+                    (float)(y),
+                    (float)(z)
+                );
+
+                rotateY = 0;
+
+                entity = api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos) as BlockEntityEIBase;
+                if (entity != null && entity.Facing != Facing.None && entity.RotationCache != null)
+                {
+                    if (entity.RotationCache.TryGetValue(entity.Facing, out var rotation))
+                    {
+                        rotateY = rotation.Y;
+                    }
+                }
+
+
+                x = connection.NeighborNodeLocalPos.X;
+                y = connection.NeighborNodeLocalPos.Y;
+                z = connection.NeighborNodeLocalPos.Z;
+
+                (x, y, z) = RotateCoords(rotateY, x, y, z);
+
+
+                
+                var endPos = new Vec3f(
+                    (float)(connection.NeighborPos.X - pos.X + x),
+                    (float)(connection.NeighborPos.Y - pos.Y + y),
+                    (float)(connection.NeighborPos.Z - pos.Z + z)
                 );
 
                 // Используем хеш позиции для детерминированного выбора направления
