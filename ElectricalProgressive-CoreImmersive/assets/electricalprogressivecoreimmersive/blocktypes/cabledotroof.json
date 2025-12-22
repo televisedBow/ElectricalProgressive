@@ -22,8 +22,8 @@
       "groupBy": [ "cabledotroof-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveqol:block-handbooktitle-cabledotroof",
-          "text": "electricalprogressiveqol:block-handbooktext-cabledotroof"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-cabledotroof",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-cabledotroof"
         }
       ]
     },

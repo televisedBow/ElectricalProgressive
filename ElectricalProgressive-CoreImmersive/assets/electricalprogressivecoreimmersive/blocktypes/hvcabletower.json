@@ -20,8 +20,8 @@
       "groupBy": [ "hvcabletower-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveimmersive:block-handbooktitle-hvcabletower",
-          "text": "electricalprogressiveimmersive:block-handbooktext-hvcabletower"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-hvcabletower",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-hvcabletower"
         }
       ]
     },

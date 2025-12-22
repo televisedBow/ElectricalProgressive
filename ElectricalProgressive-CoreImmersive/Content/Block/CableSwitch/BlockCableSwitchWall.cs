@@ -177,6 +177,7 @@ namespace EPImmersive.Content.Block.CableSwitch
 
         public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
+
             return true;
 
         }
@@ -185,6 +186,10 @@ namespace EPImmersive.Content.Block.CableSwitch
         public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
         {
             base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
+            
+            // если игрок держит провод или инструмент
+            if (IsHoldingWireTool(byPlayer) || IsHoldingWrench(byPlayer))
+                return;
 
             var entity = world.BlockAccessor.GetBlockEntity(blockSel.Position);
             var beh= entity?.GetBehavior<BEBehaviorCableSwitch>();

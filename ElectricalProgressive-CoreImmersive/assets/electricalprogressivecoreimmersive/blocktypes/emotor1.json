@@ -39,8 +39,8 @@
       "groupBy": [ "emotor1-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivebasics:block-handbooktitle-emotor-{tier}",
-          "text": "electricalprogressivebasics:block-handbooktext-emotor-{tier}"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-emotor-{tier}",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-emotor-{tier}"
         }
       ]
     },

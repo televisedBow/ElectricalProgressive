@@ -409,9 +409,6 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         // иммерсивная система?
         if (Block is ImmersiveWireBlock wireBlock)
         {
-            // Обновляем точки крепления
-            wireBlock.UpdateWireNodes(_wireNodes);
-
             // Обновляем меши при загрузке
             if (Api.Side == EnumAppSide.Client)
             {
@@ -525,7 +522,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
             {
 
                 // Обновляем точки крепления
-                wireBlock.UpdateWireNodes(_wireNodes);
+                //wireBlock.UpdateWireNodes(_wireNodes);
 
                 // Откладываем обновление меша на следующий кадр
                 Api.Event.EnqueueMainThreadTask(() =>

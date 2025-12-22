@@ -66,8 +66,8 @@
       "groupBy": [ "accumulator1-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivebasics:block-handbooktitle-accumulator-{tier}",
-          "text": "electricalprogressivebasics:block-handbooktext-accumulator-{tier}"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-accumulator-{tier}",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-accumulator-{tier}"
         }
       ]
     },

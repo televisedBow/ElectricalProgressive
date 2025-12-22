@@ -158,8 +158,8 @@
       "groupBy": [ "ecable1-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivebasics:block-handbooktitle-ecable",
-          "text": "electricalprogressivebasics:block-handbooktext-ecable"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-ecable",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-ecable"
         }
       ]
     },
@@ -210,7 +210,7 @@
     },
     "*-128v-tinbronze-*": {
       "res": 0.09,
-      "maxCurrent": 11.0,
+      "maxCurrent": 22.0,
       "crosssectional": 4
     },
     "*-32v-iron-*": {

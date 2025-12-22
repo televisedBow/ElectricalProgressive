@@ -15,7 +15,7 @@ namespace EPImmersive.Content.Block
 {
     public class ImmersiveWireBlock : Vintagestory.API.Common.Block, IMultiBlockColSelBoxes
     {
-        protected List<WireNode> _wireNodes; // точки крепления
+        //protected List<WireNode> _wireNodes; // точки крепления (ненадежно)
 
         public MeshData? _CustomMeshData;
         public bool _drawBaseMesh = true;
@@ -164,8 +164,8 @@ namespace EPImmersive.Content.Block
                 // Показываем точки подключения когда игрок держит провод
                 if (IsHoldingWireTool(capi.World.Player) || IsHoldingWrench(capi.World.Player))
                 {
-                    var coll = GetNodeSelectionBoxes(blockAccessor, pos);
-
+                    var coll = GetNodeSelectionBoxes(blockAccessor, pos.AddCopy(offset));
+                    
                     foreach (var col in coll)
                     {
                         col.X1 = col.X1 + offset.X;
@@ -217,35 +217,45 @@ namespace EPImmersive.Content.Block
         public virtual Cuboidf[] GetNodeSelectionBoxes(IBlockAccessor blockAccessor, BlockPos pos)
         {
             var boxes = new List<Cuboidf>();
-            if (_wireNodes == null || _wireNodes.Count == 0)
+
+            var entity = api.World.BlockAccessor.GetBlockEntity(pos);
+
+            if(entity==null)
+                return boxes.ToArray();
+
+            var wireNodes = entity.GetBehavior<BEBehaviorEPImmersive>().GetWireNodes();
+
+            if (wireNodes == null || wireNodes.Count == 0)
                 return boxes.ToArray();
 
             float rotateY = 0;
 
-            var entity = api.World.BlockAccessor.GetBlockEntity(pos) as BlockEntityEIBase;
-            if (entity != null && entity.Facing != Facing.None && entity.RotationCache != null)
+
+            var entity2 = entity as BlockEntityEIBase;
+            if (entity2 != null && entity2.Facing != Facing.None && entity2.RotationCache != null)
             {
-                if (entity.RotationCache.TryGetValue(entity.Facing, out var rotation))
+                if (entity2.RotationCache.TryGetValue(entity2.Facing, out var rotation))
                 {
                     rotateY = rotation.Y;
                 }
             }
 
-            for (int i = 0; i < _wireNodes.Count; i++)
+            for (int i = 0; i < wireNodes.Count; i++)
             {
-                var x = _wireNodes[i].Position.X;
-                var y = _wireNodes[i].Position.Y;
-                var z = _wireNodes[i].Position.Z;
+                var x = wireNodes[i].Position.X;
+                var y = wireNodes[i].Position.Y;
+                var z = wireNodes[i].Position.Z;
 
+                // небольшой костыль с вращением дотов
                 (x, y, z) = RotateCoords(rotateY, x, y, z);
 
                 var box = new Cuboidf(
-                    (float)(x - _wireNodes[i].Radius),
-                    (float)(y - _wireNodes[i].Radius),
-                    (float)(z - _wireNodes[i].Radius),
-                    (float)(x + _wireNodes[i].Radius),
-                    (float)(y + _wireNodes[i].Radius),
-                    (float)(z + _wireNodes[i].Radius)
+                    (float)(x - wireNodes[i].Radius),
+                    (float)(y - wireNodes[i].Radius),
+                    (float)(z - wireNodes[i].Radius),
+                    (float)(x + wireNodes[i].Radius),
+                    (float)(y + wireNodes[i].Radius),
+                    (float)(z + wireNodes[i].Radius)
                 );
 
                 boxes.Add(box);
@@ -373,16 +383,6 @@ namespace EPImmersive.Content.Block
 
         */
 
-        /// <summary>
-        /// Обновление точек крепления
-        /// </summary>
-        /// <param name="pos"></param>
-        /// <param name="nodes"></param>
-        public void UpdateWireNodes(List<WireNode> nodes)
-        {
-            // обновляем точки крепления
-            _wireNodes = nodes;
-        }
 
 
 
@@ -431,7 +431,8 @@ namespace EPImmersive.Content.Block
             if (IsHoldingWireTool(byPlayer))
             {
                 var behavior = world.BlockAccessor.GetBlockEntity(blockSel.Position)?.GetBehavior<BEBehaviorEPImmersive>();
-                if (behavior != null && _wireNodes != null && blockSel.SelectionBoxIndex < _wireNodes.Count)
+                var wireNodes = behavior.GetWireNodes();
+                if (behavior != null && wireNodes != null && blockSel.SelectionBoxIndex < wireNodes.Count)
                 {
                     // Начинаем процесс подключения провода
                     HandleWireConnection(capi, byPlayer, blockSel, behavior);
@@ -457,7 +458,7 @@ namespace EPImmersive.Content.Block
         /// </summary>
         /// <param name="player"></param>
         /// <returns></returns>
-        private bool IsHoldingWireTool(IPlayer player)
+        public bool IsHoldingWireTool(IPlayer player)
         {
             ItemSlot activeSlot = player.InventoryManager.ActiveHotbarSlot;
             return activeSlot?.Itemstack?.Block?.Code.ToString().Contains("cable1")==true;
@@ -469,7 +470,7 @@ namespace EPImmersive.Content.Block
         /// </summary>
         /// <param name="player"></param>
         /// <returns></returns>
-        private bool IsHoldingWrench(IPlayer player)
+        public bool IsHoldingWrench(IPlayer player)
         {
             ItemSlot activeSlot = player.InventoryManager.ActiveHotbarSlot;
             return activeSlot?.Itemstack?.Item?.Tool == EnumTool.Wrench;
@@ -710,8 +711,8 @@ namespace EPImmersive.Content.Block
         {
             // Находим провод под курсором и удаляем его
             var connections = behavior.GetImmersiveConnections();
-
-            if (connections.Count > 0 && _wireNodes != null && blockSel.SelectionBoxIndex < _wireNodes.Count)
+            var wireNodes = behavior.GetWireNodes();
+            if (connections.Count > 0 && wireNodes != null && blockSel.SelectionBoxIndex < wireNodes.Count)
             {
                 byte nodeIndex = (byte)blockSel.SelectionBoxIndex;
                 var connectionToRemove = connections.FirstOrDefault(c => c.LocalNodeIndex == nodeIndex);

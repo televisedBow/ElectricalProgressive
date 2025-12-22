@@ -26,8 +26,8 @@
       "groupBy": [ "cableswitchwall-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveqol:block-handbooktitle-cableswitchwall",
-          "text": "electricalprogressiveqol:block-handbooktext-cableswitchwall"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-cableswitchwall",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-cableswitchwall"
         }
       ]
     },

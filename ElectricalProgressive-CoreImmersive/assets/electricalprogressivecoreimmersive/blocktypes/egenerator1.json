@@ -41,8 +41,8 @@
       "groupBy": [ "egenerator1-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivebasics:block-handbooktitle-egenerator-{tier}",
-          "text": "electricalprogressivebasics:block-handbooktext-egenerator-{tier}"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-egenerator-{tier}",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-egenerator-{tier}"
         }
       ]
     },
