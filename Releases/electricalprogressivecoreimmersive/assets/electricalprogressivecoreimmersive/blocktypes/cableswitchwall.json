@@ -1,10 +1,13 @@
 ﻿{
-  "code": "cabledotwall",
-  "class": "BlockCableDotWall",
-  "entityClass": "BlockEntityCableDotWall",
+  "code": "cableswitchwall",
+  "class": "BlockCableSwitchWall",
+  "entityClass": "BlockEntityCableSwitch",
   "entityBehaviors": [
     {
-      "name": "BEBehaviorCableDot"
+      "name": "Animatable"
+    },
+    {
+      "name": "BEBehaviorCableSwitch"
     },
     {
       "name": "ElectricalProgressiveImmersive"
@@ -18,12 +21,13 @@
     "maxCurrent": 20.0,
     "isolated": true,
     "isolatedEnvironment": true,
+    "IsOpen": true,
     "handbook": {
-      "groupBy": [ "cabledotwall-*" ],
+      "groupBy": [ "cableswitchwall-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivecoreimmersive:block-handbooktitle-cabledotwall",
-          "text": "electricalprogressivecoreimmersive:block-handbooktext-cabledotwall"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-cableswitchwall",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-cableswitchwall"
         }
       ]
     },
@@ -31,7 +35,15 @@
       {
         "index": 0,
         "voltage": "512",
-        "x": 0.5,
+        "x": 0.3,
+        "y": 0.1,
+        "z": 0.5,
+        "dxdydz": 0.1
+      },
+      {
+        "index": 1,
+        "voltage": "512",
+        "x": 0.7,
         "y": 0.1,
         "z": 0.5,
         "dxdydz": 0.1
@@ -53,7 +65,7 @@
 
 
   "shape": {
-    "base": "block/cabledotwall"
+    "base": "block/cableswitchwall"
   },
 
   "resistance": 1,
@@ -78,18 +90,18 @@
     "walk": "game:walk/stone"
   },
   "collisionBox": {
-    "x1": 0.33,
+    "x1": 0.1,
     "y1": 0.0,
     "z1": 0.0,
-    "x2": 0.66,
+    "x2": 0.9,
     "y2": 1.0,
     "z2": 0.66
   },
   "selectionBox": {
-    "x1": 0.33,
+    "x1": 0.1,
     "y1": 0.0,
     "z1": 0.0,
-    "x2": 0.66,
+    "x2": 0.9,
     "y2": 1.0,
     "z2": 0.66
   },

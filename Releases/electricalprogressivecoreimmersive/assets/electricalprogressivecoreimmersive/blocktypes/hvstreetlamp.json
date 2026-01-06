@@ -22,8 +22,8 @@
       "groupBy": [ "hvstreetlamp-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveimmersive:block-handbooktitle-hvstreetlamp",
-          "text": "electricalprogressiveimmersive:block-handbooktext-hvstreetlamp"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-hvstreetlamp",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-hvstreetlamp"
         }
       ]
     },

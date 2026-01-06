@@ -1,7 +1,7 @@
 ﻿{
   "code": "cabledotdown",
   "class": "BlockCableDotDown",
-  "entityClass": "BlockEntityCableDot",
+  "entityClass": "BlockEntityCableDotDown",
   "entityBehaviors": [
     {
       "name": "BEBehaviorCableDot"
@@ -22,8 +22,8 @@
       "groupBy": [ "cabledotdown-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressiveqol:block-handbooktitle-cabledotdown",
-          "text": "electricalprogressiveqol:block-handbooktext-cabledotdown"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-cabledotdown",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-cabledotdown"
         }
       ]
     },

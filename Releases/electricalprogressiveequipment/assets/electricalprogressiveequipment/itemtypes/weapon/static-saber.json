@@ -1,10 +1,11 @@
 ﻿{
 	"code": "static-saber",
+	"tags": [ "weapon", "weapon-melee", "sword", "onehanded" ],
 	"damagedby": [ "blockbreaking", "attacking" ],
 	"tool": "sword",
 	"class": "EWeapon",
 	"durability": 1000,
-  "tooltier": 5,
+	"tooltier": 6,
 	"attributes": {
 		"heldItemPitchFollow": 0.9,
 		"chargable": true,
@@ -50,7 +51,6 @@
 
 	"heldTpHitAnimation": "spearhit",
 	"attackRange": 3,
-	"tooltier": 6,
 	"attackpower": 8,
 	"miningspeed": {
 		"wood": 2,
