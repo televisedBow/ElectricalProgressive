@@ -222,5 +222,6 @@
   "remove_burned_cable": "Najpierw usuń przepalony kabel",
   "cable_same_type": "Kable muszą być tego samego typu",
   "not_enough_cables": "Za mało kabli do umieszczenia",
-  "enough_lines": "Jest już wystarczająco dużo linii"
+  "enough_lines": "Jest już wystarczająco dużo linii",
+  "game:Prod_potential": "Potencjał prod."
 }

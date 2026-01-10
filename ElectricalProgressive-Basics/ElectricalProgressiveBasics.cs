@@ -12,7 +12,6 @@ using ElectricalProgressive.Content.Block.Termoplastini;
 using ElectricalProgressive.Patch;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -27,7 +26,7 @@ using Vintagestory.API.Config;
     "electricalprogressivebasics",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Basic electrical devices.",
-    Version = "2.6.1",
+    Version = "2.6.2",
     Authors =
     [
         "Tehtelev",

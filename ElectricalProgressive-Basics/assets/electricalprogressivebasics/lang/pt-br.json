@@ -226,6 +226,7 @@
   "remove_burned_cable": "Remova o cabo queimado primeiro",
   "cable_same_type": "Os cabos devem ser do mesmo tipo",
   "not_enough_cables": "Cabos insuficientes para colocar",
-  "enough_lines": "Já há linhas suficientes"
+  "enough_lines": "Já há linhas suficientes",
+  "game:Prod_potential": "Potencial prod."
 
 }

@@ -228,6 +228,7 @@
   "remove_burned_cable": "Remove the burned cable first",
   "cable_same_type": "Cables must be of the same type",
   "not_enough_cables": "Not enough cables to place",
-  "enough_lines": "There are already enough lines"
+  "enough_lines": "There are already enough lines",
+  "game:Prod_potential": "Prod. potential"
 
 }
