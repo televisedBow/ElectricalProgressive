@@ -108,7 +108,8 @@
   "block-efreezer2-*": "Elektrická Chladnička",
   "block-efreezer2-burned-north": "Elektrická Chladnička (Spálená)",
   "block-handbooktitle-efreezer2": "Použití",
-  "block-handbooktext-efreezer2": "Elektrická chladnička vám umožňuje udržet jídlo čerstvé déle. <br><br>Úložných slotů: 6.<br>Rychlost kažení jídla: 0,05×",
+  "block-handbooktext-efreezer2": "Elektrická lednička umožňuje delší skladování potravin.<br><br>Počet úložných slotů: 6.<br>Rychlost kažení jídla: 0,05x.<br>Dokáže udržet chlad uvnitř až 6 herních hodin po výpadku elektřiny.",
+  "cold_reserve": "Rezerva chladu: {0} hod.",
 
   "block-efence-*": "Elektrický plot",
   "block-handbooktitle-efence": "Použití",

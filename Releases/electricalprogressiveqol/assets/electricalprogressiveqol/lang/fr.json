@@ -116,7 +116,8 @@
   "block-efreezer2-*": "Réfrigérateur électrique",
   "block-efreezer2-burned-north": "Réfrigérateur électrique (brûlé)",
   "block-handbooktitle-efreezer2": "En service",
-  "block-handbooktext-efreezer2": "Le réfrigérateur électrique permet de conserver les aliments plus longtemps. <br><br>Emplacements de stockage : 6.<br>Vitesse de détérioration des aliments : 0,05×",
+  "block-handbooktext-efreezer2": "Le réfrigérateur électrique permet de conserver les aliments plus longtemps.<br><br>Emplacements de stockage : 6.<br>Taux de détérioration de la nourriture : 0,05x.<br>Peut garder le contenu au froid jusqu'à 6 heures de jeu après une panne de courant.",
+  "cold_reserve": "Réserve de froid : {0} heures",
 
   "block-efence-*": "Clôture électrique",
   "block-handbooktitle-efence": "Utilisation",

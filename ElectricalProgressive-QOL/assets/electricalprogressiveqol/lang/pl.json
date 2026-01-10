@@ -116,7 +116,8 @@
   "block-efreezer2-*": "Lodówka Elektryczna",
   "block-efreezer2-burned-north": "Lodówka Elektryczna (spalona)",
   "block-handbooktitle-efreezer2": "W użyciu",
-  "block-handbooktext-efreezer2": "Elektryczna lodówka pozwala na dłuższe przechowywanie żywności. <br><br>Miejsca do przechowywania: 6.<br>Szybkość psucia się żywności: 0,05×",
+  "block-handbooktext-efreezer2": "Lodówka elektryczna pozwala na dłuższe przechowywanie żywności.<br><br>Miejsca do przechowywania: 6.<br>Współczynnik psucia się żywności: 0,05x.<br>Może utrzymywać chłód wewnątrz do 6 godzin gry po odcięciu prądu.",
+  "cold_reserve": "Rezerwa chłodu: {0} godzin(y)",
 
 
   "block-efence-*": "Elektryczne ogrodzenie",

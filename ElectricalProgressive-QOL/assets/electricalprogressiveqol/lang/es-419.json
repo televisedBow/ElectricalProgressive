@@ -106,7 +106,8 @@
   "block-efreezer2-*": "Refrigerador Eléctrico",
   "block-efreezer2-burned-north": "Refrigerador Eléctrico (quemado)",
   "block-handbooktitle-efreezer2": "Uso",
-  "block-handbooktext-efreezer2": "El refrigerador eléctrico permite almacenar alimentos por más tiempo. <br><br>Ranuras de almacenamiento: 6.<br>Velocidad de descomposición de la comida: 0.05x",
+  "block-handbooktext-efreezer2": "El refrigerador eléctrico permite almacenar alimentos por más tiempo.<br><br>Espacios de almacenamiento: 6.<br>Tasa de descomposición de los alimentos: 0,05x.<br>Puede mantener el contenido frío hasta 6 horas de juego después de un corte de energía.",
+  "cold_reserve": "Reserva de frío: {0} horas",
 
   "block-efence-*": "Cerca Eléctrica",
   "block-handbooktitle-efence": "Uso",

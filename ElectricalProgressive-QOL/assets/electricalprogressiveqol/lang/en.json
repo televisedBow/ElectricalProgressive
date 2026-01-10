@@ -123,8 +123,8 @@
   "block-efreezer2-*": "Electric Refrigerator",
   "block-efreezer2-burned-north": "Electric Refrigerator (Burned)",
   "block-handbooktitle-efreezer2": "In Use",
-  "block-handbooktext-efreezer2": "The electric refrigerator allows you to keep food fresh for longer. <br><br>Storage slots: 6.<br>Food spoilage rate: 0.05×",
-
+  "block-handbooktext-efreezer2": "The electric refrigerator allows food to be stored longer.<br><br>Storage slots: 6.<br>Food spoilage rate: 0.05x.<br>Can keep contents cold for up to 6 in-game hours after a power outage.",
+  "cold_reserve": "Cold reserve: {0} hours",
 
   "block-efence-*": "Electric Fence",
   "block-handbooktitle-efence": "Usage",

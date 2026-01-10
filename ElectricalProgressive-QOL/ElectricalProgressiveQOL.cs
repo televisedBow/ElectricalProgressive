@@ -21,7 +21,7 @@ using Vintagestory.API.Server;
 
 
 
-[assembly: ModDependency("game", "1.21.0")]
+[assembly: ModDependency("game", "1.21.6")]
 [assembly: ModDependency("electricalprogressivecore", "2.6.2")]
 [assembly: ModDependency("electricalprogressivebasics", "2.6.0")]
 [assembly: ModInfo(
@@ -29,7 +29,7 @@ using Vintagestory.API.Server;
     "electricalprogressiveqol",
     Website = "https://github.com/tehtelev/ElectricalProgressive",
     Description = "Additional electrical devices.",
-    Version = "2.6.5",
+    Version = "2.6.6",
     Authors =
     [
         "Tehtelev",
