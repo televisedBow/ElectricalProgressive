@@ -21,6 +21,7 @@ using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
+using static EPImmersive.Content.Block.ImmersiveWireBlock;
 using static EPImmersive.ElectricalProgressiveImmersive;
 
 
@@ -56,6 +57,9 @@ namespace EPImmersive
         public ICoreAPI Api = null!;
         public ICoreClientAPI _capi = null!;
         private ICoreServerAPI _sapi = null!;
+
+        public static IClientNetworkChannel? clientWireChannel;
+        public static IServerNetworkChannel? serverWireChannel;
 
 
         private readonly BlockingCollection<ImmersiveNetwork> _networkProcessingQueue = new(); // коллекция для сетей
@@ -197,6 +201,8 @@ namespace EPImmersive
             this._capi = api;
             RegisterAltKeys();
 
+            // регистрируем канал для синхронизации данных о закрепляемых проводах
+            clientWireChannel = api.Network.RegisterChannel("EPWireChannel").RegisterMessageType(typeof(WireConnectionData));
         }
 
 
@@ -234,6 +240,11 @@ namespace EPImmersive
                 _networkProcessingThreads.Add(thread);
                 thread.Start();
             }
+
+            // регистрируем канал для синхронизации данных о закрепляемых проводах
+            serverWireChannel = _sapi.Network.RegisterChannel("EPWireChannel").RegisterMessageType(typeof
+                (WireConnectionData)).SetMessageHandler<WireConnectionData>(new
+                NetworkClientMessageHandler<WireConnectionData>(ImmersiveWireBlock.OnClientSent));
         }
 
 
