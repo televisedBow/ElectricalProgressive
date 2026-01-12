@@ -5,10 +5,14 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace EPImmersive.Content.Block;
@@ -59,8 +63,15 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     }
 
 
-    public const int MyPacketIdForServer = 1122334457;
-    public const int MyPacketIdForClient = 1122334458;
+    // Константы для пакетов
+    public const int PacketIdRequestNetworkInfo = 1122334457;
+    public const int PacketIdResponseNetworkInfo = 1122334458;
+
+    // Добавляем поле для хранения информации о сети
+    private ImmersiveNetworkInformation networkInformation = new();
+    private DateTime lastRequestTime = DateTime.MinValue;
+
+
 
     public const string InterruptionKey = "electricalprogressive:interruption";
     public const string ConnectionKey = "electricalprogressive:connection";
@@ -653,6 +664,125 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
         {
             ImmersiveWireBlock.InvalidateBlockMeshCache(Pos);
+        }
+    }
+
+
+    public override void GetBlockInfo(IPlayer forPlayer, StringBuilder stringBuilder)
+    {
+        base.GetBlockInfo(forPlayer, stringBuilder);
+
+        if (Api is not ICoreClientAPI capi)
+            return;
+
+        // Отправляем запрос на сервер раз в секунду
+        if ((DateTime.Now - lastRequestTime).TotalSeconds >= 1.0)
+        {
+            capi.Network.SendBlockEntityPacket(Pos, PacketIdRequestNetworkInfo, null);
+            lastRequestTime = DateTime.Now;
+        }
+
+        // Если нет информации, показываем сообщение
+        if (networkInformation == null)
+        {
+            stringBuilder.AppendLine(Lang.Get("Waiting for network information..."));
+            return;
+        }
+
+        // Проверяем нажатие Alt для подробной информации
+        var altPressed = capi.Input.IsHotKeyPressed("AltPressForNetwork");
+        var nameAltPressed = capi.Input.GetHotKeyByCode("AltPressForNetwork")?.CurrentMapping.ToString() ?? "Alt";
+
+        if (!altPressed)
+        {
+            stringBuilder.AppendLine(Lang.Get("Press {0} for details", nameAltPressed));
+            stringBuilder.AppendLine(Lang.Get("Connected wires: {0}", networkInformation.NumberOfConnections));
+            stringBuilder.AppendLine(Lang.Get("Networks: {0}", networkInformation.NumberOfNetworks));
+            return;
+        }
+
+        // Подробная информация
+        stringBuilder.AppendLine(Lang.Get("=== Electrical Network Information ==="));
+        stringBuilder.AppendLine(Lang.Get("Connected wires: {0}", networkInformation.NumberOfConnections));
+        stringBuilder.AppendLine(Lang.Get("Independent networks: {0}", networkInformation.NumberOfNetworks));
+
+        // Информация о блоке
+        stringBuilder.AppendLine(Lang.Get("--- Block Parameters ---"));
+        stringBuilder.AppendLine(Lang.Get("Max current: {0} A",
+            networkInformation.eParamsInNetwork.maxCurrent * networkInformation.eParamsInNetwork.lines));
+        stringBuilder.AppendLine(Lang.Get("Current: {0:F3} A", Math.Abs(networkInformation.current)));
+        stringBuilder.AppendLine(Lang.Get("Voltage: {0} V", networkInformation.eParamsInNetwork.voltage));
+        stringBuilder.AppendLine(Lang.Get("Resistivity: {0:F3} Ω·m", networkInformation.eParamsInNetwork.resistivity));
+        stringBuilder.AppendLine(Lang.Get("Lines: {0}", networkInformation.eParamsInNetwork.lines));
+        stringBuilder.AppendLine(Lang.Get("Cross-section: {0:F3} mm²",
+            networkInformation.eParamsInNetwork.crossArea * networkInformation.eParamsInNetwork.lines));
+
+        // Информация по каждой сети
+        for (int i = 0; i < networkInformation.Networks.Count; i++)
+        {
+            var network = networkInformation.Networks[i];
+            stringBuilder.AppendLine(Lang.Get("--- Network #{0} ---", i + 1));
+            if (network.IsConductorOpen)
+                stringBuilder.AppendLine(Lang.Get("Status: CONDUCTOR OPEN"));
+
+            stringBuilder.AppendLine(Lang.Get("Generators: {0}", network.NumberOfProducers));
+            stringBuilder.AppendLine(Lang.Get("Consumers: {0}", network.NumberOfConsumers));
+            stringBuilder.AppendLine(Lang.Get("Batteries: {0}", network.NumberOfAccumulators));
+            stringBuilder.AppendLine(Lang.Get("Transformers: {0}", network.NumberOfTransformators));
+            stringBuilder.AppendLine(Lang.Get("Conductors: {0}", network.NumberOfConductors));
+            stringBuilder.AppendLine(Lang.Get("Production: {0:F1} W", network.Production));
+            stringBuilder.AppendLine(Lang.Get("Consumption: {0:F1} W", network.Consumption));
+            stringBuilder.AppendLine(Lang.Get("Request: {0:F1} W", network.Request));
+
+            if (network.MaxCapacity > 0)
+            {
+                float capacityPercent = (network.Capacity / network.MaxCapacity) * 100f;
+                stringBuilder.AppendLine(Lang.Get("Battery capacity: {0:F0}/{1:F0} J ({2:F1}%)",
+                    network.Capacity, network.MaxCapacity, capacityPercent));
+            }
+        }
+
+        // Общая сводка
+        if (networkInformation.Networks.Count > 1)
+        {
+            stringBuilder.AppendLine(Lang.Get("--- Summary ---"));
+            stringBuilder.AppendLine(Lang.Get("Total blocks: {0}", networkInformation.NumberOfBlocks));
+            stringBuilder.AppendLine(Lang.Get("Total generators: {0}", networkInformation.NumberOfProducers));
+            stringBuilder.AppendLine(Lang.Get("Total consumers: {0}", networkInformation.NumberOfConsumers));
+            stringBuilder.AppendLine(Lang.Get("Total batteries: {0}", networkInformation.NumberOfAccumulators));
+            stringBuilder.AppendLine(Lang.Get("Total production: {0:F1} W", networkInformation.Production));
+            stringBuilder.AppendLine(Lang.Get("Total consumption: {0:F1} W", networkInformation.Consumption));
+        }
+    }
+
+    public override void OnReceivedClientPacket(IPlayer fromPlayer, int packetid, byte[] data)
+    {
+        base.OnReceivedClientPacket(fromPlayer, packetid, data);
+
+        if (packetid == PacketIdRequestNetworkInfo)
+        {
+            // Получаем информацию о сети
+            var info = System?.GetNetworkForImmersiveWire(Pos);
+            if (info != null)
+            {
+                // Используем кастомный сериализатор
+                var serializedData = ImmersiveNetworkInformationSerializer.Serialize(info);
+                (Api as ICoreServerAPI)?.Network.SendBlockEntityPacket(fromPlayer as IServerPlayer,
+                    Pos, PacketIdResponseNetworkInfo, serializedData);
+            }
+        }
+    }
+
+    public override void OnReceivedServerPacket(int packetid, byte[] data)
+    {
+        base.OnReceivedServerPacket(packetid, data);
+
+        if (packetid == PacketIdResponseNetworkInfo)
+        {
+            // Используем кастомный десериализатор
+            networkInformation = ImmersiveNetworkInformationSerializer.Deserialize(data);
+            // Обновляем отображение
+            Blockentity.MarkDirty();
         }
     }
 
