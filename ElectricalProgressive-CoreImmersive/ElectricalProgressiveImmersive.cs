@@ -2070,6 +2070,16 @@ namespace EPImmersive
                 _result.eParamsInNetwork = part.MainEparams;
                 _result.current = part.MainEparams.current;
 
+                // Проверяем, замкнуты ли узлы
+                if (part.Conductor!=null && part.Conductor.IsOpen)
+                {
+                    _result.IsConductorOpen = true;
+                }
+                else
+                {
+                    _result.IsConductorOpen = false;
+                }
+
                 // Собираем информацию о всех сетях, к которым подключен блок
                 var networks = new HashSet<ImmersiveNetwork>();
 
@@ -2135,15 +2145,7 @@ namespace EPImmersive
                         Request = network.Request
                     };
 
-                    // Проверяем, есть ли разомкнутые проводники в сети
-                    foreach (var conductor in network.Conductors)
-                    {
-                        if (conductor.IsOpen)
-                        {
-                            networkData.IsConductorOpen = true;
-                            break;
-                        }
-                    }
+
 
                     _result.Networks.Add(networkData);
 

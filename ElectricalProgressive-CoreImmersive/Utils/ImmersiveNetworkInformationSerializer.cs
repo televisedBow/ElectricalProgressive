@@ -1,6 +1,7 @@
 ﻿using ElectricalProgressive.Utils;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 
 namespace EPImmersive.Utils
@@ -24,6 +25,7 @@ namespace EPImmersive.Utils
                 writer.Write(info.NumberOfTransformators);
                 writer.Write(info.NumberOfConnections);
                 writer.Write(info.NumberOfNetworks);
+                writer.Write(info.IsConductorOpen);
 
                 // Сериализуем параметры блока
                 var eparam = info.eParamsInNetwork;
@@ -41,6 +43,7 @@ namespace EPImmersive.Utils
                 writer.Write(eparam.current);
 
                 writer.Write(info.current);
+                
 
                 // Сериализуем список сетей
                 writer.Write(info.Networks.Count);
@@ -56,7 +59,7 @@ namespace EPImmersive.Utils
                     writer.Write(network.MaxCapacity);
                     writer.Write(network.Production);
                     writer.Write(network.Request);
-                    writer.Write(network.IsConductorOpen);
+                    
                 }
             }
             return ms.ToArray();
@@ -80,7 +83,8 @@ namespace EPImmersive.Utils
                 NumberOfProducers = reader.ReadInt32(),
                 NumberOfTransformators = reader.ReadInt32(),
                 NumberOfConnections = reader.ReadInt32(),
-                NumberOfNetworks = reader.ReadInt32()
+                NumberOfNetworks = reader.ReadInt32(),
+                IsConductorOpen = reader.ReadBoolean()
             };
 
             // Десериализуем параметры блока
@@ -118,8 +122,7 @@ namespace EPImmersive.Utils
                     Capacity = reader.ReadSingle(),
                     MaxCapacity = reader.ReadSingle(),
                     Production = reader.ReadSingle(),
-                    Request = reader.ReadSingle(),
-                    IsConductorOpen = reader.ReadBoolean()
+                    Request = reader.ReadSingle()
                 };
                 info.Networks.Add(network);
             }

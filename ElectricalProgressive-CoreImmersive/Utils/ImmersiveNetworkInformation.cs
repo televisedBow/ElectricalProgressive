@@ -24,6 +24,7 @@ namespace EPImmersive.Utils
         public List<NetworkData> Networks = new(); // Информация о каждой сети
         public EParams eParamsInNetwork = new();
         public float current;
+        public bool IsConductorOpen; // Проводник разомкнут
 
         /// <summary>
         /// Сбросить все значения до стандартных
@@ -63,6 +64,6 @@ namespace EPImmersive.Utils
         public float MaxCapacity;
         public float Production;
         public float Request;
-        public bool IsConductorOpen; // Проводник разомкнут
+        
     }
 }
