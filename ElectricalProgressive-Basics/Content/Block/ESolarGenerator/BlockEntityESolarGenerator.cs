@@ -14,7 +14,7 @@ using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.ESolarGenerator;
 
-public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHeatSource
+public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 {
 
     private Facing _facing = Facing.None;
@@ -33,8 +33,7 @@ public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHea
             }
         }
     }
-
-    
+   
 
     ICoreClientAPI? _capi;
     ICoreServerAPI? _sapi;
@@ -168,9 +167,6 @@ public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHea
 
     private long _listenerId;
 
-    public override string DialogTitle => Lang.Get("solargen");
-
-    public override string InventoryClassName => "solargen";
 
     /// <summary>
     /// Инициализация блока
@@ -188,11 +184,6 @@ public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHea
         {
             _capi = api as ICoreClientAPI;
 
-            // инициализируем аниматор
-            if (AnimUtil != null)
-            {
-                AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
-            }
 
         }
 
@@ -238,23 +229,6 @@ public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHea
         base.OnBlockBroken(null);
     }
 
-
-
-
-    /// <summary>
-    /// Отвечает за тепло отдаваемое в окружающую среду
-    /// </summary>
-    /// <param name="world"></param>
-    /// <param name="heatSourcePos"></param>
-    /// <param name="heatReceiverPos"></param>
-    /// <returns></returns>
-    public float GetHeatStrength(
-      IWorldAccessor world,
-      BlockPos heatSourcePos,
-      BlockPos heatReceiverPos)
-    {
-        return Math.Max((float)(((float)this._genTemp - 20.0F) / ((float)1300F - 20.0F) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
-    }
 
     /// <summary>
     /// Вызывается при выгрузке блока
@@ -361,8 +335,6 @@ public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHea
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        if (Api != null)
-            Inventory.AfterBlocksLoaded(this.Api.World);
 
         try
         {
