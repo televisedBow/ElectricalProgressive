@@ -84,6 +84,7 @@ public class BlockESolarGenerator : BlockEBase
             world.BlockAccessor.GetBlockEntity(blockSel.Position) is BlockEntityESolarGenerator entity
         )
         {
+            entity.Facing = facing;
             LoadEProperties.Load(this, entity);
             
             return true;
