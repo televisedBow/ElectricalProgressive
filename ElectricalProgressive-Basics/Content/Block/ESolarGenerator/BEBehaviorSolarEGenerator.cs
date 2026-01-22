@@ -23,8 +23,6 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
     private static bool IsBurned => false;
 
-
-
     public new BlockPos Pos => Blockentity.Pos;
 
 
@@ -110,23 +108,13 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     public float Produce_give()
     {
         // // отсекаем внештатные ситуации
-        // if (Blockentity is not BlockEntityESolarGenerator temp)
-        // {
-        //     return 0f;
-        // }
-        //
-        // // отдаём энергию только если температура генератора выше 20 градусов
-        // if (temp.GenTemp > 20)
-        //     _powerGive = temp.Power;
-        // else
-        //     _powerGive = 0;
-        _powerGive = 1000;
-
-
+        if (Blockentity is not BlockEntityESolarGenerator temp)
+        {
+            return 0f;
+        }
+        _powerGive = temp.Power;
         return _powerGive;
-
     }
-
 
 
     public void Produce_order(float amount)
@@ -158,7 +146,6 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / entity.Power * 100));
         stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
-        stringBuilder.AppendLine("└ " + Lang.Get("electricalprogressivebasics:block-termoplastini") + ": " + entity.HeightTermoplastin);
         stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.Kpd * 100).ToString("F1") + " %");
     }
 
