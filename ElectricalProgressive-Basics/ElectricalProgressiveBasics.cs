@@ -5,6 +5,7 @@ using ElectricalProgressive.Content.Block.EConnector;
 using ElectricalProgressive.Content.Block.EFuelGenerator;
 using ElectricalProgressive.Content.Block.EGenerator;
 using ElectricalProgressive.Content.Block.EMotor;
+using ElectricalProgressive.Content.Block.ESolarGenerator;
 using ElectricalProgressive.Content.Block.ESwitch;
 using ElectricalProgressive.Content.Block.ETermoGenerator;
 using ElectricalProgressive.Content.Block.ETransformator;
@@ -103,6 +104,10 @@ public class ElectricalProgressiveBasics : ModSystem
         api.RegisterBlockClass("BlockETermoGenerator", typeof(BlockETermoGenerator));
         api.RegisterBlockEntityClass("BlockEntityETermoGenerator", typeof(BlockEntityETermoGenerator));
         api.RegisterBlockEntityBehaviorClass("BEBehaviorTermoEGenerator", typeof(BEBehaviorTermoEGenerator));
+        
+        api.RegisterBlockClass("BlockESolarGenerator", typeof(BlockESolarGenerator));
+        api.RegisterBlockEntityClass("BlockEntityESolarGenerator", typeof(BlockEntityESolarGenerator));
+        api.RegisterBlockEntityBehaviorClass("BEBehaviorSolarEGenerator", typeof(BEBehaviorSolarEGenerator));
 
         api.RegisterBlockClass("BlockEFuelGenerator", typeof(BlockEFuelGenerator));
         api.RegisterBlockEntityClass("BlockEntityEFuelGenerator", typeof(BlockEntityEFuelGenerator));

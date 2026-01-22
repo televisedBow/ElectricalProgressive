@@ -1,5 +1,4 @@
-﻿using ElectricalProgressive.Content.Block.ETermoGenerator;
-using ElectricalProgressive.Interface;
+﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Text;
@@ -111,7 +110,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     public float Produce_give()
     {
         // отсекаем внештатные ситуации
-        if (Blockentity is not BlockEntityETermoGenerator temp)
+        if (Blockentity is not BlockEntityESolarGenerator temp)
         {
             return 0f;
         }
@@ -150,7 +149,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     {
         base.GetBlockInfo(forPlayer, stringBuilder);
 
-        if (Blockentity is not BlockEntityETermoGenerator entity)
+        if (Blockentity is not BlockEntityESolarGenerator entity)
             return;
 
         if (IsBurned)

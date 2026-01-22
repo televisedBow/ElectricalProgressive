@@ -29,7 +29,7 @@ public class GuiBlockEntityESolarGenerator : GuiDialogBlockEntity
 
     private void OnSlotModified(int slotid)
     {
-        this.capi.Event.EnqueueMainThreadTask(new Action(this.SetupDialog), "termogen");
+        this.capi.Event.EnqueueMainThreadTask(new Action(this.SetupDialog), "solargen");
     }
 
     
@@ -67,9 +67,9 @@ public class GuiBlockEntityESolarGenerator : GuiDialogBlockEntity
 
         var outputText = CairoFont.WhiteDetailText().WithWeight(FontWeight.Normal);
 
-        this.SingleComposer = capi.Gui.CreateCompo("termogen" + (blockPos?.ToString()), window)
+        this.SingleComposer = capi.Gui.CreateCompo("solargen" + (blockPos?.ToString()), window)
             .AddShadedDialogBG(dialog, true, 5)
-            .AddDialogTitleBar(Lang.Get("termogen"), new Action(OnTitleBarClose), null, null)
+            .AddDialogTitleBar(Lang.Get("solargen"), new Action(OnTitleBarClose), null, null)
             .BeginChildElements(dialog)
 
             .AddDynamicCustomDraw(stoveBounds, OnBgDraw, "symbolDrawer")

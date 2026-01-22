@@ -206,9 +206,9 @@ public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHea
 
     public override InventoryBase Inventory => _inventory;
 
-    public override string DialogTitle => Lang.Get("termogen");
+    public override string DialogTitle => Lang.Get("solargen");
 
-    public override string InventoryClassName => "termogen";
+    public override string InventoryClassName => "solargen";
 
     public BlockEntityESolarGenerator()
     {
@@ -413,7 +413,7 @@ public class BlockEntityESolarGenerator : BlockEntityGenericTypedContainer, IHea
         {
             // если есть топливо, то добавляем его в мэш
             
-            _capi?.Tesselator.TesselateShape(this.Block, Vintagestory.API.Common.Shape.TryGet(Api, "electricalprogressivebasics:shapes/block/termogenerator/toplivo/toplivo-" + sizeFuel + ".json"), out fuelMesh);
+            _capi?.Tesselator.TesselateShape(this.Block, Vintagestory.API.Common.Shape.TryGet(Api, "electricalprogressivebasics:shapes/block/solargenerator/toplivo/toplivo-" + sizeFuel + ".json"), out fuelMesh);
 
             _capi?.TesselatorManager.ThreadDispose(); //обязательно
 
