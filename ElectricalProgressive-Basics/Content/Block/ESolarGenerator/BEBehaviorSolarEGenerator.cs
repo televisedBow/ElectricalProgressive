@@ -109,17 +109,18 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
     public float Produce_give()
     {
-        // отсекаем внештатные ситуации
-        if (Blockentity is not BlockEntityESolarGenerator temp)
-        {
-            return 0f;
-        }
-
-        // отдаём энергию только если температура генератора выше 20 градусов
-        if (temp.GenTemp > 20)
-            _powerGive = temp.Power;
-        else
-            _powerGive = 0;
+        // // отсекаем внештатные ситуации
+        // if (Blockentity is not BlockEntityESolarGenerator temp)
+        // {
+        //     return 0f;
+        // }
+        //
+        // // отдаём энергию только если температура генератора выше 20 градусов
+        // if (temp.GenTemp > 20)
+        //     _powerGive = temp.Power;
+        // else
+        //     _powerGive = 0;
+        _powerGive = 1000;
 
 
         return _powerGive;
