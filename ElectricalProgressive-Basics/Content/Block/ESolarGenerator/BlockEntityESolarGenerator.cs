@@ -1,11 +1,8 @@
-﻿using ElectricalProgressive.Content.Block.Termoplastini;
-using ElectricalProgressive.Utils;
+﻿using ElectricalProgressive.Utils;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -16,7 +13,6 @@ namespace ElectricalProgressive.Content.Block.ESolarGenerator;
 
 public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 {
-
     private Facing _facing = Facing.None;
 
     public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
@@ -33,7 +29,7 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
             }
         }
     }
-   
+
 
     ICoreClientAPI? _capi;
     ICoreServerAPI? _sapi;
@@ -46,23 +42,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     /// </summary>
     private static readonly Dictionary<int, MeshData> MeshData = new();
 
-
-    /// <summary>
-    /// Коэффициенты КПД в зависимости от высоты пластин
-    /// </summary>
-    public static readonly float[] KpdPerHeight =
-    [
-        0.15F, // 1-й 
-        0.14F, // 2-й 
-        0.13F, // 3-й 
-        0.12F, // 4-й 
-        0.11F, // 5-й 
-        0.09F, // 6-й 
-        0.08F, // 7-й 
-        0.07F, // 8-й 
-        0.06F, // 9-й 
-        0.05F  // 10-й 
-    ];
 
     /// <summary>
     /// Максимальная температура топлива
@@ -92,7 +71,7 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     {
         get
         {
-            return Kpd * 100;
+            return 100;
         }
     }
 
@@ -140,10 +119,9 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
             Block.LightHsv = new byte[] { 7, 7, 11 };
 
             //добавляем звук
-            _capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-open"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
-
+            _capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-open"), Pos.X, Pos.Y, Pos.Z,
+                null, false, 8.0F, 0.4F);
         }
-
     }
 
 
@@ -160,7 +138,8 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
             Block.LightHsv = new byte[] { 7, 7, 0 };
 
             //добавляем звук
-            _capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-close"), Pos.X, Pos.Y, Pos.Z, null, false, 8.0F, 0.4F);
+            _capi?.World.PlaySoundAt(new AssetLocation("game:sounds/block/cokeovendoor-close"), Pos.X, Pos.Y, Pos.Z,
+                null, false, 8.0F, 0.4F);
         }
     }
 
@@ -183,11 +162,9 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
         else
         {
             _capi = api as ICoreClientAPI;
-
-
         }
 
-        _listenerId=this.RegisterGameTickListener(new Action<float>(OnBurnTick), 1000);
+        _listenerId = this.RegisterGameTickListener(new Action<float>(OnBurnTick), 1000);
     }
 
 
@@ -203,7 +180,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     }
 
 
-
     public override void OnReceivedClientPacket(IPlayer player, int packetid, byte[] data)
     {
         base.OnReceivedClientPacket(player, packetid, data);
@@ -217,7 +193,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
         ElectricalProgressive?.OnReceivedServerPacket(packetid, data);
     }
-
 
 
     /// <summary>
@@ -239,7 +214,8 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
         MeshData.Clear(); //не забываем очищать кэш мэша при выгрузке блока
 
-        this.ElectricalProgressive?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
+        this.ElectricalProgressive
+            ?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
 
         // отключаем слушатель тика горения топлива
         UnregisterGameTickListener(_listenerId);
@@ -253,7 +229,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
         // очищаем ссылки на API
         _capi = null;
         _sapi = null;
-
     }
 
     /// <summary>
@@ -263,8 +238,7 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     public void OnBurnTick(float deltatime)
     {
         Calculate_kpd();
-      }
-
+    }
 
 
     /// <summary>
@@ -275,7 +249,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
         var accessor = Api.World.BlockAccessor;
         Kpd = accessor.GetLightLevel(Pos, EnumLightLevelType.TimeOfDaySunLight) / 32f;
     }
-
 
 
     /// <summary>
@@ -308,7 +281,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
         _capi = null;
         _sapi = null;
     }
-
 
 
     /// <summary>

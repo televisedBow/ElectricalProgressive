@@ -11,14 +11,13 @@ namespace ElectricalProgressive.Content.Block.ESolarGenerator;
 
 public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 {
-    private float _powerOrder;           // Просят столько энергии (сохраняется)
+    private float _powerOrder; // Просят столько энергии (сохраняется)
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
 
-    private float _powerGive;           // Отдаем столько энергии (сохраняется)
+    private float _powerGive; // Отдаем столько энергии (сохраняется)
     private bool hasBurnout;
     private bool prepareBurnout;
     public const string PowerGiveKey = "electricalprogressive:powerGive";
-
 
 
     private static bool IsBurned => false;
@@ -28,10 +27,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
     public BEBehaviorSolarEGenerator(BlockEntity blockEntity) : base(blockEntity)
     {
-
     }
-
-
 
 
     public void Update()
@@ -86,7 +82,8 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
             {
                 entity.ElectricalProgressive.ParticlesType = 2;
                 entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
-                entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4));
+                entity.ElectricalProgressive.ParticlesOffsetPos.Add(
+                    new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4));
             }
             else
             {
@@ -104,15 +101,14 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     }
 
 
-
     public float Produce_give()
     {
-        // // отсекаем внештатные ситуации
         if (Blockentity is not BlockEntityESolarGenerator temp)
         {
             return 0f;
         }
-        _powerGive = temp.Power;
+
+        _powerGive = temp.Power * temp.Kpd;
         return _powerGive;
     }
 
@@ -123,12 +119,10 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     }
 
 
-
     public float getPowerGive() => _powerGive;
 
 
     public float getPowerOrder() => _powerOrder;
-
 
 
     /// <summary>
@@ -145,10 +139,11 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
             return;
 
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / entity.Power * 100));
-        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
+        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " +
+                                 ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" +
+                                 ((int)entity.Power).ToString() + " " + Lang.Get("W"));
         stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.Kpd * 100).ToString("F1") + " %");
     }
-
 
 
     /// <summary>
@@ -161,7 +156,6 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
         tree.SetFloat(PowerOrderKey, _powerOrder);
         tree.SetFloat(PowerGiveKey, _powerGive);
     }
-
 
 
     /// <summary>
