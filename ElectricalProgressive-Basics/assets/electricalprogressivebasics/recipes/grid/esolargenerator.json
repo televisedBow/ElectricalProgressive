@@ -7,7 +7,7 @@
       "L": {
         "type": "item",
         "code": "game:metalplate-copper",
-        "quantity": 1
+        "quantity": 2
       },
       "S": {
         "type": "item",
@@ -17,9 +17,8 @@
       },
       "X": {
         "type": "item",
-        "code": "game:chisel-*",
-        "isTool": true,
-        "toolDurabilityCost": 8
+        "code": "game:metalplate-gold",
+        "quantity": 1
       },
       "H": {
         "type": "item",

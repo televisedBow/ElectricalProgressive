@@ -36,7 +36,6 @@
     "maxCurrent": 1024.0,
     "isolated": true,
     "isolatedEnvironment": true,
-    "maxHeat": 10.0, // достигает при 1300 градусах
     "handbook": {
       "groupBy": [ "esolargenerator-*" ],
       "extraSections": [
