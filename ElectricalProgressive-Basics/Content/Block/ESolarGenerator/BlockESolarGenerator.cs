@@ -65,6 +65,7 @@ public class BlockESolarGenerator : BlockEBase
         // Disallow stacking on the same block type
         var belowPos = blockSel.Position.DownCopy();
         var belowBlock = world.BlockAccessor.GetBlock(belowPos);
+
         if (belowBlock == this)
         {
             return false;

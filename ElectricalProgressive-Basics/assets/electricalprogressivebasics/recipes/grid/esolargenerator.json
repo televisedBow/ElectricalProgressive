@@ -11,9 +11,9 @@
       },
       "S": {
         "type": "item",
-        "code": "game:saw-*",
+        "code": "game:solderingiron",
         "isTool": true,
-        "toolDurabilityCost": 8
+        "toolDurabilityCost": 50
       },
       "X": {
         "type": "item",
@@ -22,19 +22,18 @@
       },
       "H": {
         "type": "item",
-        "code": "game:hammer-*",
-        "isTool": true,
-        "toolDurabilityCost": 8
+        "code": "game:clearquartz",
+        "quantity": 16
       },
       "M": {
         "type": "item",
         "code": "game:metalplate-iron",
-        "quantity": 2
+        "quantity": 1
       },
       "C": {
         "type": "block",
         "code": "electricalprogressivebasics:ecable-32v-copper-single-part",
-        "quantity": 2
+        "quantity": 16
       }
     },
     "output": {

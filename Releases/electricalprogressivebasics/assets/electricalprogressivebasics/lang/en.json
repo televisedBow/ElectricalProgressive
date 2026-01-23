@@ -214,9 +214,9 @@
   "block-handbooktitle-etermogenerator": "Usage",
   "block-handbooktext-etermogenerator": "Converts heat into electrical energy! Works with any burnable fuel. The higher the fuel’s burn temperature, the greater the output power. Output also varies slightly with ambient temperature: the colder the air around it, the more energy it produces. Must be fitted with <a href=\"handbook://block-electricalprogressivebasics:termoplastini\">thermoelectric plates</a> on top to function.<br><br>Can be fed fuel automatically via hoppers.",
 
-  "block-esolargenerator-*": "Solar Generator",
+  "block-esolargenerator-*": "Solar Panel Generator",
   "block-handbooktitle-esolargenerator": "Usage",
-  "block-handbooktext-esolargenerator": "Converts light into electrical energy! TODO",
+  "block-handbooktext-esolargenerator": "Converts light into electrical energy! The more sunlight that reaches the solar panel the more energy it can produce. Blocks placed above the solar panel will decrease the efficiency.",
 
 
   "block-termoplastini": "Thermoelectric Plates",
