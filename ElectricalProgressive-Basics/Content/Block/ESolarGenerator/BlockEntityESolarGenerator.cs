@@ -39,15 +39,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     /// </summary>
     public float Kpd;
 
- /// <summary>
-    /// Аниматор блока, используется для анимации открывания дверцы генератора
-    /// </summary>
-    private BlockEntityAnimationUtil AnimUtil
-    {
-        get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil!; }
-    }
-
-
   
     private long _listenerId;
 
@@ -103,12 +94,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
         // отключаем слушатель тика горения топлива
         UnregisterGameTickListener(_listenerId);
-
-        // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
-        {
-            this.AnimUtil.Dispose();
-        }
     }
 
     /// <summary>
@@ -150,13 +135,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
         // отключаем слушатель тика горения топлива
         UnregisterGameTickListener(_listenerId);
-
-        // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
-        {
-            this.AnimUtil.Dispose();
-        }
-
 
     }
 

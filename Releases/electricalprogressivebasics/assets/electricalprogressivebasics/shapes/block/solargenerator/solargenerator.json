@@ -1,48 +1,64 @@
 {
-	"editor": {
-		"collapsedPaths": "Root/plastini",
-		"allAngles": false,
-		"entityTextureMode": false
-	},
-	"textureWidth": 16,
-	"textureHeight": 16,
-	"textureSizes": {
-	},
-	"textures": {
-	},
-	"elements": [
-		{
-			"name": "stator2",
-			"from": [ 0.0, 0.0, 0.0 ],
-			"to": [ 16.0, 1.0, 16.0 ],
-			"rotationOrigin": [ 8.0, 0.0, 8.0 ],
-			"rotationY": 90.0,
-			"faces": {
-				"north": { "texture": "#iron", "uv": [ 0.0, 0.0, 16.0, 1.0 ] },
-				"east": { "texture": "#iron", "uv": [ 0.0, 0.0, 16.0, 1.0 ] },
-				"south": { "texture": "#iron", "uv": [ 0.0, 0.0, 16.0, 1.0 ] },
-				"west": { "texture": "#iron", "uv": [ 0.0, 0.0, 16.0, 1.0 ] },
-				"up": { "texture": "#iron", "uv": [ 0.0, 0.0, 16.0, 16.0 ] },
-				"down": { "texture": "#iron", "uv": [ 0.0, 0.0, 16.0, 16.0 ] }
-			},
-			"children": [
-				{
-					"name": "Cube332",
-					"from": [ 0.5, 0.3, 0.5 ],
-					"to": [ 15.5, 1.3, 15.5 ],
-					"rotationOrigin": [ 0.5, 0.3, 0.5 ],
-					"faces": {
-						"north": { "texture": "#steel", "uv": [ 0.0, 0.0, 15.0, 1.0 ] },
-						"east": { "texture": "#steel", "uv": [ 0.0, 0.0, 15.0, 1.0 ] },
-						"south": { "texture": "#steel", "uv": [ 0.0, 0.0, 15.0, 1.0 ] },
-						"west": { "texture": "#steel", "uv": [ 0.0, 0.0, 15.0, 1.0 ] },
-						"up": { "texture": "#steel", "uv": [ 0.0, 0.0, 15.0, 15.0 ] },
-						"down": { "texture": "#steel", "uv": [ 0.0, 0.0, 15.0, 15.0 ] }
-					}
-				}
-			]
-		}
-	],
-	"animations": [
-	]
+  "editor": {
+    "collapsedPaths": "Root/plastini",
+    "allAngles": false,
+    "entityTextureMode": false
+  },
+  "textureWidth": 16,
+  "textureHeight": 16,
+  "textureSizes": {},
+  "textures": {
+    "copper": "game:block/metal/plate/copper",
+    "iron": "game:block/metal/plate/iron",
+    "zinc": "game:block/metal/plate/zinc",
+    "zinc-sgorevshiy": "block/zinc-sgorevshiy",
+    "iron-s-jrfntovkoy": "block/iron-s-jrfntovkoy",
+    "copper-hot": "block/ember",
+    "linen": "block/linen",
+    "steel": "game:block/metal/plate/steel"
+  },
+  "elements": [
+    {
+      "name": "solar-generator",
+      "from": [0.0, 2.0, 0.0],
+      "to": [0.0, 2.0, 0.0],
+      "rotationOrigin": [8.0, 2.0, 8.0],
+      "faces": {
+        "north": { "texture": "#iron", "uv": [0.0, 0.0, 0.5, 0.5] },
+        "east": { "texture": "#iron", "uv": [0.0, 0.0, 0.5, 0.5] },
+        "south": { "texture": "#iron", "uv": [0.0, 0.0, 0.5, 0.5] },
+        "west": { "texture": "#iron", "uv": [0.0, 0.0, 0.5, 0.5] },
+        "up": { "texture": "#iron", "uv": [0.0, 0.0, 0.5, 0.5] },
+        "down": { "texture": "#iron", "uv": [0.0, 0.0, 0.5, 0.5] }
+      },
+      "collision": false,
+      "isSelectable": false
+    },
+    {
+      "name": "Cube332",
+      "from": [0.5, 0.3, 0.5],
+      "to": [15.5, 1.3, 15.5],
+      "rotationOrigin": [0.5, 0.3, 0.5],
+      "faces": {
+        "north": { "texture": "#steel", "uv": [0.0, 0.0, 15.0, 1.0] },
+        "east": { "texture": "#steel", "uv": [0.0, 0.0, 15.0, 1.0] },
+        "south": { "texture": "#steel", "uv": [0.0, 0.0, 15.0, 1.0] },
+        "west": { "texture": "#steel", "uv": [0.0, 0.0, 15.0, 1.0] },
+        "up": { "texture": "#steel", "uv": [0.0, 0.0, 15.0, 15.0] },
+        "down": { "texture": "#steel", "uv": [0.0, 0.0, 15.0, 15.0] }
+      }
+    }
+  ],
+  "collisionBoxes": [
+    {
+      "from": [0.5, 0.3, 0.5],
+      "to": [15.5, 1.3, 15.5]
+    }
+  ],
+  "selectionBoxes": [
+    {
+      "from": [0.5, 0.3, 0.5],
+      "to": [15.5, 1.3, 15.5]
+    }
+  ]
 }
