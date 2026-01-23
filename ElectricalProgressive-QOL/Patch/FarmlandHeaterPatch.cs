@@ -561,7 +561,7 @@ public class FarmlandHeaterPatch
     /// <param name="targetPos"></param>
     /// <param name="roomForPosition"></param>
     /// <returns></returns>
-    private static float CalculateHeaterBonus(
+    public static float CalculateHeaterBonus(
         ICoreAPI api,
         BlockPos targetPos,
         Room roomForPosition)

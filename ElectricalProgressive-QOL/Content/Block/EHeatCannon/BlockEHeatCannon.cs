@@ -1,5 +1,5 @@
-﻿using ElectricalProgressive.Utils;
-using System;
+﻿using ElectricalProgressive.Patch;
+using ElectricalProgressive.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,12 +7,14 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Util;
+using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.EHeatCannon
 {
     public class BlockEHeatCannon : BlockEBase
     {
-        
+        private WorldInteraction[]? _interactions;
 
 
 
@@ -89,6 +91,80 @@ namespace ElectricalProgressive.Content.Block.EHeatCannon
                     world.BlockAccessor.BreakBlock(pos, null);
             }
         }
+
+
+
+        public override bool OnBlockInteractStart(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            return true;
+        }
+
+        public override void OnBlockInteractStop(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel)
+        {
+            base.OnBlockInteractStop(secondsUsed, world, byPlayer, blockSel);
+
+            if (api.Side == EnumAppSide.Client)
+                return;
+
+            // держит ключ?
+            ItemSlot activeSlot = byPlayer.InventoryManager.ActiveHotbarSlot;
+            if (activeSlot?.Itemstack?.Item?.Tool != EnumTool.Wrench)
+                return;
+
+            // система комнат готова?
+            RoomRegistry roomreg = api.ModLoader.GetModSystem<RoomRegistry>();
+            if (roomreg == null)
+                return;
+
+            //выделение корректно?
+            if (blockSel == null || blockSel.Position == null)
+                return;
+
+            // есть ли комната тут
+            Room roomForPosition = roomreg.GetRoomForPosition(blockSel.Position);
+            if (roomForPosition == null)
+                return;
+
+            FarmlandHeaterPatch.CalculateHeaterBonus(api, blockSel.Position, roomForPosition);
+
+        }
+
+        public override void OnLoaded(ICoreAPI api)
+        {
+            if (api.Side != EnumAppSide.Client)
+                return;
+
+            var capi = api as ICoreClientAPI;
+
+
+            _interactions = ObjectCacheUtil.GetOrCreate(api, "heaterBlockInteractions", () =>
+            {
+                var wrenchItems = new List<ItemStack>();
+
+                Item[] wrenches = capi.World.SearchItems(new AssetLocation("wrench-*"));
+                foreach (Item item in wrenches)
+                    wrenchItems.Add(new ItemStack(item));
+
+                return new[] {
+                    new WorldInteraction
+                    {
+                        ActionLangCode = "electricalprogressiveqol:update_heater_info",
+                        HotKeyCode = null,
+                        MouseButton = EnumMouseButton.Right,
+                        Itemstacks = wrenchItems.ToArray()
+                    }
+                };
+            });
+        }
+
+
+        public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
+        {
+            return _interactions.Append(base.GetPlacedBlockInteractionHelp(world, selection, forPlayer));
+        }
+
+
+
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {

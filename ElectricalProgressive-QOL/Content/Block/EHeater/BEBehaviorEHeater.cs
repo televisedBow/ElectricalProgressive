@@ -61,6 +61,7 @@ namespace ElectricalProgressive.Content.Block.EHeater
 
 
 
+
             if (GreenhouseBonus<=0)
                 stringBuilder.AppendLine(Lang.Get("electricalprogressiveqol:heater-no-bonus"));
             else

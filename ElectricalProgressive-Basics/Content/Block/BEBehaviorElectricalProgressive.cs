@@ -436,7 +436,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         {
             try
             {
-                this.Blockentity.MarkDirty(true);
+                this.Blockentity.MarkDirty();
             }
             catch { }
         }

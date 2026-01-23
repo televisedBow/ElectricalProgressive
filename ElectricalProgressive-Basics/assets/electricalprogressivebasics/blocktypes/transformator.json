@@ -26,7 +26,7 @@
     "facesEProperties": [ "down" ],
     "voltage": 128,
     "lowVoltage": 32,
-    "maxCurrent": 20.0,
+    "maxCurrent": 40.0,
     "isolated": true,
     "isolatedEnvironment": false,
     "handbook": {

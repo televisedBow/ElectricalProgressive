@@ -84,6 +84,7 @@ namespace ElectricalProgressive.Content.Block.EOven;
     /// <returns></returns>
     public override ItemSlot GetAutoPullFromSlot(BlockFacing atBlockFace)
     {
+        var slot = new ItemSlot(null);
         for (var i = 0; i < this.CookingSlots.Length; i++)
         {
             if (this[i] != null && !this[i].Empty)
@@ -95,6 +96,7 @@ namespace ElectricalProgressive.Content.Block.EOven;
 
                 if (ElectricalProgressiveQOL.IsFinished(this[i].Itemstack.Collectible))
                 {
+                    
                     return this[i];
                 }
             }

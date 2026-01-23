@@ -374,93 +374,93 @@
 
   "attributesByType": {
     "*-32v-copper-*": {
-      "res": 1,
+      "res": 0.667,
       "maxCurrent": 5,
       "crosssectional": 1
     },
     "*-32v-silver-*": {
-      "res": 0.6,
+      "res": 0.4,
       "maxCurrent": 7,
       "crosssectional": 1
     },
     "*-32v-lead-*": {
-      "res": 2,
+      "res": 1.333,
       "maxCurrent": 3,
       "crosssectional": 1
     },
     "*-32v-electrum-*": {
-      "res": 0.65,
+      "res": 0.433,
       "maxCurrent": 6.8,
       "crosssectional": 1
     },
     "*-128v-electrum-*": {
-      "res": 0.65,
+      "res": 0.433,
       "maxCurrent": 13.6,
       "crosssectional": 2
     },
     "*-32v-brass-*": {
-      "res": 0.8,
+      "res": 0.533,
       "maxCurrent": 6.0,
       "crosssectional": 1
     },
     "*-128v-brass-*": {
-      "res": 0.8,
+      "res": 0.533,
       "maxCurrent": 12.0,
       "crosssectional": 2
     },
 
     "*-32v-tinbronze-*": {
-      "res": 0.9,
+      "res": 0.6,
       "maxCurrent": 5.5,
       "crosssectional": 1
     },
     "*-128v-tinbronze-*": {
-      "res": 0.9,
+      "res": 0.6,
       "maxCurrent": 11.0,
       "crosssectional": 2
     },
     "*-32v-iron-*": {
-      "res": 1.5,
+      "res": 1.0,
       "maxCurrent": 4.0,
       "crosssectional": 1
     },
     "*-128v-iron-*": {
-      "res": 1.5,
+      "res": 1.0,
       "maxCurrent": 8.0,
       "crosssectional": 2
     },
     "*-32v-steel-*": {
-      "res": 1.2,
+      "res": 0.8,
       "maxCurrent": 4.5,
       "crosssectional": 1
     },
     "*-128v-steel-*": {
-      "res": 1.2,
+      "res": 0.8,
       "maxCurrent": 9.0,
       "crosssectional": 2
     },
     "*-32v-gold-*": {
-      "res": 0.7,
+      "res": 0.467,
       "maxCurrent": 6.5,
       "crosssectional": 1
     },
     "*-128v-gold-*": {
-      "res": 0.7,
+      "res": 0.467,
       "maxCurrent": 13,
       "crosssectional": 2
     },
     "*-128v-copper-*": {
-      "res": 1,
+      "res": 0.667,
       "maxCurrent": 10,
       "crosssectional": 2
     },
     "*-128v-silver-*": {
-      "res": 0.6,
+      "res": 0.4,
       "maxCurrent": 14,
       "crosssectional": 2
     },
     "*-128v-lead-*": {
-      "res": 2,
+      "res": 1.333,
       "maxCurrent": 6,
       "crosssectional": 2
     }
@@ -500,6 +500,24 @@
       "z": 0.5
     },
     "scale": 1.5
+  },
+  "groundTransform": {
+    "translation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": -45,
+      "z": 0
+    },
+    "origin": {
+      "x": 0.5,
+      "y": 0,
+      "z": 0.5
+    },
+    "scale": 2.2
   },
   "tpHandTransform": {
     "translation": {

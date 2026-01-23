@@ -330,9 +330,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
 
 
 
-        MarkDirty(true, null);
-
-
+        MarkDirty();
         
 
         // обновляем диалоговое окно на клиенте
@@ -352,8 +350,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     /// </summary>
     private void StartAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client
-            || AnimUtil == null)
+        if (Api?.Side != EnumAppSide.Client|| AnimUtil == null)
             return;
 
         
@@ -558,7 +555,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         {
             if (this._clientDialog != null)
                 _clientDialog.Update(_genTemp, _fuelBurnTime);
-            MarkDirty(true, null);
+            MarkDirty();
         }
 
 

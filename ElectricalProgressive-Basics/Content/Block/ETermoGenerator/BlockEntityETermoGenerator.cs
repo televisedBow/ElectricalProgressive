@@ -469,7 +469,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
 
 
 
-            MarkDirty(true, null);
+            MarkDirty();
         }
 
 
@@ -691,7 +691,7 @@ public class BlockEntityETermoGenerator : BlockEntityGenericTypedContainer, IHea
         {
             if (this._clientDialog != null)
                 _clientDialog.Update(_genTemp, _fuelBurnTime);
-            MarkDirty(true, null);
+            MarkDirty();
         }
 
         try
