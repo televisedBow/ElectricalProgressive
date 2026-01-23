@@ -155,7 +155,6 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
         if (IsBurned)
             return;
 
-        stringBuilder.AppendLine("Oh Hi Marc!");
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / entity.Power * 100));
         stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + ((int)entity.Power).ToString() + " " + Lang.Get("W"));
         stringBuilder.AppendLine("└ " + Lang.Get("electricalprogressivebasics:block-termoplastini") + ": " + entity.HeightTermoplastin);
