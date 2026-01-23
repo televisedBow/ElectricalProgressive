@@ -33,6 +33,8 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     /// </summary>
     public float Kpd;
 
+    private float blocksUpSolarPanelPenalty;
+
   
     private long _listenerId;
 
@@ -92,8 +94,9 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     /// Обработчик тика горения топлива
     /// </summary>
     /// <param name="deltatime"></param>
-    public void OnSunTick(float deltatime)
+    private void OnSunTick(float deltatime)
     {
+        blocksUpSolarPanelPenalty = CalculateAbovePenalty(this.Pos);
         Calculate_kpd();
     }
 
@@ -104,14 +107,14 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     private void Calculate_kpd()
     {
         var accessor = Api.World.BlockAccessor;
-        Kpd = (accessor.GetLightLevel(Pos, EnumLightLevelType.TimeOfDaySunLight) / 32f) * CalculateAbovePenalty(Pos);
+        Kpd = (accessor.GetLightLevel(Pos, EnumLightLevelType.TimeOfDaySunLight) / 32f) * blocksUpSolarPanelPenalty;
     }
     
     /**
      * Calculates a penalty for having blocks above the solar panel. The farther away the blocks are above the solar
      * panel the less penalty there is. 
      */
-    float CalculateAbovePenalty(BlockPos pos)
+    private float CalculateAbovePenalty(BlockPos pos)
     {
         var accessor = Api.World.BlockAccessor;
         var penalty = 1f; // Start with full sunlight
