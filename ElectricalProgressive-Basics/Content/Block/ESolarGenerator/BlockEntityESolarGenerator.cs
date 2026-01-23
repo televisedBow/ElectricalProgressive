@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
@@ -16,15 +17,8 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
     public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
-
     /// <summary>
-    /// Rэш для мэша топлива, где int - размер топлива в генераторе (от 0 до 8)
-    /// </summary>
-    private static readonly Dictionary<int, MeshData> MeshData = new();
-
-
-    /// <summary>
-    /// Собственно выходная максимальная мощность
+    /// Maximum power output for solar panel
     /// </summary>
     public float Power
     {
@@ -51,7 +45,7 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     {
         base.Initialize(api);
 
-        _listenerId = this.RegisterGameTickListener(new Action<float>(OnSunTick), 1000);
+        _listenerId = this.RegisterGameTickListener(OnSunTick, 1000);
     }
 
 
@@ -87,8 +81,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     {
         base.OnBlockUnloaded();
 
-        MeshData.Clear(); //не забываем очищать кэш мэша при выгрузке блока
-
         this.ElectricalProgressive
             ?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
 
@@ -107,12 +99,38 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
 
     /// <summary>
-    /// Расчет КПД генератора
+    /// Calculates the efficiency. We look at the sunlight the solar panel itself is exposed to.
     /// </summary>
     private void Calculate_kpd()
     {
         var accessor = Api.World.BlockAccessor;
-        Kpd = accessor.GetLightLevel(Pos, EnumLightLevelType.TimeOfDaySunLight) / 32f;
+        Kpd = (accessor.GetLightLevel(Pos, EnumLightLevelType.TimeOfDaySunLight) / 32f) * CalculateAbovePenalty(Pos);
+    }
+    
+    /**
+     * Calculates a penalty for having blocks above the solar panel. The farther away the blocks are above the solar
+     * panel the less penalty there is. 
+     */
+    float CalculateAbovePenalty(BlockPos pos)
+    {
+        var accessor = Api.World.BlockAccessor;
+        var penalty = 1f; // Start with full sunlight
+
+        // Multipliers for the 5 blocks above
+        float[] penalties = { 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f };
+
+        for (var i = 0; i < penalties.Length; i++)
+        {
+            var checkPos = pos.UpCopy(i + 1); // +1 because first block above
+            var block = accessor.GetBlock(checkPos);
+
+            if (block.BlockId != 0) // Not air
+            {
+                return penalties[i];
+            }
+        }
+
+        return penalty;
     }
 
 
@@ -129,9 +147,6 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
         {
             electricity.Connection = Facing.None;
         }
-
-
-        MeshData.Clear(); //не забываем очищать кэш мэша при выгрузке блока
 
         // отключаем слушатель тика горения топлива
         UnregisterGameTickListener(_listenerId);

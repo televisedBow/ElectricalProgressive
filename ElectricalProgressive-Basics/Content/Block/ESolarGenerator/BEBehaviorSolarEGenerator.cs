@@ -15,12 +15,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
 
     private float _powerGive; // Отдаем столько энергии (сохраняется)
-    private bool hasBurnout;
-    private bool prepareBurnout;
     public const string PowerGiveKey = "electricalprogressive:powerGive";
-
-
-    private static bool IsBurned => false;
 
     public new BlockPos Pos => Blockentity.Pos;
 
@@ -32,49 +27,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
     public void Update()
     {
-        if (Blockentity is not BlockEntityESolarGenerator entity ||
-            entity.ElectricalProgressive == null ||
-            entity.ElectricalProgressive.AllEparams is null)
-        {
-            return;
-        }
-
-        bool anyBurnout = false;
-        bool anyPrepareBurnout = false;
-
-        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
-        {
-            if (!hasBurnout && eParam.burnout)
-            {
-                hasBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
-            {
-                prepareBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (eParam.burnout)
-                anyBurnout = true;
-
-            if (eParam.ticksBeforeBurnout > 0)
-                anyPrepareBurnout = true;
-        }
-
-        if (!anyBurnout && hasBurnout)
-        {
-            hasBurnout = false;
-            entity.MarkDirty(true);
-        }
-
-        if (!anyPrepareBurnout && prepareBurnout)
-        {
-            prepareBurnout = false;
-            entity.MarkDirty(true);
-        }
-
+        // No burn for solar panels at this time
     }
 
 
@@ -84,7 +37,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
         {
             return 0f;
         }
-
+        // Only give
         _powerGive = temp.Power * temp.Kpd;
         return _powerGive;
     }
@@ -110,9 +63,6 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
         base.GetBlockInfo(forPlayer, stringBuilder);
 
         if (Blockentity is not BlockEntityESolarGenerator entity)
-            return;
-
-        if (IsBurned)
             return;
 
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / entity.Power * 100));

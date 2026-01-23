@@ -60,13 +60,16 @@ public class BlockESolarGenerator : BlockEBase
     public override bool DoPlaceBlock(IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel,
         ItemStack byItemStack)
     {
-        // если блок сгорел, то не ставим
-        if (byItemStack.Block.Variant["type"] == "burned")
+        var selection = new Selection(blockSel);
+        
+        // Disallow stacking on the same block type
+        var belowPos = blockSel.Position.DownCopy();
+        var belowBlock = world.BlockAccessor.GetBlock(belowPos);
+        if (belowBlock == this)
         {
             return false;
         }
 
-        var selection = new Selection(blockSel);
 
         var facing = Facing.None;
 

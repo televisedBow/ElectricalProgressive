@@ -3,7 +3,6 @@
   "class": "BlockESolarGenerator",
   "entityClass": "BlockEntityESolarGenerator",
   "behaviors": [
-    { "name": "Lockable" },
     {
       "name": "HorizontalOrientable",
       "properties": {
@@ -52,8 +51,6 @@
       "loadFromProperties": "abstract/horizontalorientation"
     }
   ],
-
-
 
 
   "shapebytype": {
