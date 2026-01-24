@@ -1,4 +1,4 @@
-﻿{
+{
 	"editor": {
 		"allAngles": false,
 		"entityTextureMode": false
@@ -14,6 +14,7 @@
 		"stainlesssteel1": "electricalprogressivebasics:block/plate/stainlesssteel1",
 		"steel1": "electricalprogressivebasics:block/plate/steel1",
 		"quartzglass": "electricalprogressivebasics:block/quartzglass",
+		"frame": "electricalprogressivebasics:block/quartzglasstrans",
 		"stainlesssteel": "electricalprogressivebasics:block/stainlesssteel",
 		"steel": "electricalprogressivebasics:block/steel",
 		"zinc": "electricalprogressivebasics:block/zinc",
@@ -123,13 +124,14 @@
 			"from": [ 1.0, 3.0, 15.0 ],
 			"to": [ 15.0, 31.0, 15.5 ],
 			"rotationOrigin": [ 1.0, 3.5, 15.5 ],
+			"renderPass": 3,
 			"faces": {
-				"north": { "texture": "#steel", "uv": [ 0.0, 0.0, 8.0, 16.0 ], "autoUv": false },
-				"east": { "texture": "#steel", "uv": [ 0.0, 0.0, 1.0, 16.0 ], "autoUv": false },
-				"south": { "texture": "#steel", "uv": [ 0.0, 0.0, 8.0, 16.0 ], "autoUv": false },
-				"west": { "texture": "#steel", "uv": [ 0.0, 0.0, 1.0, 16.0 ], "autoUv": false },
-				"up": { "texture": "#steel", "uv": [ 0.0, 0.0, 14.0, 0.5 ] },
-				"down": { "texture": "#steel", "uv": [ 0.0, 0.0, 14.0, 0.5 ] }
+				"north": { "texture": "#frame", "uv": [ 0.0, 0.0, 8.0, 16.0 ], "autoUv": false },
+				"east": { "texture": "#frame", "uv": [ 0.0, 0.0, 1.0, 16.0 ], "autoUv": false },
+				"south": { "texture": "#frame", "uv": [ 0.0, 0.0, 8.0, 16.0 ], "autoUv": false },
+				"west": { "texture": "#frame", "uv": [ 0.0, 0.0, 1.0, 16.0 ], "autoUv": false },
+				"up": { "texture": "#frame", "uv": [ 0.0, 0.0, 14.0, 0.5 ] },
+				"down": { "texture": "#frame", "uv": [ 0.0, 0.0, 14.0, 0.5 ] }
 			},
 			"children": [
 				{

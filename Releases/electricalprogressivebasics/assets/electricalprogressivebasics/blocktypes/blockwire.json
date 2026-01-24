@@ -92,5 +92,14 @@
       "z": -78
     },
     "scale": 0.4
+  },
+
+  "guiTransform": {
+    "rotation": {
+      "x": -14,
+      "y": -40,
+      "z": 0
+    },
+    "scale": 1.07
   }
 }

@@ -1063,15 +1063,46 @@ namespace ElectricalProgressive.Content.Block.ECable
         /// <returns></returns>
         public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
         {
-            return new WorldInteraction[]
+            var interactions = new List<WorldInteraction>();
+
+            // Базовое взаимодействие для утолщения кабелей
+            interactions.Add(new WorldInteraction()
             {
-                new()
+                ActionLangCode = "ThickenCables",
+                HotKeyCode = "shift",
+                MouseButton = EnumMouseButton.Right
+            });
+
+            // Проверяем, есть ли на этой грани выключатель вместе с проводом
+            if (world.BlockAccessor.GetBlockEntity(selection.Position) is BlockEntityECable entity)
+            {
+                var key = CacheDataKey.FromEntity(entity);
+                var hitPosition = selection.HitPosition;
+
+                var sf = new SelectionFacingCable();
+                var selectedFacing = sf.SelectionFacing(key, hitPosition, entity); // определяем выбранное направление
+
+                // Если выбрано конкретное направление (не None) и на этом направлении есть выключатель
+                if (selectedFacing != Facing.None && (entity.Switches & selectedFacing) != 0)
                 {
-                    ActionLangCode = "ThickenCables",
-                    HotKeyCode = "shift",
-                    MouseButton = EnumMouseButton.Right                    
+                    // Добавляем взаимодействие для переключения выключателя
+                    interactions.Add(new WorldInteraction()
+                    {
+                        ActionLangCode = "electricalprogressivebasics:switch",
+                        HotKeyCode = null,
+                        MouseButton = EnumMouseButton.Right,
+                    });
                 }
-            }.Append(base.GetPlacedBlockInteractionHelp(world, selection, forPlayer));
+            }
+
+            // Добавляем базовые взаимодействия
+            var baseInteractions = base.GetPlacedBlockInteractionHelp(world, selection, forPlayer);
+            if (baseInteractions != null)
+            {
+                interactions.AddRange(baseInteractions);
+            }
+
+            return interactions.ToArray();
         }
 
 

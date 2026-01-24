@@ -1,4 +1,4 @@
-{
+﻿{
 	"editor": {
 		"allAngles": false,
 		"entityTextureMode": false
@@ -8,17 +8,17 @@
 	"textureSizes": {
 	},
 	"textures": {
-		"ceramic": "block/clay/ceramic",
-		"brass": "block/metal/plate/brass",
-		"electrum": "block/metal/plate/electrum",
-		"iron": "block/metal/plate/iron",
-		"steel": "block/metal/plate/steel",
-		"zinc": "block/metal/plate/zinc",
-		"brass1": "block/metal/sheet/brass1",
-		"brass2": "block/metal/sheet/brass2",
-		"brass3": "block/metal/sheet/brass3",
-		"brass5": "block/metal/sheet/brass5",
-		"steel2": "block/metal/sheet/steel2"
+		"ceramic": "game:block/clay/ceramic",
+		"brass": "game:block/metal/plate/brass",
+		"electrum": "game:block/metal/plate/electrum",
+		"iron": "game:block/metal/plate/iron",
+		"steel": "game:block/metal/plate/steel",
+		"zinc": "game:block/metal/plate/zinc",
+		"brass1": "game:block/metal/sheet/brass1",
+		"brass2": "game:block/metal/sheet/brass2",
+		"brass3": "game:block/metal/sheet/brass3",
+		"brass5": "game:block/metal/sheet/brass5",
+		"steel2": "game:block/metal/sheet/steel2"
 	},
 	"elements": [
 		{
