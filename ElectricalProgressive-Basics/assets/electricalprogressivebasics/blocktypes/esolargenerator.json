@@ -81,6 +81,22 @@
   "sideopaque": {
     "all": false
   },
+  "collisionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 0.25,
+    "z2": 1
+  },
+  "selectionbox": {
+    "x1": 0,
+    "y1": 0,
+    "z1": 0,
+    "x2": 1,
+    "y2": 0.25,
+    "z2": 1
+  },
   "resistance": 3.5,
   "lightAbsorption": 0,
 
