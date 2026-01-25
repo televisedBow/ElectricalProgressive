@@ -29,6 +29,7 @@
     "maxCurrent": 1024.0,
     "isolated": true,
     "isolatedEnvironment": true,
+    "maxConsumption": 100,
     "handbook": {
       "groupBy": [ "esolargenerator-*" ],
       "extraSections": [
@@ -41,11 +42,18 @@
   },
 
   "creativeinventory": {
-    "general": [ "*-south" ],
-    "electricity": [ "*-south" ]
+    "general": [ "*-off-south" ],
+    "electricity": [ "*-off-south" ]
   },
 
   "variantgroups": [
+    {
+      "code": "state",
+      "states": [
+        "on",
+        "off"
+      ]
+    },
     {
       "code": "side",
       "loadFromProperties": "abstract/horizontalorientation"
@@ -55,19 +63,19 @@
 
   "shapebytype": {
     "*-north": {
-      "base": "block/solargenerator/solargenerator",
+      "base": "block/solargenerator/solargenerator-{state}",
       "rotateY": 0
     },
     "*-east": {
-      "base": "block/solargenerator/solargenerator",
+      "base": "block/solargenerator/solargenerator-{state}",
       "rotateY": 270
     },
     "*-south": {
-      "base": "block/solargenerator/solargenerator",
+      "base": "block/solargenerator/solargenerator-{state}",
       "rotateY": 180
     },
     "*-west": {
-      "base": "block/solargenerator/solargenerator",
+      "base": "block/solargenerator/solargenerator-{state}",
       "rotateY": 90
     }
   },

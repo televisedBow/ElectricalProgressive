@@ -24,7 +24,7 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     {
         get
         {
-            return 100;
+            return _maxConsumption;
         }
     }
 
@@ -37,7 +37,7 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
   
     private long _listenerId;
-
+    private int _maxConsumption;
 
     /// <summary>
     /// Инициализация блока
@@ -47,7 +47,12 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     {
         base.Initialize(api);
 
-        _listenerId = this.RegisterGameTickListener(OnSunTick, 1000);
+        if (api.Side == EnumAppSide.Server)
+        {
+            _listenerId = this.RegisterGameTickListener(OnSunTick, 1000);
+        }
+
+        _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption", 100);
     }
 
 
@@ -98,6 +103,29 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
     {
         blocksUpSolarPanelPenalty = CalculateAbovePenalty(this.Pos);
         Calculate_kpd();
+
+
+        var beh = GetBehavior<BEBehaviorSolarEGenerator>();
+        if (beh is null)
+            return;
+
+        bool effectivePowered = beh.getPowerGive() >= _maxConsumption * 0.05F;
+        if (effectivePowered && this.Block.Variant["state"] == "off")
+        {
+            var originalBlock = Api.World.BlockAccessor.GetBlock(Pos);
+            var newBlockAL = originalBlock.CodeWithVariant("state", "on");
+            var newBlock = Api.World.GetBlock(newBlockAL);
+            Api.World.BlockAccessor.ExchangeBlock(newBlock.Id, Pos);
+            MarkDirty();
+        }
+        if (!effectivePowered && this.Block.Variant["state"] == "on")
+        {
+            var originalBlock = Api.World.BlockAccessor.GetBlock(Pos);
+            var newBlockAL = originalBlock.CodeWithVariant("state", "off");
+            var newBlock = Api.World.GetBlock(newBlockAL);
+            Api.World.BlockAccessor.ExchangeBlock(newBlock.Id, Pos);
+            MarkDirty();
+        }
     }
 
 

@@ -1,4 +1,5 @@
 ﻿using ElectricalProgressive.Utils;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Vintagestory.API.Common;
@@ -129,6 +130,23 @@ public class BlockESolarGenerator : BlockEBase
     }
 
 
+    public override ItemStack OnPickBlock(IWorldAccessor world, BlockPos pos)
+    {
+        var newState = Variant["state"] switch
+        {
+            "on" => "off",
+            "off" => "off"
+        };
+
+        var blockCode = CodeWithVariants(new Dictionary<string, string>
+        {
+            { "state", newState },
+            { "side", "south" }
+        });
+
+        var block = world.BlockAccessor.GetBlock(blockCode);
+        return new ItemStack(block);
+    }
 
 
     /// <summary>

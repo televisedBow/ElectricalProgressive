@@ -38,7 +38,7 @@
     },
     "output": {
       "type": "block",
-      "code": "electricalprogressivebasics:esolargenerator-south",
+      "code": "electricalprogressivebasics:esolargenerator-off-south",
       "quantity": 1
     }
   }
