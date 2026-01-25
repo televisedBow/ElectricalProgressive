@@ -8,6 +8,7 @@ using EPImmersive.Content.Block.EGenerator;
 using EPImmersive.Content.Block.EMotor;
 using EPImmersive.Content.Block.HVSFonar;
 using EPImmersive.Content.Block.HVTower;
+using EPImmersive.Content.Block.HVTransformator;
 using EPImmersive.Content.Block.WallConnector;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
@@ -134,6 +135,11 @@ namespace EPImmersive
             api.RegisterBlockEntityClass("BlockEntityHVTower", typeof(BlockEntityHVTower));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorHVTower", typeof(BEBehaviorHVTower));
 
+            api.RegisterBlockClass("BlockHVTransformator", typeof(BlockHVTransformator));
+            api.RegisterBlockEntityClass("BlockEntityHVTransformator", typeof(BlockEntityHVTransformator));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorHV2LVTransformator", typeof(BEBehaviorHV2LVTransformator));
+            api.RegisterBlockEntityBehaviorClass("BEBehaviorLV2HVTransformator", typeof(BEBehaviorLV2HVTransformator));
+
             api.RegisterBlockClass("BlockWConnector", typeof(BlockWConnector));
             api.RegisterBlockEntityClass("BlockEntityWConnector", typeof(BlockEntityWConnector));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorWConnector", typeof(BEBehaviorWConnector));
@@ -194,6 +200,17 @@ namespace EPImmersive
         /// <param name="api"></param>
         public override void StartPre(ICoreAPI api)
         {
+            // грузим конфиг
+            // если конфиг с ошибкой или не найден, то генерируется стандартный
+            var _config = api.LoadModConfig<ElectricityConfig>("ElectricityConfig.json") ?? new ElectricityConfig();
+            api.StoreModConfig(_config, "ElectricityConfig.json");
+
+            // проверяем, что конфиг валиден, и обрезаются значения
+            var speedOfElectricity = Math.Clamp(_config.SpeedOfElectricity, 1, 16);
+
+
+            // устанавливаем время между тиками
+            TickTimeMs = 1000 / speedOfElectricity;
         }
 
         /// <summary>

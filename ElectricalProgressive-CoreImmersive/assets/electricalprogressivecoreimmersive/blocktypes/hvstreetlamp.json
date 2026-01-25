@@ -12,8 +12,8 @@
   ],
 
   "attributes": {
-    "voltage": 32,
-    "maxCurrent": 20.0,
+    "voltage": 512,
+    "maxCurrent": 100.0,
     "maxConsumption": 32,
     "HSV": 26,
     "isolated": true,

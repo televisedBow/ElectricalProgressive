@@ -12,8 +12,8 @@
   ],
 
   "attributes": {
-    "voltage": 32,
-    "maxCurrent": 20.0,
+    "voltage": 512,
+    "maxCurrent": 100.0,
     "isolated": true,
     "isolatedEnvironment": true,
     "IsOpen": false,

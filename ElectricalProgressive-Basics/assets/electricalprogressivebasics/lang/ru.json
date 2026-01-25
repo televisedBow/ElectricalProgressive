@@ -207,7 +207,7 @@
 
 
 
-  "Electricity": "Электросеть",
+  "Electricity": "Электросеть (обычная)",
   "Consumers": "Потребителей",
   "Generators": "Генераторов",
   "Batteries": "Аккумуляторов",
@@ -228,7 +228,7 @@
   "PressForDetails": "Зажми {0} для деталей",
   "ConnectedWires": "Подключенных проводов: {0}",
   "WaitingNetworkInfo": "Ожидание информации о сети...",
-  "NetworkInfo": "=== Информация об электросети ===",
+  "NetworkInfo": "Электросеть (иммерсивная)",
   "BlockParameters": "--- Параметры блока ---",
   "NetworkStatus": "--- Обобщенная сеть ---",
   "ConductorOpen": "Статус проводника: узлы не соединены",
@@ -263,7 +263,7 @@
 
 
   "switch": "Переключить",
-
+  "buffer": "Буффер",
 
   "block-esolargenerator-*": "Генератор на солнечных батареях",
   "block-handbooktitle-esolargenerator": "Использование",

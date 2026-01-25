@@ -59,7 +59,7 @@ namespace EPImmersive.Content.Block
                 (api as ICoreClientAPI).Event.RegisterCallback((dt) =>
                 {
                     EPImmersive.ElectricalProgressiveImmersive.clientWireChannel?.SendPacket<WireConnectionData>(data);
-                }, 1000);
+                }, 100);
 
                 
             }
@@ -753,6 +753,14 @@ namespace EPImmersive.Content.Block
             if (capi != null)
                 capi.ShowChatMessage($"Wire connected successfully. Used {cableLength} blocks of cable.");
 
+            // только для проверки
+            /*
+            if (api.Side != EnumAppSide.Client)
+            {
+                (api as ICoreServerAPI).SendMessage(byPlayer,0, $"Server. Wire connected successfully. Used {cableLength} blocks of cable.", EnumChatType.AllGroups);
+            }
+            */
+
             ClearConnection(byPlayer);
         }
 
@@ -1304,7 +1312,7 @@ namespace EPImmersive.Content.Block
         /// <returns></returns>
         public static AssetLocation CreateCableAsset(ICoreAPI api, EParams cableParams)
         {
-            string voltage = cableParams.voltage == 32 ? "32v" : "128v";
+            string voltage = BlockECable.Voltages[cableParams.voltage];
             string material = cableParams.material;
             string type = cableParams.isolated ? "isolated" : "part";
 

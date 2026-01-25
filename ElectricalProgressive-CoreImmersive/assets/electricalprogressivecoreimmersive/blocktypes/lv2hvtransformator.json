@@ -1,27 +1,38 @@
 ﻿{
-  "code": "hvcabletower",
-  "class": "BlockHVTower",
-  "entityClass": "BlockEntityHVTower",
+  "code": "lv2hvtransformator",
+  "class": "BlockHVTransformator",
+  "entityClass": "BlockEntityHVTransformator",
   "entityBehaviors": [
     {
-      "name": "BEBehaviorHVTower"
+      "name": "BEBehaviorLV2HVTransformator"
     },
     {
       "name": "ElectricalProgressiveImmersive"
+    },
+    {
+      "name": "ElectricalProgressive"
+    },
+    {
+      "name": "Animatable"
     }
   ],
 
+
   "attributes": {
-    "voltage": 512,
-    "maxCurrent": 100.0,
+    "blockEProperties": "main",
+    "facesEProperties": [ "down" ],
+    "imvoltage": 512,
+    "voltage": 128,
+    "maxCurrent": 40.0,
+    "maxcapacity": 5119,
     "isolated": true,
-    "isolatedEnvironment": true,
+    "isolatedEnvironment": false,
     "handbook": {
-      "groupBy": [ "hvcabletower-*" ],
+      "groupBy": [ "lv2hvtransformator-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivecoreimmersive:block-handbooktitle-hvcabletower",
-          "text": "electricalprogressivecoreimmersive:block-handbooktext-hvcabletower"
+          "title": "electricalprogressivecoreimmersive:block-handbooktitle-lv2hvtransformator",
+          "text": "electricalprogressivecoreimmersive:block-handbooktext-lv2hvtransformator"
         }
       ]
     },
@@ -116,19 +127,19 @@
 
   "shapebytype": {
     "*-north": {
-      "base": "block/hvcabletower",
+      "base": "block/lv2hvtransformator",
       "rotateY": 0
     },
     "*-east": {
-      "base": "block/hvcabletower",
+      "base": "block/lv2hvtransformator",
       "rotateY": 270
     },
     "*-south": {
-      "base": "block/hvcabletower",
+      "base": "block/lv2hvtransformator",
       "rotateY": 180
     },
     "*-west": {
-      "base": "block/hvcabletower",
+      "base": "block/lv2hvtransformator",
       "rotateY": 90
     }
   },

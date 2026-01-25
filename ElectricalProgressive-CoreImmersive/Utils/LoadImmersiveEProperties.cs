@@ -22,7 +22,11 @@ namespace EPImmersive.Utils
             }
 
             // Загружаем параметры из JSON атрибутов
-            var voltage = MyMiniLib.GetAttributeInt(block, "voltage", 512);
+
+            var voltage = MyMiniLib.GetAttributeInt(block, "imvoltage", 0);
+            if (voltage==0) //если imvoltage нет, то берем обычный
+                voltage = MyMiniLib.GetAttributeInt(block, "voltage", 512);
+
             var maxCurrent = MyMiniLib.GetAttributeFloat(block, "maxCurrent", 20.0F);
             var isolated = MyMiniLib.GetAttributeBool(block, "isolated", false);
             var isolatedEnvironment = MyMiniLib.GetAttributeBool(block, "isolatedEnvironment", false);

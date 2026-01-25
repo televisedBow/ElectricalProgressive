@@ -788,6 +788,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                 (Api as ICoreServerAPI)?.Network.SendBlockEntityPacket(fromPlayer as IServerPlayer,
                     Pos, PacketIdResponseNetworkInfo, serializedData);
             }
+            this.Blockentity.MarkDirty();
         }
     }
 

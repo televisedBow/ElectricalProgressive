@@ -33,13 +33,15 @@ namespace ElectricalProgressive.Content.Block.ECable
         public static readonly Dictionary<int, string> Voltages = new()
         {
             { 32, "32v" },
-            { 128, "128v" }
+            { 128, "128v" },
+            {512,"512v"}
         };
 
         public static readonly Dictionary<string, int> VoltagesInvert = new()
         {
             { "32v", 32 },
-            { "128v", 128 }
+            { "128v", 128 },
+            {"512v",512}
         };
 
         public static readonly Dictionary<int, string> Quantitys = new()
