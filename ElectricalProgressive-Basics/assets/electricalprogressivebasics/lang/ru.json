@@ -96,7 +96,7 @@
 
   "block-switch-*": "Ручной переключатель",
 
-  "block-blockwire": "Сквозной разъём",
+  "block-blockwire": "Сквозной разъём (обычный)",
 
 
   "item-coil": "Медная катушка",
@@ -166,6 +166,7 @@
 
 
   "game:Voltage": "Напряжение",
+  "Voltage_immersive": "Напряжение (иммерсивное)",
   "game:High Voltage": "Высокое напряжение",
   "game:Low Voltage": "Низкое напряжение",
   "game:max_speed": "Ном. скорость",
@@ -267,12 +268,65 @@
 
   "block-esolargenerator-*": "Генератор на солнечных батареях",
   "block-handbooktitle-esolargenerator": "Использование",
-  "block-handbooktext-esolargenerator": "Преобразует свет в электрическую энергию! Чем больше солнечного света попадает на солнечную панель, тем больше энергии она может произвести. Блоки, размещенные над солнечной панелью, снизят ее эффективность.",
+  "block-handbooktext-esolargenerator": "Преобразует свет в электрическую энергию! Чем больше солнечного света попадает на солнечную панель, тем больше энергии она может произвести. Блоки, размещенные над солнечной панелью, снизят ее эффективность. В конце осени и зимой солнечного света становится меньше, что приводит к снижению эффективности.",
 
 
   "remove_burned_cable": "Уберите сгоревший кабель сначала",
   "cable_same_type": "Кабеля должны быть того же типа",
   "not_enough_cables": "Недостаточно кабелей для размещения",
   "enough_lines": "Линий уже достаточно",
-  "game:Prod_potential": "Потенциал выраб."
+  "game:Prod_potential": "Потенциал выраб.",
+
+  "too_much_wires": "Вы не можете подключить больше, чем 8 проводов в эту точку.",
+  "select_second_point": "Выберите вторую точку.",
+  "wire_connection_cancelled": "Подключение провода отменено.",
+  "hold_same_cable": "Вы должны держать тот же провод для завершения подключения.",
+  "same_block_connection": "Нельзя подключить провод к тому же блоку.",
+  "invalid_connection_point": "Неверная точка подключения.",
+  "connection_already_exists": "Такое подключение уже существует.",
+  "max_wire_length": "Максимальная длина провода не может быть более 32 блоков.",
+  "not_enough_cable": "Недостаточно провода. Нужно {0} шт., а есть только {1}.",
+  "wire_connected_successfully": "Провод успешно подключен. Использовано {0} шт. провода.",
+  "wire_disconnected": "Провод отключен. Возвращено {0} шт. провода.",
+
+
+  "block-cabledotdown-*": "Изолятор (пол)",
+  "block-handbooktitle-cabledotdown": "Использование",
+  "block-handbooktext-cabledotdown": "Вариант изолятора для иммерсивных проводов с креплением на полу.",
+
+  "block-cabledotroof-*": "Изолятор (потолок)",
+  "block-handbooktitle-cabledotroof": "Использование",
+  "block-handbooktext-cabledotroof": "Вариант изолятора для иммерсивных проводов с креплением на потолке.",
+
+  "block-cabledotwall-*": "Изолятор (стена)",
+  "block-handbooktitle-cabledotwall": "Использование",
+  "block-handbooktext-cabledotwall": "Вариант изолятора для иммерсивных проводов с креплением на стене.",
+
+  "block-cableswitchwall-*": "Рубильник (стена)",
+  "block-handbooktitle-cableswitchwall": "Использование",
+  "block-handbooktext-cableswitchwall": "Рубильник с креплением на стене. Может разрывать/или соединять цепь между двумя изоляторами рубильника.",
+
+  "block-hv2lvtransformator-*": "Высоковольтный трансформатор (512В->128В)",
+  "block-handbooktitle-hv2lvtransformator": "Использование",
+  "block-handbooktext-hv2lvtransformator": "Позволяет трансформировать напряжение с иммерсивных 512В в 128В обычной системы проводов.",
+
+  "block-lv2hvtransformator-*": "Высоковольтный трансформатор (128В->512В)",
+  "block-handbooktitle-lv2hvtransformator": "Использование",
+  "block-handbooktext-lv2hvtransformator": "Позволяет трансформировать напряжение с обычных 128В в 512В иммерсивной системы проводов.",
+
+  "block-hvcabletower-*": "Опора ЛЭП",
+  "block-handbooktitle-hvcabletower": "Использование",
+  "block-handbooktext-hvcabletower": "Позволяет закрепить несколько независимых линий иммерсивных проводов на одной опоре.",
+
+  "block-hvstreetlamp-*": "Уличное освещение",
+  "block-handbooktitle-hvstreetlamp": "Использование",
+  "block-handbooktext-hvstreetlamp": "Уличный вариант освещения с использлванием иммерсивных проводов.",
+
+  "block-wallconnectorhor-*": "Сквозной соединитель (горизонтальный)",
+  "block-handbooktitle-wallconnectorhor": "Использование",
+  "block-handbooktext-wallconnectorhor": "Позволяет передавать энергию скозь стены не нарушая целостность комнат.",
+
+  "block-wallconnectorver-*": "Сквозной соединитель (вертикальный)",
+  "block-handbooktitle-wallconnectorver": "Использование",
+  "block-handbooktext-wallconnectorver": "Позволяет передавать энергию скозь стены не нарушая целостность комнат."
 }

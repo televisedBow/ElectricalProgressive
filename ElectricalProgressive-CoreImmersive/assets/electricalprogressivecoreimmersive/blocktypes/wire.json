@@ -1,5 +1,5 @@
 ﻿{
-  "code": "ecable1",
+  "code": "wire",
 
   "variantGroups": [
     {
@@ -49,18 +49,18 @@
 
   "shapeInventoryByType": {
     "*-isolated": {
-      "base": "block/ecable/ecable-{voltage}-block_isolated"
+      "base": "block/wire/wire-{voltage}-block_isolated"
     },
 
     "*": {
-      "base": "block/ecable/ecable-{voltage}-block"
+      "base": "block/wire/wire-{voltage}-block"
     }
   },
 
 
   "shapeByType": {
     "*": {
-      "base": "block/ecable/ecable-{voltage}-{type}"
+      "base": "block/wire/wire-{voltage}-{type}"
     }
   },
 
@@ -118,11 +118,11 @@
   "attributes": {
     "particlesOffsetPos": [ [ 0.1, 0.0, 0.1 ] ],
     "handbook": {
-      "groupBy": [ "ecable1-*" ],
+      "groupBy": [ "wire-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivecoreimmersive:block-handbooktitle-ecable",
-          "text": "electricalprogressivecoreimmersive:block-handbooktext-ecable"
+          "title": "electricalprogressivebasics:block-handbooktitle-wire",
+          "text": "electricalprogressivebasics:block-handbooktext-wire"
         }
       ]
     },

@@ -31,8 +31,8 @@
       "groupBy": [ "lv2hvtransformator-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivecoreimmersive:block-handbooktitle-lv2hvtransformator",
-          "text": "electricalprogressivecoreimmersive:block-handbooktext-lv2hvtransformator"
+          "title": "electricalprogressivebasics:block-handbooktitle-lv2hvtransformator",
+          "text": "electricalprogressivebasics:block-handbooktext-lv2hvtransformator"
         }
       ]
     },
@@ -188,7 +188,7 @@
   "guiTransform": {
     "translation": {
       "x": 0,
-      "y": 68,
+      "y": 31,
       "z": 0
     },
     "rotation": {
@@ -196,7 +196,12 @@
       "y": -53,
       "z": 0
     },
-    "scale": 0.96
+    "origin": {
+      "x": 0.5,
+      "y": 1,
+      "z": 0.5
+    },
+    "scale": 0.32
   },
 
   "groundTransform": {
