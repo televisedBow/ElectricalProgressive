@@ -17,63 +17,27 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     private float _powerGive; // Отдаем столько энергии (сохраняется)
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
-    private bool hasBurnout;
-    private bool prepareBurnout;
+    private readonly BurnoutTracker _burnoutTracker = new();
 
     public new BlockPos Pos => Blockentity.Pos;
 
 
     public BEBehaviorSolarEGenerator(BlockEntity blockEntity) : base(blockEntity)
     {
-        
+
     }
 
 
     public void Update()
     {
         if (Blockentity is not BlockEntityESolarGenerator entity ||
-            entity.ElectricalProgressive == null ||
-            entity.ElectricalProgressive.AllEparams is null)
+            entity.ElectricalProgressive?.AllEparams is null)
         {
             return;
         }
 
-        bool anyBurnout = false;
-        bool anyPrepareBurnout = false;
-
-        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
-        {
-            if (!hasBurnout && eParam.burnout)
-            {
-                hasBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
-            {
-                prepareBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (eParam.burnout)
-                anyBurnout = true;
-
-            if (eParam.ticksBeforeBurnout > 0)
-                anyPrepareBurnout = true;
-        }
-
-        if (!anyBurnout && hasBurnout)
-        {
-            hasBurnout = false;
+        if (_burnoutTracker.Update(entity.ElectricalProgressive.AllEparams))
             entity.MarkDirty(true);
-        }
-
-        if (!anyPrepareBurnout && prepareBurnout)
-        {
-            prepareBurnout = false;
-            entity.MarkDirty(true);
-        }
-
     }
 
 

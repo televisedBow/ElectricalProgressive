@@ -55,68 +55,26 @@ public class BEBehaviorETransformator : BlockEntityBehavior, IElectricTransforma
     }
 
 
-    bool hasBurnout = false;
-    bool prepareBurnout = false;
+    private readonly BurnoutTracker _burnoutTracker = new();
 
 
     public void Update()
     {
         if (Blockentity is not BlockEntityETransformator entity ||
-            entity.ElectricalProgressive == null ||
-            entity.ElectricalProgressive.AllEparams is null)
+            entity.ElectricalProgressive?.AllEparams is null)
         {
             return;
         }
 
-        bool anyBurnout = false;
-        bool anyPrepareBurnout = false;
-
-        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
-        {
-            if (!hasBurnout && eParam.burnout)
-            {
-                hasBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
-            {
-                prepareBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (eParam.burnout)
-                anyBurnout = true;
-
-            if (eParam.ticksBeforeBurnout > 0)
-                anyPrepareBurnout = true;
-        }
-
-        if (!anyBurnout && hasBurnout)
-        {
-            hasBurnout = false;
+        if (_burnoutTracker.Update(entity.ElectricalProgressive.AllEparams))
             entity.MarkDirty(true);
-        }
 
-        if (!anyPrepareBurnout && prepareBurnout)
+        // Swap to burned variant if burned
+        if (_burnoutTracker.HasBurnout && entity.Block.Variant["state"] != "burned")
         {
-            prepareBurnout = false;
-            entity.MarkDirty(true);
+            var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("state", "burned"));
+            Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
         }
-
-        // Обработка burnout
-        if (hasBurnout)
-        {
-            // Проверяем и обновляем состояние блока если нужно
-            if (entity.Block.Variant["state"] != "burned")
-            {
-                // Кэшируем блок для обмена
-                var burnedBlock = Api.World.GetBlock(Block.CodeWithVariant("state", "burned"));
-                Api.World.BlockAccessor.ExchangeBlock(burnedBlock.BlockId, Pos);
-            }
-        }
-
-
     }
 
 

@@ -15,8 +15,7 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
 
     private float _powerGive;           // Отдаем столько энергии (сохраняется)
-    private bool hasBurnout;
-    private bool prepareBurnout;
+    private readonly BurnoutTracker _burnoutTracker = new();
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
 
@@ -39,63 +38,20 @@ public class BEBehaviorTermoEGenerator : BlockEntityBehavior, IElectricProducer
     public void Update()
     {
         if (Blockentity is not BlockEntityETermoGenerator entity ||
-            entity.ElectricalProgressive == null ||
-            entity.ElectricalProgressive.AllEparams is null)
+            entity.ElectricalProgressive?.AllEparams is null)
         {
             return;
         }
 
-        bool anyBurnout = false;
-        bool anyPrepareBurnout = false;
-
-        foreach (var eParam in entity.ElectricalProgressive.AllEparams)
-        {
-            if (!hasBurnout && eParam.burnout)
-            {
-                hasBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (!prepareBurnout && eParam.ticksBeforeBurnout > 0)
-            {
-                prepareBurnout = true;
-                entity.MarkDirty(true);
-            }
-
-            if (eParam.burnout)
-                anyBurnout = true;
-
-            if (eParam.ticksBeforeBurnout > 0)
-                anyPrepareBurnout = true;
-        }
-
-        if (!anyBurnout && hasBurnout)
-        {
-            hasBurnout = false;
+        if (_burnoutTracker.Update(entity.ElectricalProgressive.AllEparams))
             entity.MarkDirty(true);
-        }
 
-        if (!anyPrepareBurnout && prepareBurnout)
+        // Particle effects based on burnout and temperature
+        if (!_burnoutTracker.HasBurnout && entity.GenTemp > 20)
         {
-            prepareBurnout = false;
-            entity.MarkDirty(true);
-        }
-
-
-        if (!hasBurnout)
-        {
-            if (entity.GenTemp > 20)
-            {
-                entity.ElectricalProgressive.ParticlesType = 2;
-                entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
-                entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4));
-            }
-            else
-            {
-                entity.ElectricalProgressive.ParticlesType = 0;
-                entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
-                entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.1, 0.5, 0.1));
-            }
+            entity.ElectricalProgressive.ParticlesType = 2;
+            entity.ElectricalProgressive.ParticlesOffsetPos.Clear();
+            entity.ElectricalProgressive.ParticlesOffsetPos.Add(new Vec3d(0.4, entity.HeightTermoplastin + 0.9, 0.4));
         }
         else
         {
