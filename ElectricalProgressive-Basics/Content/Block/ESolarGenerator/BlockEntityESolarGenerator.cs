@@ -105,8 +105,7 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
         if (beh is null)
             return;
         
-        Calculate_kpd(beh);
-
+        Calculate_kpd();
 
         bool effectivePowered = (int)Math.Min(beh.getPowerGive(), beh.getPowerOrder()) >= _maxConsumption * .05;
         if (effectivePowered && this.Block.Variant["state"] == "off")
@@ -129,13 +128,11 @@ public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 
 
     /// <summary>
-    /// Calculates the efficiency. We look at the sunlight the solar panel itself is exposed to and penalize for blocks
-    /// directly above as well.
+    /// Calculates the efficiency. We look at the sunlight the solar panel itself is exposed, the blocks above it, and the time of year.
     ///
     /// We have to clamp values below a certain light threshold because we shouldn't produce energy at night.
     /// </summary>
-    private int counter = 0;
-    private void Calculate_kpd(BEBehaviorSolarEGenerator beh)
+    private void Calculate_kpd()
     {
         
         var accessor = Api.World.BlockAccessor;

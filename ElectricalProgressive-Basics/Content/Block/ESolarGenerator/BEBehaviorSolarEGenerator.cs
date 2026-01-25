@@ -124,7 +124,6 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
                                  ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" +
                                  ((int)entity.Power).ToString() + " " + Lang.Get("W"));
         stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.Kpd * 100).ToString("F1") + " %");
-        stringBuilder.AppendLine("Light Level: " + entity.Kpd);
     }
 
 
