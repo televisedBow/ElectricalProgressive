@@ -267,7 +267,7 @@
 
   "block-esolargenerator-*": "Solar Panel Generator",
   "block-handbooktitle-esolargenerator": "Usage",
-  "block-handbooktext-esolargenerator": "Converts light into electrical energy! The more sunlight hitting the solar panel, the more energy it can produce. Blocks placed above the solar panel will reduce its efficiency.",
+  "block-handbooktext-esolargenerator": "Converts light into electrical energy! The more sunlight hitting the solar panel, the more energy it can produce. Blocks placed above the solar panel will reduce its efficiency. In the late fall and winter months there is less sunlight which causes a decrease in its efficiency.",
 
 
   "remove_burned_cable": "Remove the burned cable first",
