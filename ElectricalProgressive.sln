@@ -15,8 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectricalProgressive-Equip
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectricalProgressive-QOL", "ElectricalProgressive-QOL\ElectricalProgressive-QOL.csproj", "{E38CB2F3-818F-4DD5-AD53-B58EB92506EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElectricalProgressive-Transport", "ElectricalProgressive-Transport\ElectricalProgressive-Transport.csproj", "{E38CB2F3-818F-4DD5-AD53-B58EB92506EB}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
-	ProjectSection(SolutionItems) = preProject
+	ProjectSection(SolutionItems) = preProjectElectricalProgressive-Transport
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
