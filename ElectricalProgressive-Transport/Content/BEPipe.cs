@@ -1,4 +1,4 @@
-﻿﻿using System.Text;
+﻿using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
@@ -76,15 +76,15 @@ namespace ElectricalProgressiveTransport
                 if (connectedSides[i]) connections++;
             }
             
-            sb.AppendLine(Lang.Get("vspipefiltermod:connections", connections));
+            sb.AppendLine(Lang.Get("electricalprogressivetransport:connections", connections));
             
             if (networkManager != null)
             {
                 var network = networkManager.GetNetwork(Pos);
                 if (network != null)
                 {
-                    sb.AppendLine(Lang.Get("vspipefiltermod:network-size", network.Pipes.Count));
-                    sb.AppendLine(Lang.Get("vspipefiltermod:inserters", network.Inserters.Count));
+                    sb.AppendLine(Lang.Get("electricalprogressivetransport:network-size", network.Pipes.Count));
+                    sb.AppendLine(Lang.Get("electricalprogressivetransport:inserters", network.Inserters.Count));
                 }
             }
         }

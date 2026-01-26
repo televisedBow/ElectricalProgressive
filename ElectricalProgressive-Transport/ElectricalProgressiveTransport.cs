@@ -2,6 +2,21 @@
     using Vintagestory.API.Common;
     using Vintagestory.API.Server;
 
+    [assembly: ModDependency("game", "1.21.6")]
+    [assembly: ModInfo(
+        "Electrical Progressive: Transport",
+        "electricalprogressivetransport",
+        Website = "https://github.com/tehtelev/ElectricalProgressive",
+        Description = "Additional electrical devices.",
+        Version = "2.6.6",
+        Authors =
+        [
+            "Tehtelev",
+            "Kotl"
+        ]
+    )]
+
+
     namespace ElectricalProgressiveTransport
     {
         public class ElectricalProgressiveTransport : ModSystem

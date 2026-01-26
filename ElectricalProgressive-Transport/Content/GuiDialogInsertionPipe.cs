@@ -2,6 +2,7 @@
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
@@ -71,7 +72,7 @@ namespace ElectricalProgressiveTransport
                     "filterSlots")
                 
                 // Настройки фильтра
-                .AddStaticText("Настройки фильтра:", CairoFont.WhiteDetailText().WithWeight(Cairo.FontWeight.Bold), 
+                .AddStaticText(Lang.Get("electricalprogressivetransport:filter-pipe-settings"), CairoFont.WhiteDetailText().WithWeight(Cairo.FontWeight.Bold), 
                     ElementBounds.Fixed(10, 165, 300, 25))
                 // Разделительная линия
                 .AddStaticText("═══════════════════════════════", 
@@ -81,22 +82,22 @@ namespace ElectricalProgressiveTransport
 
                 
                 // Кнопки режима фильтра (шире и с большими отступами)
-                .AddSmallButton("Белый список", OnAllowListClicked, 
+                .AddSmallButton(Lang.Get("electricalprogressivetransport:filter-mode-allow"), OnAllowListClicked, 
                     ElementBounds.Fixed(10, 190, 130, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnAllowList")
-                .AddSmallButton("Черный список", OnDenyListClicked, 
+                .AddSmallButton(Lang.Get("electricalprogressivetransport:filter-mode-deny"), OnDenyListClicked, 
                     ElementBounds.Fixed(170, 190, 130, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnDenyList")
                 
                 // Чекбоксы сравнения с выравниванием
                 .AddSwitch(OnMatchModToggled, ElementBounds.Fixed(10, 230, 40, 25), "swMatchMod")
-                .AddStaticText("Совпадение мода", CairoFont.WhiteDetailText(), 
+                .AddStaticText(Lang.Get("electricalprogressivetransport:filter-match-mod"), CairoFont.WhiteDetailText(), 
                     ElementBounds.Fixed(55, 235, 150, 25))
                 
                 .AddSwitch(OnMatchTypeToggled, ElementBounds.Fixed(10, 265, 40, 25), "swMatchType")
-                .AddStaticText("Совпадение типа", CairoFont.WhiteDetailText(), 
+                .AddStaticText(Lang.Get("electricalprogressivetransport:filter-match-type"), CairoFont.WhiteDetailText(), 
                     ElementBounds.Fixed(55, 270, 150, 25))
                 
                 .AddSwitch(OnMatchAttrsToggled, ElementBounds.Fixed(10, 300, 40, 25), "swMatchAttrs")
-                .AddStaticText("Совпадение атрибутов", CairoFont.WhiteDetailText(), 
+                .AddStaticText(Lang.Get("electricalprogressivetransport:filter-match-attrs"), CairoFont.WhiteDetailText(), 
                     ElementBounds.Fixed(55, 305, 150, 25))
                 
                 // Еще одна разделительная линия
@@ -105,11 +106,11 @@ namespace ElectricalProgressiveTransport
                     ElementBounds.Fixed(10, 345, 300, 25))
                 
                 // Скорость передачи
-                .AddStaticText("Скорость передачи:", CairoFont.WhiteDetailText().WithWeight(Cairo.FontWeight.Bold), 
+                .AddStaticText(Lang.Get("electricalprogressivetransport:filter-speet-transfer"), CairoFont.WhiteDetailText().WithWeight(Cairo.FontWeight.Bold), 
                     ElementBounds.Fixed(10, 335, 150, 25))
                 
                 // Кнопка "-"
-                .AddSmallButton("Убавить", OnDecreaseRateClicked,
+                .AddSmallButton(Lang.Get("electricalprogressivetransport:filter-speet-down"), OnDecreaseRateClicked,
                     ElementBounds.Fixed(12, 360, 100, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnDecrease")
                 
                 // Отображение текущей скорости
@@ -118,7 +119,7 @@ namespace ElectricalProgressiveTransport
                     ElementBounds.Fixed(150, 363, 40, 30), "txtTransferRate")
                 
                 // Кнопка "+"
-                .AddSmallButton("Прибавить", OnIncreaseRateClicked,
+                .AddSmallButton(Lang.Get("electricalprogressivetransport:filter-speet-up"), OnIncreaseRateClicked,
                     ElementBounds.Fixed(200, 360, 100, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnIncrease")
                 
                 .EndChildElements()

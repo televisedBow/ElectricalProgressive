@@ -96,7 +96,7 @@ namespace ElectricalProgressiveTransport
             if (_clientDialog == null || !_clientDialog.IsOpened())
             {
                 _clientDialog = new GuiDialogInsertionPipe(
-                    Lang.Get("vspipefiltermod:filter-pipe-title"),
+                    Lang.Get("electricalprogressivetransport:filter-pipe-title"),
                     Inventory,
                     Pos,
                     Api as ICoreClientAPI,
@@ -787,53 +787,51 @@ private bool ExecuteTransfer(ItemSlot sourceSlot, ItemSlot targetSlot, BlockEnti
         // Отображение информации о блоке
         public override void GetBlockInfo(IPlayer forPlayer, StringBuilder sb)
         {
+            base.GetBlockInfo(forPlayer, sb);
             int connections = 0;
             for (int i = 0; i < 6; i++)
             {
                 if (connectedSides[i]) connections++;
             }
             
-            sb.AppendLine(Lang.Get("vspipefiltermod:connections", connections));
-            sb.AppendLine(Lang.Get("vspipefiltermod:filter-pipe"));
-            sb.AppendLine(Lang.Get("vspipefiltermod:transfer-rate", transferRate));
-            
-            // Информация о режиме фильтра
-            string modeText = currentFilterMode switch
-            {
-                FilterMode.AllowList => Lang.Get("vspipefiltermod:filter-mode-allow"),
-                FilterMode.DenyList => Lang.Get("vspipefiltermod:filter-mode-deny"),
-                _ => "Unknown"
-            };
-            sb.AppendLine(Lang.Get("vspipefiltermod:filter-mode", modeText));
-            
-            // Информация о настройки сравнения
-            if (matchMod) sb.AppendLine(Lang.Get("vspipefiltermod:filter-match-mod"));
-            if (matchType) sb.AppendLine(Lang.Get("vspipefiltermod:filter-match-type"));
-            if (matchAttributes) sb.AppendLine(Lang.Get("vspipefiltermod:filter-match-attrs"));
-            
-            if (outputFacing != null)
-            {
-                sb.AppendLine(Lang.Get("vspipefiltermod:output-facing", outputFacing.Code));
-            }
-            
+            sb.AppendLine(Lang.Get("electricalprogressivetransport:connections", connections));
             if (networkManager != null)
             {
                 var network = networkManager.GetNetwork(Pos);
                 if (network != null)
                 {
-                    sb.AppendLine(Lang.Get("vspipefiltermod:network-size", network.Pipes.Count));
-                    sb.AppendLine(Lang.Get("vspipefiltermod:inserters", network.Inserters.Count));
+                    sb.AppendLine(Lang.Get("electricalprogressivetransport:network-size", network.Pipes.Count));
+                    sb.AppendLine(Lang.Get("electricalprogressivetransport:inserters", network.Inserters.Count));
                 }
             }
+            sb.AppendLine("══════════════════════════════════════════");
             
+            // Информация о режиме фильтра
+            string modeText = currentFilterMode switch
+            {
+                FilterMode.AllowList => Lang.Get("electricalprogressivetransport:filter-mode-allow"),
+                FilterMode.DenyList => Lang.Get("electricalprogressivetransport:filter-mode-deny"),
+                _ => "Unknown"
+            };
+            sb.AppendLine(Lang.Get("electricalprogressivetransport:filter-mode", modeText));
+            
+            
+            // Информация о настройки сравнения
+            List<string> filters = new List<string>();
+            if (matchMod) filters.Add(Lang.Get("electricalprogressivetransport:filter-match-mod"));
+            if (matchType) filters.Add(Lang.Get("electricalprogressivetransport:filter-match-type"));
+            if (matchAttributes) filters.Add(Lang.Get("electricalprogressivetransport:filter-match-attrs"));
+            sb.AppendLine("└ " +string.Join(", ", filters));
+            sb.AppendLine(Lang.Get("electricalprogressivetransport:transfer-rate", transferRate));
             // Показываем информацию о фильтрах
             int activeFilters = 0;
             for (int i = 0; i < _inventory.Count; i++)
             {
                 if (!_inventory[i].Empty) activeFilters++;
             }
-            sb.AppendLine(Lang.Get("vspipefiltermod:active-filters", activeFilters, _inventory.Count));
-        }
+            sb.AppendLine(Lang.Get("electricalprogressivetransport:active-filters", activeFilters, _inventory.Count));
+            
+        } 
         
         public override void OnBlockPlaced(ItemStack byItemStack = null)
         {
@@ -985,12 +983,6 @@ private bool ExecuteTransfer(ItemSlot sourceSlot, ItemSlot targetSlot, BlockEnti
                 }
             }
         }
-        
-        public override void OnReceivedServerPacket(int packetid, byte[] data)
-        {
-            base.OnReceivedServerPacket(packetid, data);
-        }
-        
         public override void OnBlockUnloaded()
         {
             base.OnBlockUnloaded();

@@ -1,8 +1,11 @@
 ﻿using System.Text;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Util;
+using Vintagestory.GameContent;
 
 namespace ElectricalProgressiveTransport
 {
@@ -31,7 +34,7 @@ namespace ElectricalProgressiveTransport
             
             if (newType != currentType)
             {
-                Block newBlock = world.GetBlock(new AssetLocation($"vspipefiltermod:{newType}"));
+                Block newBlock = world.GetBlock(new AssetLocation($"electricalprogressivetransport:{newType}"));
                 if (newBlock != null)
                 {
                     BEPipe pipe = world.BlockAccessor.GetBlockEntity(pos) as BEPipe;
@@ -80,27 +83,5 @@ namespace ElectricalProgressiveTransport
             }
         }
         
-        public override string GetPlacedBlockInfo(IWorldAccessor world, BlockPos pos, IPlayer forPlayer)
-        {
-            StringBuilder sb = new StringBuilder();
-            
-            if (this.Code.Path == "pipe-normal")
-            {
-                sb.AppendLine(Lang.Get("vspipefiltermod:pipe-normal-info"));
-            }
-            else if (this.Code.Path == "pipe-insertion")
-            {
-                sb.AppendLine(Lang.Get("vspipefiltermod:pipe-insertion-info"));
-                sb.AppendLine(Lang.Get("vspipefiltermod:shift-right-click"));
-            }
-            
-            BEPipe pipe = world.BlockAccessor.GetBlockEntity(pos) as BEPipe;
-            if (pipe != null)
-            {
-                pipe.GetBlockInfo(sb);
-            }
-            
-            return sb.ToString();
-        }
     }
 }
