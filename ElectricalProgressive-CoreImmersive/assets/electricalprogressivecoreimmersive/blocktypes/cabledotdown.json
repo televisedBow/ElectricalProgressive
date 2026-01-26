@@ -22,8 +22,8 @@
       "groupBy": [ "cabledotdown-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivecoreimmersive:block-handbooktitle-cabledotdown",
-          "text": "electricalprogressivecoreimmersive:block-handbooktext-cabledotdown"
+          "title": "electricalprogressivebasics:block-handbooktitle-cabledotdown",
+          "text": "electricalprogressivebasics:block-handbooktext-cabledotdown"
         }
       ]
     },

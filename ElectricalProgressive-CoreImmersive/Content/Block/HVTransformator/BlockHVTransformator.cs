@@ -78,7 +78,12 @@ namespace EPImmersive.Content.Block.HVTransformator
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
         {
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
-            dsc.AppendLine(Lang.Get("Voltage") + ": " + MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "voltage", 0) + " " + Lang.Get("V"));
+
+            var imvoltage = MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "imvoltage", 0);
+            var voltage = MyMiniLib.GetAttributeInt(inSlot.Itemstack.Block, "voltage", 0);
+
+            dsc.AppendLine(Lang.Get("electricalprogressivebasics:Voltage_immersive") + ": " + imvoltage + " " + Lang.Get("V"));
+            dsc.AppendLine(Lang.Get("Voltage") + ": " + voltage + " " + Lang.Get("V"));
             dsc.AppendLine(Lang.Get("WResistance") + ": " + ((MyMiniLib.GetAttributeBool(inSlot.Itemstack.Block, "isolatedEnvironment", false)) ? Lang.Get("Yes") : Lang.Get("No")));
         }
 

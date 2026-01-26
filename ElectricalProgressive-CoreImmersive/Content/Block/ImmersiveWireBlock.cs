@@ -7,13 +7,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
-using static HarmonyLib.Code;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EPImmersive.Content.Block
 {
@@ -530,7 +529,7 @@ namespace EPImmersive.Content.Block
         public bool IsHoldingWireTool(IPlayer player)
         {
             ItemSlot activeSlot = player.InventoryManager.ActiveHotbarSlot;
-            return activeSlot?.Itemstack?.Block?.Code.ToString().Contains("cable1")==true;
+            return activeSlot?.Itemstack?.Block?.Code.ToString().Contains("wire-")==true;
         }
 
 
@@ -562,7 +561,7 @@ namespace EPImmersive.Content.Block
             {
                 if (capi != null)
                 {
-                    capi.ShowChatMessage("You cannot connect more than 8 wires to this point.");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:too_much_wires"));
                 }
                 return;
             }
@@ -580,7 +579,7 @@ namespace EPImmersive.Content.Block
 
             if (capi != null)
             {
-                capi.ShowChatMessage("Select second connection point. Right-click to cancel.");
+                capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:select_second_point"));
 
             }
 
@@ -591,7 +590,7 @@ namespace EPImmersive.Content.Block
                 if (HasActiveConnection(byPlayer))
                 {
                     if (capi != null)
-                        capi.ShowChatMessage("Wire connection cancelled.");
+                        capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:wire_connection_cancelled"));
 
                     ClearConnection(byPlayer);
                 }
@@ -617,7 +616,7 @@ namespace EPImmersive.Content.Block
             if (!IsHoldingWireTool(byPlayer) || !byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Block.Code.ToString().Equals(connectionData.Asset))
             {
                 if (capi != null)
-                    capi.ShowChatMessage("You must hold the same cable to complete connection");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:hold_same_cable"));
                 ClearConnection(byPlayer);
                 return;
             }
@@ -626,7 +625,7 @@ namespace EPImmersive.Content.Block
             if (blockSel.Position.Equals(connectionData.StartPos))
             {
                 if (capi != null)
-                    capi.ShowChatMessage("Cannot connect wire to the same block");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:same_block_connection"));
                 ClearConnection(byPlayer);
                 return;
             }
@@ -636,7 +635,7 @@ namespace EPImmersive.Content.Block
             if (endBehavior == null || blockSel.SelectionBoxIndex >= endBehavior.GetWireNodes().Count)
             {
                 if (capi != null)
-                    capi.ShowChatMessage("Invalid connection point");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:invalid_connection_point"));
                 ClearConnection(byPlayer);
                 return;
             }
@@ -649,7 +648,7 @@ namespace EPImmersive.Content.Block
                     blockSel.Position, (byte)blockSel.SelectionBoxIndex) != null)
             {
                 if (capi != null)
-                    capi.ShowChatMessage("Such a connection already exists.");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:connection_already_exists"));
                 ClearConnection(byPlayer);
                 return;
             }
@@ -658,7 +657,7 @@ namespace EPImmersive.Content.Block
             if (endBehavior.FindConnection((byte)blockSel.SelectionBoxIndex).Count >= 8)
             {
                 if (capi != null)
-                    capi.ShowChatMessage("You cannot connect more than 8 wires to this point.");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:too_much_wires"));
                 ClearConnection(byPlayer);
                 return;
             }
@@ -692,7 +691,7 @@ namespace EPImmersive.Content.Block
             if (cableLength > 32)
             {
                 if (capi != null)
-                    capi.ShowChatMessage("The maximum wire length cannot be more than 32 blocks.");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:max_wire_length"));
                 ClearConnection(byPlayer);
                 return;
             }
@@ -702,7 +701,7 @@ namespace EPImmersive.Content.Block
             if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative && activeSlot.StackSize < cableLength)
             {
                 if (capi != null)
-                    capi.ShowChatMessage($"Not enough cable. Need {cableLength} blocks, but only have {activeSlot.StackSize}");
+                    capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:not_enough_cable", cableLength, activeSlot.StackSize));
                 ClearConnection(byPlayer);
                 return;
             }
@@ -751,7 +750,7 @@ namespace EPImmersive.Content.Block
 
 
             if (capi != null)
-                capi.ShowChatMessage($"Wire connected successfully. Used {cableLength} blocks of cable.");
+                capi.ShowChatMessage(Lang.Get("electricalprogressivebasics:wire_connected_successfully", cableLength));
 
             // только для проверки
             /*
@@ -854,7 +853,7 @@ namespace EPImmersive.Content.Block
                     if (api.Side == EnumAppSide.Client)
                     {
                         // вывод сообщения о количестве выданных кабелей
-                        ((ICoreClientAPI)api).ShowChatMessage($"Wire disconnected. Returned {cableLength} blocks of cable.");
+                        ((ICoreClientAPI)api).ShowChatMessage(Lang.Get("electricalprogressivebasics:wire_disconnected", cableLength));
 
                         ImmersiveWireBlock.InvalidateBlockMeshCache(blockSel.Position);
                         ImmersiveWireBlock.InvalidateBlockMeshCache(connectionToRemove.NeighborPos);
@@ -887,7 +886,7 @@ namespace EPImmersive.Content.Block
 
 
             // Создаем ключ для кэша проводов
-            var cacheKey = new WireMeshCacheKey(position, connections);
+            var cacheKey = new WireMeshCacheKey(position.Copy(), connections);
 
             // Получаем базовый меш (генерируется каждый раз, но это дешево)
             MeshData baseMeshData = null;
@@ -964,43 +963,34 @@ namespace EPImmersive.Content.Block
         /// </summary>
         public static void InvalidateBlockMeshCache(BlockPos position)
         {
-            // Быстрая проверка на пустоту
             if (WireMeshesCache == null || WireMeshesCache.Count == 0)
                 return;
 
             try
             {
-                // Используем список с предварительным выделением памяти
-                // Предполагаем, что в среднем у блока не более 8 подключений
+                // Создаем список для ключей, которые нужно удалить
                 var keysToRemove = new List<WireMeshCacheKey>(8);
 
-                // Собираем ключи для удаления напрямую из словаря без LINQ
-                foreach (var kvp in WireMeshesCache)
+                // Перебираем все ключи в кэше
+                foreach (var key in WireMeshesCache.Keys)
                 {
-                    // Используем прямое сравнение координат вместо Equals для производительности
-                    var keyPos = kvp.Key.Position;
-                    if (keyPos.X == position.X &&
-                        keyPos.Y == position.Y &&
-                        keyPos.Z == position.Z &&
-                        keyPos.dimension == position.dimension)
+                    // Используем Equals для сравнения BlockPos 
+                    if (key.Position.Equals(position))
                     {
-                        keysToRemove.Add(kvp.Key);
+                        keysToRemove.Add(key);
                     }
                 }
 
-                // Удаляем собранные ключи
-                int count = keysToRemove.Count;
-                for (int i = 0; i < count; i++)
+                // Удаляем найденные ключи
+                foreach (var key in keysToRemove)
                 {
-                    WireMeshesCache.Remove(keysToRemove[i]);
+                    WireMeshesCache.Remove(key);
                 }
-
-                // Быстрая очистка списка (предотвращает утечку памяти при частых вызовах)
-                keysToRemove.Clear();
             }
-            catch
+            catch (Exception ex)
             {
-                // Быстрое подавление исключения без дополнительной нагрузки
+                // Для отладки можно добавить логирование
+                // api?.Logger.Debug($"Failed to clear mesh cache for {position}: {ex.Message}");
             }
         }
 
@@ -1044,7 +1034,7 @@ namespace EPImmersive.Content.Block
 
             // Очищаем кэш для этого блока
             InvalidateBlockMeshCache(pos);
-            WireMeshesCache.Clear();
+            //WireMeshesCache.Clear();
         }
 
 
@@ -1296,7 +1286,7 @@ namespace EPImmersive.Content.Block
             if (cableBlock == null)
             {
                 // Fallback на базовый кабель
-                cableBlock = api.World.GetBlock(new AssetLocation("electricalprogressivebasics:ecable-32v-copper-single-part"));
+                cableBlock = api.World.GetBlock(new AssetLocation("electricalprogressivebasics:wire-512v-copper-single-part"));
             }
 
             return new ItemStack(cableBlock);
@@ -1327,11 +1317,11 @@ namespace EPImmersive.Content.Block
             if (material == null || material == "")
             {
                 // Fallback на базовый кабель
-                cable = new AssetLocation("electricalprogressivecoreimmersive:ecable1-32v-copper-part");
+                cable = new AssetLocation("electricalprogressivecoreimmersive:wire-32v-copper-part");
             }
             else
             {
-                cable = new AssetLocation($"electricalprogressivecoreimmersive:ecable1-{voltage}-{material}-{type}");
+                cable = new AssetLocation($"electricalprogressivecoreimmersive:wire-{voltage}-{material}-{type}");
             }
 
             return cable;

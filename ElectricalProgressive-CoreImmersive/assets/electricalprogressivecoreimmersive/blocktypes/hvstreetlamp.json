@@ -22,8 +22,8 @@
       "groupBy": [ "hvstreetlamp-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivecoreimmersive:block-handbooktitle-hvstreetlamp",
-          "text": "electricalprogressivecoreimmersive:block-handbooktext-hvstreetlamp"
+          "title": "electricalprogressivebasics:block-handbooktitle-hvstreetlamp",
+          "text": "electricalprogressivebasics:block-handbooktext-hvstreetlamp"
         }
       ]
     },
@@ -135,7 +135,7 @@
 
 
 
- 
+
 
 
 
@@ -161,17 +161,17 @@
 
 
   "guiTransform": {
-      "translation": {
-        "x": 0,
-        "y": 68,
-        "z": 0
-      },
-      "rotation": {
-        "x": -21,
-        "y": -53,
-        "z": 0
-      },
-      "scale": 0.96    
+    "translation": {
+      "x": 0,
+      "y": 31,
+      "z": 0
+    },
+    "rotation": {
+      "x": -21,
+      "y": -53,
+      "z": 0
+    },
+    "scale": 0.32
   },
 
   "groundTransform": {

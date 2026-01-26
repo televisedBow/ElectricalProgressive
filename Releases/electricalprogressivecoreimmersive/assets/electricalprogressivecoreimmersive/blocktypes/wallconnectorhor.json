@@ -21,8 +21,8 @@
       "groupBy": [ "wallconnectorhor-*" ],
       "extraSections": [
         {
-          "title": "electricalprogressivecoreimmersive:block-handbooktitle-wallconnectorhor",
-          "text": "electricalprogressivecoreimmersive:block-handbooktext-wallconnectorhor"
+          "title": "electricalprogressivebasics:block-handbooktitle-wallconnectorhor",
+          "text": "electricalprogressivebasics:block-handbooktext-wallconnectorhor"
         }
       ]
     },
