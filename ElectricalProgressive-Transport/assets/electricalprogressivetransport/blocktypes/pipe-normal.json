@@ -12,7 +12,7 @@
   "resistance": 4,
   "lightAbsorption": 99,
   "textures": {
-    "all": { "base": "game:block/machine/device-blank" }
+    "all": { "base": "game:block/metal/corroded/rusty3" }
   },
   "heldTpIdleAnimation": "holdbothhandslarge", "heldRightReadyAnimation": "heldblockready", "heldTpUseAnimation": "twohandplaceblock",
   "tpHandTransform": {

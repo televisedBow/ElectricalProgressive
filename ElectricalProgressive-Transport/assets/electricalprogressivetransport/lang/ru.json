@@ -4,6 +4,7 @@
   "electricalprogressivetransport:pipe-normal-info": "Обычная транспортная труба",
   "electricalprogressivetransport:pipe-insertion-info": "Труба с фильтром для помещения предметов",
   "electricalprogressivetransport:blockhelp-filter-settings": "Открыть настройки фильтра",
+  "electricalprogressivetransport:blockhelp-pipe-switch-type": "Сменить тип трубы",
   "electricalprogressivetransport:connections": "Соединений: {0}",
   "electricalprogressivetransport:containers": "Контейнеров: {0}",
   "electricalprogressivetransport:filter-mode": "Режим фильтра: {0}",

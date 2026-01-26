@@ -10,7 +10,7 @@
   "resistance": 4,
   "lightAbsorption": 99,
   "textures": {
-    "all": { "base": "game:block/machine/tech/tech-powergeneratorbottom" }
+    "all": { "base": "game:block/metal/fence/iron-fence-base" }
   },
   "heldTpIdleAnimation": "holdbothhandslarge", "heldRightReadyAnimation": "heldblockready", "heldTpUseAnimation": "twohandplaceblock",
   "tpHandTransform": {
