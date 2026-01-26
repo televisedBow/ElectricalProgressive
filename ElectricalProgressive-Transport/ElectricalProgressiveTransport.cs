@@ -35,10 +35,12 @@
                 api.RegisterBlockClass("BlockPipeBase", typeof(BlockPipeBase));
                 api.RegisterBlockClass("BlockPipe", typeof(BlockPipe));
                 api.RegisterBlockClass("BlockInsertionPipe", typeof(BlockInsertionPipe));
+                api.RegisterBlockClass("BlockLiquidInsertionPipe", typeof(BlockLiquidInsertionPipe)); // НОВОЕ
 
                 // Регистрация блок-сущностей
                 api.RegisterBlockEntityClass("BEPipe", typeof(BEPipe));
                 api.RegisterBlockEntityClass("BEInsertionPipe", typeof(BEInsertionPipe));
+                api.RegisterBlockEntityClass("BELiquidInsertionPipe", typeof(BELiquidInsertionPipe)); // НОВОЕ
 
                 // Инициализация менеджера сетей
                 networkManager = new PipeNetworkManager();

@@ -1,4 +1,5 @@
 ﻿{
+  "game:tabname-electricalprogressivetransport": "Транспортные трубы",
   "electricalprogressivetransport:block-pipe-normal": "Транспортная труба",
   "electricalprogressivetransport:block-pipe-insertion": "Помещающая труба",
   "electricalprogressivetransport:pipe-normal-info": "Обычная транспортная труба",
@@ -23,5 +24,15 @@
   "electricalprogressivetransport:filter-match-attrs": "Совпадение атрибутов",
   "electricalprogressivetransport:filter-speet-transfer": "Скорость передачи:",
   "electricalprogressivetransport:filter-speet-up": "Прибавить",
-  "electricalprogressivetransport:filter-speet-down": "Убавить"
+  "electricalprogressivetransport:filter-speet-down": "Убавить",
+
+  "electricalprogressivetransport:block-pipe-liquid-insertion": "Жидкостная помещающая труба",
+  "electricalprogressivetransport:pipe-liquid-insertion-info": "Труба для фильтрации и помещения жидкостей",
+  "electricalprogressivetransport:blockhelp-liquid-filter-settings": "Открыть настройки жидкостного фильтра",
+  "electricalprogressivetransport:liquid-filter-pipe-title": "Жидкостная фильтрующая труба",
+  "electricalprogressivetransport:liquid-filter-pipe-settings": "Настройки жидкостного фильтра:",
+  "electricalprogressivetransport:liquid-inserters": "Жидкостных труб в сети: {0}",
+  "electricalprogressivetransport:liquid-transfer-rate": "Скорость передачи жидкостей: {0} мл/такт",
+  "electricalprogressivetransport:liquid-transfer-speed": "Скорость передачи:",
+  "electricalprogressivetransport:active-liquid-filters": "Жидкостных фильтров: {0}/{1}"
 }
