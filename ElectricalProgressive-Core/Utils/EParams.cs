@@ -141,6 +141,30 @@ namespace ElectricalProgressive.Utils
 
 
         /// <summary>
+        /// Создает глубокую копию текущего экземпляра EParams
+        /// </summary>
+        /// <returns>Новый экземпляр EParams с теми же значениями</returns>
+        public EParams Clone()
+        {
+            return new EParams
+            {
+                voltage = this.voltage,
+                maxCurrent = this.maxCurrent,
+                material = this.material, // string неизменяем, можно просто присвоить
+                resistivity = this.resistivity,
+                lines = this.lines,
+                crossArea = this.crossArea,
+                burnout = this.burnout,
+                isolated = this.isolated,
+                isolatedEnvironment = this.isolatedEnvironment,
+                causeBurnout = this.causeBurnout,
+                ticksBeforeBurnout = this.ticksBeforeBurnout,
+                current = this.current
+            };
+        }
+
+
+        /// <summary>
         /// Переопределение метода GetHashCode для получения хэш-кода объекта EParams
         /// </summary>
         /// <returns></returns>

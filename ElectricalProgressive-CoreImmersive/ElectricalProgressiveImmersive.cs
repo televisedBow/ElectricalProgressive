@@ -1345,28 +1345,37 @@ namespace EPImmersive
                         {
                             connection.Parameters.prepareForBurnout(2);
 
-                            /*
-                            var neighborPart = Parts[connection.NeighborPos];
-
-                            ConnectionData connect = null;
-
-                            for (int i = 0; i < neighborPart.Connections.Count; i++)
+                            // сгорел таки?
+                            if (connection.Parameters.burnout)
                             {
-                                connect = neighborPart.Connections[i];
+                                // Синхронизируем параметры с соседним блоком
+                                if (Parts.TryGetValue(connection.NeighborPos, out var neighborPart))
+                                {
+                                    var mirrorConnection = neighborPart.Connections.FirstOrDefault(c =>
+                                        c.NeighborPos.Equals(partPos) &&
+                                        c.LocalNodeIndex == connection.NeighborNodeIndex &&
+                                        c.NeighborNodeIndex == connection.LocalNodeIndex);
 
-                                if (connect.NeighborPos.Equals(part.Position) && connect.NeighborNodeIndex == connection.LocalNodeIndex)
-                                    break;
+                                    if (mirrorConnection != null)
+                                    {
+                                        mirrorConnection.Parameters = connection.Parameters.Clone();
+                                    }
+                                }
 
-                                connect = null;
+
+                                // ПОМЕТИТЬ БЛОК КАК ГРЯЗНЫЙ - отправка на клиент
+                                var blockEntity = Api.World.BlockAccessor.GetBlockEntity(partPos);
+                                if (blockEntity != null)
+                                {
+                                    blockEntity.MarkDirty();
+                                }
+
+                                blockEntity = Api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
+                                if (blockEntity != null)
+                                {
+                                    blockEntity.MarkDirty();
+                                }
                             }
-
-                            connect.Parameters.burnou
-                            */
-                            /*
-                            if (packet2.path[packet2.currentIndex] == partPos)
-                                packet2.shouldBeRemoved = true;
-                            */
-                            //ResetComponents(ref part);
                         }
                     }
                 }
@@ -1381,18 +1390,39 @@ namespace EPImmersive
 
                     connection.Parameters.prepareForBurnout(1);
 
-                    /*
-                    foreach (var p in _globalEnergyPackets)
-                    {
-                        // Здесь нужно добавить логику проверки для иммерсивных соединений
-                        if (p.path[p.currentIndex] == partPos)
-                        {
-                            p.shouldBeRemoved = true;
-                        }
-                    }
-                    */
 
-                    //ResetComponents(ref part);
+                    // сгорел таки?
+                    if (connection.Parameters.burnout)
+                    {
+                        // Синхронизируем параметры с соседним блоком
+                        if (Parts.TryGetValue(connection.NeighborPos, out var neighborPart))
+                        {
+                            var mirrorConnection = neighborPart.Connections.
+                                FirstOrDefault(c =>
+                                c.NeighborPos.Equals(partPos) &&
+                                c.LocalNodeIndex == connection.NeighborNodeIndex &&
+                                c.NeighborNodeIndex == connection.LocalNodeIndex);
+
+                            if (mirrorConnection != null)
+                            {
+                                mirrorConnection.Parameters = connection.Parameters.Clone();
+                            }
+                        }
+
+                        // ПОМЕТИТЬ БЛОК КАК ГРЯЗНЫЙ - отправка на клиент
+                        var blockEntity = Api.World.BlockAccessor.GetBlockEntity(partPos);
+                        if (blockEntity != null)
+                        {
+                            blockEntity.MarkDirty();
+                        }
+
+                        blockEntity = Api.World.BlockAccessor.GetBlockEntity(connection.NeighborPos);
+                        if (blockEntity != null)
+                        {
+                            blockEntity.MarkDirty();
+                        }
+
+                    }
                 }
             }
 
@@ -1459,7 +1489,7 @@ namespace EPImmersive
 
                     if (curIndex > 0)
                     {
-                        // ищем провода которые ведут на слежующий блок в пути
+                        // ищем провода которые ведут на следующий блок в пути
 
                         ConnectionData connect = null;
 
@@ -1498,7 +1528,7 @@ namespace EPImmersive
                             }
 
 
-                            // считаем сопротивление для основного блока (используем основные параметры как fallback)
+                            // считаем сопротивление для провода
                             resistance = ElectricalProgressive.ElectricalProgressive.energyLossFactor *
                                          connect.WireLength *
                                          connect.Parameters.resistivity /

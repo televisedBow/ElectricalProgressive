@@ -529,7 +529,7 @@ namespace EPImmersive.Content.Block
         public bool IsHoldingWireTool(IPlayer player)
         {
             ItemSlot activeSlot = player.InventoryManager.ActiveHotbarSlot;
-            return activeSlot?.Itemstack?.Block?.Code.ToString().Contains("cable1")==true;
+            return activeSlot?.Itemstack?.Block?.Code.ToString().Contains("wire-")==true;
         }
 
 
@@ -886,7 +886,7 @@ namespace EPImmersive.Content.Block
 
 
             // Создаем ключ для кэша проводов
-            var cacheKey = new WireMeshCacheKey(position, connections);
+            var cacheKey = new WireMeshCacheKey(position.Copy(), connections);
 
             // Получаем базовый меш (генерируется каждый раз, но это дешево)
             MeshData baseMeshData = null;
@@ -963,43 +963,34 @@ namespace EPImmersive.Content.Block
         /// </summary>
         public static void InvalidateBlockMeshCache(BlockPos position)
         {
-            // Быстрая проверка на пустоту
             if (WireMeshesCache == null || WireMeshesCache.Count == 0)
                 return;
 
             try
             {
-                // Используем список с предварительным выделением памяти
-                // Предполагаем, что в среднем у блока не более 8 подключений
+                // Создаем список для ключей, которые нужно удалить
                 var keysToRemove = new List<WireMeshCacheKey>(8);
 
-                // Собираем ключи для удаления напрямую из словаря без LINQ
-                foreach (var kvp in WireMeshesCache)
+                // Перебираем все ключи в кэше
+                foreach (var key in WireMeshesCache.Keys)
                 {
-                    // Используем прямое сравнение координат вместо Equals для производительности
-                    var keyPos = kvp.Key.Position;
-                    if (keyPos.X == position.X &&
-                        keyPos.Y == position.Y &&
-                        keyPos.Z == position.Z &&
-                        keyPos.dimension == position.dimension)
+                    // Используем Equals для сравнения BlockPos 
+                    if (key.Position.Equals(position))
                     {
-                        keysToRemove.Add(kvp.Key);
+                        keysToRemove.Add(key);
                     }
                 }
 
-                // Удаляем собранные ключи
-                int count = keysToRemove.Count;
-                for (int i = 0; i < count; i++)
+                // Удаляем найденные ключи
+                foreach (var key in keysToRemove)
                 {
-                    WireMeshesCache.Remove(keysToRemove[i]);
+                    WireMeshesCache.Remove(key);
                 }
-
-                // Быстрая очистка списка (предотвращает утечку памяти при частых вызовах)
-                keysToRemove.Clear();
             }
-            catch
+            catch (Exception ex)
             {
-                // Быстрое подавление исключения без дополнительной нагрузки
+                // Для отладки можно добавить логирование
+                // api?.Logger.Debug($"Failed to clear mesh cache for {position}: {ex.Message}");
             }
         }
 
@@ -1043,7 +1034,7 @@ namespace EPImmersive.Content.Block
 
             // Очищаем кэш для этого блока
             InvalidateBlockMeshCache(pos);
-            WireMeshesCache.Clear();
+            //WireMeshesCache.Clear();
         }
 
 

@@ -59,21 +59,21 @@
 
   "attributesByType": { //params - параметры двигателя: I_min , I_max, torque_max, kpd_max, speed_max, resistance_factor, base_resistance 
     "*-tier1-*": {
-      "params": [ 10.0, 128.0, 0.5, 0.75, 0.5, 0.125, 0.05 ],
+      "params": [ 10.0, 1280.0, 0.5, 0.75, 0.5, 0.125, 0.05 ],
       "voltage": 512,
       "maxCurrent": 100.0,
       "isolated": true,
       "isolatedEnvironment": false
     },
     "*-tier2-*": {
-      "params": [ 10.0, 256.0, 1.0, 0.85, 0.5, 0.25, 0.05 ],
+      "params": [ 10.0, 2560.0, 1.0, 0.85, 0.5, 0.25, 0.05 ],
       "voltage": 512,
       "maxCurrent": 100.0,
       "isolated": true,
       "isolatedEnvironment": false
     },
     "*-tier3-*": {
-      "params": [ 10.0, 512.0, 2.0, 0.95, 1.0, 0.5, 0.05 ],
+      "params": [ 10.0, 5120.0, 2.0, 0.95, 1.0, 0.5, 0.05 ],
       "voltage": 512,
       "maxCurrent": 100.0,
       "isolated": true,
