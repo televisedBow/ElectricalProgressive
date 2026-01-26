@@ -1,0 +1,20 @@
+﻿{
+  "vspipefiltermod:pipe-normal": "Труба",
+  "vspipefiltermod:pipe-insertion": "Труба-вставка",
+  "vspipefiltermod:pipe-extraction": "Труба-извлечения",
+  "vspipefiltermod:pipe-normal-info": "Обычная транспортная труба",
+  "vspipefiltermod:pipe-insertion-info": "Труба для помещения предметов в контейнеры",
+  "vspipefiltermod:pipe-extraction-info": "Труба для извлечения предметов из контейнеров",
+  "vspipefiltermod:connections": "Соединений: {0}",
+  "vspipefiltermod:containers": "Контейнеров: {0}",
+  "vspipefiltermod:filter-pipe-title": "Фильтрующая труба",
+  "vspipefiltermod:filter-pipe": "Фильтрующая труба",
+  "vspipefiltermod:filter-mode-allow": "Белый список",
+  "vspipefiltermod:filter-mode-deny": "Черный список",
+  "vspipefiltermod:filter-mode-stackable": "Только стаки",
+  "vspipefiltermod:filter-mode": "Режим: {0}",
+  "vspipefiltermod:filter-match-mod": "• Совпадать по мод-идентификатору",
+  "vspipefiltermod:filter-match-type": "• Совпадать по типу предмета",
+  "vspipefiltermod:filter-match-attrs": "• Совпадать по атрибутам",
+  "vspipefiltermod:active-filters": "Фильтров: {0}/{1}"
+}
