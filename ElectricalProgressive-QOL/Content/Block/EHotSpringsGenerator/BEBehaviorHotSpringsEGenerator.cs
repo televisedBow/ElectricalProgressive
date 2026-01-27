@@ -83,7 +83,6 @@ public class BEBehaviorHotSpringsEGenerator : BlockEntityBehavior, IElectricProd
         {
             return 0f;
         }
-        // Only give
         _powerGive = temp.Power * temp.Kpd;
         return _powerGive;
     }
@@ -118,10 +117,7 @@ public class BEBehaviorHotSpringsEGenerator : BlockEntityBehavior, IElectricProd
                                  ((int)entity.Power).ToString() + " " + Lang.Get("W"));
         stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.Kpd * 100).ToString("F1") + " %");
 
-        if (!string.IsNullOrEmpty(entity.ErrorMessage))
-        {
-            stringBuilder.AppendLine(Lang.Get(entity.ErrorMessage));
-        }
+        if (!string.IsNullOrEmpty(entity.ErrorMessage)) stringBuilder.AppendLine(Lang.Get(entity.ErrorMessage));
     }
 
 

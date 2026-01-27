@@ -37,7 +37,6 @@ public class BlockEntityEHotSpringsGenerator : BlockEntityEFacingBase
     /// Error message to display in tooltip, empty if no error
     /// </summary>
     public string ErrorMessage = "";
-
     private long _listenerId;
     private int _maxConsumption;
 
@@ -51,7 +50,7 @@ public class BlockEntityEHotSpringsGenerator : BlockEntityEFacingBase
 
         if (api.Side == EnumAppSide.Server)
         {
-            _listenerId = this.RegisterGameTickListener(OnHotSpringsTick, 1000);
+            _listenerId = this.RegisterGameTickListener(OnHotSpringsTick, 5000);
         }
 
         _maxConsumption = MyMiniLib.GetAttributeInt(this.Block, "maxConsumption");
@@ -130,9 +129,10 @@ public class BlockEntityEHotSpringsGenerator : BlockEntityEFacingBase
 
 
     /// <summary>
-    /// Calculates the efficiency based on boiling water surrounding the generator.
+    /// Calculates the efficiency based on heat exchangers and nearby generators.
     /// Requires boiling water on all four horizontal sides to function.
-    /// Efficiency is reduced when multiple generators are within 8 blocks.
+    /// Heat exchangers provide base efficiency: 4=100%, 3=75%, 2=50%, 1=25%, 0=10%.
+    /// Nearby generators apply a penalty multiplier after the heat exchanger calculation.
     /// </summary>
     private void Calculate_kpd()
     {
@@ -153,10 +153,15 @@ public class BlockEntityEHotSpringsGenerator : BlockEntityEFacingBase
             return;
         }
 
+        // Base efficiency from heat exchangers: 0=5%, scales linearly to 7=100%
+        // Formula: 5% + (count/7 * 95%), capped at 7
+        float baseKpd = 0.05f + (CountAdjacentHeatExchangers() * 0.95f / 7f);
+
         // Count nearby generators within 8 blocks
         int nearbyGenerators = CountNearbyGenerators(8);
 
-        Kpd = nearbyGenerators switch
+        // Apply nearby generator penalty multiplier
+        float nearbyPenalty = nearbyGenerators switch
         {
             0 => 1f,
             1 => 0.5f,
@@ -165,7 +170,17 @@ public class BlockEntityEHotSpringsGenerator : BlockEntityEFacingBase
             _ => 0.05f
         };
 
-        ErrorMessage = nearbyGenerators > 0 ? "electricalprogressiveqol:hotsprings-nearby-penalty" : "";
+        Kpd = baseKpd * nearbyPenalty;
+
+        // Set error message based on the most significant issue
+        if (nearbyGenerators > 0)
+        {
+            ErrorMessage = "electricalprogressiveqol:hotsprings-nearby-penalty";
+        }
+        else // Clears message in case there was one from before
+        {
+            ErrorMessage = "";
+        }
     }
 
     /// <summary>
@@ -190,6 +205,39 @@ public class BlockEntityEHotSpringsGenerator : BlockEntityEFacingBase
                     if (blockEntity is BlockEntityEHotSpringsGenerator generator && generator.Kpd > 0)
                         count++;
                 }
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Counts heat exchangers adjacent to this generator (all 8 horizontal directions).
+    /// </summary>
+    private int CountAdjacentHeatExchangers()
+    {
+        var accessor = Api.World.BlockAccessor;
+        int count = 0;
+
+        // Check all 8 horizontal directions (N, S, E, W, NE, NW, SE, SW)
+        BlockPos[] adjacentPositions = new[]
+        {
+            Pos.NorthCopy(),
+            Pos.SouthCopy(),
+            Pos.EastCopy(),
+            Pos.WestCopy(),
+            Pos.NorthCopy().EastCopy(),  // NE
+            Pos.NorthCopy().WestCopy(),  // NW
+            Pos.SouthCopy().EastCopy(),  // SE
+            Pos.SouthCopy().WestCopy()   // SW
+        };
+
+        foreach (var adjPos in adjacentPositions)
+        {
+            var block = accessor.GetBlock(adjPos);
+            if (block?.Code?.Path == "eheatexchanger")
+            {
+                count++;
             }
         }
 

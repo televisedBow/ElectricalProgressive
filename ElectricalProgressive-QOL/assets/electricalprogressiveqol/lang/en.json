@@ -133,9 +133,14 @@
   "block-ehotspringsgenerator-*": "Hot Springs Generator",
   "block-ehotspringsgenerator-burned-south": "Hot Springs Generator (Burned)",
   "block-handbooktitle-ehotspringsgenerator": "Usage",
-  "block-handbooktext-ehotspringsgenerator": "A generator that harnesses hot springs to produce electricity.",
-  "electricalprogressiveqol:hotsprings-nearby-penalty": "Multiple Hot Springs Generators nearby, efficiency reduced",
-  "electricalprogressiveqol:hotsprings-not-surrounded": "Must be surrounded by hot springs on all sides to function",
+  "block-handbooktext-ehotspringsgenerator": "A generator that harnesses hot springs to produce electricity. The generator must be surrounded by hot springs on all sides. Efficiency can be improved by placing <a href=\"handbook:\/\/block-electricalprogressiveqol:eheatexchanger\">heat exchangers</a> adjacent to the generator. Multiple Hot Springs Generators nearby will significantly reduce efficiency.",
+  "electricalprogressiveqol:hotsprings-nearby-penalty": "Multiple Generators nearby, efficiency reduced",
+  "electricalprogressiveqol:hotsprings-not-surrounded": "Must be surrounded by Hot Springs",
+
+  "block-eheatexchanger": "Heat Exchanger",
+  "block-handbooktitle-eheatexchanger": "Usage",
+  "block-handbooktext-eheatexchanger": "A heat exchanger that must be placed adjacent to a Hot Springs Generator (including diagonally). Each heat exchanger improves the generator's efficiency, scaling from 5% with none to 100% with 7 heat exchangers.",
+  "electricalprogressiveqol:heatexchanger-placement-hint": "Must be placed next to a Hot Spring Generator",
 
   "progress": "Progress: {0:P0}"
 

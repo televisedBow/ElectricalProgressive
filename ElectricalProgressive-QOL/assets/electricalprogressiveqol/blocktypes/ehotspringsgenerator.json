@@ -29,7 +29,7 @@
     "maxCurrent": 1024.0,
     "isolated": true,
     "isolatedEnvironment": true,
-    "maxConsumption": 250,
+    "maxConsumption": 200,
     "handbook": {
       "groupBy": [ "ehotspringsgenerator-*" ],
       "extraSections": [

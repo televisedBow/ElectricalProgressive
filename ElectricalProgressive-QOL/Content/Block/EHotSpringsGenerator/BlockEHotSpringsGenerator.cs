@@ -13,7 +13,7 @@ public class BlockEHotSpringsGenerator : BlockEBase
     /// <summary>
     /// Checks if the block can be placed
     /// </summary>
-    /// <param name="world"></param>
+    /// <param name="world"></paramf>
     /// <param name="byPlayer"></param>
     /// <param name="itemstack"></param>
     /// <param name="blockSel"></param>
@@ -38,8 +38,7 @@ public class BlockEHotSpringsGenerator : BlockEBase
         if (
             FacingHelper.Faces(facing).First() is { } blockFacing &&
             !world.BlockAccessor
-                .GetBlock(blockSel.Position.AddCopy(blockFacing)).SideSolid[blockFacing.Opposite.Index]
-        )
+                .GetBlock(blockSel.Position.AddCopy(blockFacing)).SideSolid[blockFacing.Opposite.Index])
         {
             return false;
         }
