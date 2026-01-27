@@ -583,6 +583,13 @@ private bool TryTransferFromSource(BlockPos sourcePos, IInventory targetInventor
         return false;
     }
     
+    if (IsLiquidItem(sourceSlot.Itemstack))
+    {
+        if (debugCounter % 10 == 0)
+            Api.Logger.Notification($"=== Пропускаем жидкость: {sourceSlot.Itemstack.Collectible.Code} ===");
+        return false;
+    }
+    
     // Определяем направление к цели
     BlockFacing directionToTarget = GetFacingFromTo(Pos, targetPos);
     if (directionToTarget == null) 
@@ -634,6 +641,60 @@ private bool TryTransferFromSource(BlockPos sourcePos, IInventory targetInventor
     
     // Выполняем перенос
     return ExecuteTransfer(sourceSlot, targetSlot, sourceBe, targetContainer, sourcePos);
+}
+
+// Добавляем метод проверки на жидкость (аналогичный в BELiquidInsertionPipe)
+private bool IsLiquidItem(ItemStack itemstack)
+{
+    if (itemstack == null || itemstack.Collectible == null)
+        return false;
+    
+    // 1. Проверяем через IsLiquid()
+    if (itemstack.Collectible.IsLiquid())
+        return true;
+    
+    // 2. Проверяем, является ли это BlockLiquidContainerBase (ведра)
+    if (itemstack.Block is BlockLiquidContainerBase)
+        return true;
+    
+    // 3. Проверяем атрибуты контейнера с жидкостью
+    if (itemstack.ItemAttributes != null)
+    {
+        // Контейнеры с жидкостью имеют contentItemCode
+        if (itemstack.ItemAttributes["contentItemCode"].Exists)
+            return true;
+            
+        // Или contentItem2BlockCodes (для бутылок)
+        if (itemstack.ItemAttributes["contentItem2BlockCodes"].Exists)
+            return true;
+            
+        // Проверяем атрибут containerType
+        if (itemstack.ItemAttributes["containerType"].Exists)
+        {
+            string containerType = itemstack.ItemAttributes["containerType"].AsString();
+            if (containerType?.ToLower() == "liquid" || containerType?.ToLower() == "portion")
+                return true;
+        }
+        
+        // Проверяем атрибут liquidProps
+        if (itemstack.ItemAttributes["liquidProps"].Exists)
+            return true;
+    }
+    
+    // 4. Проверяем через ItemLadle (черпаки)
+    if (itemstack.Collectible.Code?.Path?.Contains("ladle") == true)
+        return true;
+    
+    // 5. Для предметов с атрибутом "content" - предполагаем жидкость
+    if (itemstack.Attributes?.HasAttribute("content") == true)
+        return true;
+    
+    // 6. Проверяем по коду (waterportion, milkportion и т.д.)
+    string itemCode = itemstack.Collectible.Code?.ToString() ?? "";
+    if (itemCode.ToLower().Contains("portion"))
+        return true;
+    
+    return false;
 }
 
 // НОВЫЙ МЕТОД: Ищет первый подходящий слот в источнике

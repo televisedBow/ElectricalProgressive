@@ -59,7 +59,7 @@ namespace ElectricalProgressiveTransport
                     SendInvPacket, 
                     6,  // 6 колонок
                     new[] { 0, 1, 2, 3, 4, 5 }, // 6 слотов
-                    ElementStdBounds.SlotGrid(EnumDialogArea.None, 10, 60, 2, 1),
+                    ElementStdBounds.SlotGrid(EnumDialogArea.None, 10, 60, 6, 1),
                     "liquidFilterSlots")
                 
                 // Настройки фильтра
