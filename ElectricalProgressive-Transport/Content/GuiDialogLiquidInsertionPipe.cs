@@ -36,7 +36,7 @@ namespace ElectricalProgressiveTransport
 
         private void SetupDialog()
         {
-            var dialogBounds = ElementBounds.Fixed(0, 0, 280, 300);
+            var dialogBounds = ElementBounds.Fixed(0, 0, 320, 300);
             var dialogAlignment = ElementStdBounds.AutosizedMainDialog
                 .WithAlignment(EnumDialogArea.RightMiddle)
                 .WithFixedAlignmentOffset(-GuiStyle.DialogToScreenPadding, 0.0);
@@ -51,15 +51,15 @@ namespace ElectricalProgressiveTransport
                 
                 // Заголовок фильтров
                 .AddStaticText("Положите жидкости в слоты для фильтрации", CairoFont.WhiteDetailText(), 
-                    ElementBounds.Fixed(10, 40, 260, 25))
+                    ElementBounds.Fixed(10, 40, 320, 25))
                 
                 // Сетка фильтров для жидкостей (2x3)
                 .AddItemSlotGrid(
                     (IInventory)Inventory, 
                     SendInvPacket, 
-                    2,  // 2 колонки
+                    6,  // 6 колонок
                     new[] { 0, 1, 2, 3, 4, 5 }, // 6 слотов
-                    ElementStdBounds.SlotGrid(EnumDialogArea.None, 10, 60, 2, 3),
+                    ElementStdBounds.SlotGrid(EnumDialogArea.None, 10, 60, 2, 1),
                     "liquidFilterSlots")
                 
                 // Настройки фильтра
@@ -73,9 +73,9 @@ namespace ElectricalProgressiveTransport
                 
                 // Кнопки режима фильтра
                 .AddSmallButton(Lang.Get("electricalprogressivetransport:filter-mode-allow"), OnAllowListClicked, 
-                    ElementBounds.Fixed(10, 185, 125, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnAllowList")
+                    ElementBounds.Fixed(10, 185, 130, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnAllowList")
                 .AddSmallButton(Lang.Get("electricalprogressivetransport:filter-mode-deny"), OnDenyListClicked, 
-                    ElementBounds.Fixed(145, 185, 125, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnDenyList")
+                    ElementBounds.Fixed(170, 185, 130, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnDenyList")
                 
                 .AddStaticText("═══════════════════════════", 
                     CairoFont.WhiteDetailText(), 
@@ -86,15 +86,15 @@ namespace ElectricalProgressiveTransport
                     CairoFont.WhiteDetailText().WithWeight(Cairo.FontWeight.Bold), 
                     ElementBounds.Fixed(10, 215, 150, 25))
                 
-                .AddSmallButton("-50", OnDecreaseRateClicked,
-                    ElementBounds.Fixed(10, 240, 80, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnDecrease")
+                .AddSmallButton("-10", OnDecreaseRateClicked,
+                    ElementBounds.Fixed(12, 240, 100, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnDecrease")
                 
-                .AddDynamicText(transferRate + " мл", 
+                .AddDynamicText(transferRate.ToString(), 
                     CairoFont.WhiteDetailText().WithFontSize(16).WithWeight(Cairo.FontWeight.Bold),
-                    ElementBounds.Fixed(100, 245, 80, 30), "txtTransferRate")
+                    ElementBounds.Fixed(150, 240, 40, 30), "txtTransferRate")
                 
-                .AddSmallButton("+50", OnIncreaseRateClicked,
-                    ElementBounds.Fixed(190, 240, 80, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnIncrease")
+                .AddSmallButton("+10", OnIncreaseRateClicked,
+                    ElementBounds.Fixed(200, 240, 100, 30), EnumButtonStyle.Normal, EnumTextOrientation.Center, "btnIncrease")
                 
                 .EndChildElements()
                 .Compose();
@@ -124,7 +124,7 @@ namespace ElectricalProgressiveTransport
             var txtRate = SingleComposer.GetDynamicText("txtTransferRate");
             if (txtRate != null)
             {
-                txtRate.SetNewText(transferRate + " мл");
+                txtRate.SetNewText(transferRate.ToString());
                 
                 var btnDecrease = SingleComposer.GetButton("btnDecrease");
                 var btnIncrease = SingleComposer.GetButton("btnIncrease");
@@ -180,7 +180,7 @@ namespace ElectricalProgressiveTransport
         {
             if (transferRate > 10)
             {
-                transferRate = Math.Max(10, transferRate - 50);
+                transferRate = Math.Max(10, transferRate - 10);
                 UpdateTransferRateDisplay();
                 SendTransferRateUpdate();
             }
@@ -191,7 +191,7 @@ namespace ElectricalProgressiveTransport
         {
             if (transferRate < 1000)
             {
-                transferRate = Math.Min(1000, transferRate + 50);
+                transferRate = Math.Min(1000, transferRate + 10);
                 UpdateTransferRateDisplay();
                 SendTransferRateUpdate();
             }
