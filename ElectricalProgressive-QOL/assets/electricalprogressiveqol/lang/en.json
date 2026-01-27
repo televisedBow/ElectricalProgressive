@@ -130,6 +130,13 @@
   "block-handbooktitle-efence": "Usage",
   "block-handbooktext-efence": "A good defense against unwanted guests. Deals electric damage on contact. Doesn't consume energy, but must be connected to an electrical circuit to function.",
 
+  "block-ehotspringsgenerator-*": "Hot Springs Generator",
+  "block-ehotspringsgenerator-burned-south": "Hot Springs Generator (Burned)",
+  "block-handbooktitle-ehotspringsgenerator": "Usage",
+  "block-handbooktext-ehotspringsgenerator": "A generator that harnesses hot springs to produce electricity.",
+  "electricalprogressiveqol:hotsprings-nearby-penalty": "Multiple Hot Springs Generators nearby, efficiency reduced",
+  "electricalprogressiveqol:hotsprings-not-surrounded": "Must be surrounded by hot springs on all sides to function",
+
   "progress": "Progress: {0:P0}"
 
 }

@@ -9,6 +9,7 @@ using ElectricalProgressive.Content.Block.ELamp;
 using ElectricalProgressive.Content.Block.EOven;
 using ElectricalProgressive.Content.Block.ESFonar;
 using ElectricalProgressive.Content.Block.EStove;
+using ElectricalProgressive.Content.Block.EHotSpringsGenerator;
 using ElectricalProgressive.Patch;
 using HarmonyLib;
 using Newtonsoft.Json.Linq;
@@ -121,6 +122,10 @@ public class ElectricalProgressiveQOL : ModSystem
         api.RegisterBlockClass("BlockEFence", typeof(BlockEFence));
         api.RegisterBlockEntityClass("BlockEntityEFence", typeof(BlockEntityEFence));
         api.RegisterBlockEntityBehaviorClass("BEBehaviorEFence", typeof(BEBehaviorEFence));
+
+        api.RegisterBlockClass("BlockEHotSpringsGenerator", typeof(BlockEHotSpringsGenerator));
+        api.RegisterBlockEntityClass("BlockEntityEHotSpringsGenerator", typeof(BlockEntityEHotSpringsGenerator));
+        api.RegisterBlockEntityBehaviorClass("BEBehaviorHotSpringsEGenerator", typeof(BEBehaviorHotSpringsEGenerator));
 
         // xskills интеграция через рефлексию
         if (api.ModLoader.IsModEnabled("xskillsrabite") || api.ModLoader.IsModEnabled("xskills"))
