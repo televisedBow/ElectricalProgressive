@@ -1,4 +1,4 @@
-﻿using ElectricalProgressive.Interface;
+using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Text;
@@ -7,14 +7,14 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
-namespace ElectricalProgressive.Content.Block.ESolarGenerator;
+namespace ElectricalProgressive.Content.Block.EHotSpringsGenerator;
 
-public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
+public class BEBehaviorHotSpringsEGenerator : BlockEntityBehavior, IElectricProducer
 {
-    private float _powerOrder; // Просят столько энергии (сохраняется)
+    private float _powerOrder; // Power requested (saved)
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
 
-    private float _powerGive; // Отдаем столько энергии (сохраняется)
+    private float _powerGive; // Power given (saved)
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
     private bool hasBurnout;
@@ -23,15 +23,15 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
     public new BlockPos Pos => Blockentity.Pos;
 
 
-    public BEBehaviorSolarEGenerator(BlockEntity blockEntity) : base(blockEntity)
+    public BEBehaviorHotSpringsEGenerator(BlockEntity blockEntity) : base(blockEntity)
     {
-        
+
     }
 
 
     public void Update()
     {
-        if (Blockentity is not BlockEntityESolarGenerator entity ||
+        if (Blockentity is not BlockEntityEHotSpringsGenerator entity ||
             entity.ElectricalProgressive == null ||
             entity.ElectricalProgressive.AllEparams is null)
         {
@@ -79,11 +79,10 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
     public float Produce_give()
     {
-        if (Blockentity is not BlockEntityESolarGenerator temp)
+        if (Blockentity is not BlockEntityEHotSpringsGenerator temp)
         {
             return 0f;
         }
-        // Only give
         _powerGive = temp.Power * temp.Kpd;
         return _powerGive;
     }
@@ -94,6 +93,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
         _powerOrder = amount;
     }
 
+
     public float getPowerGive() => _powerGive;
 
 
@@ -101,13 +101,13 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
 
     /// <summary>
-    /// Подсказка при наведении на блок
+    /// Tooltip when hovering over the block
     /// </summary>
     public override void GetBlockInfo(IPlayer forPlayer, StringBuilder stringBuilder)
     {
         base.GetBlockInfo(forPlayer, stringBuilder);
 
-        if (Blockentity is not BlockEntityESolarGenerator entity)
+        if (Blockentity is not BlockEntityEHotSpringsGenerator entity)
             return;
 
 
@@ -116,11 +116,13 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
                                  ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" +
                                  ((int)entity.Power).ToString() + " " + Lang.Get("W"));
         stringBuilder.AppendLine("└ " + Lang.Get("kpd") + ": " + (entity.Kpd * 100).ToString("F1") + " %");
+
+        if (!string.IsNullOrEmpty(entity.ErrorMessage)) stringBuilder.AppendLine(Lang.Get(entity.ErrorMessage));
     }
 
 
     /// <summary>
-    /// Сохранение параметров в дерево атрибутов
+    /// Save parameters to attribute tree
     /// </summary>
     /// <param name="tree"></param>
     public override void ToTreeAttributes(ITreeAttribute tree)
@@ -132,7 +134,7 @@ public class BEBehaviorSolarEGenerator : BlockEntityBehavior, IElectricProducer
 
 
     /// <summary>
-    /// Загрузка параметров из дерева атрибутов
+    /// Load parameters from attribute tree
     /// </summary>
     /// <param name="tree"></param>
     /// <param name="worldAccessForResolve"></param>

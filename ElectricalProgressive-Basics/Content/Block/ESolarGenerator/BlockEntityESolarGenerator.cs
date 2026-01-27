@@ -1,21 +1,15 @@
 ﻿using ElectricalProgressive.Utils;
 using System;
-using System.Collections.Generic;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.ESolarGenerator;
 
 public class BlockEntityESolarGenerator : BlockEntityEFacingBase
 {
     private Facing _facing = Facing.None;
-
-    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
 
     /// <summary>
     /// Maximum power output for solar panel
