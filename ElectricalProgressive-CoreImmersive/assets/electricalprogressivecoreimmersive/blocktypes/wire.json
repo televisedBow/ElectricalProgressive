@@ -1,6 +1,6 @@
 ﻿{
   "code": "wire",
-
+  "class": "BlockWire",
   "variantGroups": [
     {
       "code": "voltage",
@@ -129,7 +129,7 @@
     "material": "{material}"
   },
 
-  "attributesByType": {   
+  "attributesByType": {
     "*-512v-electrum-*": {
       "res": 0.065,
       "maxCurrent": 27.2,
@@ -144,17 +144,17 @@
       "res": 0.09,
       "maxCurrent": 22.0,
       "crosssectional": 4
-    },  
+    },
     "*-512v-iron-*": {
       "res": 0.155,
       "maxCurrent": 16.0,
       "crosssectional": 4
-    },  
+    },
     "*-512v-steel-*": {
       "res": 1.2,
       "maxCurrent": 18.0,
       "crosssectional": 4
-    }, 
+    },
     "*-512v-gold-*": {
       "res": 0.07,
       "maxCurrent": 26,

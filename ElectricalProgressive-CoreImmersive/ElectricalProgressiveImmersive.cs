@@ -10,6 +10,7 @@ using EPImmersive.Content.Block.HVSFonar;
 using EPImmersive.Content.Block.HVTower;
 using EPImmersive.Content.Block.HVTransformator;
 using EPImmersive.Content.Block.WallConnector;
+using EPImmersive.Content.Block.Wire;
 using EPImmersive.Interface;
 using EPImmersive.Utils;
 using System;
@@ -22,7 +23,6 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-using Vintagestory.GameContent;
 using static EPImmersive.Content.Block.ImmersiveWireBlock;
 using static EPImmersive.ElectricalProgressiveImmersive;
 
@@ -143,6 +143,8 @@ namespace EPImmersive
             api.RegisterBlockClass("BlockWConnector", typeof(BlockWConnector));
             api.RegisterBlockEntityClass("BlockEntityWConnector", typeof(BlockEntityWConnector));
             api.RegisterBlockEntityBehaviorClass("BEBehaviorWConnector", typeof(BEBehaviorWConnector));
+
+            api.RegisterBlockClass("BlockWire", typeof(BlockWire));
 
             api.RegisterBlockEntityBehaviorClass("ElectricalProgressiveImmersive", typeof(BEBehaviorEPImmersive));
         }
@@ -319,7 +321,7 @@ namespace EPImmersive
         /// <param name="isLoaded">Загружен ли блок</param>
         /// <returns>Успешно ли обновлено</returns>
         public bool Update(BlockPos position, List<WireNode> wireNodes, ref List<ConnectionData> connections,
-    EParams mainEpar, (EParams param, byte index) currentEpar, bool isLoaded)
+    ref EParams mainEpar, (EParams param, byte index) currentEpar, bool isLoaded)
         {
             bool hasChanges = false;
 
@@ -362,6 +364,7 @@ namespace EPImmersive
             if (!mainEpar.Equals(new EParams()) && !part.MainEparams.Equals(mainEpar))
             {
                 part.MainEparams = mainEpar;
+                mainEpar = part.MainEparams;
                 hasChanges = true;
             }
 
@@ -407,7 +410,8 @@ namespace EPImmersive
 
         private bool AreWireNodesEqual(List<WireNode> list1, List<WireNode> list2)
         {
-            if (list1.Count != list2.Count) return false;
+            if (list1.Count != list2.Count)
+                return false;
 
             for (int i = 0; i < list1.Count; i++)
             {
@@ -1336,12 +1340,34 @@ namespace EPImmersive
                 }
 
 
-                // Проверка на превышение напряжения для иммерсивных соединений
+                // Проверка на превышение напряжения 
                 foreach (var packet2 in part.Packets)
                 {
+                    // проверка на превышение напряжения блоками
+                    if (part.MainEparams.voltage != 0 && packet2.voltage > part.MainEparams.voltage && !part.MainEparams.burnout)
+                    {
+                        part.MainEparams.prepareForBurnout(2);
+
+                        // сгорело таки?
+                        if (part.MainEparams.burnout)
+                        {
+                            
+                            // ПОМЕТИТЬ БЛОК КАК ГРЯЗНЫЙ - отправка на клиент
+                            var blockEntity = Api.World.BlockAccessor.GetBlockEntity(partPos);
+                            if (blockEntity != null)
+                            {
+                                blockEntity.MarkDirty();
+                            }
+
+                           
+                        }
+                    }
+                    
+
+                    // проверка иммерсивных соединений на превышение напряжения
                     foreach (var connection in part.Connections)
                     {
-                        if (connection.Parameters.voltage != 0 && packet2.voltage > connection.Parameters.voltage)
+                        if (connection.Parameters.voltage != 0 && packet2.voltage > connection.Parameters.voltage && !connection.Parameters.burnout)
                         {
                             connection.Parameters.prepareForBurnout(2);
 
@@ -1381,11 +1407,35 @@ namespace EPImmersive
                 }
 
 
+                // проверка на превышение тока блоками
+                if (part.MainEparams.voltage != 0 && Math.Abs(part.MainEparams.current) >
+                    part.MainEparams.maxCurrent * part.MainEparams.lines && !part.MainEparams.burnout) 
+                {
+                    part.MainEparams.prepareForBurnout(1);
+
+                    // сгорел таки?
+                    if (part.MainEparams.burnout)
+                    {
+                        // ПОМЕТИТЬ БЛОК КАК ГРЯЗНЫЙ - отправка на клиент
+                        var blockEntity = Api.World.BlockAccessor.GetBlockEntity(partPos);
+                        if (blockEntity != null)
+                        {
+                            blockEntity.MarkDirty();
+                        }
+                        
+                    }
+                }
+
+
+
+
+
+
                 // Проверка на превышение тока для иммерсивных соединений
                 foreach (var connection in part.Connections)
                 {
                     if (connection.Parameters.voltage == 0 ||
-                        Math.Abs(connection.Parameters.current) <= connection.Parameters.maxCurrent * connection.Parameters.lines)
+                        Math.Abs(connection.Parameters.current) <= connection.Parameters.maxCurrent * connection.Parameters.lines || connection.Parameters.burnout)
                         continue;
 
                     connection.Parameters.prepareForBurnout(1);
@@ -1614,6 +1664,13 @@ namespace EPImmersive
                             continue;
                         }
 
+                        // сгоревший блок?
+                        if (partValue.MainEparams.burnout)
+                        {
+                            packet.shouldBeRemoved = true;
+                            continue;
+                        }
+
                         //currentPos = packet.path[curIndex]; // текущая позиция в пути пакета
 
 
@@ -1644,6 +1701,7 @@ namespace EPImmersive
                         if (packet.energy <= 0.001f)
                         {
                             packet.shouldBeRemoved = true;
+                            continue;
                         }
 
                         // переходим к следующему блоку в пути

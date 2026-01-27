@@ -818,8 +818,25 @@ namespace EPImmersive.Content.Block
                     if (api is ICoreServerAPI)
                     {
                         // Возвращаем кабель игроку
-                        ItemStack cableStack = CreateCableStack(api, connectionToRemove.Parameters);
+
+                        // Создаем и выбрасываем кабель
+                        ItemStack cableStack = null;
+
+                        // если не сгорел
+                        if (!connectionToRemove.Parameters.burnout)
+                        {
+                            cableStack = CreateCableStack(api, connectionToRemove.Parameters);
+                        }
+                        else
+                        {
+                            // если сгорел, то даем кусочки металла
+                            var assetLoc = new AssetLocation("metalbit-" + connectionToRemove.Parameters.material);
+                            var item = api.World.GetItem(assetLoc);
+                            cableStack = new(item);
+                        }
+                        
                         cableStack.StackSize = cableLength;
+                        
 
                         if (byPlayer.WorldData.CurrentGameMode != EnumGameMode.Creative)
                         {

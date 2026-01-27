@@ -9,8 +9,8 @@
 	"textureSizes": {
 	},
 	"textures": {
-		"Volt dwn": "electricalprogressivebasics:block/volt_dwn",
-		"Volt up": "electricalprogressivebasics:block/volt_up",
+		"Volt dwn": "electricalprogressivebasics:block/voltdwn",
+		"Volt up": "electricalprogressivebasics:block/voltup",
 		"quartzglass": "electricalprogressivebasics:block/quartzglass",
 		"stainlesssteel": "electricalprogressivebasics:block/stainlesssteel",
 		"ceramic": "game:block/clay/ceramic",

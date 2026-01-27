@@ -13,7 +13,7 @@
 
   "attributes": {
     "voltage": 512,
-    "maxCurrent": 100.0,
+    "maxCurrent": 10.0,
     "isolated": true,
     "isolatedEnvironment": true,
     "handbook": {

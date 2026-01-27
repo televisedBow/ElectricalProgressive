@@ -339,7 +339,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     /// </summary>
     public void LoadWireNodes()
     {
-        
+
         _wireNodes.Clear();
 
         var wireNodesAttribute = this.Block?.Attributes?["wireNodes"];
@@ -527,7 +527,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         var currentEpar = this._paramsSet ? _eparams : (new(), 0);
 
 
-        if (system.Update(this.Blockentity.Pos, _wireNodes, ref _connections, _mainEpar, currentEpar, _isLoaded))
+        if (system.Update(this.Blockentity.Pos, _wireNodes, ref _connections, ref _mainEpar, currentEpar, _isLoaded))
         {
             // ВСЕГДА обновляем меш текущего блока
             if (Api.Side == EnumAppSide.Client && Block is ImmersiveWireBlock wireBlock)
@@ -614,9 +614,21 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
                 {
                     int cableLength = (int)Math.Ceiling(connection.WireLength);
 
-
                     // Создаем и выбрасываем кабель
-                    var cableStack = ImmersiveWireBlock.CreateCableStack(Api, connection.Parameters);
+                    ItemStack cableStack = null;
+
+                    // если не сгорел
+                    if (!connection.Parameters.burnout)
+                    {
+                        cableStack = ImmersiveWireBlock.CreateCableStack(Api, connection.Parameters);
+                    }
+                    else
+                    {
+                        // если сгорел, то даем кусочки металла
+                        var assetLoc = new AssetLocation("metalbit-" + connection.Parameters.material);
+                        var item = Api.World.GetItem(assetLoc);
+                        cableStack = new(item);
+                    }
 
                     cableStack.StackSize = cableLength;
 
@@ -680,6 +692,34 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         if (Api is not ICoreClientAPI capi)
             return;
 
+
+        // работаем с выводом информации о причинах сгорания
+        if (this.System?.Parts.TryGetValue(this.Blockentity.Pos, out var part) ?? false)
+        {
+
+            if (part.MainEparams.burnout || part.MainEparams.ticksBeforeBurnout > 0)
+            {
+                var cause = part.MainEparams.causeBurnout switch
+                {
+                    1 => Lang.Get("electricalprogressivebasics:CauseCurrent"),
+                    2 => Lang.Get("electricalprogressivebasics:CauseVoltage"),
+                    3 => Lang.Get("electricalprogressivebasics:CauseEnvironment"),
+                    _ => null!
+                };
+
+                if (cause is not null)
+                {
+                    if (part.MainEparams.burnout)
+                        stringBuilder.AppendLine(Lang.Get("electricalprogressivebasics:Burned"));
+
+                    stringBuilder.AppendLine(cause);
+
+                }
+            }
+
+        }
+
+
         // Отправляем запрос на сервер раз в секунду
         if ((DateTime.Now - lastRequestTime).TotalSeconds >= 1.0)
         {
@@ -734,30 +774,30 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         // Информация по каждой сети
         for (int i = 0; i < networkInformation.Networks.Count; i++)
         {
-                var network = networkInformation.Networks[i];
-                stringBuilder.AppendLine(Lang.Get("electricalprogressivebasics:NetworkStatus"));
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:GeneratorsShort") + ": " + network.NumberOfProducers);
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:ConsumersShort") + ": " + network.NumberOfConsumers);
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:BatteriesShort") + ": " + network.NumberOfAccumulators);
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:TransformersShort") + ": " + network.NumberOfTransformators);
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:ConductorsShort") + ": " + network.NumberOfConductors);
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:Generation") + ": " + network.Production.ToString("F1") + " " + Lang.Get("electricalprogressivebasics:W"));
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:Consumption") + ": " + network.Consumption.ToString("F1") + " " + Lang.Get("electricalprogressivebasics:W"));
-                stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:Request") + ": " + network.Request.ToString("F1") + " " + Lang.Get("electricalprogressivebasics:W"));
+            var network = networkInformation.Networks[i];
+            stringBuilder.AppendLine(Lang.Get("electricalprogressivebasics:NetworkStatus"));
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:GeneratorsShort") + ": " + network.NumberOfProducers);
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:ConsumersShort") + ": " + network.NumberOfConsumers);
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:BatteriesShort") + ": " + network.NumberOfAccumulators);
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:TransformersShort") + ": " + network.NumberOfTransformators);
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:ConductorsShort") + ": " + network.NumberOfConductors);
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:Generation") + ": " + network.Production.ToString("F1") + " " + Lang.Get("electricalprogressivebasics:W"));
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:Consumption") + ": " + network.Consumption.ToString("F1") + " " + Lang.Get("electricalprogressivebasics:W"));
+            stringBuilder.AppendLine("  ├ " + Lang.Get("electricalprogressivebasics:Request") + ": " + network.Request.ToString("F1") + " " + Lang.Get("electricalprogressivebasics:W"));
 
-                if (network.MaxCapacity > 0)
-                {
-                    float capacityPercent = (network.Capacity / network.MaxCapacity) * 100f;
-                    stringBuilder.AppendLine("  └ " + Lang.Get("electricalprogressivebasics:Capacity") + ": " +
-                        network.Capacity.ToString("F0") + "/" + network.MaxCapacity.ToString("F0") + " " +
-                        Lang.Get("electricalprogressivebasics:J") + " (" + capacityPercent.ToString("F1") + "%)");
-                }
-                else
-                {
-                    stringBuilder.AppendLine("  └ " + Lang.Get("electricalprogressivebasics:Capacity") + ": 0/0 " +
-                        Lang.Get("electricalprogressivebasics:J") + " (0.0%)");
-                }
+            if (network.MaxCapacity > 0)
+            {
+                float capacityPercent = (network.Capacity / network.MaxCapacity) * 100f;
+                stringBuilder.AppendLine("  └ " + Lang.Get("electricalprogressivebasics:Capacity") + ": " +
+                    network.Capacity.ToString("F0") + "/" + network.MaxCapacity.ToString("F0") + " " +
+                    Lang.Get("electricalprogressivebasics:J") + " (" + capacityPercent.ToString("F1") + "%)");
             }
+            else
+            {
+                stringBuilder.AppendLine("  └ " + Lang.Get("electricalprogressivebasics:Capacity") + ": 0/0 " +
+                    Lang.Get("electricalprogressivebasics:J") + " (0.0%)");
+            }
+        }
 
         // Общая сводка (только если больше одной сети)
         if (networkInformation.Networks.Count > 1)
@@ -937,7 +977,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         this.Update();
     }
 
-   
+
 
 
 
