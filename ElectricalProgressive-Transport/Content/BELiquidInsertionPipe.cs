@@ -805,32 +805,62 @@ public class LiquidFilterSlot : ItemSlotWatertight
         if (sourceStack == null || sourceStack.Collectible == null)
             return false;
         
-        // 1. Проверяем, является ли предмет жидкостью через IsLiquid()
+        // 1. Проверяем через IsLiquid() - самый прямой способ
         if (sourceStack.Collectible.IsLiquid())
             return true;
         
-        // 2. Проверяем, является ли это контейнером с жидкостью (ведро)
-        if (sourceStack.ItemAttributes != null)
-        {
-            // Контейнеры с жидкостью имеют contentItemCode или contentItem2BlockCodes
-            if (sourceStack.ItemAttributes["contentItemCode"].Exists || 
-                sourceStack.ItemAttributes["contentItem2BlockCodes"].Exists)
-                return true;
-        }
-        
-        // 3. Проверяем, является ли это BlockLiquidContainerBase
+        // 2. Проверяем, является ли это BlockLiquidContainerBase (ведра)
         if (sourceStack.Block is BlockLiquidContainerBase)
             return true;
         
-        // 4. Проверяем по коду (portion предметы)
-        string itemCode = sourceStack.Collectible.Code?.ToString() ?? "";
-        string codeLower = itemCode.ToLowerInvariant();
+        // 3. Проверяем атрибуты контейнера с жидкостью
+        if (sourceStack.ItemAttributes != null)
+        {
+            // Контейнеры с жидкостью имеют contentItemCode
+            if (sourceStack.ItemAttributes["contentItemCode"].Exists)
+            {
+                string contentCode = sourceStack.ItemAttributes["contentItemCode"].AsString();
+                if (!string.IsNullOrEmpty(contentCode))
+                {
+                    // Получаем предмет содержимого
+                    AssetLocation contentAsset = AssetLocation.Create(contentCode, sourceStack.Collectible.Code.Domain);
+                    Item contentItem = this.inventory.Api.World.GetItem(contentAsset);
+                    
+                    if (contentItem != null && contentItem.IsLiquid())
+                    {
+                        return true;
+                    }
+                }
+                return true; // Даже если не смогли проверить - предполагаем что это жидкость
+            }
+            
+            // Или contentItem2BlockCodes (для бутылок)
+            if (sourceStack.ItemAttributes["contentItem2BlockCodes"].Exists)
+                return true;
+                
+            // Проверяем атрибут containerType на "liquid" или "portion"
+            if (sourceStack.ItemAttributes["containerType"].Exists)
+            {
+                string containerType = sourceStack.ItemAttributes["containerType"].AsString();
+                if (containerType?.ToLower() == "liquid" || containerType?.ToLower() == "portion")
+                    return true;
+            }
+            
+            // Проверяем атрибут liquidProps
+            if (sourceStack.ItemAttributes["liquidProps"].Exists)
+                return true;
+        }
         
-        if (codeLower.Contains("portion"))
+        // 5. Проверяем через ItemLadle (черпаки)
+        if (sourceStack.Collectible.Code?.Path?.Contains("ladle") == true)
             return true;
         
-        // 5. Используем базовую логику CanHold для водонепроницаемых предметов
-        return base.CanHold(sourceSlot);
+        // 6. Для предметов с атрибутом "content" - предполагаем жидкость
+        if (sourceStack.Attributes?.HasAttribute("content") == true)
+            return true;
+        
+        // 7. Ни один из проверенных способов не подтвердил что это жидкость - НЕ допускаем
+        return false;
     }
     
     // Переопределяем CanTake - в фильтре предметы нельзя брать обычным способом
@@ -852,6 +882,15 @@ public class LiquidFilterSlot : ItemSlotWatertight
                 this.MarkDirty();
                 op.MovedQuantity = 1;
             }
+            return;
+        }
+        
+        // Сначала проверяем, можно ли вообще положить этот предмет
+        if (!CanHold(sourceSlot))
+        {
+            // Не жидкость - ничего не делаем
+            op.MovedQuantity = 0;
+            op.RequestedQuantity = 0;
             return;
         }
         
@@ -879,8 +918,47 @@ public class LiquidFilterSlot : ItemSlotWatertight
             return;
         }
         
-        // Для других предметов - стандартная логика
-        base.ActivateSlot(sourceSlot, ref op);
+        // Для других разрешенных жидкостей - стандартная логика с ограничением количества
+        if (this.Empty)
+        {
+            // Берем только 1 предмет
+            this.Itemstack = sourceStack.Clone();
+            this.Itemstack.StackSize = 1;
+            
+            if (sourceSlot.StackSize == 1)
+            {
+                sourceSlot.Itemstack = null;
+            }
+            else
+            {
+                sourceSlot.Itemstack.StackSize -= 1;
+            }
+            
+            sourceSlot.MarkDirty();
+            this.MarkDirty();
+            
+            op.MovedQuantity = 1;
+            op.RequestedQuantity = 1;
+        }
+        else
+        {
+            // Заменяем содержимое слота
+            ItemStack temp = this.Itemstack;
+            this.Itemstack = sourceStack.Clone();
+            this.Itemstack.StackSize = 1;
+            
+            sourceSlot.Itemstack = temp;
+            if (sourceSlot.Itemstack != null)
+            {
+                sourceSlot.Itemstack.StackSize = Math.Min(sourceSlot.Itemstack.StackSize, sourceSlot.MaxSlotStackSize);
+            }
+            
+            sourceSlot.MarkDirty();
+            this.MarkDirty();
+            
+            op.MovedQuantity = 1;
+            op.RequestedQuantity = 1;
+        }
     }
     
     // Обрабатывает контейнер с жидкостью (ведро)
@@ -904,31 +982,39 @@ public class LiquidFilterSlot : ItemSlotWatertight
             else
             {
                 // Ведро пустое - ничего не делаем
-                base.ActivateSlot(containerSlot, ref op);
+                op.MovedQuantity = 0;
+                op.RequestedQuantity = 0;
             }
         }
         else
         {
-            // Если в слоте уже есть что-то, проверяем, можно ли заменить
-            if (CanHold(containerSlot))
+            // Если в слоте уже есть что-то, заменяем
+            ItemStack temp = this.Itemstack;
+            
+            ItemStack content = block.GetContent(containerSlot.Itemstack);
+            if (content != null)
             {
-                ItemStack temp = this.Itemstack;
-                
-                ItemStack content = block.GetContent(containerSlot.Itemstack);
-                if (content != null)
-                {
-                    this.Itemstack = content.Clone();
-                    this.Itemstack.StackSize = 1;
-                }
-                else
-                {
-                    this.Itemstack = null;
-                }
-                
-                this.MarkDirty();
-                op.MovedQuantity = 1;
-                op.RequestedQuantity = 1;
+                this.Itemstack = content.Clone();
+                this.Itemstack.StackSize = 1;
             }
+            else
+            {
+                this.Itemstack = null;
+            }
+            
+            this.MarkDirty();
+            
+            // Возвращаем старую жидкость в контейнер
+            if (temp != null)
+            {
+                // Пытаемся положить обратно
+                containerSlot.Itemstack = temp;
+                containerSlot.Itemstack.StackSize = 1;
+                containerSlot.MarkDirty();
+            }
+            
+            op.MovedQuantity = 1;
+            op.RequestedQuantity = 1;
         }
     }
     
@@ -941,7 +1027,8 @@ public class LiquidFilterSlot : ItemSlotWatertight
         string contentCode = sourceSlot.Itemstack.ItemAttributes["contentItemCode"].AsString();
         if (contentCode == null)
         {
-            base.ActivateSlot(sourceSlot, ref op);
+            op.MovedQuantity = 0;
+            op.RequestedQuantity = 0;
             return;
         }
         
@@ -950,7 +1037,8 @@ public class LiquidFilterSlot : ItemSlotWatertight
         
         if (contentItem == null)
         {
-            base.ActivateSlot(sourceSlot, ref op);
+            op.MovedQuantity = 0;
+            op.RequestedQuantity = 0;
             return;
         }
         
@@ -996,17 +1084,22 @@ public class LiquidFilterSlot : ItemSlotWatertight
         }
         else
         {
-            // Если в слоте уже есть что-то, проверяем, можно ли заменить
-            if (CanHold(sourceSlot))
+            // Заменяем содержимое слота
+            ItemStack temp = this.Itemstack;
+            this.Itemstack = contentStack;
+            this.Itemstack.StackSize = 1;
+            this.MarkDirty();
+            
+            // Возвращаем старую жидкость
+            if (temp != null)
             {
-                ItemStack temp = this.Itemstack;
-                this.Itemstack = contentStack;
-                this.Itemstack.StackSize = 1;
-                this.MarkDirty();
-                
-                op.MovedQuantity = 1;
-                op.RequestedQuantity = 1;
+                sourceSlot.Itemstack = temp;
+                sourceSlot.Itemstack.StackSize = 1;
+                sourceSlot.MarkDirty();
             }
+            
+            op.MovedQuantity = 1;
+            op.RequestedQuantity = 1;
         }
     }
     
@@ -1111,12 +1204,18 @@ public class LiquidFilterSlot : ItemSlotWatertight
             return;
         }
         
-        base.ActivateSlotRightClick(sourceSlot, ref op);
+        // Для не-жидкостей - ничего не делаем
+        op.MovedQuantity = 0;
+        op.RequestedQuantity = 0;
     }
     
     // Переопределяем TryFlipWith для ограничения количества
     public override bool TryFlipWith(ItemSlot itemSlot)
     {
+        // Сначала проверяем, можно ли вообще поместить этот предмет
+        if (!CanHold(itemSlot))
+            return false;
+            
         if (itemSlot != null && itemSlot.StackSize > 1)
         {
             // Если пытаются положить больше 1 предмета
@@ -1153,5 +1252,7 @@ public class LiquidFilterSlot : ItemSlotWatertight
         }
         base.OnItemSlotModified(extractedStack);
     }
-  }
+    
+
+}
 }
