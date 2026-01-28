@@ -101,7 +101,7 @@ public class BEBehaviorElectricalProgressive : BlockEntityBehavior
         get => (this.eparams, this.eparamsFace);
         set
         {
-            if (!this.eparams.Equals(value.Item1) || this.eparamsFace != value.Item2)
+            if (this.eparams==null || !this.eparams.Equals(value.Item1) || this.eparamsFace != value.Item2)
             {
                 this.eparams = value.Item1;
                 this.eparamsFace = value.Item2;

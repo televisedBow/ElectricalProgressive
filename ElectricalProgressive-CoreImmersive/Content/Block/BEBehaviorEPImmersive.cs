@@ -437,7 +437,9 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
 
 
-
+    /// <summary>
+    /// Грузим позиции частиц из блока
+    /// </summary>
     private void GetParticles()
     {
         ParticlesType = MyMiniLib.GetAttributeInt(this.Block, "particlesType", 0);
@@ -469,10 +471,65 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
         }
     }
 
+
+
+    /// <summary>
+    /// Асинхронные частицы
+    /// </summary>
+    /// <param name="dt"></param>
+    /// <param name="manager"></param>
+    /// <returns></returns>
     private bool OnAsyncParticles(float dt, IAsyncParticleManager manager)
     {
         if (!this._isLoaded || _connections.Count == 0)
             return true;
+
+        var hasBurnout = false;
+        var prepareBurnout = false;
+
+
+        hasBurnout = _mainEpar.burnout;
+        prepareBurnout = _mainEpar.ticksBeforeBurnout > 0;
+        
+
+        // Спавн частиц в указанных позициях
+        if (ParticlesOffsetPos != null && ParticlesOffsetPos.Count > 0)
+        {
+            int k = 0;
+            foreach (var partPos in ParticlesOffsetPos)
+            {
+                // Обработка prepareBurnout
+                if (prepareBurnout)
+                {
+                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos).Add(0.5d, 0d, 0.5d), 0);
+                }
+
+                // Обработка burnout
+                if (hasBurnout)
+                {
+                    ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos).Add(0.5d, 0d, 0.5d), 1);
+                }
+
+                // частицы собственные для блока
+                if (ParticlesType > 1 && !hasBurnout && !prepareBurnout)
+                {
+                    // настреок анимации нет?
+                    if (ParticlesFramesAnim == null || ParticlesFramesAnim[k][0] == -1 || ParticlesFramesAnim[k][1] == -1)
+                        ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), ParticlesType);
+
+                    // ищем аниматор
+                    if (AnimUtil != null && AnimUtil.animator != null && AnimUtil.animator.Animations.Length > 0)
+                    {
+                        float buf = AnimUtil.animator.Animations[0].CurrentFrame;
+                        if (buf > ParticlesFramesAnim[k][0] && buf < ParticlesFramesAnim[k][1])
+                            ParticleManager.SpawnParticlesAsync(manager, Blockentity.Pos.ToVec3d().Offset(partPos), ParticlesType);
+                    }
+                }
+
+                k++;
+            }
+        }
+
 
         // Логика частиц остается прежней
         return this._isLoaded;
