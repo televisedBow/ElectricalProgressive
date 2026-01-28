@@ -20,7 +20,9 @@ namespace EPImmersive.Content.Block;
 
 
 
-
+/// <summary>
+/// Точка подключения провода
+/// </summary>
 public class WireNode
 {
     public byte Index { get; set; }           // Индекс точки подключения
@@ -32,7 +34,9 @@ public class WireNode
 
 
 
-
+/// <summary>
+/// Содержит информацию о конкретном соединении между двумя точками подключения
+/// </summary>
 public class ConnectionData
 {
     public byte LocalNodeIndex { get; set; }      // Индекс точки подключения на ТЕКУЩЕМ устройстве
@@ -100,7 +104,7 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
     private (EParams param, byte index) _eparams;
     private bool _isLoaded;
 
-    private EParams _mainEpar;
+    private EParams _mainEpar = new EParams();
 
 
 
@@ -740,8 +744,8 @@ public class BEBehaviorEPImmersive : BlockEntityBehavior
 
         if (!altPressed)
         {
+            stringBuilder.AppendLine("" + Lang.Get("electricalprogressivebasics:ConnectedWires", networkInformation.NumberOfConnections));
             stringBuilder.AppendLine(Lang.Get("electricalprogressivebasics:PressForDetails", nameAltPressed));
-            stringBuilder.AppendLine("├ " + Lang.Get("electricalprogressivebasics:ConnectedWires", networkInformation.NumberOfConnections));
             return;
         }
 

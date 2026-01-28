@@ -364,7 +364,7 @@ namespace EPImmersive
             if (!mainEpar.Equals(new EParams()) && !part.MainEparams.Equals(mainEpar))
             {
                 part.MainEparams = mainEpar;
-                mainEpar = part.MainEparams;
+                
                 hasChanges = true;
             }
 
@@ -1349,6 +1349,8 @@ namespace EPImmersive
                         part.MainEparams.prepareForBurnout(2);
 
                         // сгорело таки?
+                        /*
+                        // потом часть кода из блока надо вынести сюда
                         if (part.MainEparams.burnout)
                         {
                             
@@ -1361,8 +1363,9 @@ namespace EPImmersive
 
                            
                         }
+                        */
                     }
-                    
+
 
                     // проверка иммерсивных соединений на превышение напряжения
                     foreach (var connection in part.Connections)
@@ -1413,6 +1416,8 @@ namespace EPImmersive
                 {
                     part.MainEparams.prepareForBurnout(1);
 
+                    /*
+                    // потом часть кода из блока надо вынести сюда
                     // сгорел таки?
                     if (part.MainEparams.burnout)
                     {
@@ -1424,6 +1429,7 @@ namespace EPImmersive
                         }
                         
                     }
+                    */
                 }
 
 

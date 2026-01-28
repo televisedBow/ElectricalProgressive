@@ -5,7 +5,7 @@ namespace ElectricalProgressive.Utils
     /// <summary>
     /// Параметры проводов/приборов как участников электрической цепи
     /// </summary>
-    public struct EParams : IEquatable<EParams>
+    public class EParams : IEquatable<EParams>
     {
         private static int maxSecBeforeBurnout = ElectricalProgressive.timeBeforeBurnout; //максимальное время в секундах до сгорания проводника
         private static int maxTicksBeforeBurnout = maxSecBeforeBurnout*ElectricalProgressive.speedOfElectricity; //максимальное количество тиков до сгорания проводника 
@@ -127,6 +127,26 @@ namespace ElectricalProgressive.Utils
                    causeBurnout == other.causeBurnout &&
                    ticksBeforeBurnout == other.ticksBeforeBurnout;
 
+        }
+
+        /// <summary>
+        /// Копирует значения из другого экземпляра EParams в текущий
+        /// </summary>
+        public void CopyFrom(EParams other)
+        {
+            if (other == null) throw new ArgumentNullException(nameof(other));
+            this.voltage = other.voltage;
+            this.maxCurrent = other.maxCurrent;
+            this.material = other.material;
+            this.resistivity = other.resistivity;
+            this.lines = other.lines;
+            this.crossArea = other.crossArea;
+            this.burnout = other.burnout;
+            this.isolated = other.isolated;
+            this.isolatedEnvironment = other.isolatedEnvironment;
+            this.causeBurnout = other.causeBurnout;
+            this.ticksBeforeBurnout = other.ticksBeforeBurnout;
+            this.current = other.current;
         }
 
         /// <summary>
