@@ -3,6 +3,7 @@ using ElectricalProgressive.Content.Block.EAccumulator;
 using ElectricalProgressive.Content.Block.ECable;
 using ElectricalProgressive.Content.Block.EConnector;
 using ElectricalProgressive.Content.Block.EFuelGenerator;
+using ElectricalProgressive.Content.Block.ENuclearGenerator;
 using ElectricalProgressive.Content.Block.EGenerator;
 using ElectricalProgressive.Content.Block.EMotor;
 using ElectricalProgressive.Content.Block.ESolarGenerator;
@@ -112,6 +113,10 @@ public class ElectricalProgressiveBasics : ModSystem
         api.RegisterBlockClass("BlockEFuelGenerator", typeof(BlockEFuelGenerator));
         api.RegisterBlockEntityClass("BlockEntityEFuelGenerator", typeof(BlockEntityEFuelGenerator));
         api.RegisterBlockEntityBehaviorClass("BEBehaviorFuelEGenerator", typeof(BEBehaviorFuelEGenerator));
+
+        api.RegisterBlockClass("BlockENuclearGenerator", typeof(BlockENuclearGenerator));
+        api.RegisterBlockEntityClass("BlockEntityENuclearGenerator", typeof(BlockEntityENuclearGenerator));
+        api.RegisterBlockEntityBehaviorClass("BEBehaviorNuclearEGenerator", typeof(BEBehaviorNuclearEGenerator));
 
 
         api.RegisterBlockClass("BlockTermoplastini", typeof(BlockTermoplastini));

@@ -1,0 +1,125 @@
+{
+  "code": "enucleargenerator",
+  "class": "BlockENuclearGenerator",
+  "entityClass": "BlockEntityENuclearGenerator",
+  "behaviors": [
+    { "name": "Lockable" },
+    { "name": "Container" },
+    {
+      "name": "HorizontalOrientable",
+      "properties": {
+        "dropBlockFace": "south"
+      }
+    },
+    {
+      "name": "Multiblock",
+      "properties": {
+        "sizex": 4,
+        "sizey": 4,
+        "sizez": 4,
+        "cposition": {
+          "x": 1,
+          "y": 0,
+          "z": 1
+        }
+      }
+    }
+  ],
+
+
+
+  "entityBehaviors": [
+    {
+      "name": "Animatable"
+    },
+    {
+      "name": "BEBehaviorNuclearEGenerator"
+    },
+    {
+      "name": "ElectricalProgressive"
+    }
+  ],
+
+  "attributes": {
+    "particlesOffsetPos": [ [ 2.0, 4.0, 2.0 ] ],
+    "particlesType": 2,
+    "blockEProperties": "main",
+    "facesEProperties": [ "down" ],
+    "voltage": 32,
+    "maxCurrent": 1024.0,
+    "isolated": true,
+    "isolatedEnvironment": true,
+    "maxHeat": 10.0,
+    "handbook": {
+      "groupBy": [ "enucleargenerator-*" ],
+      "extraSections": [
+        {
+          "title": "electricalprogressivebasics:block-handbooktitle-enucleargenerator",
+          "text": "electricalprogressivebasics:block-handbooktext-enucleargenerator"
+        }
+      ]
+    }
+  },
+
+  "creativeinventory": {
+    "general": [ "*-south" ],
+    "electricity": [ "*-south" ]
+  },
+
+  "variantgroups": [
+    {
+      "code": "side",
+      "loadFromProperties": "abstract/horizontalorientation"
+    }
+  ],
+
+
+
+  "shape": {
+    "base": "electricalprogressivebasics:block/nucleargenerator/nucleargenerator"
+  },
+
+
+
+  "blockmaterial": "Stone",
+  "sidesolid": {
+    "all": false
+  },
+  "sideopaque": {
+    "all": false
+  },
+  "resistance": 3.5,
+  "lightAbsorption": 0,
+
+  "sounds": {
+    "walk": "game:walk/stone"
+  },
+
+  "heldTpIdleAnimation": "holdbothhandslarge",
+  "heldTpUseAnimation": "twohandplaceblock",
+
+  "tpHandTransform": {
+    "translation": { "x": -1.2, "y": -1.1, "z": -0.8 },
+    "rotation": { "x": -2, "y": 26, "z": -78 },
+    "origin": { "x": 0.5, "y": 0.1, "z": 0.5 },
+    "scale": 0.2
+  },
+  "fpHandTransform": {
+    "translation": { "x": 0, "y": 0.1, "z": 0 },
+    "rotation": { "x": 0, "y": -25, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.5, "z": 0.5 },
+    "scale": 0.15
+  },
+  "guiTransform": {
+    "translation": { "x": 3, "y": 2, "z": 0 },
+    "rotation": { "x": -22, "y": -43, "z": 0 },
+    "origin": { "x": 0.5, "y": 0.25, "z": 0.5 },
+    "scale": 0.4
+  },
+  "groundTransform": {
+    "translation": { "x": 0, "y": 0, "z": 0 },
+    "rotation": { "x": 0, "y": 0, "z": 0 },
+    "origin": { "x": 0.5, "y": 0, "z": 0.5 },
+    "scale": 0.3
+  }
+}

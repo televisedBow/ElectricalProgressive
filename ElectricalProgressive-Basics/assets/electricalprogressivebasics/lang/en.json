@@ -265,6 +265,11 @@
   "switch": "Toggle",
 
 
+  "block-enucleargenerator-*": "Nuclear Generator",
+  "block-handbooktitle-enucleargenerator": "Usage",
+  "block-handbooktext-enucleargenerator": "Converts thermal energy into electrical energy! Runs on anything that supports combustion. The higher the combustion temperature of the fuel, the greater the output power. Output power also slightly depends on ambient temperature: the lower the ambient air temperature, the greater the energy generation. By itself, it does not function - thermoelectric plates must be installed on top.",
+  "game:nucleargen": "Nuclear Generator",
+
   "block-esolargenerator-*": "Solar Panel Generator",
   "block-handbooktitle-esolargenerator": "Usage",
   "block-handbooktext-esolargenerator": "Converts light into electrical energy! The more sunlight hitting the solar panel, the more energy it can produce. Blocks placed above the solar panel will reduce its efficiency. In the late fall and winter months there is less sunlight which causes a decrease in its efficiency.",
