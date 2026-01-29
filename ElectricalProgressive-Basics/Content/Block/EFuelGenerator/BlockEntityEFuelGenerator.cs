@@ -1,6 +1,5 @@
 ﻿using ElectricalProgressive.Utils;
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -8,156 +7,109 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.EFuelGenerator;
 
 public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeatSource
 {
-    public BEBehaviorElectricalProgressive? ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
-
+    public BEBehaviorElectricalProgressive ElectricalProgressive => GetBehavior<BEBehaviorElectricalProgressive>();
     
-    ICoreClientAPI? _capi;
-    ICoreServerAPI? _sapi;
+    ICoreClientAPI _capi;
+    ICoreServerAPI _sapi;
     private InventoryFuelGenerator _inventory;
-    private GuiBlockEntityEFuelGenerator? _clientDialog;
-
+    private GuiBlockEntityEFuelGenerator _clientDialog;
 
     private float _genTemp = 20f;
+    private float _waterAmount = 0f;
+    private const float WaterConsumptionRate = 0.1f;
 
-    /// <summary>
-    /// Максимальная температура топлива
-    /// </summary>
     private int _maxTemp;
-
-    /// <summary>
-    /// Текущее время горения топлива
-    /// </summary>
     private float _fuelBurnTime;
-
-    /// <summary>
-    /// Максимальное время горения топлива
-    /// </summary>
     private float _maxBurnTime;
-
-    /// <summary>
-    /// Температура в генераторе
-    /// </summary>
     public float GenTemp => _genTemp;
+    
+    public float WaterAmount 
+    { 
+        get => _waterAmount; 
+        set 
+        { 
+            _waterAmount = Math.Min(Math.Max(value, 0), WaterCapacity);
+            MarkDirty(); 
+        } 
+    }
 
+    public float WaterCapacity => 100f; // 100 литров емкость бака
 
-    /// <summary>
-    /// Собственно выходная максимальная мощность
-    /// </summary>
     public float Power
     {
         get
         {
-            var envTemp = EnvironmentTemperature(); //температура окружающей среды
-
-            if (_genTemp <= envTemp) //окружающая среда теплее? 
-            {
+            var envTemp = EnvironmentTemperature();
+            if (_genTemp <= envTemp || _genTemp < 200 || _waterAmount <= 0)
                 return 1f;
-            }
-            else
-            {
-                return (_genTemp - envTemp);  //учитываем разницу температур с окружающей средой 
-            }
-
-
+            return (_genTemp - envTemp) * 2f;
         }
     }
 
+    public ItemSlot FuelSlot => _inventory[0];
+    public ItemSlot WaterSlot => _inventory[1];
 
-
-
-    /// <summary>
-    /// Слот для топлива в инвентаре генератора
-    /// </summary>
-    public ItemSlot FuelSlot => this._inventory[0];
-
-
-
-
-
-    /// <summary>
-    /// Стак для топлива в генераторе
-    /// </summary>
     public ItemStack FuelStack
     {
-        get { return this._inventory[0].Itemstack; }
+        get => _inventory[0].Itemstack;
         set
         {
-            this._inventory[0].Itemstack = value;
-            this._inventory[0].MarkDirty();
+            _inventory[0].Itemstack = value;
+            _inventory[0].MarkDirty();
         }
     }
 
-    /// <summary>
-    /// Аниматор блока, используется для анимации открывания дверцы генератора
-    /// </summary>
-    private BlockEntityAnimationUtil AnimUtil
+    public ItemStack WaterStack
     {
-        get { return GetBehavior<BEBehaviorAnimatable>()?.animUtil!; }
+        get => _inventory[1].Itemstack;
+        set
+        {
+            _inventory[1].Itemstack = value;
+            _inventory[1].MarkDirty();
+        }
     }
 
-
-
-
+    private BlockEntityAnimationUtil AnimUtil => GetBehavior<BEBehaviorAnimatable>()?.animUtil;
 
     private long _listenerId;
-
     public override InventoryBase Inventory => _inventory;
-
     public override string DialogTitle => Lang.Get("fuelgen");
-
     public override string InventoryClassName => "fuelgen";
+    
+    
 
     public BlockEntityEFuelGenerator()
     {
-        this._inventory = new InventoryFuelGenerator(null!, null!);
-        this._inventory.SlotModified += OnSlotModified;
+        _inventory = new InventoryFuelGenerator(null, null);
+        _inventory.SlotModified += OnSlotModified;
     }
 
-
-    /// <summary>
-    /// Инициализация блока
-    /// </summary>
-    /// <param name="api"></param>
     public override void Initialize(ICoreAPI api)
     {
         base.Initialize(api);
 
         if (api.Side == EnumAppSide.Server)
-        {
             _sapi = api as ICoreServerAPI;
-        }
         else
         {
             _capi = api as ICoreClientAPI;
-
-            // инициализируем аниматор
             if (AnimUtil != null)
-            {
                 AnimUtil.InitializeAnimator(InventoryClassName, null, null, new Vec3f(0, GetRotation(), 0f));
-            }
-
         }
 
-        this._inventory.Pos = this.Pos;
-        this._inventory.LateInitialize(InventoryClassName + "-" + Pos, api);
+        _inventory.Pos = Pos;
+        _inventory.LateInitialize(InventoryClassName + "-" + Pos, api);
 
-        _listenerId = this.RegisterGameTickListener(new Action<float>(OnBurnTick), 1000);
-
+        _listenerId = RegisterGameTickListener(OnBurnTick, 1000);
         CanDoBurn();
     }
 
-
-    /// <summary>
-    /// Получает угол поворота блока в градусах
-    /// </summary>
-    /// <returns></returns>
     public int GetRotation()
     {
         var side = Block.Variant["side"];
@@ -165,147 +117,87 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         return adjustedIndex * 90;
     }
 
-
-
     public override void OnReceivedClientPacket(IPlayer player, int packetid, byte[] data)
     {
         base.OnReceivedClientPacket(player, packetid, data);
-
         ElectricalProgressive?.OnReceivedClientPacket(player, packetid, data);
     }
 
     public override void OnReceivedServerPacket(int packetid, byte[] data)
     {
         base.OnReceivedServerPacket(packetid, data);
-
         ElectricalProgressive?.OnReceivedServerPacket(packetid, data);
     }
 
-
-
-    /// <summary>
-    /// При ломании блока
-    /// </summary>
-    /// <param name="byPlayer"></param>
-    public override void OnBlockBroken(IPlayer byPlayer = null!)
+    public override void OnBlockBroken(IPlayer byPlayer = null)
     {
-        base.OnBlockBroken(null);
+        base.OnBlockBroken(byPlayer);
     }
 
-
-
-
-    /// <summary>
-    /// Отвечает за тепло отдаваемое в окружающую среду
-    /// </summary>
-    /// <param name="world"></param>
-    /// <param name="heatSourcePos"></param>
-    /// <param name="heatReceiverPos"></param>
-    /// <returns></returns>
-    public float GetHeatStrength(
-      IWorldAccessor world,
-      BlockPos heatSourcePos,
-      BlockPos heatReceiverPos)
+    public float GetHeatStrength(IWorldAccessor world, BlockPos heatSourcePos, BlockPos heatReceiverPos)
     {
-        return Math.Max((float)(((float)this._genTemp - 20.0F) / ((float)1300F - 20.0F) * MyMiniLib.GetAttributeFloat(this.Block, "maxHeat", 0.0F)), 0.0f);
+        return Math.Max(((_genTemp - 20.0f) / (1300f - 20.0f) * MyMiniLib.GetAttributeFloat(Block, "maxHeat", 0.0f)), 0.0f);
     }
 
-
-
-
-    /// <summary>
-    /// Получает температуру окружающей среды
-    /// </summary>
-    /// <returns></returns>
     protected virtual int EnvironmentTemperature()
     {
-        return (int)this.Api.World.BlockAccessor.GetClimateAt(this.Pos, EnumGetClimateMode.ForSuppliedDate_TemperatureOnly, this.Api.World.Calendar.TotalDays).Temperature;
+        return (int)Api.World.BlockAccessor.GetClimateAt(Pos, EnumGetClimateMode.ForSuppliedDate_TemperatureOnly, Api.World.Calendar.TotalDays).Temperature;
     }
 
-
-
-
-
-
-    /// <summary>
-    /// Вызывается при выгрузке блока
-    /// </summary>
     public override void OnBlockUnloaded()
     {
         base.OnBlockUnloaded();
-
+        ElectricalProgressive?.OnBlockUnloaded();
         
-
-        this.ElectricalProgressive?.OnBlockUnloaded(); // вызываем метод OnBlockUnloaded у BEBehaviorElectricalProgressive
-
-        // закрываем диалоговое окно, если оно открыто
-        if (this.Api is ICoreClientAPI && this._clientDialog != null)
+        if (_clientDialog != null)
         {
-            this._clientDialog.TryClose();
-            this._clientDialog = null;
+            _clientDialog.TryClose();
+            _clientDialog = null;
         }
 
-        // отключаем слушатель тика горения топлива
         UnregisterGameTickListener(_listenerId);
 
-        // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
-        {
-            this.AnimUtil.Dispose();
-        }
+        if (Api.Side == EnumAppSide.Client && AnimUtil != null)
+            AnimUtil.Dispose();
 
-        // очищаем ссылки на API
         _capi = null;
         _sapi = null;
-
     }
 
-    /// <summary>
-    /// Обработчик изменения слота инвентаря
-    /// </summary>
-    /// <param name="slotId"></param>
     public void OnSlotModified(int slotId)
     {
         if (slotId == 0)
         {
-            if (Inventory[0].Itemstack != null && !Inventory[0].Empty &&
-                Inventory[0].Itemstack.Collectible.CombustibleProps != null)
-            {
-                if (_fuelBurnTime == 0)
-                    CanDoBurn();
-            }
+            if (!FuelSlot.Empty && FuelStack.Collectible.CombustibleProps != null && _fuelBurnTime == 0)
+                CanDoBurn();
         }
-
-        base.Block = this.Api.World.BlockAccessor.GetBlock(this.Pos);
-        this.MarkDirty(this.Api.Side == EnumAppSide.Server, null);
-
-        if (this.Api is ICoreClientAPI && this._clientDialog != null)
+        else if (slotId == 1)
         {
-            _clientDialog.Update(_genTemp, _fuelBurnTime);
+            TryFillWaterFromSlot();
         }
 
-        var chunkatPos = this.Api.World.BlockAccessor.GetChunkAtBlockPos(this.Pos);
-        if (chunkatPos == null)
-            return;
+        Block = Api.World.BlockAccessor.GetBlock(Pos);
+        MarkDirty(Api.Side == EnumAppSide.Server, null);
 
-        chunkatPos.MarkModified();
+        if (_clientDialog != null)
+            _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
+
+        Api.World.BlockAccessor.GetChunkAtBlockPos(Pos)?.MarkModified();
     }
 
-
-
-
-
-    /// <summary>
-    /// Обработчик тика горения топлива
-    /// </summary>
-    /// <param name="deltatime"></param>
     public void OnBurnTick(float deltatime)
     {
-
         if (_fuelBurnTime > 0f)
         {
-            if (_genTemp>200)
+            if (_genTemp > 200)
+            {
                 StartAnimation();
+                if (_waterAmount > 0)
+                {
+                    _waterAmount -= WaterConsumptionRate * deltatime;
+                    if (_waterAmount < 0) _waterAmount = 0;
+                }
+            }
 
             _genTemp = ChangeTemperature(_genTemp, _maxTemp, deltatime);
             _fuelBurnTime -= deltatime;
@@ -313,8 +205,8 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             {
                 _fuelBurnTime = 0f;
                 _maxBurnTime = 0f;
-                _maxTemp = 20; // важно
-                if (!Inventory[0].Empty)
+                _maxTemp = 20;
+                if (!FuelSlot.Empty)
                     CanDoBurn();
             }
         }
@@ -322,44 +214,55 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         {
             if (_genTemp < 200)
                 StopAnimation();
-
             if (_genTemp != 20f)
                 _genTemp = ChangeTemperature(_genTemp, 20f, deltatime);
             CanDoBurn();
         }
 
-
+        if (!WaterSlot.Empty && _waterAmount < WaterCapacity)
+            TryFillWaterFromSlot();
 
         MarkDirty();
-        
 
-        // обновляем диалоговое окно на клиенте
-        if (this.Api != null && this.Api.Side == EnumAppSide.Client)
-        {
-            if (this._clientDialog != null)
-                _clientDialog.Update(_genTemp, _fuelBurnTime);
-
-        }
-
+        if (_clientDialog != null)
+            _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
     }
 
+    private void TryFillWaterFromSlot()
+    {
+        if (WaterSlot.Empty) return;
+        
+        var waterStack = WaterStack;
+        var props = BlockLiquidContainerBase.GetContainableProps(waterStack);
+        if (props == null || !waterStack.Collectible.Code.Path.ToLower().Contains("water"))
+            return;
+        
+        float availableLitres = waterStack.StackSize / props.ItemsPerLitre;
+        float neededLitres = WaterCapacity - _waterAmount;
+        
+        if (neededLitres > 0 && availableLitres > 0)
+        {
+            float takeLitres = Math.Min(neededLitres, availableLitres);
+            int takeItems = (int)(takeLitres * props.ItemsPerLitre);
+            
+            waterStack.StackSize -= takeItems;
+            _waterAmount += takeLitres;
+            
+            if (waterStack.StackSize <= 0)
+                WaterSlot.Itemstack = null;
+            
+            WaterSlot.MarkDirty();
+            MarkDirty();
+        }
+    }
 
-
-    /// <summary>
-    /// Запуск анимации
-    /// </summary>
     private void StartAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client|| AnimUtil == null)
-            return;
+        if (Api?.Side != EnumAppSide.Client || AnimUtil == null) return;
 
-        
-
-        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == false)
+        if (!AnimUtil.activeAnimationsByAnimCode.ContainsKey("work-on"))
         {
-            this.Block.LightHsv = new byte[] { 0, 0, 14 };
-
-
+            Block.LightHsv = new byte[] { 0, 0, 14 };
             AnimUtil.StartAnimation(new AnimationMetaData()
             {
                 Animation = "work-on",
@@ -369,41 +272,25 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
                 EaseInSpeed = 1f
             });
         }
-
     }
 
-    /// <summary>
-    /// Остановка анимации
-    /// </summary>
     private void StopAnimation()
     {
-        if (Api?.Side != EnumAppSide.Client || AnimUtil == null)
-            return;
+        if (Api?.Side != EnumAppSide.Client || AnimUtil == null) return;
 
-        
-
-        if (AnimUtil?.activeAnimationsByAnimCode.ContainsKey("work-on") == true)
+        if (AnimUtil.activeAnimationsByAnimCode.ContainsKey("work-on"))
         {
-            this.Block.LightHsv = new byte[] { 0, 0, 0 };
-
+            Block.LightHsv = new byte[] { 0, 0, 0 };
             AnimUtil.StopAnimation("work-on");
         }
-
     }
 
-
-
-    /// <summary>
-    /// Проверяет, можно ли сжечь топливо в генераторе
-    /// </summary>
     private void CanDoBurn()
     {
-        var fuelProps = FuelSlot.Itemstack?.Collectible?.CombustibleProps ?? null!;
-        if (fuelProps == null)
-            return;
-
-        if (_fuelBurnTime > 0)
-            return;
+        if (FuelSlot.Empty) return;
+        
+        var fuelProps = FuelStack.Collectible.CombustibleProps;
+        if (fuelProps == null || _fuelBurnTime > 0) return;
 
         if (fuelProps.BurnTemperature > 0f && fuelProps.BurnDuration > 0f)
         {
@@ -411,171 +298,98 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             _maxTemp = fuelProps.BurnTemperature;
             FuelStack.StackSize--;
             if (FuelStack.StackSize <= 0)
-            {
-                FuelStack = null!;
-            }
-
+                FuelStack = null;
             FuelSlot.MarkDirty();
-            //MarkDirty(true);
         }
     }
 
-
-    /// <summary>
-    /// Изменяет температуру в зависимости от времени и разницы температур
-    /// </summary>
-    /// <param name="fromTemp"></param>
-    /// <param name="toTemp"></param>
-    /// <param name="deltaTime"></param>
-    /// <returns></returns>
     private static float ChangeTemperature(float fromTemp, float toTemp, float deltaTime)
     {
         var diff = Math.Abs(fromTemp - toTemp);
         deltaTime += deltaTime * (diff / 28f);
-        if (diff < deltaTime)
-        {
-            return toTemp;
-        }
-
-        if (fromTemp > toTemp)
-        {
-            deltaTime = -deltaTime;
-        }
-
-        if (Math.Abs(fromTemp - toTemp) < 1f)
-        {
-            return toTemp;
-        }
+        if (diff < deltaTime) return toTemp;
+        if (fromTemp > toTemp) deltaTime = -deltaTime;
+        if (Math.Abs(fromTemp - toTemp) < 1f) return toTemp;
         return fromTemp + deltaTime;
     }
 
-
-
-
-
-
-
-
-    /// <summary>
-    /// Обработчик нажатия правой кнопкой мыши по блоку, открывает диалоговое окно
-    /// </summary>
-    /// <param name="byPlayer"></param>
-    /// <param name="blockSel"></param>
-    /// <returns></returns>
     public override bool OnPlayerRightClick(IPlayer byPlayer, BlockSelection blockSel)
     {
-
-        // открываем диалоговое окно
-        if (this.Api.Side == EnumAppSide.Client)
+        if (Api.Side == EnumAppSide.Client)
         {
-            base.toggleInventoryDialogClient(byPlayer, delegate
+            toggleInventoryDialogClient(byPlayer, () =>
             {
-                this._clientDialog =
-                    new GuiBlockEntityEFuelGenerator(DialogTitle, Inventory, this.Pos, this._capi!, this);
-                _clientDialog.Update(_genTemp, _fuelBurnTime);
-                return this._clientDialog;
+                _clientDialog = new GuiBlockEntityEFuelGenerator(DialogTitle, Inventory, Pos, _capi, this);
+                _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
+                return _clientDialog;
             });
         }
         return true;
     }
 
-
-
-
-    /// <summary>
-    /// При удалении блока, закрывает диалоговое окно и отключает электричество
-    /// </summary>
     public override void OnBlockRemoved()
     {
         base.OnBlockRemoved();
-
-        var electricity = ElectricalProgressive;
-
-        if (electricity != null)
+        ElectricalProgressive.Connection = Facing.None;
+        
+        if (_clientDialog != null)
         {
-            electricity.Connection = Facing.None;
+            _clientDialog.TryClose();
+            _clientDialog = null;
         }
 
-
-        // закрываем диалоговое окно, если оно открыто
-        if (this.Api is ICoreClientAPI && this._clientDialog != null)
-        {
-            this._clientDialog.TryClose();
-            this._clientDialog = null;
-        }
-
-        // отключаем слушатель тика горения топлива
         UnregisterGameTickListener(_listenerId);
 
-        // отключаем аниматор, если он есть
-        if (this.Api.Side == EnumAppSide.Client && this.AnimUtil != null)
-        {
-            this.AnimUtil.Dispose();
-        }
+        if (Api.Side == EnumAppSide.Client && AnimUtil != null)
+            AnimUtil.Dispose();
 
-        // очищаем ссылки на API
         _capi = null;
         _sapi = null;
     }
 
-
-
-    /// <summary>
-    /// Сохраняет атрибуты
-    /// </summary>
-    /// <param name="tree"></param>
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
         ITreeAttribute invtree = new TreeAttribute();
-        this._inventory.ToTreeAttributes(invtree);
+        _inventory.ToTreeAttributes(invtree);
         tree["inventory"] = invtree;
         tree.SetFloat("_genTemp", _genTemp);
         tree.SetInt("maxTemp", _maxTemp);
         tree.SetFloat("fuelBurnTime", _fuelBurnTime);
+        tree.SetFloat("waterAmount", _waterAmount);
     }
 
-
-    /// <summary>
-    /// Загружает атрибуты 
-    /// </summary>
-    /// <param name="tree"></param>
-    /// <param name="worldForResolving"></param>
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
     {
         base.FromTreeAttributes(tree, worldForResolving);
-        this._inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+        
+        if (tree.HasAttribute("inventory"))
+            _inventory.FromTreeAttributes(tree.GetTreeAttribute("inventory"));
+        
         if (Api != null)
-            Inventory.AfterBlocksLoaded(this.Api.World);
-        _genTemp = tree.GetFloat("_genTemp", 0);
-        _maxTemp = tree.GetInt("maxTemp", 0);
+            Inventory.AfterBlocksLoaded(Api.World);
+            
+        _genTemp = tree.GetFloat("_genTemp", 20);
+        _maxTemp = tree.GetInt("maxTemp", 20);
         _fuelBurnTime = tree.GetFloat("fuelBurnTime", 0);
+        _waterAmount = tree.GetFloat("waterAmount", 0);
 
-        if (Api != null && Api.Side == EnumAppSide.Client)
+        if (Api != null && Api.Side == EnumAppSide.Client && _clientDialog != null)
         {
-            if (this._clientDialog != null)
-                _clientDialog.Update(_genTemp, _fuelBurnTime);
+            _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
             MarkDirty();
         }
-
-
     }
 
-
-    /// <summary>
-    /// Получение информации о блоке 
-    /// </summary>
-    /// <param name="forPlayer"></param>
-    /// <param name="dsc"></param>
     public override void GetBlockInfo(IPlayer forPlayer, StringBuilder dsc)
     {
         base.GetBlockInfo(forPlayer, dsc);
 
-        if (this.FuelStack == null)
-            return;
+        if (FuelStack != null)
+            dsc.AppendLine(Lang.Get("Contents") + ": " + FuelStack.StackSize + "x" + FuelStack.GetName());
 
-        dsc.AppendLine(Lang.Get("Contents") + ": " + (object)this.FuelStack.StackSize + "x" + (object)this.FuelStack.GetName());
-
+        dsc.AppendLine(Lang.Get("Water") + ": " + _waterAmount.ToString("0.0") + "/" + WaterCapacity + " L");
+        if (_waterAmount <= 0)
+            dsc.AppendLine(Lang.Get("No water - reduced power"));
     }
-
 }

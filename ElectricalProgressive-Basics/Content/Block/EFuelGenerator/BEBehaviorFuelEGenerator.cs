@@ -9,23 +9,18 @@ using Vintagestory.API.MathTools;
 
 namespace ElectricalProgressive.Content.Block.EFuelGenerator;
 
-public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBehavior(blockEntity), IElectricProducer
+public class BEBehaviorFuelEGenerator : BlockEntityBehavior, IElectricProducer
 {
-    private float _powerOrder;           // Просят столько энергии (сохраняется)
+    private float _powerOrder;
     public const string PowerOrderKey = "electricalprogressive:powerOrder";
-
-    private float _powerGive;           // Отдаем столько энергии (сохраняется)
+    private float _powerGive;
     private bool hasBurnout;
     private bool prepareBurnout;
     public const string PowerGiveKey = "electricalprogressive:powerGive";
 
-
-
-    private static bool IsBurned => false;
-
-    
-
     public new BlockPos Pos => Blockentity.Pos;
+
+    public BEBehaviorFuelEGenerator(BlockEntity blockEntity) : base(blockEntity) { }
 
     public void Update()
     {
@@ -75,14 +70,9 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
         if (!hasBurnout)
         {
             if (entity.GenTemp > 200)
-            {
-                // Кэшируем вычисление позиции
                 entity.ElectricalProgressive.ParticlesType = 3;
-            }
             else
-            {
                 entity.ElectricalProgressive.ParticlesType = 0;
-            }
         }
         else
         {
@@ -90,47 +80,27 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
         }
     }
 
-
-    /// <summary>
-    /// Сколько энергии может отдать генератор
-    /// </summary>
-    /// <returns></returns>
     public float Produce_give()
     {
-        // отсекаем внештатные ситуации
         if (Blockentity is not BlockEntityEFuelGenerator temp)
-        {
             return 0f;
-        }
 
-        // отдаём энергию только если температура генератора выше 200 градусов
-        if (temp.GenTemp > 200)
+        if (temp.GenTemp > 200 && temp.WaterAmount > 0)
             _powerGive = temp.Power;
         else
-            _powerGive = 0;
+            _powerGive = 1f;
         
         return _powerGive;
     }
-
-
 
     public void Produce_order(float amount)
     {
         _powerOrder = amount;
     }
 
-
-
     public float getPowerGive() => _powerGive;
-
-
     public float getPowerOrder() => _powerOrder;
 
-
-
-    /// <summary>
-    /// Подсказка при наведении на блок
-    /// </summary>
     public override void GetBlockInfo(IPlayer forPlayer, StringBuilder stringBuilder)
     {
         base.GetBlockInfo(forPlayer, stringBuilder);
@@ -138,20 +108,15 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
         if (Blockentity is not BlockEntityEFuelGenerator entity)
             return;
 
-        if (IsBurned)
-            return;
-
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / Math.Max(1f, _powerGive) * 100));
-        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)).ToString() + "/" + Math.Max(1f, _powerGive).ToString() + " " + Lang.Get("W"));
-       
+        stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)) + "/" + Math.Max(1f, _powerGive) + " " + Lang.Get("W"));
+        
+        if (entity.WaterAmount > 0)
+            stringBuilder.AppendLine("└ " + Lang.Get("Water") + ": " + entity.WaterAmount.ToString("0.0") + "/" + entity.WaterCapacity + " L");
+        else
+            stringBuilder.AppendLine("└ " + Lang.Get("No water") + " - " + Lang.Get("Reduced power"));
     }
 
-
-
-    /// <summary>
-    /// Сохранение параметров в дерево атрибутов
-    /// </summary>
-    /// <param name="tree"></param>
     public override void ToTreeAttributes(ITreeAttribute tree)
     {
         base.ToTreeAttributes(tree);
@@ -159,13 +124,6 @@ public class BEBehaviorFuelEGenerator(BlockEntity blockEntity) : BlockEntityBeha
         tree.SetFloat(PowerGiveKey, _powerGive);
     }
 
-
-
-    /// <summary>
-    /// Загрузка параметров из дерева атрибутов
-    /// </summary>
-    /// <param name="tree"></param>
-    /// <param name="worldAccessForResolve"></param>
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
     {
         base.FromTreeAttributes(tree, worldAccessForResolve);
