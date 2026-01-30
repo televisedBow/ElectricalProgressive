@@ -1,9 +1,10 @@
-﻿using System;
+﻿﻿using System;
 using Cairo;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
+using Vintagestory.GameContent;
 
 namespace ElectricalProgressive.Content.Block.EFuelGenerator;
 
@@ -11,6 +12,7 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
 {
     private BlockEntityEFuelGenerator betestgen;
     private float _gentemp;
+    private float _fuelBurntime;
     private float _waterAmount;
 
     public GuiBlockEntityEFuelGenerator(string dialogTitle, InventoryBase inventory, BlockPos blockEntityPos, ICoreClientAPI capi,
@@ -32,14 +34,18 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
     {
         ElementBounds dialogBounds = ElementBounds.Fixed(250, 60);
         ElementBounds dialog = ElementBounds.Fill.WithFixedPadding(0);
-        ElementBounds fuelGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 17, 50, 1, 1);
-        ElementBounds waterGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 17, 100, 1, 1);
-        ElementBounds stoveBounds = ElementBounds.Fixed(17, 50, 210, 150);
-        ElementBounds waterBounds = ElementBounds.Fixed(17, 100, 210, 50);
-        ElementBounds textBounds = ElementBounds.Fixed(115, 60, 121, 100);
+        ElementBounds fuelGrid = ElementStdBounds.SlotGrid(EnumDialogArea.None, 80, 50, 1, 1);
+        ElementBounds stoveBounds = ElementBounds.Fixed(80, 70, 210, 150);
         
+        // Просто задаем абсолютные координаты для индикатора
+        // X = 100, Y = 50, ширина = 40, высота = 170 (оставляем место сверху и снизу)
+        ElementBounds waterBounds = ElementBounds.Fixed(17, 40, 40, 150);
+        
+        ElementBounds textBounds = ElementBounds.Fixed(145, 50, 121, 100);
+        
+        // Не привязываем индикатор к dialog, он будет самостоятельным
         dialog.BothSizing = ElementSizing.FitToChildren;
-        dialog.WithChildren(dialogBounds, fuelGrid, waterGrid, waterBounds, textBounds);
+        dialog.WithChildren(dialogBounds, fuelGrid, textBounds);
         
         ElementBounds window = ElementStdBounds.AutosizedMainDialog
             .WithAlignment(EnumDialogArea.RightMiddle)
@@ -57,12 +63,18 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
             .AddDialogTitleBar(Lang.Get("termogen"), OnTitleBarClose)
             .BeginChildElements(dialog)
             .AddDynamicCustomDraw(stoveBounds, OnBgDraw, "symbolDrawer")
+            
+            // Добавляем индикатор прямо в окно, а не в dialog
+            .AddInset(waterBounds.ForkBoundingParent(2, 2, 2, 2), 2)
             .AddDynamicCustomDraw(waterBounds, OnWaterDraw, "waterDrawer")
+            
             .AddItemSlotGrid(Inventory, SendInvPacket, 1, new int[] { 0 }, fuelGrid, "fuelSlot")
-            .AddItemSlotGrid(Inventory, SendInvPacket, 1, new int[] { 1 }, waterGrid, "waterSlot")
             .AddDynamicText("", outputText, textBounds, "outputText")
             .EndChildElements()
             .Compose();
+        
+        // Обновляем данные при создании GUI
+        Update(betestgen.GenTemp, betestgen.GetFuelBurnTime(), betestgen.WaterAmount);
     }
 
     private void SendInvPacket(object packet)
@@ -93,36 +105,42 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
 
     private void OnWaterDraw(Context ctx, ImageSurface surface, ElementBounds currentBounds)
     {
-        ctx.Save();
+        ItemSlot liquidSlot = Inventory[1];
+        if (liquidSlot.Empty)
+            return;
+
+        float itemsPerLitre = 1f;
+        int capacity = 100; // Вместимость генератора
+
+        WaterTightContainableProps containableProps = BlockLiquidContainerBase.GetContainableProps(liquidSlot.Itemstack);
+        if (containableProps != null)
+        {
+            itemsPerLitre = containableProps.ItemsPerLitre;
+        }
+
+        float fullnessRelative = (float)liquidSlot.StackSize / itemsPerLitre / capacity;
+        fullnessRelative = Math.Min(Math.Max(fullnessRelative, 0f), 1f);
         
-        // Рамка бака
-        ctx.SetSourceRGB(0.3, 0.3, 0.3);
-        ctx.Rectangle(0, 0, currentBounds.OuterWidth, currentBounds.OuterHeight);
-        ctx.Stroke();
-        
-        // Уровень воды
-        float waterPercentage = _waterAmount / 100f;
-        float waterHeight = (float)(currentBounds.OuterHeight * waterPercentage);
-        
-        // Вода
-        ctx.Rectangle(2, currentBounds.OuterHeight - waterHeight, currentBounds.OuterWidth - 4, waterHeight);
-        var gradient = new LinearGradient(0, currentBounds.OuterHeight - waterHeight, 0, currentBounds.OuterHeight);
-        gradient.AddColorStop(0, new Color(0.2, 0.4, 1.0, 0.8));
-        gradient.AddColorStop(1, new Color(0.1, 0.2, 0.8, 0.8));
-        ctx.SetSource(gradient);
-        ctx.Fill();
-        gradient.Dispose();
-        
-        // Текст
-        ctx.SetSourceRGB(1, 1, 1);
-        ctx.SelectFontFace("Arial", FontSlant.Normal, FontWeight.Bold);
-        ctx.SetFontSize(12);
-        string waterText = $"{_waterAmount:0.0}/100 L";
-        var extents = ctx.TextExtents(waterText);
-        ctx.MoveTo((currentBounds.OuterWidth - extents.Width) / 2, currentBounds.OuterHeight / 2);
-        ctx.ShowText(waterText);
-        
-        ctx.Restore();
+        double y = (1.0 - fullnessRelative) * currentBounds.InnerHeight;
+
+        ctx.Rectangle(0, y, currentBounds.InnerWidth, currentBounds.InnerHeight - y);
+
+        CompositeTexture compositeTexture = containableProps?.Texture ?? 
+            liquidSlot.Itemstack.Collectible.Attributes?["inContainerTexture"]
+                .AsObject<CompositeTexture>(null, liquidSlot.Itemstack.Collectible.Code.Domain);
+
+        if (compositeTexture != null)
+        {
+            ctx.Save();
+            Matrix matrix = ctx.Matrix;
+            matrix.Scale(GuiElement.scaled(3.0), GuiElement.scaled(3.0));
+            ctx.Matrix = matrix;
+
+            AssetLocation textureLoc = compositeTexture.Base.Clone().WithPathAppendixOnce(".png");
+            GuiElement.fillWithPattern(capi, ctx, textureLoc, true, false, compositeTexture.Alpha);
+
+            ctx.Restore();
+        }
     }
 
     public void Update(float gentemp, float burntime, float waterAmount)
@@ -130,6 +148,7 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
         if (!IsOpened()) return;
 
         _gentemp = gentemp;
+        _fuelBurntime = burntime;
         _waterAmount = waterAmount;
         
         var newText = (int)gentemp + " °C\n" + 
@@ -159,7 +178,6 @@ public class GuiBlockEntityEFuelGenerator : GuiDialogBlockEntity
     {
         Inventory.SlotModified -= OnSlotModified;
         SingleComposer.GetSlotGrid("fuelSlot").OnGuiClosed(capi);
-        SingleComposer.GetSlotGrid("waterSlot").OnGuiClosed(capi);
         base.OnGuiClosed();
     }
 }

@@ -1,4 +1,4 @@
-﻿using ElectricalProgressive.Utils;
+﻿﻿using ElectricalProgressive.Utils;
 using System;
 using System.Linq;
 using System.Text;
@@ -104,12 +104,12 @@ public class BlockEFuelGenerator : BlockEBase
                         ItemStack content = liquidSource.GetContent(slot.Itemstack);
                         if (content != null && IsWaterLiquid(content, world))
                         {
-                            float desiredLitres = ctrlKey ? liquidSource.TransferSizeLitres : liquidSource.CapacityLitres;
-                            
-                            // Рассчитываем сколько воды можем добавить
                             WaterTightContainableProps containableProps = BlockLiquidContainerBase.GetContainableProps(content);
                             if (containableProps != null)
                             {
+                                float desiredLitres = ctrlKey ? liquidSource.TransferSizeLitres : liquidSource.CapacityLitres;
+                                
+                                // Рассчитываем сколько воды можем добавить
                                 float tankSpace = bef.WaterCapacity - bef.WaterAmount;
                                 
                                 // Ограничиваем желаемое количество доступным пространством
@@ -117,25 +117,38 @@ public class BlockEFuelGenerator : BlockEBase
                                 
                                 if (desiredLitres > 0)
                                 {
-                                    // Используем SplitStackAndPerformAction логику
-                                    int moved = SplitStackAndPerformActionWater(byPlayer.Entity, slot, (itemStack) =>
+                                    int itemsToTake = (int)(desiredLitres * containableProps.ItemsPerLitre);
+                                    
+                                    // Создаем делегат для передачи в SplitStackAndPerformActionWater
+                                    Vintagestory.API.Common.Func<ItemStack, bool> waterTransferAction = (itemStack) =>
                                     {
                                         ItemStack contentInStack = liquidSource.GetContent(itemStack);
-                                        if (contentInStack == null) return 0;
+                                        if (contentInStack == null) return false;
                                         
-                                        int itemsToTake = (int)(desiredLitres * containableProps.ItemsPerLitre);
+                                        // Используем правильную перегрузку TryTakeContent
                                         ItemStack taken = liquidSource.TryTakeContent(itemStack, itemsToTake);
-                                        return taken?.StackSize ?? 0;
-                                    });
-                                    
-                                    if (moved > 0)
-                                    {
-                                        // Добавляем воду в бак (пересчитываем из количества предметов в литры)
-                                        float litresAdded = (float)moved / containableProps.ItemsPerLitre;
-                                        bef.WaterAmount += litresAdded;
+                                        if (taken != null && taken.StackSize > 0)
+                                        {
+                                            // Клонируем воду для добавления в бак
+                                            ItemStack waterToAdd = taken.Clone();
+                                            waterToAdd.StackSize = taken.StackSize;
+                                            
+                                            // Добавляем воду в бак генератора
+                                            bool added = bef.AddWaterFromContainer(waterToAdd, false);
+                                            return added;
+                                        }
                                         
+                                        return false;
+                                    };
+                                    
+                                    // Используем SplitStackAndPerformAction логику
+                                    bool containerEmptied = SplitStackAndPerformActionWater(byPlayer.Entity, slot, waterTransferAction);
+                                    
+                                    if (containerEmptied)
+                                    {
                                         // Эффекты
-                                        DoLiquidMovedEffects(byPlayer, content, moved, EnumLiquidDirection.Fill, world, blockSel.Position);
+                                        DoLiquidMovedEffects(byPlayer, content, itemsToTake, 
+                                            EnumLiquidDirection.Fill, world, blockSel.Position);
                                         
                                         bef.MarkDirty();
                                         return true;
@@ -229,16 +242,16 @@ public class BlockEFuelGenerator : BlockEBase
     }
 
     // Адаптированный метод из BlockLiquidContainerBase для работы с водой
-    private int SplitStackAndPerformActionWater(Entity byEntity, ItemSlot slot, Vintagestory.API.Common.Func<ItemStack, int> action)
+    private bool SplitStackAndPerformActionWater(Entity byEntity, ItemSlot slot, Vintagestory.API.Common.Func<ItemStack, bool> action)
     {
         if (slot.Itemstack == null || slot.Itemstack.StackSize == 0)
-            return 0;
+            return false;
         
         // Если в стаке только 1 предмет
         if (slot.Itemstack.StackSize == 1)
         {
-            int moved = action(slot.Itemstack);
-            if (moved <= 0) return moved;
+            bool success = action(slot.Itemstack);
+            if (!success) return false;
             
             // Помечаем слот как измененный
             slot.MarkDirty();
@@ -250,15 +263,15 @@ public class BlockEFuelGenerator : BlockEBase
                 ReplaceWithEmptyContainer(byEntity, slot);
             }
             
-            return moved;
+            return true;
         }
         
         // Если в стаке больше 1 предмета
         ItemStack singleStack = slot.Itemstack.Clone();
         singleStack.StackSize = 1; // Работаем с одним предметом
         
-        int movedQuantity = action(singleStack);
-        if (movedQuantity <= 0) return 0;
+        bool successAction = action(singleStack);
+        if (!successAction) return false;
         
         // Убираем один предмет из стака
         slot.TakeOut(1);
@@ -287,7 +300,7 @@ public class BlockEFuelGenerator : BlockEBase
         }
         
         slot.MarkDirty();
-        return movedQuantity;
+        return true;
     }
 
     // Вспомогательный класс для работы со слотами

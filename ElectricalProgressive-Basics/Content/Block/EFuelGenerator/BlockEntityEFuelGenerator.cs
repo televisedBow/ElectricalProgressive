@@ -1,4 +1,4 @@
-﻿using ElectricalProgressive.Utils;
+﻿﻿﻿using ElectricalProgressive.Utils;
 using System;
 using System.Text;
 using Vintagestory.API.Client;
@@ -21,22 +21,32 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     private GuiBlockEntityEFuelGenerator _clientDialog;
 
     private float _genTemp = 20f;
-    private float _waterAmount = 0f;
     private const float WaterConsumptionRate = 0.1f;
+    private float _waterAmount = 0f;
 
     private int _maxTemp;
     private float _fuelBurnTime;
     private float _maxBurnTime;
+    
+    // Поля для отслеживания последних значений GUI
+    private float _lastGuiUpdateTemp = -1;
+    private float _lastGuiUpdateBurnTime = -1;
+    private float _lastGuiUpdateWater = -1;
+    private long _lastGuiUpdateTime = 0;
+    
     public float GenTemp => _genTemp;
     
     public float WaterAmount 
     { 
-        get => _waterAmount; 
-        set 
-        { 
-            _waterAmount = Math.Min(Math.Max(value, 0), WaterCapacity);
-            MarkDirty(); 
-        } 
+        get 
+        {
+            if (WaterSlot.Empty) return 0f;
+            
+            var props = BlockLiquidContainerBase.GetContainableProps(WaterSlot.Itemstack);
+            if (props == null) return 0f;
+            
+            return (float)WaterSlot.Itemstack.StackSize / props.ItemsPerLitre;
+        }
     }
 
     public float WaterCapacity => 100f; // 100 литров емкость бака
@@ -46,7 +56,7 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         get
         {
             var envTemp = EnvironmentTemperature();
-            if (_genTemp <= envTemp || _genTemp < 200 || _waterAmount <= 0)
+            if (_genTemp <= envTemp || _genTemp < 200 || WaterSlot.Empty)
                 return 1f;
             return (_genTemp - envTemp) * 2f;
         }
@@ -82,8 +92,6 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     public override string DialogTitle => Lang.Get("fuelgen");
     public override string InventoryClassName => "fuelgen";
     
-    
-
     public BlockEntityEFuelGenerator()
     {
         _inventory = new InventoryFuelGenerator(null, null);
@@ -166,21 +174,21 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
 
     public void OnSlotModified(int slotId)
     {
-        if (slotId == 0)
+        if (slotId == 0) // Слот топлива
         {
             if (!FuelSlot.Empty && FuelStack.Collectible.CombustibleProps != null && _fuelBurnTime == 0)
                 CanDoBurn();
         }
-        else if (slotId == 1)
+        else if (slotId == 1) // Слот воды
         {
-            TryFillWaterFromSlot();
+            CheckAnimationState();
         }
 
         Block = Api.World.BlockAccessor.GetBlock(Pos);
         MarkDirty(Api.Side == EnumAppSide.Server, null);
 
-        if (_clientDialog != null)
-            _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
+        // Обновляем GUI с принудительным флагом при изменении слота
+        UpdateGuiData(true);
 
         Api.World.BlockAccessor.GetChunkAtBlockPos(Pos)?.MarkModified();
     }
@@ -189,71 +197,192 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
     {
         if (_fuelBurnTime > 0f)
         {
-            if (_genTemp > 200)
+            bool canProducePower = _genTemp > 200 && !WaterSlot.Empty;
+            
+            if (canProducePower)
             {
                 StartAnimation();
-                if (_waterAmount > 0)
-                {
-                    _waterAmount -= WaterConsumptionRate * deltatime;
-                    if (_waterAmount < 0) _waterAmount = 0;
-                }
+                // Потребляем воду только если она есть и температура выше 200
+                ConsumeWater(WaterConsumptionRate * deltatime);
+            }
+            else
+            {
+                // Если нет воды или температура упала ниже 200 - останавливаем анимацию
+                StopAnimation();
             }
 
             _genTemp = ChangeTemperature(_genTemp, _maxTemp, deltatime);
             _fuelBurnTime -= deltatime;
+            
             if (_fuelBurnTime <= 0f)
             {
                 _fuelBurnTime = 0f;
                 _maxBurnTime = 0f;
                 _maxTemp = 20;
+                StopAnimation(); // Гарантируем остановку анимации при окончании топлива
+                
                 if (!FuelSlot.Empty)
                     CanDoBurn();
             }
         }
         else
         {
-            if (_genTemp < 200)
-                StopAnimation();
+            // Останавливаем анимацию когда топливо кончилось
+            StopAnimation();
+            
             if (_genTemp != 20f)
                 _genTemp = ChangeTemperature(_genTemp, 20f, deltatime);
+                
             CanDoBurn();
         }
 
-        if (!WaterSlot.Empty && _waterAmount < WaterCapacity)
-            TryFillWaterFromSlot();
-
         MarkDirty();
-
-        if (_clientDialog != null)
-            _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
+        
+        // Всегда обновляем GUI после каждого тика горения
+        UpdateGuiData();
     }
 
-    private void TryFillWaterFromSlot()
+    // Метод для проверки состояния анимации
+    private void CheckAnimationState()
     {
-        if (WaterSlot.Empty) return;
+        bool shouldBeAnimated = _fuelBurnTime > 0 && _genTemp > 200 && !WaterSlot.Empty;
         
-        var waterStack = WaterStack;
-        var props = BlockLiquidContainerBase.GetContainableProps(waterStack);
-        if (props == null || !waterStack.Collectible.Code.Path.ToLower().Contains("water"))
-            return;
-        
-        float availableLitres = waterStack.StackSize / props.ItemsPerLitre;
-        float neededLitres = WaterCapacity - _waterAmount;
-        
-        if (neededLitres > 0 && availableLitres > 0)
+        if (shouldBeAnimated)
         {
-            float takeLitres = Math.Min(neededLitres, availableLitres);
+            StartAnimation();
+        }
+        else
+        {
+            StopAnimation();
+        }
+    }
+
+    // Метод для добавления воды извне (вызывается из BlockEFuelGenerator)
+    public bool AddWaterFromContainer(ItemStack waterStack, bool consumeFromSource = true)
+    {
+        if (waterStack == null) return false;
+        
+        var props = BlockLiquidContainerBase.GetContainableProps(waterStack);
+        if (props == null || !IsWaterLiquid(waterStack))
+            return false;
+        
+        // Конвертируем StackSize в литры
+        float slotLitres = (float)waterStack.StackSize / props.ItemsPerLitre;
+        float tankLitres = WaterAmount;
+        float neededLitres = WaterCapacity - tankLitres;
+        
+        if (neededLitres > 0 && slotLitres > 0)
+        {
+            float takeLitres = Math.Min(neededLitres, slotLitres);
             int takeItems = (int)(takeLitres * props.ItemsPerLitre);
             
-            waterStack.StackSize -= takeItems;
-            _waterAmount += takeLitres;
+            if (takeItems <= 0) return false;
             
-            if (waterStack.StackSize <= 0)
-                WaterSlot.Itemstack = null;
+            // Создаем новый стак воды для бака
+            ItemStack waterForTank = waterStack.Clone();
+            waterForTank.StackSize = takeItems;
             
-            WaterSlot.MarkDirty();
+            // Добавляем воду в бак
+            AddWaterToTank(waterForTank);
+            
+            // Убираем воду из исходного стака (если нужно)
+            if (consumeFromSource)
+            {
+                waterStack.StackSize -= takeItems;
+            }
+            
+            // Проверяем состояние анимации после добавления воды
+            CheckAnimationState();
+            
+            MarkDirty();
+            
+            // Обновляем GUI после добавления воды
+            UpdateGuiData(true);
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Метод для добавления воды в бак
+    private void AddWaterToTank(ItemStack waterStack)
+    {
+        if (waterStack == null || waterStack.StackSize <= 0) return;
+        
+        if (WaterSlot.Empty)
+        {
+            WaterSlot.Itemstack = waterStack;
+        }
+        else
+        {
+            // Проверяем, совпадает ли тип жидкости
+            if (WaterStack.Collectible.Code == waterStack.Collectible.Code)
+            {
+                WaterStack.StackSize += waterStack.StackSize;
+            }
+            else
+            {
+                // Если тип жидкости другой, заменяем
+                WaterSlot.Itemstack = waterStack;
+            }
+        }
+        WaterSlot.MarkDirty();
+    }
+
+    // Метод потребления воды
+    private void ConsumeWater(float litres)
+    {
+        if (WaterSlot.Empty) 
+        {
+            StopAnimation(); // Останавливаем анимацию если вода закончилась
+            return;
+        }
+
+        var props = BlockLiquidContainerBase.GetContainableProps(WaterStack);
+        if (props == null) 
+        {
+            StopAnimation();
+            return;
+        }
+    
+        int itemsToConsume = (int)(litres * props.ItemsPerLitre);
+        if (itemsToConsume <= 0) return;
+    
+        WaterStack.StackSize -= itemsToConsume;
+        if (WaterStack.StackSize <= 0)
+        {
+            WaterSlot.Itemstack = null;
+            StopAnimation(); // Останавливаем анимацию когда вода закончилась
+        }
+    
+        WaterSlot.MarkDirty();
+    
+        // Обновляем количество воды для GUI
+        UpdateWaterAmount(WaterAmount);
+    }
+    
+    // Метод для обновления количества воды
+    public void UpdateWaterAmount(float newAmount)
+    {
+        if (Math.Abs(_waterAmount - newAmount) > 0.1f)
+        {
+            _waterAmount = newAmount;
+            
+            // Обновляем GUI при изменении количества воды
+            UpdateGuiData();
+            
             MarkDirty();
         }
+    }
+
+    // Проверка что жидкость является водой
+    private bool IsWaterLiquid(ItemStack stack)
+    {
+        if (stack == null) return false;
+        
+        string code = stack.Collectible.Code.Path.ToLower();
+        return code.Contains("water") || code.Contains("freshwater");
     }
 
     private void StartAnimation()
@@ -300,6 +429,9 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             if (FuelStack.StackSize <= 0)
                 FuelStack = null;
             FuelSlot.MarkDirty();
+            
+            // Обновляем GUI после начала горения с принудительным обновлением
+            UpdateGuiData(true);
         }
     }
 
@@ -320,7 +452,11 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
             toggleInventoryDialogClient(byPlayer, () =>
             {
                 _clientDialog = new GuiBlockEntityEFuelGenerator(DialogTitle, Inventory, Pos, _capi, this);
-                _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
+                // Сбрасываем кэш при открытии GUI и обновляем с актуальными значениями
+                _lastGuiUpdateTemp = -1;
+                _lastGuiUpdateBurnTime = -1;
+                _lastGuiUpdateWater = -1;
+                UpdateGuiData(true);
                 return _clientDialog;
             });
         }
@@ -356,7 +492,6 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         tree.SetFloat("_genTemp", _genTemp);
         tree.SetInt("maxTemp", _maxTemp);
         tree.SetFloat("fuelBurnTime", _fuelBurnTime);
-        tree.SetFloat("waterAmount", _waterAmount);
     }
 
     public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldForResolving)
@@ -372,12 +507,21 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         _genTemp = tree.GetFloat("_genTemp", 20);
         _maxTemp = tree.GetInt("maxTemp", 20);
         _fuelBurnTime = tree.GetFloat("fuelBurnTime", 0);
-        _waterAmount = tree.GetFloat("waterAmount", 0);
 
-        if (Api != null && Api.Side == EnumAppSide.Client && _clientDialog != null)
+        // Проверяем состояние анимации при загрузке
+        if (Api != null && Api.Side == EnumAppSide.Client)
         {
-            _clientDialog.Update(_genTemp, _fuelBurnTime, _waterAmount);
-            MarkDirty();
+            CheckAnimationState();
+            
+            if (_clientDialog != null && _clientDialog.IsOpened())
+            {
+                // Сбрасываем кэш при загрузке и обновляем GUI
+                _lastGuiUpdateTemp = -1;
+                _lastGuiUpdateBurnTime = -1;
+                _lastGuiUpdateWater = -1;
+                UpdateGuiData(true);
+                MarkDirty();
+            }
         }
     }
 
@@ -388,8 +532,67 @@ public class BlockEntityEFuelGenerator : BlockEntityGenericTypedContainer, IHeat
         if (FuelStack != null)
             dsc.AppendLine(Lang.Get("Contents") + ": " + FuelStack.StackSize + "x" + FuelStack.GetName());
 
-        dsc.AppendLine(Lang.Get("Water") + ": " + _waterAmount.ToString("0.0") + "/" + WaterCapacity + " L");
-        if (_waterAmount <= 0)
+        dsc.AppendLine(Lang.Get("Water") + ": " + WaterAmount.ToString("0.0") + "/" + WaterCapacity + " L");
+        if (WaterSlot.Empty)
             dsc.AppendLine(Lang.Get("No water - reduced power"));
+            
+        // Добавляем информацию о состоянии
+        if (_fuelBurnTime > 0)
+        {
+            dsc.AppendLine(Lang.Get("Burn time") + ": " + (int)_fuelBurnTime + " " + Lang.Get("gui-word-seconds"));
+            if (!WaterSlot.Empty && _genTemp > 200)
+                dsc.AppendLine(Lang.Get("Working at full power"));
+            else if (WaterSlot.Empty)
+                dsc.AppendLine(Lang.Get("No water - generator stopped"));
+        }
+    }
+    
+    // Метод для получения времени горения (для GUI)
+    public float GetFuelBurnTime()
+    {
+        return _fuelBurnTime;
+    }
+    
+    // Единый метод для обновления GUI с оптимизацией
+    private void UpdateGuiData(bool force = false)
+    {
+        if (_clientDialog == null || !_clientDialog.IsOpened())
+            return;
+            
+        long currentTime = Api?.World?.ElapsedMilliseconds ?? 0;
+        float currentWater = WaterAmount;
+        float currentBurnTime = _fuelBurnTime;
+        
+        // Всегда обновляем при принудительном обновлении
+        if (force)
+        {
+            _clientDialog.Update(_genTemp, currentBurnTime, currentWater);
+            _lastGuiUpdateTemp = _genTemp;
+            _lastGuiUpdateBurnTime = currentBurnTime;
+            _lastGuiUpdateWater = currentWater;
+            _lastGuiUpdateTime = currentTime;
+            return;
+        }
+        
+        // Для обычных обновлений - проверяем частоту
+        if (currentTime - _lastGuiUpdateTime < 250)
+            return;
+            
+        // Проверяем, изменились ли данные значительно
+        bool tempChanged = Math.Abs(_genTemp - _lastGuiUpdateTemp) > 0.5f;
+        bool burnTimeChanged = Math.Abs(currentBurnTime - _lastGuiUpdateBurnTime) > 0.5f;
+        bool waterChanged = Math.Abs(currentWater - _lastGuiUpdateWater) > 0.1f;
+        
+        // Обновляем только если есть значимые изменения
+        if (tempChanged || burnTimeChanged || waterChanged)
+        {
+            _clientDialog.Update(_genTemp, currentBurnTime, currentWater);
+            
+            // Сохраняем последние значения
+            _lastGuiUpdateTemp = _genTemp;
+            _lastGuiUpdateBurnTime = currentBurnTime;
+            _lastGuiUpdateWater = currentWater;
+            _lastGuiUpdateTime = currentTime;
+        }
     }
 }

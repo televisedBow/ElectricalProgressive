@@ -1,4 +1,4 @@
-﻿using ElectricalProgressive.Interface;
+﻿﻿using ElectricalProgressive.Interface;
 using ElectricalProgressive.Utils;
 using System;
 using System.Text;
@@ -85,7 +85,7 @@ public class BEBehaviorFuelEGenerator : BlockEntityBehavior, IElectricProducer
         if (Blockentity is not BlockEntityEFuelGenerator temp)
             return 0f;
 
-        if (temp.GenTemp > 200 && temp.WaterAmount > 0)
+        if (temp.GenTemp > 200 && !temp.WaterSlot.Empty)
             _powerGive = temp.Power;
         else
             _powerGive = 1f;
@@ -111,7 +111,7 @@ public class BEBehaviorFuelEGenerator : BlockEntityBehavior, IElectricProducer
         stringBuilder.AppendLine(StringHelper.Progressbar(Math.Min(_powerGive, _powerOrder) / Math.Max(1f, _powerGive) * 100));
         stringBuilder.AppendLine("└ " + Lang.Get("Production") + ": " + ((int)Math.Min(_powerGive, _powerOrder)) + "/" + Math.Max(1f, _powerGive) + " " + Lang.Get("W"));
         
-        if (entity.WaterAmount > 0)
+        if (!entity.WaterSlot.Empty)
             stringBuilder.AppendLine("└ " + Lang.Get("Water") + ": " + entity.WaterAmount.ToString("0.0") + "/" + entity.WaterCapacity + " L");
         else
             stringBuilder.AppendLine("└ " + Lang.Get("No water") + " - " + Lang.Get("Reduced power"));
