@@ -1,4 +1,4 @@
-{
+﻿{
 	"editor": {
 		"allAngles": false,
 		"entityTextureMode": false
@@ -126,12 +126,34 @@
 			"rotationOrigin": [ 1.0, 3.5, 15.5 ],
 			"renderPass": 3,
 			"faces": {
-				"north": { "texture": "#frame", "uv": [ 0.0, 0.0, 8.0, 16.0 ], "autoUv": false },
-				"east": { "texture": "#frame", "uv": [ 0.0, 0.0, 1.0, 16.0 ], "autoUv": false },
-				"south": { "texture": "#frame", "uv": [ 0.0, 0.0, 8.0, 16.0 ], "autoUv": false },
-				"west": { "texture": "#frame", "uv": [ 0.0, 0.0, 1.0, 16.0 ], "autoUv": false },
-				"up": { "texture": "#frame", "uv": [ 0.0, 0.0, 14.0, 0.5 ] },
-				"down": { "texture": "#frame", "uv": [ 0.0, 0.0, 14.0, 0.5 ] }
+				"north": {
+					"texture": "#steel",
+					"uv": [ 0.0, 0.0, 8.0, 16.0 ],
+					"autoUv": false
+				},
+				"east": {
+					"texture": "#steel",
+					"uv": [ 0.0, 0.0, 1.0, 16.0 ],
+					"autoUv": false
+				},
+				"south": {
+					"texture": "#steel",
+					"uv": [ 0.0, 0.0, 8.0, 16.0 ],
+					"autoUv": false
+				},
+				"west": {
+					"texture": "#steel",
+					"uv": [ 0.0, 0.0, 1.0, 16.0 ],
+					"autoUv": false
+				},
+				"up": {
+					"texture": "#steel",
+					"uv": [ 0.0, 0.0, 14.0, 0.5 ]
+				},
+				"down": {
+					"texture": "#steel",
+					"uv": [ 0.0, 0.0, 14.0, 0.5 ]
+				}
 			},
 			"children": [
 				{

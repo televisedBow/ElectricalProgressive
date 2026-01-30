@@ -144,5 +144,19 @@
 
   "progress": "Прогресс: {0:P0}",
 
-  "electricalprogressiveqol:update_heater_info": "Обновить информацию на обогревателях"
+  "electricalprogressiveqol:update_heater_info": "Обновить информацию на обогревателях",
+
+
+  "block-ehotspringsgenerator-*": "Генератор на горячих источниках",
+  "block-ehotspringsgenerator-burned-south": "Генератор на горячих источниках (Сгоревший)",
+  "block-handbooktitle-ehotspringsgenerator": "Использование",
+  "block-handbooktext-ehotspringsgenerator": "Генератор, использующий энергию горячих источников для выработки электричества. Должен быть со всех сторон окружён горячими источниками. Эффективность можно повысить, разместив <a href=\"handbook:\/\/block-electricalprogressiveqol:eheatexchanger\">теплообменники</a> рядом с генератором. Наличие нескольких генераторов поблизости значительно снижает эффективность.",
+  "hotsprings-nearby-penalty": "Поблизости несколько генераторов, эффективность снижена",
+  "hotsprings-not-surrounded": "Должен быть окружён горячими источниками",
+
+  "block-eheatexchanger": "Теплообменник",
+  "block-handbooktitle-eheatexchanger": "Использование",
+  "block-handbooktext-eheatexchanger": "Теплообменник, который должен быть размещён рядом с Генератором на горячих источниках (включая диагональные клетки). Каждый теплообменник повышает эффективность генератора, от 5% при отсутствии до 100% при 7 теплообменниках.",
+  "heatexchanger-placement-hint": "Должен быть размещён рядом с Генератором на горячих источниках"
+
 }
