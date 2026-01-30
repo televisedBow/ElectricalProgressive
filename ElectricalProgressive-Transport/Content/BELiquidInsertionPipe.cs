@@ -101,65 +101,52 @@ namespace ElectricalProgressiveTransport
         
         private void DetermineOutputDirection()
         {
-            if (Api == null) return;
-    
-            if (debugCounter % 10 == 0)
-                Api.Logger.Notification($"=== Определяем вывод для жидкостной трубы на {Pos} ===");
-    
             for (int i = 0; i < 6; i++)
             {
                 BlockFacing facing = BlockFacing.ALLFACES[i];
                 BlockPos checkPos = Pos.AddCopy(facing);
-        
+
+                // Проверяем БЛОК на интерфейсы жидкостей
                 Block checkBlock = Api.World.BlockAccessor.GetBlock(checkPos);
-                if (checkBlock is BlockPipeBase)
-                {
-                    continue;
-                }
         
-                // Ищем контейнеры, которые могут хранить жидкости
-                BlockEntity be = Api.World.BlockAccessor.GetBlockEntity(checkPos);
-                
-                if (be != null && (be is ILiquidSink || HasLiquidSlot(be)))
+                if (checkBlock is ILiquidSink)
                 {
+                    // Блок реализует интерфейс приемника жидкостей
                     outputFacing = facing;
-                    if (debugCounter % 5 == 0)
+            
+                    // Отладочная информация
+                    Api.Logger.Notification($"=== Найден ILiquidSink: {facing.Code} -> {checkPos} ===");
+                    Api.Logger.Notification($"=== Тип блока: {checkBlock.GetType().Name} ===");
+            
+                    // Проверим конкретный тип
+                    if (checkBlock is BlockLiquidContainerBase liquidContainer)
                     {
-                        Api.Logger.Notification($"=== НАЙДЕН ЖИДКОСТНОЙ КОНТЕЙНЕР! {be.GetType().Name} на {checkPos} ===");
+                        Api.Logger.Notification($"=== Это BlockLiquidContainerBase, емкость: {liquidContainer.CapacityLitres}л ===");
                     }
+            
                     return;
                 }
             }
-    
             outputFacing = null;
-        }
-        
-        private bool HasLiquidSlot(BlockEntity be)
-        {
-            if (be is BlockEntityContainer container)
-            {
-                if (container.Inventory != null)
-                {
-                    for (int i = 0; i < container.Inventory.Count; i++)
-                    {
-                        ItemSlot slot = container.Inventory[i];
-                        if (slot is ItemSlotLiquidOnly)
-                        {
-                            if (debugCounter % 10 == 0)
-                                Api.Logger.Notification($"=== Найден ItemSlotLiquidOnly в слоте #{i} ===");
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
         }
         
         private void OnTransferTick(float dt)
         {
             debugCounter++;
-            
-            if (Api == null || networkManager == null) return;
+    
+            if (Api == null)
+            {
+                Api.Logger.Notification($"=== Api is null! ===");
+                return;
+            }
+    
+            if (networkManager == null)
+            {
+                Api.Logger.Notification($"=== networkManager is null! ===");
+                return;
+            }
+
+            Api.Logger.Notification($"=== OnTransferTick #{debugCounter} на позиции {Pos} ===");
 
             // Обновляем направление вывода
             if (outputFacing == null || debugCounter % 20 == 0)
@@ -168,653 +155,203 @@ namespace ElectricalProgressiveTransport
             }
 
             if (outputFacing == null)
+            {
+                Api.Logger.Notification($"=== outputFacing is null, пропускаем тик ===");
                 return;
+            }
 
             // Получаем целевой контейнер
-            BlockPos containerPos = Pos.AddCopy(outputFacing);
-            BlockEntity be = Api.World.BlockAccessor.GetBlockEntity(containerPos);
-            
-            if (be == null)
-                return;
+            BlockPos targetPos = Pos.AddCopy(outputFacing);
+            Api.Logger.Notification($"=== Целевая позиция: {targetPos} ===");
     
-            // Пытаемся передать жидкость в контейнер
-            TryTransferLiquidToContainer(be, containerPos);
-        }
-        
-        private void TryTransferLiquidToContainer(BlockEntity targetBe, BlockPos targetPos)
-        {
-            if (debugCounter % 10 == 0)
-                Api.Logger.Notification($"=== Пытаемся передать жидкость в контейнер на {targetPos} ===");
-            
-            // Если целевой блок реализует ILiquidSink
-            if (targetBe is ILiquidSink liquidSink)
+            Block targetBlock = Api.World.BlockAccessor.GetBlock(targetPos);
+            Api.Logger.Notification($"=== Целевой блок: {targetBlock?.GetType().Name} ===");
+    
+            if (targetBlock is ILiquidSink)
             {
-                TransferToLiquidSink(liquidSink, targetPos);
+                Api.Logger.Notification($"=== Целевой блок реализует ILiquidSink ===");
+            }
+            else
+            {
+                Api.Logger.Notification($"=== Целевой блок НЕ реализует ILiquidSink! ===");
+                outputFacing = null; // Сбросим направление
                 return;
             }
-            
-            // Если это BlockEntityContainer с жидкостными слотами
-            if (targetBe is BlockEntityContainer container)
-            {
-                TransferToContainerSlots(container, targetPos);
-                return;
-            }
+
+            // Вызываем передачу напрямую через блок, а не через BlockEntity
+            TryTransferLiquidToSinkDirect(targetBlock as ILiquidSink, targetPos);
         }
         
-        private void TransferToLiquidSink(ILiquidSink liquidSink, BlockPos targetPos)
+        // Новый метод: передача напрямую через блок
+private void TryTransferLiquidToSinkDirect(ILiquidSink sink, BlockPos targetPos)
+{
+    if (sink == null) return;
+    
+    Api.Logger.Notification($"=== TryTransferLiquidToSinkDirect: цель на {targetPos} ===");
+    
+    // Используем сеть для поиска источников
+    var network = networkManager.GetNetwork(Pos);
+    if (network == null) 
+    {
+        Api.Logger.Notification($"=== СЕТЬ НЕ НАЙДЕНА ===");
+        return;
+    }
+
+    Api.Logger.Notification($"=== Размер сети: {network.Pipes.Count} труб ===");
+    
+    // Собираем все позиции для исключения
+    var excludePositions = new HashSet<BlockPos>();
+    excludePositions.Add(Pos);
+    excludePositions.Add(targetPos);
+
+    int sourcesChecked = 0;
+    
+    // Ищем источник жидкости в сети
+    foreach (var pipePos in network.Pipes)
+    {
+        if (excludePositions.Contains(pipePos)) continue;
+
+        // Проверяем все стороны трубы
+        for (int i = 0; i < 6; i++)
         {
-            if (debugCounter % 10 == 0)
-                Api.Logger.Notification($"=== Цель реализует ILiquidSink ===");
-            
-            // Используем сеть для поиска источников
-            var network = networkManager.GetNetwork(Pos);
-            if (network == null) 
-                return;
+            BlockFacing facing = BlockFacing.ALLFACES[i];
+            BlockPos sourcePos = pipePos.AddCopy(facing);
 
-            if (debugCounter % 20 == 0)
-                Api.Logger.Notification($"=== Размер сети: {network.Pipes.Count} труб ===");
+            if (excludePositions.Contains(sourcePos)) continue;
             
-            // Собираем все позиции для исключения
-            var excludePositions = new HashSet<BlockPos>();
-            excludePositions.Add(Pos);
-            excludePositions.Add(targetPos);
-
-            // Ищем источник жидкости в сети
-            foreach (var pipePos in network.Pipes)
+            // Пропускаем другие трубы
+            Block sourceBlock = Api.World.BlockAccessor.GetBlock(sourcePos);
+            if (sourceBlock is BlockPipeBase)
+                continue;
+                
+            sourcesChecked++;
+            Api.Logger.Notification($"=== Проверяем источник #{sourcesChecked}: {sourcePos} ===");
+            Api.Logger.Notification($"=== Блок источника: {sourceBlock?.GetType().Name} ===");
+            
+            // Проверяем БЛОК на ILiquidSource
+            if (sourceBlock is ILiquidSource liquidSource)
             {
-                if (excludePositions.Contains(pipePos)) continue;
-
-                // Проверяем все стороны трубы
-                for (int i = 0; i < 6; i++)
+                Api.Logger.Notification($"=== Блок источника реализует ILiquidSource! ===");
+                
+                // Пытаемся передать
+                if (TryTransferFromBlockSourceToSink(sourcePos, liquidSource, sink, targetPos))
                 {
-                    BlockFacing facing = BlockFacing.ALLFACES[i];
-                    BlockPos checkPos = pipePos.AddCopy(facing);
-
-                    if (excludePositions.Contains(checkPos)) continue;
-                    
-                    // Пропускаем другие трубы
-                    Block checkBlock = Api.World.BlockAccessor.GetBlock(checkPos);
-                    if (checkBlock is BlockPipeBase)
-                        continue;
-
-                    // Проверяем, можно ли взять жидкость из этого источника
-                    if (TryTransferFromSourceToSink(checkPos, liquidSink, targetPos))
-                    {
-                        if (debugCounter % 5 == 0)
-                            Api.Logger.Notification($"=== Успешно перенесли жидкость из {checkPos} ===");
-                        return;
-                    }
+                    Api.Logger.Notification($"=== Успешно перенесли жидкость из {sourcePos} ===");
+                    return;
                 }
             }
-        }
-        
-        private void TransferToContainerSlots(BlockEntityContainer container, BlockPos targetPos)
-        {
-            if (debugCounter % 10 == 0)
-                Api.Logger.Notification($"=== Цель - BlockEntityContainer ===");
-            
-            IInventory targetInventory = container.Inventory;
-            
-            if (targetInventory == null) 
-                return;
-            
-            // Используем сеть для поиска источников
-            var network = networkManager.GetNetwork(Pos);
-            if (network == null) 
-                return;
-
-            // Собираем все позиции для исключения
-            var excludePositions = new HashSet<BlockPos>();
-            excludePositions.Add(Pos);
-            excludePositions.Add(targetPos);
-
-            // Ищем источник жидкости в сети
-            foreach (var pipePos in network.Pipes)
+            else
             {
-                if (excludePositions.Contains(pipePos)) continue;
-
-                // Проверяем все стороны трубы
-                for (int i = 0; i < 6; i++)
-                {
-                    BlockFacing facing = BlockFacing.ALLFACES[i];
-                    BlockPos checkPos = pipePos.AddCopy(facing);
-
-                    if (excludePositions.Contains(checkPos)) continue;
-                    
-                    // Пропускаем другие трубы
-                    Block checkBlock = Api.World.BlockAccessor.GetBlock(checkPos);
-                    if (checkBlock is BlockPipeBase)
-                        continue;
-
-                    // Проверяем, можно ли взять жидкость из этого источника
-                    if (TryTransferFromSourceToContainerSlots(checkPos, container, targetPos))
-                    {
-                        if (debugCounter % 5 == 0)
-                            Api.Logger.Notification($"=== Успешно перенесли жидкость из {checkPos} ===");
-                        return;
-                    }
-                }
+                Api.Logger.Notification($"=== Блок НЕ реализует ILiquidSource ===");
             }
         }
+    }
+    
+    if (sourcesChecked == 0)
+        Api.Logger.Notification($"=== НЕ НАЙДЕНО НИ ОДНОГО ИСТОЧНИКА ===");
+}
         
-        private bool TryTransferFromSourceToSink(BlockPos sourcePos, ILiquidSink liquidSink, BlockPos targetPos)
+// Новый метод: передача от блока-источника к приемнику
+        private bool TryTransferFromBlockSourceToSink(BlockPos sourcePos, ILiquidSource source, ILiquidSink sink,
+            BlockPos targetPos)
         {
             // Проверяем тайминг
-            if (!CanTransferFrom(sourcePos)) 
-                return false;
-            
-            BlockEntity sourceBe = Api.World.BlockAccessor.GetBlockEntity(sourcePos);
-            if (sourceBe == null) 
-                return false;
-            
-            if (debugCounter % 10 == 0)
-                Api.Logger.Notification($"=== Проверяем источник: {sourceBe.GetType().Name} на {sourcePos} ===");
-            
-            // Проверяем, является ли источник ILiquidSource
-            if (sourceBe is ILiquidSource liquidSource)
+            if (!CanTransferFrom(sourcePos))
             {
-                return TransferBetweenLiquidInterfaces(liquidSource, liquidSink, sourcePos, targetPos);
-            }
-            
-            // Если источник - BlockEntityContainer с жидкостными контейнерами
-            if (sourceBe is BlockEntityContainer sourceContainer)
-            {
-                return TransferFromContainerToSink(sourceContainer, liquidSink, sourcePos, targetPos);
-            }
-            
-            return false;
-        }
-        
-        private bool TryTransferFromSourceToContainerSlots(BlockPos sourcePos, BlockEntityContainer targetContainer, BlockPos targetPos)
-        {
-            // Проверяем тайминг
-            if (!CanTransferFrom(sourcePos)) 
+                Api.Logger.Notification($"=== Тайминг не позволяет передачу из {sourcePos} ===");
                 return false;
-            
-            BlockEntity sourceBe = Api.World.BlockAccessor.GetBlockEntity(sourcePos);
-            if (sourceBe == null) 
-                return false;
-            
-            if (debugCounter % 10 == 0)
-                Api.Logger.Notification($"=== Проверяем источник: {sourceBe.GetType().Name} на {sourcePos} ===");
-            
-            // Если источник - ILiquidSource
-            if (sourceBe is ILiquidSource liquidSource)
-            {
-                return TransferFromLiquidSourceToContainer(liquidSource, targetContainer, sourcePos, targetPos);
             }
-            
-            // Если источник - BlockEntityContainer с жидкостными контейнерами
-            if (sourceBe is BlockEntityContainer sourceContainer)
-            {
-                return TransferBetweenContainers(sourceContainer, targetContainer, sourcePos, targetPos);
-            }
-            
-            return false;
-        }
-        
-        private bool TransferBetweenLiquidInterfaces(ILiquidSource source, ILiquidSink sink, BlockPos sourcePos, BlockPos targetPos)
-        {
+
+            Api.Logger.Notification($"=== TryTransferFromBlockSourceToSink ===");
+            Api.Logger.Notification($"=== Источник (блок): {source.GetType().Name} на {sourcePos} ===");
+            Api.Logger.Notification($"=== Приемник: {sink.GetType().Name} на {targetPos} ===");
+
             // Получаем содержимое из источника
             var contentStack = source.GetContent(sourcePos);
             if (contentStack == null)
             {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== Источник пуст ===");
+                Api.Logger.Notification($"=== Источник пуст (GetContent вернул null) ===");
                 return false;
             }
-    
+
+            Api.Logger.Notification(
+                $"=== Содержимое источника: {contentStack.Collectible?.Code}, StackSize: {contentStack.StackSize} ===");
+
             // Проверяем фильтр
             if (!CheckItemAgainstLiquidFilter(contentStack))
             {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== Жидкость не прошла фильтр ===");
+                Api.Logger.Notification($"=== Жидкость не прошла фильтр ===");
                 return false;
             }
-    
+
             // Вычисляем количество для передачи (в литрах)
-            float litresToTransfer = Math.Min(transferRate / 1000f, source.GetCurrentLitres(sourcePos));
+            float currentLitres = source.GetCurrentLitres(sourcePos);
+            Api.Logger.Notification($"=== Текущее количество в источнике: {currentLitres} литров ===");
+
+            float litresToTransfer = Math.Min(transferRate / 1000f, currentLitres);
             if (litresToTransfer <= 0)
             {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== Недостаточно жидкости для передачи ===");
+                Api.Logger.Notification($"=== Недостаточно жидкости для передачи ===");
                 return false;
             }
-    
-            if (debugCounter % 5 == 0)
-            {
-                Api.Logger.Notification($"=== Пытаемся передать {litresToTransfer} литров жидкости {contentStack.Collectible?.Code} ===");
-            }
-    
+
+            Api.Logger.Notification($"=== Пытаемся передать {litresToTransfer} литров жидкости ===");
+
             // Пытаемся передать жидкость
             int movedItems = sink.TryPutLiquid(targetPos, contentStack, litresToTransfer);
-    
+
+            Api.Logger.Notification($"=== TryPutLiquid вернул: {movedItems} единиц ===");
+
             if (movedItems > 0)
             {
                 // Забираем переданное количество из источника
                 ItemStack takenStack = source.TryTakeContent(sourcePos, movedItems);
-        
+
+                if (takenStack != null)
+                    Api.Logger.Notification($"=== Изъято из источника: {takenStack.StackSize} единиц ===");
+
                 lastTransferTime[sourcePos] = Api.World.ElapsedMilliseconds;
-                Api.World.BlockAccessor.GetBlockEntity(sourcePos)?.MarkDirty();
-                Api.World.BlockAccessor.GetBlockEntity(targetPos)?.MarkDirty();
-        
+
+                // Обновляем блоки
+                Api.World.BlockAccessor.MarkBlockDirty(sourcePos);
+                Api.World.BlockAccessor.MarkBlockDirty(targetPos);
+
                 Api.Logger.Notification($"=== УСПЕХ: Передано {movedItems} единиц жидкости ===");
                 return true;
             }
-    
+            else
+            {
+                Api.Logger.Notification($"=== НЕУДАЧА: TryPutLiquid вернул 0 ===");
+
+                // Попробуем диагностику для приемника
+                if (sink is BlockLiquidContainerBase container)
+                {
+                    BlockEntity targetBe = Api.World.BlockAccessor.GetBlockEntity(targetPos);
+                    if (targetBe != null)
+                    {
+                        Api.Logger.Notification($"=== Сущность приемника: {targetBe.GetType().Name} ===");
+                    }
+                }
+            }
+
             return false;
         }
         
-        private bool TransferFromLiquidSourceToContainer(ILiquidSource source, BlockEntityContainer targetContainer, BlockPos sourcePos, BlockPos targetPos)
-        {
-            // Получаем содержимое из источника
-            var contentStack = source.GetContent(sourcePos);
-            if (contentStack == null)
-            {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== Источник пуст ===");
-                return false;
-            }
-            
-            // Проверяем фильтр
-            if (!CheckItemAgainstLiquidFilter(contentStack))
-            {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== Жидкость не прошла фильтр ===");
-                return false;
-            }
-            
-            // Ищем подходящий слот в контейнере
-            var targetSlot = FindSuitableLiquidSlot(targetContainer.Inventory, contentStack);
-            if (targetSlot == null)
-            {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== Не найден подходящий слот в цели ===");
-                return false;
-            }
-            
-            // Вычисляем количество для передачи (в литрах)
-            float litresToTransfer = Math.Min(transferRate / 1000f, source.GetCurrentLitres(sourcePos));
-            if (litresToTransfer <= 0)
-                return false;
-            
-            // Пытаемся передать жидкость
-            int movedItems = 0;
-            
-            if (targetSlot is ItemSlotLiquidOnly liquidSlot)
-            {
-                // Передача в жидкостной слот
-                movedItems = TransferToLiquidSlot(source, sourcePos, liquidSlot, litresToTransfer);
-            }
-            else if (targetSlot.Itemstack?.Block is BlockLiquidContainerBase containerBlock)
-            {
-                // Передача в жидкостной контейнер
-                movedItems = TransferToLiquidContainer(source, sourcePos, targetSlot, containerBlock, litresToTransfer);
-            }
-            
-            if (movedItems > 0)
-            {
-                lastTransferTime[sourcePos] = Api.World.ElapsedMilliseconds;
-                Api.World.BlockAccessor.GetBlockEntity(sourcePos)?.MarkDirty();
-                targetContainer.MarkDirty();
-                targetSlot.MarkDirty();
-                
-                Api.Logger.Notification($"=== УСПЕХ: Передано {movedItems} единиц жидкости в контейнер ===");
-                return true;
-            }
-            
-            return false;
-        }
         
-        private bool TransferFromContainerToSink(BlockEntityContainer sourceContainer, ILiquidSink sink, BlockPos sourcePos, BlockPos targetPos)
-        {
-            // Ищем жидкость в контейнере-источнике
-            var sourceSlot = FindLiquidSlot(sourceContainer.Inventory);
-            if (sourceSlot == null || sourceSlot.Empty)
-            {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== В источнике не найдена жидкость ===");
-                return false;
-            }
-            
-            var liquidStack = sourceSlot.Itemstack;
-            
-            // Проверяем фильтр
-            if (!CheckItemAgainstLiquidFilter(liquidStack))
-            {
-                if (debugCounter % 5 == 0)
-                    Api.Logger.Notification($"=== Жидкость не прошла фильтр ===");
-                return false;
-            }
-            
-            // Вычисляем количество для передачи (в литрах)
-            float litresToTransfer = transferRate / 1000f;
-            
-            if (debugCounter % 5 == 0)
-            {
-                Api.Logger.Notification($"=== Пытаемся передать {litresToTransfer} литров жидкости {liquidStack.Collectible?.Code} ===");
-            }
-            
-            // Пытаемся передать жидкость в приемник
-            int movedItems = sink.TryPutLiquid(targetPos, liquidStack, litresToTransfer);
-            
-            if (movedItems > 0)
-            {
-                // Забираем переданное количество из источника
-                if (sourceSlot.Itemstack.StackSize == movedItems)
-                {
-                    sourceSlot.Itemstack = null;
-                }
-                else
-                {
-                    sourceSlot.Itemstack.StackSize -= movedItems;
-                }
-                
-                sourceSlot.MarkDirty();
-                sourceContainer.MarkDirty();
-                lastTransferTime[sourcePos] = Api.World.ElapsedMilliseconds;
-                Api.World.BlockAccessor.GetBlockEntity(targetPos)?.MarkDirty();
-                
-                Api.Logger.Notification($"=== УСПЕХ: Передано {movedItems} единиц жидкости ===");
-                return true;
-            }
-            
-            return false;
-        }
-        
-private bool TransferBetweenContainers(BlockEntityContainer sourceContainer, BlockEntityContainer targetContainer, BlockPos sourcePos, BlockPos targetPos)
-{
-    // Ищем жидкость в контейнере-источнике
-    var sourceSlot = FindLiquidSlot(sourceContainer.Inventory);
-    if (sourceSlot == null || sourceSlot.Empty)
-    {
-        if (debugCounter % 5 == 0)
-            Api.Logger.Notification($"=== В источнике не найдена жидкость ===");
-        return false;
-    }
-    
-    var liquidStack = sourceSlot.Itemstack;
-    
-    // Проверяем фильтр
-    if (!CheckItemAgainstLiquidFilter(liquidStack))
-    {
-        if (debugCounter % 5 == 0)
-            Api.Logger.Notification($"=== Жидкость не прошла фильтр ===");
-        return false;
-    }
-    
-    // Ищем подходящий слот в целевом контейнере
-    var targetSlot = FindSuitableLiquidSlot(targetContainer.Inventory, liquidStack);
-    if (targetSlot == null)
-    {
-        if (debugCounter % 5 == 0)
-            Api.Logger.Notification($"=== Не найден подходящий слот в цели ===");
-        return false;
-    }
-    
-    // Вычисляем количество для передачи
-    int maxAmount = Math.Min(transferRate, sourceSlot.StackSize);
-    if (maxAmount <= 0)
-        return false;
-    
-    if (debugCounter % 5 == 0)
-    {
-        Api.Logger.Notification($"=== Пытаемся передать {maxAmount} единиц жидкости {liquidStack.Collectible?.Code} ===");
-    }
-    
-    // Простая логика переноса
-    int transferred = 0;
-    
-    if (targetSlot is ItemSlotLiquidOnly liquidTargetSlot)
-    {
-        // Для жидкостных слотов
-        if (liquidTargetSlot.Empty)
-        {
-            liquidTargetSlot.Itemstack = liquidStack.Clone();
-            liquidTargetSlot.Itemstack.StackSize = maxAmount;
-            transferred = maxAmount;
-        }
-        else if (liquidTargetSlot.Itemstack.Collectible.Code.Equals(liquidStack.Collectible.Code))
-        {
-            int availableSpace = liquidTargetSlot.MaxSlotStackSize - liquidTargetSlot.StackSize;
-            transferred = Math.Min(maxAmount, availableSpace);
-            liquidTargetSlot.Itemstack.StackSize += transferred;
-        }
-    }
-    else
-    {
-        // Для обычных слотов
-        ItemStackMoveOperation op = new ItemStackMoveOperation(
-            Api.World,
-            EnumMouseButton.Left,
-            0,
-            EnumMergePriority.DirectMerge,
-            maxAmount
-        );
-        
-        transferred = sourceSlot.TryPutInto(targetSlot, ref op);
-    }
-    
-    if (transferred > 0)
-    {
-        // Убираем переданное количество из источника
-        sourceSlot.Itemstack.StackSize -= transferred;
-        if (sourceSlot.Itemstack.StackSize <= 0)
-        {
-            sourceSlot.Itemstack = null;
-        }
-        
-        sourceSlot.MarkDirty();
-        targetSlot.MarkDirty();
-        sourceContainer.MarkDirty();
-        targetContainer.MarkDirty();
-        lastTransferTime[sourcePos] = Api.World.ElapsedMilliseconds;
-        
-        Api.Logger.Notification($"=== УСПЕХ: Передано {transferred} единиц жидкости ===");
-        return true;
-    }
-    
-    return false;
-}
-
-        private int TransferToLiquidSlot(ILiquidSource source, BlockPos sourcePos, ItemSlotLiquidOnly targetSlot, float litresToTransfer)
-        {
-            if (Api == null) return 0;
-    
-            // Получаем содержимое из источника
-            var contentStack = source.GetContent(sourcePos);
-            if (contentStack == null)
-                return 0;
-    
-            // Вычисляем количество в единицах предмета
-            var props = GetLiquidProps(contentStack);
-            int itemsToTransfer = (int)(litresToTransfer * (props?.ItemsPerLitre ?? 1));
-    
-            if (itemsToTransfer <= 0)
-                return 0;
-    
-            // Ограничиваем максимальное количество
-            itemsToTransfer = Math.Min(itemsToTransfer, contentStack.StackSize);
-    
-            // Берем жидкость из источника
-            ItemStack takenStack = source.TryTakeContent(sourcePos, itemsToTransfer);
-    
-            if (takenStack != null && takenStack.StackSize > 0)
-            {
-                int transferred = takenStack.StackSize;
-        
-                // Простая логика добавления жидкости в слот
-                if (targetSlot.Empty)
-                {
-                    // Просто кладем в пустой слот
-                    targetSlot.Itemstack = takenStack;
-                    targetSlot.MarkDirty();
-                    return transferred;
-                }
-                else if (targetSlot.Itemstack.Collectible.Code.Equals(takenStack.Collectible.Code))
-                {
-                    // Добавляем к существующей жидкости
-                    targetSlot.Itemstack.StackSize += transferred;
-                    targetSlot.MarkDirty();
-                    return transferred;
-                }
-            }
-    
-            return 0;
-        }
-
-private int TransferToLiquidContainer(ILiquidSource source, BlockPos sourcePos, ItemSlot containerSlot, BlockLiquidContainerBase containerBlock, float litresToTransfer)
-{
-    // Получаем содержимое из источника
-    var contentStack = source.GetContent(sourcePos);
-    if (contentStack == null)
-        return 0;
-    
-    // Создаем копию для передачи
-    var liquidStack = contentStack.Clone();
-    
-    // Передаем жидкость в контейнер
-    int transferred = containerBlock.TryPutLiquid(containerSlot.Itemstack, liquidStack, litresToTransfer);
-    
-    if (transferred > 0)
-    {
-        // Забираем переданное количество из источника
-        source.TryTakeContent(sourcePos, transferred);
-        containerSlot.MarkDirty();
-        return transferred;
-    }
-    
-    return 0;
-}
-
-// Вспомогательный метод для создания временного ItemSlot с содержимым
-        private ItemSlot sourceSlotWithContent(ILiquidSource source, ItemStack content)
-        {
-            if (content == null) return null;
-
-            // Создаем временный слот с содержимым источника
-            var tempSlot = new DummySlot(content.Clone());
-            return tempSlot;
-        }
-        
-
-        private WaterTightContainableProps GetLiquidProps(ItemStack stack)
-        {
-            if (stack == null) return null;
-    
-            // 1. Пытаемся получить свойства из атрибутов предмета
-            JsonObject obj = stack.ItemAttributes?["waterTightContainerProps"];
-            if (obj != null && obj.Exists) 
-                return obj.AsObject<WaterTightContainableProps>(null, stack.Collectible.Code.Domain);
-    
-            // 2. Если это жидкость из источника, она может быть BlockLiquidContainerBase
-            if (stack.Block is BlockLiquidContainerBase containerBlock)
-            {
-                // Получаем свойства содержимого
-                var content = containerBlock.GetContent(stack);
-                if (content != null)
-                {
-                    JsonObject contentObj = content.ItemAttributes?["waterTightContainerProps"];
-                    if (contentObj != null && contentObj.Exists)
-                        return contentObj.AsObject<WaterTightContainableProps>(null, content.Collectible.Code.Domain);
-                }
-            }
-    
-            // 3. По умолчанию: 1 предмет = 1 литр
-            return new WaterTightContainableProps { ItemsPerLitre = 1 };
-        }
-        
-
         private bool CanTransferFrom(BlockPos sourcePos)
         {
             if (!lastTransferTime.ContainsKey(sourcePos))
                 return true;
-                
+        
             long elapsed = Api.World.ElapsedMilliseconds - lastTransferTime[sourcePos];
-            return elapsed > MinTransferInterval;
-        }
-        
-        // Находит жидкостной слот в инвентаре
-        private ItemSlotLiquidOnly FindLiquidSlot(IInventory inventory)
-        {
-            for (int i = 0; i < inventory.Count; i++)
-            {
-                ItemSlot slot = inventory[i];
-                if (slot is ItemSlotLiquidOnly liquidSlot && !liquidSlot.Empty)
-                {
-                    if (debugCounter % 5 == 0)
-                    {
-                        Api.Logger.Notification($"=== Найден жидкостной слот #{i}: содержит {liquidSlot.Itemstack?.Collectible?.Code} ===");
-                    }
-                    return liquidSlot;
-                }
-            }
-            
-            return null;
-        }
-        
-// Находит подходящий слот для жидкости в инвентаре
-private ItemSlot FindSuitableLiquidSlot(IInventory inventory, ItemStack liquidStack)
-{
-    if (Api == null || liquidStack == null) return null;
+            bool canTransfer = elapsed > MinTransferInterval;
     
-    for (int i = 0; i < inventory.Count; i++)
-    {
-        ItemSlot slot = inventory[i];
-        if (slot == null) continue;
+            if (!canTransfer)
+                Api.Logger.Notification($"=== Тайминг: {elapsed}мс из {MinTransferInterval}мс ===");
         
-        // Проверяем разные типы слотов
-        if (slot is ItemSlotLiquidOnly liquidSlot)
-        {
-            // Проверяем, может ли этот слот принять жидкость
-            // Простая проверка: если слот пустой или содержит ту же жидкость
-            if (liquidSlot.Empty)
-            {
-                // Пустой слот всегда может принять жидкость (CanHold проверит тип)
-                return liquidSlot;
-            }
-            else if (liquidSlot.Itemstack != null && 
-                     liquidSlot.Itemstack.Collectible.Code.Equals(liquidStack.Collectible.Code))
-            {
-                // Слот уже содержит ту же жидкость
-                return liquidSlot;
-            }
+            return canTransfer;
         }
-        else if (!slot.Empty && slot.Itemstack.Block is BlockLiquidContainerBase)
-        {
-            // Проверяем, можно ли добавить жидкость в контейнер
-            var containerBlock = slot.Itemstack.Block as BlockLiquidContainerBase;
-            var currentContent = containerBlock.GetContent(slot.Itemstack);
-            
-            if (currentContent == null || 
-                currentContent.Equals(Api.World, liquidStack, GlobalConstants.IgnoredStackAttributes))
-            {
-                // Есть место для добавления жидкости
-                float currentLitres = containerBlock.GetCurrentLitres(slot.Itemstack);
-                if (currentLitres < containerBlock.CapacityLitres)
-                {
-                    if (debugCounter % 5 == 0)
-                    {
-                        Api.Logger.Notification($"=== Найден жидкостной контейнер #{i}: {containerBlock.Code}, заполнен на {currentLitres}/{containerBlock.CapacityLitres} литров ===");
-                    }
-                    return slot;
-                }
-            }
-        }
-        else if (slot.Empty && slot is ItemSlotLiquidOnly)
-        {
-            // Пустой жидкостной слот
-            if (debugCounter % 5 == 0)
-            {
-                Api.Logger.Notification($"=== Найден пустой ItemSlotLiquidOnly #{i} ===");
-            }
-            return slot;
-        }
-    }
-    
-    return null;
-}
-
+        
         // Проверяет предмет через фильтр (если фильтры настроены)
         private bool CheckItemAgainstLiquidFilter(ItemStack itemstack)
         {
@@ -1127,24 +664,6 @@ private ItemSlot FindSuitableLiquidSlot(IInventory inventory, ItemStack liquidSt
                     if (target is ILiquidSink liquidSink)
                     {
                         Api.Logger.Notification($"=== Реализует ILiquidSink ===");
-                    }
-                    
-                    if (target is BlockEntityContainer container)
-                    {
-                        for (int i = 0; i < container.Inventory.Count; i++)
-                        {
-                            ItemSlot slot = container.Inventory[i];
-                            if (slot is ItemSlotLiquidOnly)
-                            {
-                                string status = slot.Empty ? "пустой" : $"содержит {slot.Itemstack?.Collectible?.Code}";
-                                Api.Logger.Notification($"=== Жидкостной слот #{i}: {status} ===");
-                            }
-                            else if (!slot.Empty && slot.Itemstack.Block is BlockLiquidContainerBase)
-                            {
-                                string status = slot.Empty ? "пустой" : $"содержит {slot.Itemstack?.Collectible?.Code}";
-                                Api.Logger.Notification($"=== Жидкостной контейнер #{i}: {status} ===");
-                            }
-                        }
                     }
                 }
             }
