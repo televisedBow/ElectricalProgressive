@@ -34,9 +34,11 @@ public class InventoryEHorn : InventoryGeneric
         var heatable = firstCodePart == "ingot" || firstCodePart == "metalplate" ||
                        firstCodePart == "workitem" || forgableGeneric;
 
+        // нагреть нельзя?
         if (!heatable)
             return null;
 
+        // Устанавливаем максимальный размер стека в зависимости от типа предмета
         if (forgableGeneric)
             slots[0].MaxSlotStackSize = 1;
         else
@@ -69,6 +71,10 @@ public class InventoryEHorn : InventoryGeneric
         // Получаем рабочую температуру
         float workingTemp = GetWorkingTemperature(stack);
 
+        // если вдруг температура не определилась, ставим дефолт в 800
+        if (workingTemp <= 0)
+            workingTemp = 800;
+
         // Выгружаем только если температура >= рабочая + 100
         if (temperature >= workingTemp + 100)
         {
@@ -78,21 +84,7 @@ public class InventoryEHorn : InventoryGeneric
         return null;
     }
 
-    /// <summary>
-    /// Проверяет, можно ли работать с предметом (нагревать его)
-    /// </summary>
-    private bool CanWork(ItemStack stack)
-    {
-        float temperature = stack.Collectible.GetTemperature(Api.World, stack);
-        float meltingpoint = stack.Collectible.GetMeltingPoint(Api.World, null, new DummySlot(stack));
 
-        if (stack.Collectible.Attributes?["workableTemperature"].Exists == true)
-        {
-            return stack.Collectible.Attributes["workableTemperature"].AsFloat(meltingpoint / 2) <= temperature;
-        }
-
-        return temperature >= meltingpoint / 2;
-    }
 
     /// <summary>
     /// Получает рабочую температуру предмета
