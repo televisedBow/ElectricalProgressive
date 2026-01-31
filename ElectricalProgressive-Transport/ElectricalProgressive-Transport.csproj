@@ -68,8 +68,5 @@
         <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       </EmbeddedResource>
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="assets\electricalprogressivetransport\shapes\block\pipe\" />
-    </ItemGroup>
     <ProjectExtensions><VisualStudio><UserProperties /></VisualStudio></ProjectExtensions>
 </Project>

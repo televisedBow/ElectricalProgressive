@@ -152,23 +152,6 @@ namespace ElectricalProgressiveTransport
             outputFacing = null;
         }
         
-        // Основной метод для получения инвентаря из позиции (КАК У ЖЕЛОБА!)
-        private IInventory GetInventoryAt(BlockPos pos)
-        {
-            // Используем ТОЧНО ТАКОЙ ЖЕ подход как желоб!
-            Block block = Api.World.BlockAccessor.GetBlock(pos);
-            
-            // 1. Пробуем получить BlockEntityContainer через блок (как желоб)
-            BlockEntityContainer container = block.GetBlockEntity<BlockEntityContainer>(pos);
-            if (container != null)
-            {
-                if (debugCounter % 10 == 0)
-                    Api.Logger.Notification($"=== Получен BlockEntityContainer из {container.GetType().Name} на {pos} ===");
-                return container.Inventory;
-            }
-            
-            return null;
-        }
         
         // Получаем инвентарь из BlockEntity (для источников)
         private IInventory GetInventoryFromBlockEntity(BlockEntity be)
@@ -529,100 +512,104 @@ private void FindAndTransferItems(BlockEntityContainer targetContainer, BlockPos
     if (!foundSource && debugCounter % 10 == 0)
         Api.Logger.Notification($"=== Не найдено подходящих источников в сети ===");
 }
-        
-private bool TryTransferFromSource(BlockPos sourcePos, IInventory targetInventory, 
+
+private bool TryTransferFromSource(BlockPos sourcePos, IInventory targetInventory,
     BlockEntityContainer targetContainer, BlockPos targetPos)
 {
     // Проверяем тайминг
-    if (!CanTransferFrom(sourcePos)) 
+    if (!CanTransferFrom(sourcePos))
     {
         if (debugCounter % 30 == 0)
             Api.Logger.Notification($"=== Слишком рано для переноса из {sourcePos} ===");
         return false;
     }
-    
-    BlockEntity sourceBe = Api.World.BlockAccessor.GetBlockEntity(sourcePos);
-    if (sourceBe == null) 
+
+    // ПОЛУЧАЕМ КОНТЕЙНЕР ИСТОЧНИКА ТАК ЖЕ, КАК И ДЛЯ ЦЕЛИ!
+    Block sourceBlock = Api.World.BlockAccessor.GetBlock(sourcePos);
+    BlockEntityContainer sourceContainer = sourceBlock.GetBlockEntity<BlockEntityContainer>(sourcePos);
+
+    if (sourceContainer == null)
     {
         if (debugCounter % 30 == 0)
             Api.Logger.Notification($"=== Источник не найден на {sourcePos} ===");
         return false;
     }
-    
+
     if (debugCounter % 20 == 0)
-        Api.Logger.Notification($"=== Проверяем источник: {sourceBe.GetType().Name} на {sourcePos} ===");
-    
-    // Получаем инвентарь источника
-    IInventory sourceInventory = GetInventoryFromBlockEntity(sourceBe);
-    if (sourceInventory == null) 
+        Api.Logger.Notification($"=== Проверяем источник: {sourceContainer.GetType().Name} на {sourcePos} ===");
+
+    // Получаем инвентарь источника ЧЕРЕЗ CONTAINER
+    IInventory sourceInventory = sourceContainer.Inventory;
+    if (sourceInventory == null)
     {
         if (debugCounter % 20 == 0)
-            Api.Logger.Notification($"=== Не удалось получить инвентарь из источника {sourceBe.GetType().Name} ===");
+            Api.Logger.Notification(
+                $"=== Не удалось получить инвентарь из источника {sourceContainer.GetType().Name} ===");
         return false;
     }
-    
+
     if (debugCounter % 20 == 0)
         Api.Logger.Notification($"=== Инвентарь источника получен. Слотов: {sourceInventory.Count} ===");
-    
+
     // Определяем направление от источника к трубе
     BlockFacing directionFromSource = GetFacingFromTo(sourcePos, Pos);
-    if (directionFromSource == null) 
+    if (directionFromSource == null)
     {
         if (debugCounter % 20 == 0)
             Api.Logger.Notification($"=== Не удалось определить направление от источника ===");
         return false;
     }
-    
-    // ВАЖНОЕ ИЗМЕНЕНИЕ: Ищем ВСЕ подходящие слоты, а не только первый
+
+    // Ищем подходящий слот
     ItemSlot sourceSlot = FindFirstSuitableSlot(sourceInventory, directionFromSource.Opposite);
-    
-    if (sourceSlot == null || sourceSlot.Empty) 
+
+    if (sourceSlot == null || sourceSlot.Empty)
     {
         if (debugCounter % 30 == 0)
             Api.Logger.Notification($"=== В источнике нет подходящих предметов ===");
         return false;
     }
-    
+
     if (IsLiquidItem(sourceSlot.Itemstack))
     {
         if (debugCounter % 10 == 0)
             Api.Logger.Notification($"=== Пропускаем жидкость: {sourceSlot.Itemstack.Collectible.Code} ===");
         return false;
     }
-    
+
     // Определяем направление к цели
     BlockFacing directionToTarget = GetFacingFromTo(Pos, targetPos);
-    if (directionToTarget == null) 
+    if (directionToTarget == null)
     {
         if (debugCounter % 20 == 0)
             Api.Logger.Notification($"=== Не удалось определить направление к цели ===");
         return false;
     }
-    
+
     // Запрашиваем у цели разрешение на вставку
     ItemSlot targetSlot = null;
     if (targetInventory is InventoryBase targetInventoryBase)
     {
         if (debugCounter % 20 == 0)
             Api.Logger.Notification($"=== Запрашиваем GetAutoPushIntoSlot у цели ===");
-        
+
         targetSlot = targetInventoryBase.GetAutoPushIntoSlot(directionToTarget.Opposite, sourceSlot);
-        
+
         if (targetSlot != null)
         {
             if (debugCounter % 10 == 0)
                 Api.Logger.Notification($"=== GetAutoPushIntoSlot вернул целевой слот ===");
         }
     }
-    
+
     // Если не получили целевой слот через GetAutoPushIntoSlot, ищем подходящий
     if (targetSlot == null)
     {
         if (debugCounter % 20 == 0)
             Api.Logger.Notification($"=== Ищем подходящий слот в цели вручную ===");
-        
+
         targetSlot = FindSuitableTargetSlot(targetInventory, sourceSlot);
-        
+
         if (targetSlot == null)
         {
             if (debugCounter % 10 == 0)
@@ -630,7 +617,7 @@ private bool TryTransferFromSource(BlockPos sourcePos, IInventory targetInventor
             return false;
         }
     }
-    
+
     // Проверяем, может ли целевой слот принять предмет
     if (!targetSlot.CanHold(sourceSlot))
     {
@@ -638,83 +625,83 @@ private bool TryTransferFromSource(BlockPos sourcePos, IInventory targetInventor
             Api.Logger.Notification($"=== Целевой слот не может принять предмет ===");
         return false;
     }
-    
+
     // Выполняем перенос
-    return ExecuteTransfer(sourceSlot, targetSlot, sourceBe, targetContainer, sourcePos);
+    return ExecuteTransfer(sourceSlot, targetSlot, sourceContainer, targetContainer, sourcePos);
 }
 
 // Добавляем метод проверки на жидкость (аналогичный в BELiquidInsertionPipe)
-private bool IsLiquidItem(ItemStack itemstack)
-{
-    if (itemstack == null || itemstack.Collectible == null)
-        return false;
-    
-    // 1. Проверяем через IsLiquid()
-    if (itemstack.Collectible.IsLiquid())
-        return true;
-    
-    // 2. Проверяем, является ли это BlockLiquidContainerBase (ведра)
-    if (itemstack.Block is BlockLiquidContainerBase)
-        return true;
-    
-    // 3. Проверяем атрибуты контейнера с жидкостью
-    if (itemstack.ItemAttributes != null)
-    {
-        // Контейнеры с жидкостью имеют contentItemCode
-        if (itemstack.ItemAttributes["contentItemCode"].Exists)
-            return true;
-            
-        // Или contentItem2BlockCodes (для бутылок)
-        if (itemstack.ItemAttributes["contentItem2BlockCodes"].Exists)
-            return true;
-            
-        // Проверяем атрибут containerType
-        if (itemstack.ItemAttributes["containerType"].Exists)
+        private bool IsLiquidItem(ItemStack itemstack)
         {
-            string containerType = itemstack.ItemAttributes["containerType"].AsString();
-            if (containerType?.ToLower() == "liquid" || containerType?.ToLower() == "portion")
+            if (itemstack == null || itemstack.Collectible == null)
+                return false;
+
+            // 1. Проверяем через IsLiquid()
+            if (itemstack.Collectible.IsLiquid())
                 return true;
+
+            // 2. Проверяем, является ли это BlockLiquidContainerBase (ведра)
+            if (itemstack.Block is BlockLiquidContainerBase)
+                return true;
+
+            // 3. Проверяем атрибуты контейнера с жидкостью
+            if (itemstack.ItemAttributes != null)
+            {
+                // Контейнеры с жидкостью имеют contentItemCode
+                if (itemstack.ItemAttributes["contentItemCode"].Exists)
+                    return true;
+
+                // Или contentItem2BlockCodes (для бутылок)
+                if (itemstack.ItemAttributes["contentItem2BlockCodes"].Exists)
+                    return true;
+
+                // Проверяем атрибут containerType
+                if (itemstack.ItemAttributes["containerType"].Exists)
+                {
+                    string containerType = itemstack.ItemAttributes["containerType"].AsString();
+                    if (containerType?.ToLower() == "liquid" || containerType?.ToLower() == "portion")
+                        return true;
+                }
+
+                // Проверяем атрибут liquidProps
+                if (itemstack.ItemAttributes["liquidProps"].Exists)
+                    return true;
+            }
+
+            // 4. Проверяем через ItemLadle (черпаки)
+            if (itemstack.Collectible.Code?.Path?.Contains("ladle") == true)
+                return true;
+
+            // 5. Для предметов с атрибутом "content" - предполагаем жидкость
+            if (itemstack.Attributes?.HasAttribute("content") == true)
+                return true;
+
+            // 6. Проверяем по коду (waterportion, milkportion и т.д.)
+            string itemCode = itemstack.Collectible.Code?.ToString() ?? "";
+            if (itemCode.ToLower().Contains("portion"))
+                return true;
+
+            return false;
         }
-        
-        // Проверяем атрибут liquidProps
-        if (itemstack.ItemAttributes["liquidProps"].Exists)
-            return true;
-    }
-    
-    // 4. Проверяем через ItemLadle (черпаки)
-    if (itemstack.Collectible.Code?.Path?.Contains("ladle") == true)
-        return true;
-    
-    // 5. Для предметов с атрибутом "content" - предполагаем жидкость
-    if (itemstack.Attributes?.HasAttribute("content") == true)
-        return true;
-    
-    // 6. Проверяем по коду (waterportion, milkportion и т.д.)
-    string itemCode = itemstack.Collectible.Code?.ToString() ?? "";
-    if (itemCode.ToLower().Contains("portion"))
-        return true;
-    
-    return false;
-}
 
 // НОВЫЙ МЕТОД: Ищет первый подходящий слот в источнике
-private ItemSlot FindFirstSuitableSlot(IInventory inventory, BlockFacing pullDirection)
-{
-    // ищем по всем слотам вручную
-    for (int i = 0; i < inventory.Count; i++)
-    {
-        ItemSlot slot = inventory[i];
-        if (slot != null && !slot.Empty && CheckItemAgainstFilter(slot.Itemstack))
+        private ItemSlot FindFirstSuitableSlot(IInventory inventory, BlockFacing pullDirection)
         {
-            return slot;
-        }
-    }
-    
-    return null;
-}
-        
+            // ищем по всем слотам вручную
+            for (int i = 0; i < inventory.Count; i++)
+            {
+                ItemSlot slot = inventory[i];
+                if (slot != null && !slot.Empty && CheckItemAgainstFilter(slot.Itemstack))
+                {
+                    return slot;
+                }
+            }
 
-        
+            return null;
+        }
+
+
+
         private ItemSlot FindSuitableTargetSlot(IInventory targetInventory, ItemSlot sourceSlot)
         {
             // 1. Сначала ищем слот с таким же предметом
