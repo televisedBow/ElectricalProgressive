@@ -99,54 +99,152 @@ namespace ElectricalProgressiveTransport
             }
         }
         
+        // Универсальный метод для получения реальной позиции (с учетом мультиблоков)
+        private BlockPos GetRealPosition(BlockPos pos)
+        {
+            Block block = Api.World.BlockAccessor.GetBlock(pos);
+            
+            if (block is BlockMultiblock multiblock)
+            {
+                BlockPos controlPos = multiblock.GetControlBlockPos(pos);
+                
+                if (debugCounter % 20 == 0)
+                {
+                    Api.Logger.Notification($"=== Мультиблок {pos} -> контрольная позиция: {controlPos} ===");
+                }
+                
+                // Рекурсивно (на случай вложенных мультиблоков)
+                return GetRealPosition(controlPos);
+            }
+            
+            return pos;
+        }
+        
+        // Метод для получения ILiquidSink из позиции (с учетом мультиблоков)
+        private ILiquidSink GetLiquidSinkAtPosition(BlockPos pos)
+        {
+            Block block = Api.World.BlockAccessor.GetBlock(pos);
+            
+            // 1. Проверяем сам блок
+            if (block is ILiquidSink sink)
+            {
+                if (debugCounter % 20 == 0)
+                    Api.Logger.Notification($"=== Блок имеет ILiquidSink: {block.GetType().Name} ===");
+                return sink;
+            }
+            
+            // 2. Если это мультиблок, проверяем контрольный блок
+            if (block is BlockMultiblock multiblock)
+            {
+                BlockPos controlPos = multiblock.GetControlBlockPos(pos);
+                Block controlBlock = Api.World.BlockAccessor.GetBlock(controlPos);
+                
+                if (controlBlock is ILiquidSink controlSink)
+                {
+                    if (debugCounter % 10 == 0)
+                        Api.Logger.Notification($"=== Мультиблок -> контрольный блок имеет ILiquidSink: {controlBlock.GetType().Name} ===");
+                    return controlSink;
+                }
+                else if (debugCounter % 20 == 0)
+                {
+                    Api.Logger.Notification($"=== Контрольный блок {controlBlock?.GetType().Name} НЕ имеет ILiquidSink ===");
+                }
+            }
+            
+            return null;
+        }
+        
+        // Метод для получения ILiquidSource из позиции (с учетом мультиблоков)
+        private ILiquidSource GetLiquidSourceAtPosition(BlockPos pos)
+        {
+            Block block = Api.World.BlockAccessor.GetBlock(pos);
+            
+            // 1. Проверяем сам блок
+            if (block is ILiquidSource source)
+            {
+                if (debugCounter % 20 == 0)
+                    Api.Logger.Notification($"=== Блок имеет ILiquidSource: {block.GetType().Name} ===");
+                return source;
+            }
+            
+            // 2. Если это мультиблок, проверяем контрольный блок
+            if (block is BlockMultiblock multiblock)
+            {
+                BlockPos controlPos = multiblock.GetControlBlockPos(pos);
+                Block controlBlock = Api.World.BlockAccessor.GetBlock(controlPos);
+                
+                if (controlBlock is ILiquidSource controlSource)
+                {
+                    if (debugCounter % 10 == 0)
+                        Api.Logger.Notification($"=== Мультиблок -> контрольный блок имеет ILiquidSource: {controlBlock.GetType().Name} ===");
+                    return controlSource;
+                }
+                else if (debugCounter % 20 == 0)
+                {
+                    Api.Logger.Notification($"=== Контрольный блок {controlBlock?.GetType().Name} НЕ имеет ILiquidSource ===");
+                }
+            }
+            
+            return null;
+        }
+        
         private void DetermineOutputDirection()
         {
+            if (Api == null) return;
+            
+            if (debugCounter % 20 == 0)
+                Api.Logger.Notification($"=== DetermineOutputDirection для {Pos} ===");
+            
             for (int i = 0; i < 6; i++)
             {
                 BlockFacing facing = BlockFacing.ALLFACES[i];
                 BlockPos checkPos = Pos.AddCopy(facing);
 
-                // Проверяем БЛОК на интерфейсы жидкостей
+                // Пропускаем трубы
                 Block checkBlock = Api.World.BlockAccessor.GetBlock(checkPos);
-        
-                if (checkBlock is ILiquidSink)
+                if (checkBlock is BlockPipeBase)
                 {
-                    // Блок реализует интерфейс приемника жидкостей
+                    continue;
+                }
+
+                // Ищем ILiquidSink (с учетом мультиблоков)
+                ILiquidSink liquidSink = GetLiquidSinkAtPosition(checkPos);
+                
+                if (liquidSink != null)
+                {
                     outputFacing = facing;
-            
-                    // Отладочная информация
-                    Api.Logger.Notification($"=== Найден ILiquidSink: {facing.Code} -> {checkPos} ===");
-                    Api.Logger.Notification($"=== Тип блока: {checkBlock.GetType().Name} ===");
-            
-                    // Проверим конкретный тип
-                    if (checkBlock is BlockLiquidContainerBase liquidContainer)
+                    
+                    if (debugCounter % 10 == 0)
                     {
-                        Api.Logger.Notification($"=== Это BlockLiquidContainerBase, емкость: {liquidContainer.CapacityLitres}л ===");
+                        Api.Logger.Notification($"=== НАЙДЕН ILiquidSink! ===");
+                        Api.Logger.Notification($"=== Направление: {facing.Code} -> {checkPos} ===");
+                        Api.Logger.Notification($"=== Блок: {checkBlock.GetType().Name} ===");
+                        
+                        // Показываем реальную позицию для мультиблоков
+                        if (checkBlock is BlockMultiblock)
+                        {
+                            BlockPos realPos = GetRealPosition(checkPos);
+                            Api.Logger.Notification($"=== Реальная позиция: {realPos} ===");
+                        }
                     }
-            
+                    
                     return;
                 }
             }
+            
             outputFacing = null;
+            if (debugCounter % 20 == 0)
+                Api.Logger.Notification($"=== ILiquidSink не найден в соседних блоках ===");
         }
         
         private void OnTransferTick(float dt)
         {
             debugCounter++;
-    
-            if (Api == null)
-            {
-                Api.Logger.Notification($"=== Api is null! ===");
-                return;
-            }
-    
-            if (networkManager == null)
-            {
-                Api.Logger.Notification($"=== networkManager is null! ===");
-                return;
-            }
 
-            Api.Logger.Notification($"=== OnTransferTick #{debugCounter} на позиции {Pos} ===");
+            if (Api == null || networkManager == null) return;
+
+            if (debugCounter % 10 == 0)
+                Api.Logger.Notification($"=== OnTransferTick #{debugCounter} на позиции {Pos} ===");
 
             // Обновляем направление вывода
             if (outputFacing == null || debugCounter % 20 == 0)
@@ -156,187 +254,248 @@ namespace ElectricalProgressiveTransport
 
             if (outputFacing == null)
             {
-                Api.Logger.Notification($"=== outputFacing is null, пропускаем тик ===");
+                if (debugCounter % 20 == 0)
+                    Api.Logger.Notification($"=== outputFacing is null, пропускаем тик ===");
                 return;
             }
 
             // Получаем целевой контейнер
             BlockPos targetPos = Pos.AddCopy(outputFacing);
-            Api.Logger.Notification($"=== Целевая позиция: {targetPos} ===");
+            
+            if (debugCounter % 10 == 0)
+                Api.Logger.Notification($"=== Целевая позиция: {targetPos} ===");
     
-            Block targetBlock = Api.World.BlockAccessor.GetBlock(targetPos);
-            Api.Logger.Notification($"=== Целевой блок: {targetBlock?.GetType().Name} ===");
-    
-            if (targetBlock is ILiquidSink)
+            // Ищем ILiquidSink (с учетом мультиблоков)
+            ILiquidSink sink = GetLiquidSinkAtPosition(targetPos);
+            
+            if (sink != null)
             {
-                Api.Logger.Notification($"=== Целевой блок реализует ILiquidSink ===");
+                if (debugCounter % 10 == 0)
+                {
+                    Api.Logger.Notification($"=== Целевой блок реализует ILiquidSink ===");
+                    
+                    // Показываем реальную позицию
+                    Block targetBlock = Api.World.BlockAccessor.GetBlock(targetPos);
+                    if (targetBlock is BlockMultiblock)
+                    {
+                        BlockPos realPos = GetRealPosition(targetPos);
+                        Api.Logger.Notification($"=== Это мультиблок! Реальная позиция: {realPos} ===");
+                    }
+                }
+                
+                // Вызываем передачу
+                TryTransferLiquidToSinkDirect(sink, targetPos);
             }
             else
             {
-                Api.Logger.Notification($"=== Целевой блок НЕ реализует ILiquidSink! ===");
-                outputFacing = null; // Сбросим направление
+                if (debugCounter % 10 == 0)
+                {
+                    Api.Logger.Notification($"=== Целевой блок НЕ реализует ILiquidSink! ===");
+                    outputFacing = null; // Сбросим направление
+                }
+                return;
+            }
+        }
+        
+        private void TryTransferLiquidToSinkDirect(ILiquidSink sink, BlockPos targetPos)
+        {
+            if (sink == null) return;
+            
+            if (debugCounter % 10 == 0)
+                Api.Logger.Notification($"=== TryTransferLiquidToSinkDirect: цель на {targetPos} ===");
+            
+            // Используем сеть для поиска источников
+            var network = networkManager.GetNetwork(Pos);
+            if (network == null) 
+            {
+                if (debugCounter % 20 == 0)
+                    Api.Logger.Notification($"=== СЕТЬ НЕ НАЙДЕНА ===");
                 return;
             }
 
-            // Вызываем передачу напрямую через блок, а не через BlockEntity
-            TryTransferLiquidToSinkDirect(targetBlock as ILiquidSink, targetPos);
-        }
-        
-        // Новый метод: передача напрямую через блок
-private void TryTransferLiquidToSinkDirect(ILiquidSink sink, BlockPos targetPos)
-{
-    if (sink == null) return;
-    
-    Api.Logger.Notification($"=== TryTransferLiquidToSinkDirect: цель на {targetPos} ===");
-    
-    // Используем сеть для поиска источников
-    var network = networkManager.GetNetwork(Pos);
-    if (network == null) 
-    {
-        Api.Logger.Notification($"=== СЕТЬ НЕ НАЙДЕНА ===");
-        return;
-    }
-
-    Api.Logger.Notification($"=== Размер сети: {network.Pipes.Count} труб ===");
-    
-    // Собираем все позиции для исключения
-    var excludePositions = new HashSet<BlockPos>();
-    excludePositions.Add(Pos);
-    excludePositions.Add(targetPos);
-
-    int sourcesChecked = 0;
-    
-    // Ищем источник жидкости в сети
-    foreach (var pipePos in network.Pipes)
-    {
-        if (excludePositions.Contains(pipePos)) continue;
-
-        // Проверяем все стороны трубы
-        for (int i = 0; i < 6; i++)
-        {
-            BlockFacing facing = BlockFacing.ALLFACES[i];
-            BlockPos sourcePos = pipePos.AddCopy(facing);
-
-            if (excludePositions.Contains(sourcePos)) continue;
+            if (debugCounter % 20 == 0)
+                Api.Logger.Notification($"=== Размер сети: {network.Pipes.Count} труб ===");
             
-            // Пропускаем другие трубы
-            Block sourceBlock = Api.World.BlockAccessor.GetBlock(sourcePos);
-            if (sourceBlock is BlockPipeBase)
-                continue;
-                
-            sourcesChecked++;
-            Api.Logger.Notification($"=== Проверяем источник #{sourcesChecked}: {sourcePos} ===");
-            Api.Logger.Notification($"=== Блок источника: {sourceBlock?.GetType().Name} ===");
+            // Собираем все позиции для исключения
+            var excludePositions = new HashSet<BlockPos>();
+            excludePositions.Add(Pos);
+            excludePositions.Add(targetPos);
+
+            int sourcesChecked = 0;
             
-            // Проверяем БЛОК на ILiquidSource
-            if (sourceBlock is ILiquidSource liquidSource)
+            // Ищем источник жидкости в сети
+            foreach (var pipePos in network.Pipes)
             {
-                Api.Logger.Notification($"=== Блок источника реализует ILiquidSource! ===");
-                
-                // Пытаемся передать
-                if (TryTransferFromBlockSourceToSink(sourcePos, liquidSource, sink, targetPos))
+                if (excludePositions.Contains(pipePos)) continue;
+
+                // Проверяем все стороны трубы
+                for (int i = 0; i < 6; i++)
                 {
-                    Api.Logger.Notification($"=== Успешно перенесли жидкость из {sourcePos} ===");
-                    return;
+                    BlockFacing facing = BlockFacing.ALLFACES[i];
+                    BlockPos sourcePos = pipePos.AddCopy(facing);
+
+                    if (excludePositions.Contains(sourcePos)) continue;
+                    
+                    // Пропускаем другие трубы
+                    Block sourceBlock = Api.World.BlockAccessor.GetBlock(sourcePos);
+                    if (sourceBlock is BlockPipeBase)
+                        continue;
+                        
+                    sourcesChecked++;
+                    
+                    if (debugCounter % 5 == 0)
+                    {
+                        Api.Logger.Notification($"=== Проверяем источник #{sourcesChecked}: {sourcePos} ===");
+                        Api.Logger.Notification($"=== Визуальный блок: {sourceBlock?.GetType().Name} ===");
+                    }
+                    
+                    // Ищем ILiquidSource (с учетом мультиблоков)
+                    ILiquidSource liquidSource = GetLiquidSourceAtPosition(sourcePos);
+                    
+                    if (liquidSource != null)
+                    {
+                        if (debugCounter % 5 == 0)
+                            Api.Logger.Notification($"=== НАЙДЕН ILiquidSource! ===");
+                        
+                        // Пытаемся передать
+                        if (TryTransferFromBlockSourceToSink(sourcePos, liquidSource, sink, targetPos))
+                        {
+                            if (debugCounter % 5 == 0)
+                                Api.Logger.Notification($"=== Успешно перенесли жидкость из {sourcePos} ===");
+                            return;
+                        }
+                        else if (debugCounter % 10 == 0)
+                        {
+                            Api.Logger.Notification($"=== Не удалось перенести жидкость из {sourcePos} ===");
+                        }
+                    }
+                    else if (debugCounter % 20 == 0)
+                    {
+                        Api.Logger.Notification($"=== Блок НЕ реализует ILiquidSource ===");
+                    }
                 }
             }
-            else
-            {
-                Api.Logger.Notification($"=== Блок НЕ реализует ILiquidSource ===");
-            }
+            
+            if (sourcesChecked == 0 && debugCounter % 10 == 0)
+                Api.Logger.Notification($"=== НЕ НАЙДЕНО НИ ОДНОГО ИСТОЧНИКА ===");
         }
-    }
-    
-    if (sourcesChecked == 0)
-        Api.Logger.Notification($"=== НЕ НАЙДЕНО НИ ОДНОГО ИСТОЧНИКА ===");
-}
         
-// Новый метод: передача от блока-источника к приемнику
         private bool TryTransferFromBlockSourceToSink(BlockPos sourcePos, ILiquidSource source, ILiquidSink sink,
             BlockPos targetPos)
         {
             // Проверяем тайминг
             if (!CanTransferFrom(sourcePos))
             {
-                Api.Logger.Notification($"=== Тайминг не позволяет передачу из {sourcePos} ===");
+                if (debugCounter % 30 == 0)
+                    Api.Logger.Notification($"=== Тайминг не позволяет передачу из {sourcePos} ===");
                 return false;
             }
 
-            Api.Logger.Notification($"=== TryTransferFromBlockSourceToSink ===");
-            Api.Logger.Notification($"=== Источник (блок): {source.GetType().Name} на {sourcePos} ===");
-            Api.Logger.Notification($"=== Приемник: {sink.GetType().Name} на {targetPos} ===");
+            if (debugCounter % 5 == 0)
+            {
+                Api.Logger.Notification($"=== TryTransferFromBlockSourceToSink ===");
+                Api.Logger.Notification($"=== Визуальная позиция источника: {sourcePos} ===");
+                Api.Logger.Notification($"=== Визуальная позиция цели: {targetPos} ===");
+            }
 
-            // Получаем содержимое из источника
-            var contentStack = source.GetContent(sourcePos);
+            // Определяем РЕАЛЬНЫЕ позиции для обоих блоков
+            BlockPos realSourcePos = GetRealPosition(sourcePos);
+            BlockPos realTargetPos = GetRealPosition(targetPos);
+            
+            if (debugCounter % 5 == 0 && (!realSourcePos.Equals(sourcePos) || !realTargetPos.Equals(targetPos)))
+            {
+                Api.Logger.Notification($"=== Реальная позиция источника: {realSourcePos} ===");
+                Api.Logger.Notification($"=== Реальная позиция цели: {realTargetPos} ===");
+            }
+
+            // Получаем содержимое из РЕАЛЬНОЙ позиции источника
+            var contentStack = source.GetContent(realSourcePos);
             if (contentStack == null)
             {
-                Api.Logger.Notification($"=== Источник пуст (GetContent вернул null) ===");
+                if (debugCounter % 20 == 0)
+                    Api.Logger.Notification($"=== Источник пуст (GetContent вернул null) ===");
                 return false;
             }
 
-            Api.Logger.Notification(
-                $"=== Содержимое источника: {contentStack.Collectible?.Code}, StackSize: {contentStack.StackSize} ===");
+            if (debugCounter % 5 == 0)
+            {
+                Api.Logger.Notification(
+                    $"=== Содержимое источника: {contentStack.Collectible?.Code}, StackSize: {contentStack.StackSize} ===");
+            }
 
             // Проверяем фильтр
             if (!CheckItemAgainstLiquidFilter(contentStack))
             {
-                Api.Logger.Notification($"=== Жидкость не прошла фильтр ===");
+                if (debugCounter % 10 == 0)
+                    Api.Logger.Notification($"=== Жидкость не прошла фильтр ===");
                 return false;
             }
 
             // Вычисляем количество для передачи (в литрах)
-            float currentLitres = source.GetCurrentLitres(sourcePos);
-            Api.Logger.Notification($"=== Текущее количество в источнике: {currentLitres} литров ===");
+            float currentLitres = source.GetCurrentLitres(realSourcePos);
+            
+            if (debugCounter % 10 == 0)
+                Api.Logger.Notification($"=== Текущее количество в источнике: {currentLitres} литров ===");
 
             float litresToTransfer = Math.Min(transferRate / 1000f, currentLitres);
             if (litresToTransfer <= 0)
             {
-                Api.Logger.Notification($"=== Недостаточно жидкости для передачи ===");
+                if (debugCounter % 20 == 0)
+                    Api.Logger.Notification($"=== Недостаточно жидкости для передачи ===");
                 return false;
             }
 
-            Api.Logger.Notification($"=== Пытаемся передать {litresToTransfer} литров жидкости ===");
+            if (debugCounter % 5 == 0)
+                Api.Logger.Notification($"=== Пытаемся передать {litresToTransfer} литров жидкости ===");
 
-            // Пытаемся передать жидкость
-            int movedItems = sink.TryPutLiquid(targetPos, contentStack, litresToTransfer);
+            // Пытаемся передать жидкость в РЕАЛЬНУЮ позицию цели
+            int movedItems = sink.TryPutLiquid(realTargetPos, contentStack, litresToTransfer);
 
-            Api.Logger.Notification($"=== TryPutLiquid вернул: {movedItems} единиц ===");
+            if (debugCounter % 5 == 0)
+                Api.Logger.Notification($"=== TryPutLiquid вернул: {movedItems} единиц ===");
 
             if (movedItems > 0)
             {
-                // Забираем переданное количество из источника
-                ItemStack takenStack = source.TryTakeContent(sourcePos, movedItems);
+                // Забираем переданное количество из РЕАЛЬНОЙ позиции источника
+                ItemStack takenStack = source.TryTakeContent(realSourcePos, movedItems);
 
-                if (takenStack != null)
+                if (takenStack != null && debugCounter % 5 == 0)
                     Api.Logger.Notification($"=== Изъято из источника: {takenStack.StackSize} единиц ===");
 
                 lastTransferTime[sourcePos] = Api.World.ElapsedMilliseconds;
 
-                // Обновляем блоки
-                Api.World.BlockAccessor.MarkBlockDirty(sourcePos);
-                Api.World.BlockAccessor.MarkBlockDirty(targetPos);
+                // Обновляем РЕАЛЬНЫЕ позиции
+                Api.World.BlockAccessor.MarkBlockDirty(realSourcePos);
+                Api.World.BlockAccessor.MarkBlockDirty(realTargetPos);
 
-                Api.Logger.Notification($"=== УСПЕХ: Передано {movedItems} единиц жидкости ===");
+                // Также обновляем визуальные позиции (для мультиблоков)
+                if (!realSourcePos.Equals(sourcePos))
+                    Api.World.BlockAccessor.MarkBlockDirty(sourcePos);
+                if (!realTargetPos.Equals(targetPos))
+                    Api.World.BlockAccessor.MarkBlockDirty(targetPos);
+
+                if (debugCounter % 2 == 0)
+                    Api.Logger.Notification($"=== УСПЕХ: Передано {movedItems} единиц жидкости ===");
                 return true;
             }
             else
             {
-                Api.Logger.Notification($"=== НЕУДАЧА: TryPutLiquid вернул 0 ===");
-
-                // Попробуем диагностику для приемника
-                if (sink is BlockLiquidContainerBase container)
+                if (debugCounter % 10 == 0)
                 {
-                    BlockEntity targetBe = Api.World.BlockAccessor.GetBlockEntity(targetPos);
-                    if (targetBe != null)
-                    {
-                        Api.Logger.Notification($"=== Сущность приемника: {targetBe.GetType().Name} ===");
-                    }
+                    Api.Logger.Notification($"=== НЕУДАЧА: TryPutLiquid вернул 0 ===");
+                    
+                    // Диагностика
+                    Block sourceBlock = Api.World.BlockAccessor.GetBlock(realSourcePos);
+                    Block targetBlock = Api.World.BlockAccessor.GetBlock(realTargetPos);
+                    
+                    Api.Logger.Notification($"=== Реальный блок источника: {sourceBlock?.GetType().Name} ===");
+                    Api.Logger.Notification($"=== Реальный блок цели: {targetBlock?.GetType().Name} ===");
+                    Api.Logger.Notification($"=== Код жидкости: {contentStack.Collectible?.Code} ===");
                 }
             }
 
             return false;
         }
-        
         
         private bool CanTransferFrom(BlockPos sourcePos)
         {
@@ -346,7 +505,7 @@ private void TryTransferLiquidToSinkDirect(ILiquidSink sink, BlockPos targetPos)
             long elapsed = Api.World.ElapsedMilliseconds - lastTransferTime[sourcePos];
             bool canTransfer = elapsed > MinTransferInterval;
     
-            if (!canTransfer)
+            if (!canTransfer && debugCounter % 20 == 0)
                 Api.Logger.Notification($"=== Тайминг: {elapsed}мс из {MinTransferInterval}мс ===");
         
             return canTransfer;
@@ -566,6 +725,16 @@ private void TryTransferLiquidToSinkDirect(ILiquidSink sink, BlockPos targetPos)
                 if (!_inventory[i].Empty) activeFilters++;
             }
             sb.AppendLine(Lang.Get("electricalprogressivetransport:active-liquid-filters", activeFilters, _inventory.Count));
+            
+            // Информация о направлении вывода
+            if (outputFacing != null)
+            {
+                sb.AppendLine(Lang.Get("electricalprogressivetransport:output-facing", outputFacing.Code));
+            }
+            else
+            {
+                sb.AppendLine(Lang.Get("electricalprogressivetransport:no-output-facing"));
+            }
         }
         
         public override void FromTreeAttributes(ITreeAttribute tree, IWorldAccessor worldAccessForResolve)
@@ -656,15 +825,21 @@ private void TryTransferLiquidToSinkDirect(ILiquidSink sink, BlockPos targetPos)
                 BlockPos targetPos = Pos.AddCopy(outputFacing);
                 Api.Logger.Notification($"=== Выходное направление: {outputFacing.Code} -> {targetPos} ===");
                 
-                BlockEntity target = Api.World.BlockAccessor.GetBlockEntity(targetPos);
-                if (target != null)
+                Block visualBlock = Api.World.BlockAccessor.GetBlock(targetPos);
+                Api.Logger.Notification($"=== Визуальный блок: {visualBlock?.GetType().Name} ===");
+                
+                BlockPos realPos = GetRealPosition(targetPos);
+                Block realBlock = Api.World.BlockAccessor.GetBlock(realPos);
+                Api.Logger.Notification($"=== Реальный блок: {realBlock?.GetType().Name} на {realPos} ===");
+                
+                ILiquidSink sink = GetLiquidSinkAtPosition(targetPos);
+                if (sink != null)
                 {
-                    Api.Logger.Notification($"=== Целевой блок: {target.GetType().Name} ===");
-                    
-                    if (target is ILiquidSink liquidSink)
-                    {
-                        Api.Logger.Notification($"=== Реализует ILiquidSink ===");
-                    }
+                    Api.Logger.Notification($"=== Реализует ILiquidSink ===");
+                }
+                else
+                {
+                    Api.Logger.Notification($"=== НЕ реализует ILiquidSink ===");
                 }
             }
             else
